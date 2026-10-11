@@ -13,10 +13,7 @@ public partial class QuickPanelSizePreviewWindow : Window
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
         ContentRendered += (_, _) => ApplySize();
-        Closed += (_, _) =>
-        {
-            _model?.PropertyChanged -= OnSizeChanged;
-        };
+        Closed += (_, _) => _model?.PropertyChanged -= OnSizeChanged;
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
