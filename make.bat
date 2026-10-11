@@ -122,32 +122,18 @@ mkdir "%OUT%"
 
 :: Publish App/Service/Cli in Release mode
 ::
-:: Solution-level `dotnet publish -o` prints NETSDK1194 ("specifying a solution-level output path...
-:: may result in inconsistent builds") since it's not an officially supported publish mode -- every
-:: project in Lertaro.slnx just publishes into the same -o in whatever order MSBuild picks, rather
-:: than each publish being independently well-defined the way `dotnet publish SomeProject.csproj -o`
-:: is. Used anyway (as Lertaro.Plugins.slnx already does below, without issue) since it's simpler to
-:: maintain than a separate pushd/publish/popd block per exe project, and has been verified to produce
-:: the same merged output (App+Service+Cli+Core+PluginSdk all landing in %OUT%) as the three separate
-:: publishes it replaces.
+:: Publish each project separately to keep shared output deterministic and avoid NETSDK1194.
 echo.
 echo [1/4] Publishing App/Service/Cli in Release mode...
-dotnet publish "%ROOT%Lertaro.slnx" -c Release -o "%OUT%" %RIDARGS% -v quiet
-set "SLN_EXIT=%errorlevel%"
-if not "%SLN_EXIT%"=="0" (
-    echo [Error] App/Service/Cli publish failed for %ARCH%.
-    exit /b %SLN_EXIT%
+for %%p in (App\App.csproj Service\Service.csproj Cli\Cli.csproj) do (
+    dotnet publish "%ROOT%%%p" -c Release -o "%OUT%" %RIDARGS% -v quiet
+    if errorlevel 1 exit /b 1
 )
 
-:: Publish Plugins in Release mode
 echo.
 echo [2/4] Publishing Plugins in Release mode...
-dotnet publish "%ROOT%Lertaro.Plugins.slnx" -c Release -o "%OUT%\Plugins" %RIDARGS% -v quiet
-set "PLUGINS_EXIT=%errorlevel%"
-if not "%PLUGINS_EXIT%"=="0" (
-    echo [Error] Plugins publish failed for %ARCH%.
-    exit /b %PLUGINS_EXIT%
-)
+powershell -NoProfile -Command "$projects = ([xml](Get-Content -LiteralPath '%ROOT%Lertaro.Plugins.slnx')).Solution.Project; foreach ($project in $projects) { dotnet publish (Join-Path '%ROOT%' $project.Path) -c Release -o '%OUT%\Plugins' %RIDARGS% -v quiet; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }"
+if errorlevel 1 exit /b 1
 
 
 :: Copy portable updater/cleanup files and clean PDB files
