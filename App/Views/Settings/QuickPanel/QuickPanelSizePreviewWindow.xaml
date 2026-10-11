@@ -3,7 +3,7 @@
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:services="clr-namespace:Lertaro.App.Services"
  Title="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_SizePreview]}"
- Width="{Binding Width, Mode=OneWay}" Height="{Binding Height, Mode=OneWay}"
+ Width="640" Height="480"
  ResizeMode="NoResize" WindowStartupLocation="CenterScreen" ShowInTaskbar="False" ShowActivated="False">
  <Window.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries>
   <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml"/>

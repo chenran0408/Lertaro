@@ -89,11 +89,21 @@ public sealed class QuickPanelWindowSizeSettingsViewModelTests
         var preview = new Lertaro.App.Views.Settings.QuickPanel.QuickPanelSizePreviewWindow { DataContext = model };
         try
         {
+            preview.Show();
+            preview.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             model.Width = 850;
             model.Height = 650;
             preview.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.DataBind);
-            Assert.AreEqual(850d, preview.Width);
-            Assert.AreEqual(650d, preview.Height);
+            preview.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            Assert.AreEqual(850d, preview.Width, 1);
+            Assert.AreEqual(850d, preview.ActualWidth, 1);
+            Assert.AreEqual(650d, preview.Height, 1);
+            Assert.AreEqual(650d, preview.ActualHeight, 1);
+            model.Width = 500;
+            model.Height = 350;
+            preview.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            Assert.AreEqual(500d, preview.ActualWidth, 1);
+            Assert.AreEqual(350d, preview.ActualHeight, 1);
             Assert.AreEqual(640d, settings.WindowWidth);
             Assert.AreEqual(480d, settings.WindowHeight);
         }
