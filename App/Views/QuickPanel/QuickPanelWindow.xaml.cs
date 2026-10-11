@@ -19,6 +19,8 @@ public partial class QuickPanelWindow : Window,
     // the preview and not.
     public Thickness VisibleContentInset => new(8);
 
+    internal bool IsSizeMenuOpen => SizeButton.ContextMenu?.IsOpen == true;
+
     // The four methods ActionFlyout needs from whoever hosts it. Deliberately IPluginSearchWindow and
     // not ISearchWindow: that larger interface is built around an in-window actions pane, which is what
     // ShellMenuPresenter drives and what this panel has no equivalent of. The flyout asks only for these.

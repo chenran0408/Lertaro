@@ -86,6 +86,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
                     <local:QuickPanelTabStrip Grid.Column="0" VerticalAlignment="Bottom"/>
@@ -96,7 +97,8 @@
                          the panel dismissing itself is its normal behaviour, so the state worth showing
                          is the one that suspends it. Clickable as well as bound to the hotkey, since a
                          pin that only reports is a pin you cannot press. -->
-                    <ToggleButton Grid.Column="2" Margin="2,-4,0,0" VerticalAlignment="Bottom"
+                    <local:QuickPanelSizeButton x:Name="SizeButton" Grid.Column="2" Margin="2,-4,0,0" VerticalAlignment="Bottom"/>
+                    <ToggleButton Grid.Column="3" Margin="2,-4,0,0" VerticalAlignment="Bottom"
                                   Width="32" Height="32"
                                   IsChecked="{Binding IsStayOpen, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}"
                                   ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_StayOpenTooltip]}"

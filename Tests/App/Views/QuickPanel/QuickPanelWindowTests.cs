@@ -105,6 +105,23 @@ public sealed class QuickPanelWindowTests
             Assert.AreEqual(Lertaro.App.Converters.QuickPanelTileMetrics.IconWidthFor(container.ActualWidth), iconBox.ActualWidth, 0.01);
             Assert.AreEqual(Lertaro.App.Converters.QuickPanelTileMetrics.IconHeightFor(container.ActualWidth), iconBox.ActualHeight, 0.01);
             Assert.AreEqual(Lertaro.App.Converters.QuickPanelTileMetrics.CellHeightFor(container.ActualWidth), container.ActualHeight, 0.01);
+            var previousSize = Lertaro.App.Converters.QuickPanelTileMetrics.IconSize;
+            var previousPosition = (window.Left, window.Top);
+            try
+            {
+                Lertaro.App.Views.QuickPanel.QuickPanelSizeButton.ApplySize(window, QuickPanelThumbnailSize.Small);
+                window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+                Assert.AreEqual(32.0, iconBox.ActualWidth, 0.01);
+                Assert.AreEqual(56.0, container.ActualWidth, 0.01);
+                Assert.AreEqual(62.0, container.ActualHeight, 0.01);
+                Assert.AreEqual(previousPosition, (window.Left, window.Top));
+                Assert.AreEqual(7, group.GridSlots[path]);
+            }
+            finally
+            {
+                Lertaro.App.Views.QuickPanel.QuickPanelSizeButton.ApplySize(window, previousSize);
+                window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            }
             var point = container.TranslatePoint(new Point(container.ActualWidth / 2, container.ActualHeight / 2), panel);
             Assert.AreEqual(7, panel.SlotAt(point));
             group.SortMode = QuickPanelSortMode.NameAscending;
