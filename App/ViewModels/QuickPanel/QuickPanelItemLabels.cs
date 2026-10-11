@@ -9,8 +9,16 @@ public sealed class QuickPanelItemLabels : ViewModelBase
     public QuickPanelItemLabels(IReadOnlyDictionary<string, QuickPanelItemLabel>? values = null)
         => _values = values?.ToDictionary(p => p.Key, p => p.Value.Clone(), StringComparer.OrdinalIgnoreCase) ?? new(StringComparer.OrdinalIgnoreCase);
     public IReadOnlyDictionary<string, QuickPanelItemLabel> Values => _values;
-    public string Name(string path, string original)
-        => _values.TryGetValue(path, out var value) && value.DisplayName.Length > 0 ? value.DisplayName : original;
+    public string Name(string path, string original, bool isDirectory = false)
+        => DisplayName(path, original, isDirectory, _values.GetValueOrDefault(path));
+    internal static string DisplayName(string path, string original, bool isDirectory, QuickPanelItemLabel? label = null)
+    {
+        if (!string.IsNullOrEmpty(label?.DisplayName)) return label.DisplayName;
+        if (isDirectory) return original;
+        var extension = System.IO.Path.GetExtension(string.IsNullOrEmpty(path) ? original : path);
+        return extension.Length > 0 && original.Length > extension.Length && original.EndsWith(extension, StringComparison.OrdinalIgnoreCase)
+            ? original[..^extension.Length] : original;
+    }
     public void Set(string path, string name, bool hidden)
     {
         if (string.IsNullOrWhiteSpace(path)) return;

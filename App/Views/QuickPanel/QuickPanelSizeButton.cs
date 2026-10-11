@@ -13,9 +13,11 @@ internal sealed class QuickPanelSizeButton : Button
 {
     public QuickPanelSizeButton()
     {
-        Content = "↔";
-        FontSize = 18;
-        Width = Height = 32;
+        SetBinding(ContentProperty, new System.Windows.Data.Binding("[QuickPanel_SizeButton]") { Source = TranslationManager.Instance });
+        FontSize = 12;
+        MinWidth = 64;
+        Height = 32;
+        Padding = new Thickness(8, 0, 8, 0);
         Background = System.Windows.Media.Brushes.Transparent;
         BorderThickness = new Thickness(0);
         SetBinding(ToolTipProperty, new System.Windows.Data.Binding("[QuickPanel_ThumbnailSize]") { Source = TranslationManager.Instance });

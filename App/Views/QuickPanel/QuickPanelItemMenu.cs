@@ -44,7 +44,7 @@ internal sealed class QuickPanelItemMenu(QuickPanelWindow window)
     private void Rename(QuickPanelGroupViewModel group, AppSearchResult item) => WithPin(() =>
                                                                                       {
                                                                                           group.ItemLabels.Values.TryGetValue(item.FullPath, out var label);
-                                                                                          var current = group.ItemLabels.Name(item.FullPath, item.Name);
+                                                                                          var current = group.ItemLabels.Name(item.FullPath, item.Name, item.IsDir);
                                                                                           var values = Controls.Dialogs.PluginFieldPromptWindow.ShowPrompt(TranslationManager.Instance["QuickPanel_IconName"],
                                                                                               new[] { new PluginConfigField { Key = "Name", LabelKey = "QuickLaunch_FieldName", FieldType = ConfigFieldType.Text, DefaultValue = current } },
                                                                                               new Dictionary<string, object?> { ["Name"] = current });

@@ -105,6 +105,7 @@
                             <MultiBinding Converter="{StaticResource DisplayNameWithParent}">
                                 <Binding/>
                                 <Binding Path="DataContext.FolderPath" RelativeSource="{RelativeSource AncestorType=ListBox}"/>
+                                <Binding Path="DataContext.ItemLabels.Values" RelativeSource="{RelativeSource AncestorType=ListBox}"/>
                             </MultiBinding>
                         </conv:TextHighlighter.Text>
                     </TextBlock>
@@ -214,10 +215,10 @@
                            TextAlignment="Center"
                            helpers:MarqueeBehavior.EnableMarquee="True">
                     <conv:TextHighlighter.Text><MultiBinding Converter="{StaticResource ItemLabel}">
-                        <Binding Path="Name"/><Binding Path="FullPath"/><Binding Path="DataContext.ItemLabels.Values" RelativeSource="{RelativeSource AncestorType=ListBox}"/>
+                        <Binding Path="Name"/><Binding Path="FullPath"/><Binding Path="DataContext.ItemLabels.Values" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="IsDir"/>
                     </MultiBinding></conv:TextHighlighter.Text>
                     <TextBlock.Visibility><MultiBinding Converter="{StaticResource ItemLabel}" ConverterParameter="Visibility">
-                        <Binding Path="Name"/><Binding Path="FullPath"/><Binding Path="DataContext.ItemLabels.Values" RelativeSource="{RelativeSource AncestorType=ListBox}"/>
+                        <Binding Path="Name"/><Binding Path="FullPath"/><Binding Path="DataContext.ItemLabels.Values" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="IsDir"/>
                     </MultiBinding></TextBlock.Visibility>
                 </TextBlock>
             </ScrollViewer>

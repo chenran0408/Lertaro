@@ -35,7 +35,7 @@ public class QuickPanelDisplayNameConverterTests
 
         var result = _nameConverter.Convert(values, typeof(string), parameter: null, culture: CultureInfo.InvariantCulture);
 
-        Assert.AreEqual(@"App.csproj (Src\App)", result);
+        Assert.AreEqual(@"App (Src\App)", result);
     }
 
     [TestMethod]
@@ -50,7 +50,7 @@ public class QuickPanelDisplayNameConverterTests
 
         var result = _nameConverter.Convert(values, typeof(string), parameter: null, culture: CultureInfo.InvariantCulture);
 
-        Assert.AreEqual("README.md", result);
+        Assert.AreEqual("README", result);
     }
 
     [TestMethod]

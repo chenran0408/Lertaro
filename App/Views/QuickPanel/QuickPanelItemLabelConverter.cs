@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using Lertaro.Core;
+using Lertaro.App.ViewModels.QuickPanel;
 
 namespace Lertaro.App.Views.QuickPanel;
 
@@ -15,7 +16,7 @@ internal sealed class QuickPanelItemLabelConverter : IMultiValueConverter
         QuickPanelItemLabel? label = null;
         labels?.TryGetValue(path, out label);
         return parameter as string == "Visibility" ? label?.HideName == true ? Visibility.Collapsed : Visibility.Visible
-            : string.IsNullOrEmpty(label?.DisplayName) ? original : label.DisplayName;
+            : QuickPanelItemLabels.DisplayName(path, original, values.ElementAtOrDefault(3) is true, label);
     }
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
 }

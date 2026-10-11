@@ -295,7 +295,7 @@ public class QuickPanelGroupViewModel : ViewModelBase
 
         var matching = _filter.Length == 0
             ? _loaded
-            : _loaded.Where(pair => FuzzyMatcher.IsMatch(_filter, pair.Item.Name) || FuzzyMatcher.IsMatch(_filter, ItemLabels.Name(pair.Item.FullPath, pair.Item.Name))).ToList();
+            : _loaded.Where(pair => FuzzyMatcher.IsMatch(_filter, pair.Item.Name) || FuzzyMatcher.IsMatch(_filter, ItemLabels.Name(pair.Item.FullPath, pair.Item.Name, pair.Item.IsDir))).ToList();
 
         // Ordered on the DateTime, not on the string the row shows: that string is formatted and
         // localised, so ordering by it would rank "3 days ago" against "10 minutes ago" alphabetically

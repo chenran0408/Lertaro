@@ -132,7 +132,9 @@ public sealed class QuickPanelWindowTests
             group.ItemLabels.Set(path, "", false);
             window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             Assert.AreEqual(Visibility.Visible, caption.Visibility);
-            Assert.AreEqual(group.Items.First(item => item.FullPath == path).Name, caption.Text);
+            var restoredItem = group.Items.First(item => item.FullPath == path);
+            Assert.AreEqual("file.txt", restoredItem.Name);
+            Assert.AreEqual("file", caption.Text);
             var point = container.TranslatePoint(new Point(container.ActualWidth / 2, container.ActualHeight / 2), panel);
             Assert.AreEqual(7, panel.SlotAt(point));
             group.SortMode = QuickPanelSortMode.NameAscending;

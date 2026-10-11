@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Windows.Data;
+using Lertaro.Core;
+using Lertaro.App.ViewModels.QuickPanel;
 
 namespace Lertaro.App.Views.QuickPanel;
 
@@ -12,7 +14,9 @@ public sealed class QuickPanelDisplayNameConverter : IMultiValueConverter, IValu
         {
             var groupFolder = values.Length > 1 ? values[1] as string : null;
             var relativeDir = QuickPanelPathHelper.GetRelativeDirectory(item.ParentDir, groupFolder);
-            return string.IsNullOrEmpty(relativeDir) ? item.Name : $"{item.Name} ({relativeDir})";
+            var labels = values.ElementAtOrDefault(2) as IReadOnlyDictionary<string, QuickPanelItemLabel>;
+            var name = QuickPanelItemLabels.DisplayName(item.FullPath, item.Name, item.IsDir, labels?.GetValueOrDefault(item.FullPath));
+            return string.IsNullOrEmpty(relativeDir) ? name : $"{name} ({relativeDir})";
         }
         return string.Empty;
     }
@@ -24,7 +28,7 @@ public sealed class QuickPanelDisplayNameConverter : IMultiValueConverter, IValu
     {
         if (value is AppSearchResult item)
         {
-            return item.Name;
+            return QuickPanelItemLabels.DisplayName(item.FullPath, item.Name, item.IsDir);
         }
         return value ?? string.Empty;
     }
