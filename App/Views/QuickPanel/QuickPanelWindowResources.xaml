@@ -20,6 +20,7 @@
 
     <!-- Five tiles to a row, sized from the list's own width: see the converter for why five. -->
     <conv:QuickPanelTileMetrics x:Key="QuickPanelTileMetrics"/>
+    <local:QuickPanelItemLabelConverter x:Key="ItemLabel"/>
     <!-- The full window's row, rebuilt for a ListBox. SearchResultItemStyle itself cannot be
          reused: it targets ListViewItem and presents through a GridViewRowPresenter, neither of
          which a plain ListBox has. Everything that makes it behave the way it does is here,
@@ -207,12 +208,18 @@
             <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Focusable="False" Margin="0,3,0,0"
                           conv:ScrollViewerHelper.BubbleMouseWheel="True">
                 <TextBlock FontSize="11"
-                           conv:TextHighlighter.Text="{Binding Name}"
                            conv:TextHighlighter.HighlightText="{Binding DataContext.SearchQuery, RelativeSource={RelativeSource AncestorType=Window}}"
                            conv:TextHighlighter.HighlightBrush="{DynamicResource AccentBlue}"
                            Foreground="{DynamicResource TextPrimary}"
                            TextAlignment="Center"
-                           helpers:MarqueeBehavior.EnableMarquee="True"/>
+                           helpers:MarqueeBehavior.EnableMarquee="True">
+                    <conv:TextHighlighter.Text><MultiBinding Converter="{StaticResource ItemLabel}">
+                        <Binding Path="Name"/><Binding Path="FullPath"/><Binding Path="DataContext.ItemLabels.Values" RelativeSource="{RelativeSource AncestorType=ListBox}"/>
+                    </MultiBinding></conv:TextHighlighter.Text>
+                    <TextBlock.Visibility><MultiBinding Converter="{StaticResource ItemLabel}" ConverterParameter="Visibility">
+                        <Binding Path="Name"/><Binding Path="FullPath"/><Binding Path="DataContext.ItemLabels.Values" RelativeSource="{RelativeSource AncestorType=ListBox}"/>
+                    </MultiBinding></TextBlock.Visibility>
+                </TextBlock>
             </ScrollViewer>
             </StackPanel>
         </Grid>

@@ -90,6 +90,7 @@ public sealed class QuickPanelWindowTests
             Assert.IsNotNull(picker);
             Assert.HasCount(3, picker.Items);
             group.IsArranging = true;
+            Assert.IsTrue(window.IsStayOpen);
             window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             var panel = Find<Lertaro.App.Views.QuickPanel.QuickPanelNumberedWrapPanel>(list);
             Assert.IsNotNull(panel);
@@ -122,6 +123,16 @@ public sealed class QuickPanelWindowTests
                 Lertaro.App.Views.QuickPanel.QuickPanelSizeButton.ApplySize(window, previousSize);
                 window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             }
+            group.ItemLabels.Set(path, "Short label", true);
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            var texts = new List<System.Windows.Controls.TextBlock>();
+            Collect(container, texts);
+            var caption = texts.Single(text => text.Text == "Short label");
+            Assert.AreEqual(Visibility.Collapsed, caption.Visibility);
+            group.ItemLabels.Set(path, "", false);
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            Assert.AreEqual(Visibility.Visible, caption.Visibility);
+            Assert.AreEqual(group.Items.First(item => item.FullPath == path).Name, caption.Text);
             var point = container.TranslatePoint(new Point(container.ActualWidth / 2, container.ActualHeight / 2), panel);
             Assert.AreEqual(7, panel.SlotAt(point));
             group.SortMode = QuickPanelSortMode.NameAscending;
@@ -129,9 +140,11 @@ public sealed class QuickPanelWindowTests
             group.SortMode = QuickPanelSortMode.Custom;
             Assert.AreEqual(7, group.GridSlots[path]);
             group.IsArranging = true;
+            Assert.IsTrue(window.IsStayOpen);
             window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             Assert.IsFalse(Lertaro.App.Helpers.Visuals.RubberBandSelection.GetIsEnabled(list));
             group.IsArranging = false;
+            Assert.IsFalse(window.IsStayOpen);
             window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             Assert.IsTrue(Lertaro.App.Helpers.Visuals.RubberBandSelection.GetIsEnabled(list));
         }

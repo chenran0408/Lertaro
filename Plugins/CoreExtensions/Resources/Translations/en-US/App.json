@@ -1,4 +1,11 @@
 {
+  "QuickPanel_AddShortcut": "Add shortcuts…",
+  "QuickPanel_AddFolderShortcut": "Add folder shortcuts…",
+  "QuickPanel_IconName": "Edit display name…",
+  "QuickPanel_HideIconName": "Hide name",
+  "QuickPanel_ResetIconName": "Restore original name",
+  "QuickPanel_MoreActions": "File actions…",
+
   "QuickPanel_DropHint": "Pin the panel, then drop onto a cell to add shortcuts. Originals stay in place and this folder switches to the fixed grid.",
   "QuickPanel_DropFailed": "Could not add shortcuts",
 

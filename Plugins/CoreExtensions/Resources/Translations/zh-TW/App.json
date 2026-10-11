@@ -1,4 +1,11 @@
 {
+  "QuickPanel_AddShortcut": "新增捷徑…",
+  "QuickPanel_AddFolderShortcut": "新增資料夾捷徑…",
+  "QuickPanel_IconName": "修改顯示名稱…",
+  "QuickPanel_HideIconName": "隱藏名稱",
+  "QuickPanel_ResetIconName": "恢復原名稱",
+  "QuickPanel_MoreActions": "檔案操作…",
+
   "QuickPanel_DropHint": "先釘住面板，再拖到目標格子新增捷徑。原檔案保留，面板切換為固定網格。",
   "QuickPanel_DropFailed": "無法新增捷徑",
 

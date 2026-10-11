@@ -19,7 +19,8 @@ public partial class QuickPanelWindow : Window,
     // the preview and not.
     public Thickness VisibleContentInset => new(8);
 
-    internal bool IsSizeMenuOpen => SizeButton.ContextMenu?.IsOpen == true;
+    internal bool IsSizeMenuOpen => SizeButton.ContextMenu?.IsOpen == true || _itemMenu.IsOpen;
+    private readonly QuickPanelItemMenu _itemMenu;
 
     // The four methods ActionFlyout needs from whoever hosts it. Deliberately IPluginSearchWindow and
     // not ISearchWindow: that larger interface is built around an in-window actions pane, which is what
@@ -31,7 +32,9 @@ public partial class QuickPanelWindow : Window,
 
     public QuickPanelWindow(QuickPanelViewModel viewModel)
     {
+        _itemMenu = new QuickPanelItemMenu(this);
         InitializeComponent();
+        _ = new QuickPanelArrangePinSupport(this, viewModel);
         var scrollSupport = new QuickPanelScrollSupport(GroupsScrollViewer, StickyGroupHeader);
         Loaded += (_, _) => Dispatcher.BeginInvoke(scrollSupport.Update, System.Windows.Threading.DispatcherPriority.Loaded);
         Helpers.Visuals.SystemMenuBlocker.Attach(this);
@@ -218,12 +221,15 @@ public partial class QuickPanelWindow : Window,
     {
         if (sender is not System.Windows.Controls.ListBox list) return;
 
+        if (list.DataContext is not QuickPanelGroupViewModel group) return;
         _activeList = list;
-        var selection = list.SelectedItems.OfType<AppSearchResult>().ToList();
-        if (selection.Count == 0) return;
-
+        var container = list.InputHitTest(e.GetPosition(list)) is not DependencyObject hit ? null : System.Windows.Controls.ItemsControl.ContainerFromElement(list, hit) as System.Windows.Controls.ListBoxItem;
+        var item = container?.DataContext as AppSearchResult;
+        if (item != null && !list.SelectedItems.Contains(item)) list.SelectedItem = item;
+        var grid = QuickPanelNumberedWrapPanel.Find(list);
+        var slot = grid?.SlotAt(e.GetPosition(grid)) ?? -1;
         e.Handled = true;
-        ActionFlyout.Show(selection, this, this, list, System.Windows.Controls.Primitives.PlacementMode.MousePoint, includeShellActions: false);
+        _itemMenu.Show(list, group, item, slot);
     }
 
     /// <summary>The list the user last touched, which is what a keystroke acts on.</summary>

@@ -101,7 +101,7 @@ internal sealed class QuickPanelGroupLoader
             source.AcceptsDrops,
             isLoading: isLoading,
             maxItems: source.MaxItems,
-            itemOrder: preference?.ItemOrder, gridSlots: preference?.GridSlots);
+            itemOrder: preference?.ItemOrder, gridSlots: preference?.GridSlots, itemLabels: preference?.ItemLabels);
 
     private static string TitleOf(QuickPanelFolderSource source, QuickPanelGroupPreference? preference)
         => string.IsNullOrWhiteSpace(preference?.DisplayName)

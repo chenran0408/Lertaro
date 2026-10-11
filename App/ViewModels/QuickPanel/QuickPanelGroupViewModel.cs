@@ -29,8 +29,11 @@ public class QuickPanelGroupViewModel : ViewModelBase
         bool isLoading = false,
         int maxItems = 0,
         IEnumerable<string>? itemOrder = null,
-        IReadOnlyDictionary<string, int>? gridSlots = null)
+        IReadOnlyDictionary<string, int>? gridSlots = null,
+        IReadOnlyDictionary<string, QuickPanelItemLabel>? itemLabels = null)
     {
+        ItemLabels = new QuickPanelItemLabels(itemLabels);
+        ItemLabels.PropertyChanged += (_, _) => { OnPropertyChanged(nameof(ItemLabels)); Rebuild(); };
         SourceId = sourceId;
         Title = title;
         FolderPath = folderPath;
@@ -51,6 +54,8 @@ public class QuickPanelGroupViewModel : ViewModelBase
 
     /// <summary>The source this group came from, which is what its stored preferences are filed under.</summary>
     public string SourceId { get; }
+
+    public QuickPanelItemLabels ItemLabels { get; }
 
     /// <summary>The heading: the user's own name for the source, or the source's default one.</summary>
     public string Title { get; }
@@ -290,7 +295,7 @@ public class QuickPanelGroupViewModel : ViewModelBase
 
         var matching = _filter.Length == 0
             ? _loaded
-            : _loaded.Where(pair => FuzzyMatcher.IsMatch(_filter, pair.Item.Name)).ToList();
+            : _loaded.Where(pair => FuzzyMatcher.IsMatch(_filter, pair.Item.Name) || FuzzyMatcher.IsMatch(_filter, ItemLabels.Name(pair.Item.FullPath, pair.Item.Name))).ToList();
 
         // Ordered on the DateTime, not on the string the row shows: that string is formatted and
         // localised, so ordering by it would rank "3 days ago" against "10 minutes ago" alphabetically

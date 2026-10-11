@@ -1,4 +1,11 @@
 {
+  "QuickPanel_AddShortcut": "添加快捷方式…",
+  "QuickPanel_AddFolderShortcut": "添加文件夹快捷方式…",
+  "QuickPanel_IconName": "修改显示名称…",
+  "QuickPanel_HideIconName": "隐藏名称",
+  "QuickPanel_ResetIconName": "恢复原名称",
+  "QuickPanel_MoreActions": "文件操作…",
+
   "QuickPanel_DropHint": "先钉住面板，再拖到目标格子添加快捷方式。原文件保留，面板切换为固定网格。",
   "QuickPanel_DropFailed": "未能添加快捷方式",
 

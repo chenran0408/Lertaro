@@ -1,4 +1,11 @@
 {
+  "QuickPanel_AddShortcut": "ショートカットを追加…",
+  "QuickPanel_AddFolderShortcut": "フォルダーのショートカットを追加…",
+  "QuickPanel_IconName": "表示名を変更…",
+  "QuickPanel_HideIconName": "名前を非表示",
+  "QuickPanel_ResetIconName": "元の名前に戻す",
+  "QuickPanel_MoreActions": "ファイル操作…",
+
   "QuickPanel_DropHint": "パネルを固定してから目的のマスへドロップしてショートカットを追加します。元のファイルを保持し、固定グリッドに切り替えます。",
   "QuickPanel_DropFailed": "ショートカットを追加できませんでした",
 

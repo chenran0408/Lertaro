@@ -102,7 +102,7 @@ internal sealed class QuickPanelNumberedWrapPanel : System.Windows.Controls.Pane
         var count = UsesGridSlots && InternalChildren.Count > 0 ? Enumerable.Range(0, InternalChildren.Count).Max(SlotFor) + 1 : InternalChildren.Count;
         var rows = QuickPanelLineNumberLayout.RowsFor(count, Math.Max(1, _columns));
         // Keep a free row available for placing icons without squeezing existing cells together.
-        return UsesGridSlots ? rows + 1 : rows;
+        return UsesGridSlots ? rows + 1 : Math.Max(1, rows);
     }
 
     private void CalculateLayout(double width)

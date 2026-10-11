@@ -8,8 +8,11 @@ public sealed class QuickPanelGroupOrderingTests
     {
         var tab = new Lertaro.Core.QuickPanelTab();
         tab.GroupPreferences["source"] = new Lertaro.Core.QuickPanelGroupPreference { GridSlots = new() { ["file"] = 7 } };
+        tab.GroupPreferences["source"].ItemLabels["file"] = new() { DisplayName = "Short label", HideName = true };
         var clone = tab.Clone();
         clone.GroupPreferences["source"].GridSlots["file"] = 2;
+        clone.GroupPreferences["source"].ItemLabels["file"].DisplayName = "Changed";
+        Assert.AreEqual("Short label", tab.GroupPreferences["source"].ItemLabels["file"].DisplayName);
         Assert.AreEqual(7, tab.GroupPreferences["source"].GridSlots["file"]);
     }
 

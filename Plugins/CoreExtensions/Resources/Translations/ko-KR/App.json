@@ -1,4 +1,11 @@
 {
+  "QuickPanel_AddShortcut": "바로 가기 추가…",
+  "QuickPanel_AddFolderShortcut": "폴더 바로 가기 추가…",
+  "QuickPanel_IconName": "표시 이름 변경…",
+  "QuickPanel_HideIconName": "이름 숨기기",
+  "QuickPanel_ResetIconName": "원래 이름 복원",
+  "QuickPanel_MoreActions": "파일 작업…",
+
   "QuickPanel_DropHint": "패널을 고정하고 원하는 칸에 놓아 바로 가기를 추가하세요. 원본은 유지되고 폴더는 고정 격자로 전환됩니다.",
   "QuickPanel_DropFailed": "바로 가기를 추가하지 못했습니다",
 

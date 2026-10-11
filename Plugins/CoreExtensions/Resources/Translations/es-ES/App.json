@@ -1,4 +1,11 @@
 {
+  "QuickPanel_AddShortcut": "Añadir accesos directos…",
+  "QuickPanel_AddFolderShortcut": "Añadir accesos a carpetas…",
+  "QuickPanel_IconName": "Editar nombre mostrado…",
+  "QuickPanel_HideIconName": "Ocultar nombre",
+  "QuickPanel_ResetIconName": "Restaurar nombre original",
+  "QuickPanel_MoreActions": "Acciones de archivo…",
+
   "QuickPanel_DropHint": "Fija el panel y suelta en una celda para añadir accesos directos. Los originales se conservan y la carpeta cambia a la cuadrícula fija.",
   "QuickPanel_DropFailed": "No se pudieron añadir los accesos directos",
 

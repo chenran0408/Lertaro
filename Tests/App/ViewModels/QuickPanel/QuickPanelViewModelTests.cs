@@ -53,12 +53,15 @@ public sealed class QuickPanelViewModelTests
         await vm.RefreshAsync();
         var path = vm.Groups[0].Items[0].FullPath;
         vm.Groups[0].PlaceInGrid(new[] { path }, 8);
+        vm.Groups[0].ItemLabels.Set(path, "Short name", true);
         vm.Groups[0].SortMode = QuickPanelSortMode.NameAscending;
         settings = System.Text.Json.JsonSerializer.Deserialize<QuickPanelSettings>(System.Text.Json.JsonSerializer.Serialize(settings))!;
         var reopened = Build(settings);
         await reopened.RefreshAsync();
         Assert.IsFalse(reopened.Groups[0].UsesGridSlots);
         Assert.AreEqual(8, reopened.Groups[0].GridSlots[path]);
+        Assert.AreEqual("Short name", reopened.Groups[0].ItemLabels.Name(path, "original"));
+        Assert.IsTrue(reopened.Groups[0].ItemLabels.Values[path].HideName);
         reopened.Groups[0].SortMode = QuickPanelSortMode.Custom;
         Assert.IsTrue(reopened.Groups[0].UsesGridSlots);
         Assert.AreEqual(8, reopened.Groups[0].GridSlots[path]);
