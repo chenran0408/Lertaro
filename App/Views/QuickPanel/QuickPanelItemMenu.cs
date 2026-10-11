@@ -2,6 +2,8 @@ using System.Windows.Controls.Primitives;
 using Lertaro.App.ViewModels.QuickPanel;
 using Lertaro.App.Services;
 using Lertaro.PluginSdk.Abstractions;
+using Lertaro.PluginSdk.Helpers;
+using Lertaro.App.Services.ShellMenu.ActionFlyout;
 using MenuItem = System.Windows.Controls.MenuItem;
 using ContextMenu = System.Windows.Controls.ContextMenu;
 using ListBox = System.Windows.Controls.ListBox;
@@ -12,9 +14,12 @@ namespace Lertaro.App.Views.QuickPanel;
 internal sealed class QuickPanelItemMenu(QuickPanelWindow window)
 {
     private ContextMenu? _menu;
-    internal bool IsOpen => _menu?.IsOpen == true;
-    internal void Show(ListBox list, QuickPanelGroupViewModel group, AppSearchResult? item, int slot)
+    private bool _building;
+    internal bool IsOpen => _building || _menu?.IsOpen == true;
+    internal async Task ShowAsync(ListBox list, QuickPanelGroupViewModel group, AppSearchResult? item, int slot)
     {
+        _building = false;
+        _menu?.IsOpen = false;
         var menu = new ContextMenu { PlacementTarget = list, Placement = PlacementMode.MousePoint };
         if (item == null)
         {
@@ -29,17 +34,58 @@ internal sealed class QuickPanelItemMenu(QuickPanelWindow window)
             var toggle = Add("QuickPanel_HideIconName", () => group.ItemLabels.Set(item.FullPath, label?.DisplayName ?? "", !hidden));
             toggle.IsCheckable = true; toggle.IsChecked = hidden;
             Add("QuickPanel_ResetIconName", () => group.ItemLabels.Set(item.FullPath, "", false));
-            menu.Items.Add(new System.Windows.Controls.Separator());
-            Add("QuickPanel_MoreActions", () => Services.ShellMenu.ActionFlyout.ActionFlyout.Show(list.SelectedItems.OfType<AppSearchResult>().ToList(), window, window, list, PlacementMode.MousePoint, includeShellActions: false));
+
         }
         _menu = menu;
-        menu.IsOpen = true;
+        list.ContextMenu = menu;
+        if (item != null)
+        {
+            var selection = list.SelectedItems.OfType<AppSearchResult>().ToList();
+            if (!selection.Contains(item)) selection = new() { item };
+            _building = true;
+            try
+            {
+                using var existence = PathExistenceCache.BeginScope();
+                await Task.Run(() => PathExistenceCache.PrimeResults(selection));
+                if (_menu != menu || !window.IsVisible) return;
+                PrependActions(menu, ActionMenuBuilder.FinalizeItems(ActionMenuBuilder.BuildStatic(selection, SearchWindowType.Main)), selection, window);
+            }
+            catch (Exception ex) { Core.Logger.Log($"[QuickPanel] Building item actions failed: {ex.Message}", Core.LogLevel.Error); }
+            finally { if (_menu == menu) _building = false; }
+        }
+        if (_menu == menu && window.IsVisible) menu.IsOpen = true;
         MenuItem Add(string key, Action action)
         {
             var entry = new MenuItem { Header = TranslationManager.Instance[key] };
             entry.Click += (_, _) => { menu.IsOpen = false; action(); };
             menu.Items.Add(entry); return entry;
         }
+    }
+    // Keep built-in command routing and multi-selection identical to the shared action menu.
+    internal static void PrependActions(ContextMenu menu, IReadOnlyList<ActionMenuItem> actions, IReadOnlyList<AppSearchResult> selection, IPluginSearchWindow view)
+    {
+        var index = 0;
+        var commands = new Dictionary<uint, PluginSdk.Abstractions.Plugins.IDynamicActionProvider>();
+        foreach (var action in actions)
+        {
+            if (action.IsSeparator) { menu.Items.Insert(index++, new System.Windows.Controls.Separator()); continue; }
+            var entry = new MenuItem
+            {
+                Header = action.IsSectionHeader ? action.SectionTitle : action.Text,
+                InputGestureText = action.ShortcutHint,
+                IsEnabled = !action.IsSectionHeader && !action.IsDisabled,
+                DataContext = action
+            };
+            if (action.Icon != null) entry.Icon = new System.Windows.Controls.Image { Source = action.Icon, Width = 16, Height = 16 };
+            if (!action.IsSectionHeader)
+                entry.Click += (_, _) =>
+                {
+                    menu.IsOpen = false;
+                    menu.Dispatcher.BeginInvoke(new Action(() => ActionFlyoutItems.DispatchExecute(action, selection, commands, view)), System.Windows.Threading.DispatcherPriority.Background);
+                };
+            menu.Items.Insert(index++, entry);
+        }
+        if (index > 0 && index < menu.Items.Count) menu.Items.Insert(index, new System.Windows.Controls.Separator());
     }
     private void Rename(QuickPanelGroupViewModel group, AppSearchResult item) => WithPin(() =>
                                                                                       {

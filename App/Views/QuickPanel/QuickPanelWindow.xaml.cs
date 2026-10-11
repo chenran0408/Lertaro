@@ -229,7 +229,7 @@ public partial class QuickPanelWindow : Window,
         var grid = QuickPanelNumberedWrapPanel.Find(list);
         var slot = grid?.SlotAt(e.GetPosition(grid)) ?? -1;
         e.Handled = true;
-        _itemMenu.Show(list, group, item, slot);
+        _ = _itemMenu.ShowAsync(list, group, item, slot);
     }
 
     /// <summary>The list the user last touched, which is what a keystroke acts on.</summary>
