@@ -4,7 +4,7 @@ using Lertaro.App.ViewModels.QuickPanel;
 
 namespace Lertaro.App.Views.QuickPanel;
 
-// Observe only visible groups, so leaving an arranging tab restores the earlier pin state.
+// Observe only visible groups, so leaving a dragged tab restores the earlier pin state.
 internal sealed class QuickPanelArrangePinSupport
 {
     private readonly QuickPanelWindow _window;
@@ -25,7 +25,7 @@ internal sealed class QuickPanelArrangePinSupport
     private void Changed(object? sender, NotifyCollectionChangedEventArgs e) => Sync();
     private void GroupChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(QuickPanelGroupViewModel.IsArranging)) Update();
+        if (e.PropertyName == nameof(QuickPanelGroupViewModel.IsReordering)) Update();
     }
     private void Sync()
     {
@@ -34,5 +34,5 @@ internal sealed class QuickPanelArrangePinSupport
         foreach (var group in _viewModel.Groups) { _groups.Add(group); group.PropertyChanged += GroupChanged; }
         Update();
     }
-    private void Update() => _window.IsStayOpen = _state.Update(_groups.Any(group => group.IsArranging), _window.IsStayOpen);
+    private void Update() => _window.IsStayOpen = _state.Update(_groups.Any(group => group.IsReordering), _window.IsStayOpen);
 }

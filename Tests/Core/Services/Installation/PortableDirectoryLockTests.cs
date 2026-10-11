@@ -5,6 +5,8 @@ using Lertaro.Core.Services.Installation;
 namespace Lertaro.Core.Tests.Services.Installation;
 
 [TestClass]
+// Installation locks temporarily change process-token privileges; isolate permission checks.
+[DoNotParallelize]
 public sealed class PortableDirectoryLockTests
 {
     private const string App = @"D:\Tools\Lertaro";

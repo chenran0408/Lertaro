@@ -264,11 +264,13 @@ public sealed class SettingsBackupTests
         SettingsBackup.Prepare(zip, stage);
         var target = Folder("target");
 
+        var ordinaryFile = new FileInfo(Write(target, "owner-reference.txt", ""));
+        var expectedOwner = ordinaryFile.GetAccessControl().GetOwner(typeof(SecurityIdentifier));
         SettingsBackup.Apply(stage, target);
 
         var restored = new FileInfo(Path.Combine(target, "user-settings.json"));
         Assert.IsFalse(restored.IsReadOnly);
-        Assert.AreEqual(WindowsIdentity.GetCurrent().User, restored.GetAccessControl().GetOwner(typeof(SecurityIdentifier)));
+        Assert.AreEqual(expectedOwner, restored.GetAccessControl().GetOwner(typeof(SecurityIdentifier)));
         Assert.IsFalse(restored.GetAccessControl().GetAccessRules(true, false, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().Any(r => r.IdentityReference == everyone));
         File.AppendAllText(restored.FullName, " ");
     }

@@ -74,7 +74,7 @@ public sealed class QuickPanelWindowTests
     }
 
     [StaTestMethod]
-    public async Task ArrangingDisablesSelectionBandAndSwitchingSortKeepsGridPositions()
+    public async Task DraggingDisablesSelectionBandAndSwitchingSortKeepsGridPositions()
     {
         var vm = BuildViewModel();
         await vm.RefreshAsync();
@@ -89,12 +89,12 @@ public sealed class QuickPanelWindowTests
             var picker = Find<System.Windows.Controls.ComboBox>(window);
             Assert.IsNotNull(picker);
             Assert.HasCount(3, picker.Items);
-            group.IsArranging = true;
+            group.IsReordering = true;
             Assert.IsTrue(window.IsStayOpen);
             window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             var panel = Find<Lertaro.App.Views.QuickPanel.QuickPanelNumberedWrapPanel>(list);
             Assert.IsNotNull(panel);
-            Assert.IsTrue(panel.UsesGridSlots);
+            Assert.IsFalse(panel.UsesGridSlots, "Starting a drag must not change the saved sort.");
             Assert.IsGreaterThan(0.0, panel.ActualHeight);
             var path = group.Items[0].FullPath;
             group.PlaceInGrid(new[] { path }, 7);
@@ -141,11 +141,12 @@ public sealed class QuickPanelWindowTests
             Assert.IsFalse(group.UsesGridSlots);
             group.SortMode = QuickPanelSortMode.Custom;
             Assert.AreEqual(7, group.GridSlots[path]);
-            group.IsArranging = true;
+            group.IsReordering = true;
             Assert.IsTrue(window.IsStayOpen);
             window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             Assert.IsFalse(Lertaro.App.Helpers.Visuals.RubberBandSelection.GetIsEnabled(list));
-            group.IsArranging = false;
+            Lertaro.App.Views.QuickPanel.QuickPanelItemReordering.Cancel(window);
+            Assert.IsFalse(group.IsReordering);
             Assert.IsFalse(window.IsStayOpen);
             window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             Assert.IsTrue(Lertaro.App.Helpers.Visuals.RubberBandSelection.GetIsEnabled(list));

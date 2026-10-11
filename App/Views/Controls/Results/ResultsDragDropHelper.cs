@@ -225,6 +225,14 @@ public static class ResultsDragDropHelper
     internal static bool IsCurrentListDragSource(object? sourceList, object? currentList, object? sourceItem)
         => sourceItem is ISearchResult && ReferenceEquals(sourceList, currentList);
 
+    internal static void CancelPendingDrag(System.Windows.Controls.ListBox list)
+    {
+        if (ReferenceEquals(_dragSourceList, list)) ClearDragSource();
+        if (!ReferenceEquals(_pendingList, list)) return;
+        _pendingItem = null;
+        _pendingList = null;
+    }
+
     private static void ClearDragSource()
     {
         _dragSourceList = null;

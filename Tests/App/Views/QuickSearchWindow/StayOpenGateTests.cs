@@ -21,15 +21,15 @@ public sealed class StayOpenGateTests
             Assert.AreEqual("True", (string?)stayOpen.Attribute("Value"));
             Assert.AreEqual("False", (string?)serviceDown.Attribute("Value"));
             Assert.IsLessThan(triggers.IndexOf(serviceDown), triggers.IndexOf(stayOpen), "the last matching WPF trigger wins");
-            var indicator = stayOpen.Elements().Single(e => (string?)e.Attribute("Property") == "Background");
-            var warning = serviceDown.Elements().Single(e => (string?)e.Attribute("Property") == "Background");
-            Assert.AreEqual("#007DB2", (string?)indicator.Attribute("Value"));
+            var indicator = stayOpen.Elements().Single(e => (string?)e.Attribute("Property") == "BorderBrush");
+            var warning = serviceDown.Elements().Single(e => (string?)e.Attribute("Property") == "BorderBrush");
+            Assert.AreEqual("{DynamicResource AccentBlue}", (string?)indicator.Attribute("Value"));
             Assert.AreEqual("{DynamicResource WarningBrush}", (string?)warning.Attribute("Value"));
-            var normal = style.Elements().Single(e => (string?)e.Attribute("Property") == "Background");
-            Assert.AreEqual("#0098D8", (string?)normal.Attribute("Value"));
+            var normal = style.Elements().Single(e => (string?)e.Attribute("Property") == "BorderBrush");
+            Assert.AreEqual("Transparent", (string?)normal.Attribute("Value"));
             var hover = style.Descendants().Single(e => e.Name.LocalName == "MultiDataTrigger");
             Assert.IsLessThan(triggers.IndexOf(serviceDown), triggers.IndexOf(hover), "hover must not hide the service warning");
-            Assert.AreEqual("#007DB2", (string?)hover.Elements().Single(e => (string?)e.Attribute("Property") == "Background").Attribute("Value"));
+            Assert.AreEqual("{DynamicResource AccentBlue}", (string?)hover.Elements().Single(e => (string?)e.Attribute("Property") == "BorderBrush").Attribute("Value"));
         }
     }
 

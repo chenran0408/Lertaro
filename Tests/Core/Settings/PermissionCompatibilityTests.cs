@@ -7,6 +7,8 @@ using Lertaro.Core.Services.Installation;
 namespace Lertaro.Core.Tests.Settings;
 
 [TestClass]
+// Installation locks temporarily change process-token privileges; isolate permission checks.
+[DoNotParallelize]
 public sealed class PermissionCompatibilityTests
 {
     private static readonly SecurityIdentifier User = WindowsIdentity.GetCurrent().User!;

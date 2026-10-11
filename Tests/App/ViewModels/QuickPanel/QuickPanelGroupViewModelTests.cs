@@ -56,19 +56,19 @@ public sealed class QuickPanelGroupViewModelTests
     public void SearchingAndLoadingPreventRearranging()
     {
         var group = Group(3);
-        group.IsArranging = true;
+        group.IsReordering = true;
         group.ApplyFilter("0001");
-        Assert.IsFalse(group.IsArranging);
+        Assert.IsFalse(group.IsReordering);
         Assert.IsFalse(group.CanArrange);
         var before = group.GridSlots.ToList();
         group.PlaceInGrid(new[] { @"C:\source\0001" }, 9);
         CollectionAssert.AreEqual(before, group.GridSlots.ToList());
-        Assert.AreEqual(QuickPanelSortMode.Custom, group.SortMode);
+        Assert.AreEqual(QuickPanelSortMode.NameAscending, group.SortMode);
         group.ApplyFilter("");
         Assert.IsTrue(group.CanArrange);
         var loading = new QuickPanelGroupViewModel("source", "Source", "", Pairs("a", "b"), isLoading: true);
-        loading.IsArranging = true;
-        Assert.IsFalse(loading.IsArranging);
+        loading.IsReordering = true;
+        Assert.IsFalse(loading.IsReordering);
         loading.Replace(Pairs("a", "b"));
         Assert.IsTrue(loading.CanArrange);
     }
@@ -126,6 +126,46 @@ public sealed class QuickPanelGroupViewModelTests
         group.Replace(Pairs("z", "a"));
 
         CollectionAssert.AreEqual(new[] { "a", "z" }, group.Items.Select(item => item.Name).ToList());
+    }
+
+    [TestMethod]
+    public void CancelingADragPreservesAutomaticSortAndStoredGrid()
+    {
+        var group = Group(3);
+        group.PlaceInGrid(new[] { @"C:\source\0000" }, 8);
+        group.SortMode = QuickPanelSortMode.NameAscending;
+        var saved = group.GridSlots.ToList();
+        group.IsReordering = true;
+        Assert.AreEqual(QuickPanelSortMode.NameAscending, group.SortMode);
+        group.IsReordering = false;
+        CollectionAssert.AreEqual(saved, group.GridSlots.ToList());
+        CollectionAssert.AreEqual(new[] { "0000", "0001", "0002" }, group.Items.Select(item => item.Name).ToList());
+    }
+
+    [TestMethod]
+    public void DroppingFromAutomaticSortUsesVisiblePositionsInsteadOfAnOlderGrid()
+    {
+        var group = Group(3);
+        group.PlaceInGrid(new[] { @"C:\source\0000" }, 8);
+        group.SortMode = QuickPanelSortMode.NameAscending;
+        group.PlaceInGrid(new[] { @"C:\source\0000" }, 1);
+        Assert.AreEqual(QuickPanelSortMode.Custom, group.SortMode);
+        Assert.AreEqual(1, group.GridSlots[@"C:\source\0000"]);
+        Assert.AreEqual(0, group.GridSlots[@"C:\source\0001"]);
+        Assert.AreEqual(2, group.GridSlots[@"C:\source\0002"]);
+    }
+
+    [TestMethod]
+    public void RearrangingListRowsIsAlsoRememberedWhenReturningToIcons()
+    {
+        var group = Group(3);
+        group.PlaceInGrid(new[] { @"C:\source\0000" }, 8);
+        group.IsThumbnailView = false;
+        group.MoveTo(@"C:\source\0000", @"C:\source\0001");
+        group.IsThumbnailView = true;
+        Assert.AreEqual(0, group.GridSlots[@"C:\source\0000"]);
+        Assert.AreEqual(1, group.GridSlots[@"C:\source\0001"]);
+        Assert.AreEqual(2, group.GridSlots[@"C:\source\0002"]);
     }
 
     private static QuickPanelGroupViewModel Group(int count) => new("source", "Source", @"C:\source",

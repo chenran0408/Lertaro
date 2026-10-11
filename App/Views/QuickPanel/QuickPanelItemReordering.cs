@@ -10,18 +10,30 @@ using Cursors = System.Windows.Input.Cursors;
 
 namespace Lertaro.App.Views.QuickPanel;
 
-// Arrange gestures stay inside the panel. A separate transparent popup avoids item clipping while moving.
+// Reordering gestures stay inside the panel. A separate transparent popup avoids item clipping while moving.
 internal static class QuickPanelItemReordering
 {
+    private static readonly DependencyProperty CancelProperty = DependencyProperty.RegisterAttached(
+        "Cancel", typeof(Action), typeof(QuickPanelItemReordering));
+
+    internal static void Cancel(DependencyObject root)
+    {
+        if (root.GetValue(CancelProperty) is Action cancel) cancel();
+        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(root); index++)
+            Cancel(VisualTreeHelper.GetChild(root, index));
+    }
+
     internal static void Register(ListBox list)
     {
         AppSearchResult? dragged = null;
         Point start = default;
         Vector offset = default;
         var moved = false;
+        var suppressRelease = false;
         System.Windows.Controls.Primitives.Popup? ghost = null;
         QuickPanelNumberedWrapPanel? grid = null;
         var scroll = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(80) };
+        list.SetValue(CancelProperty, (Action)Cancel);
         scroll.Tick += (_, _) =>
         {
             if (!moved || dragged == null) return;
@@ -34,13 +46,33 @@ internal static class QuickPanelItemReordering
         };
         list.PreviewMouseLeftButtonDown += (_, e) =>
         {
-            if (list.DataContext is not QuickPanelGroupViewModel { IsArranging: true, CanArrange: true }) return;
-            e.Handled = true;
+            Cancel();
+            suppressRelease = false;
+            if (Keyboard.Modifiers != ModifierKeys.None
+                || list.DataContext is not QuickPanelGroupViewModel { CanArrange: true }) return;
             dragged = ItemAt(e.GetPosition(list));
             if (dragged == null) return;
             start = e.GetPosition(list);
             moved = false;
-            list.SelectedItem = dragged;
+        };
+        list.PreviewMouseMove += (_, e) =>
+        {
+            if (dragged == null) return;
+            if (e.LeftButton != MouseButtonState.Pressed
+                || list.DataContext is not QuickPanelGroupViewModel { CanArrange: true } group
+                || (moved && !group.IsReordering))
+            {
+                Cancel();
+                return;
+            }
+            e.Handled = true;
+            var point = e.GetPosition(list);
+            if (!moved)
+            {
+                if (Math.Abs(point.X - start.X) <= SystemParameters.MinimumHorizontalDragDistance
+                    && Math.Abs(point.Y - start.Y) <= SystemParameters.MinimumVerticalDragDistance) return;
+                group.IsReordering = true;
+                if (!list.SelectedItems.Contains(dragged)) list.SelectedItem = dragged;
             grid = QuickPanelNumberedWrapPanel.Find(list);
             if (list.ItemContainerGenerator.ContainerFromItem(dragged) is ListBoxItem container)
             {
@@ -60,18 +92,10 @@ internal static class QuickPanelItemReordering
                     Child = new System.Windows.Controls.Image { Source = bitmap, Width = container.ActualWidth, Height = container.ActualHeight, Opacity = 0.85, IsHitTestVisible = false }
                 };
             }
-            list.CaptureMouse();
-            scroll.Start();
-        };
-        list.PreviewMouseMove += (_, e) =>
-        {
-            if (list.DataContext is not QuickPanelGroupViewModel { IsArranging: true }) return;
-            e.Handled = true;
-            if (dragged == null || e.LeftButton != MouseButtonState.Pressed) return;
-            var point = e.GetPosition(list);
-            moved |= Math.Abs(point.X - start.X) > SystemParameters.MinimumHorizontalDragDistance
-                || Math.Abs(point.Y - start.Y) > SystemParameters.MinimumVerticalDragDistance;
-            if (!moved) return;
+                list.CaptureMouse();
+                moved = true;
+                scroll.Start();
+            }
             list.Cursor = Cursors.SizeAll;
             if (ghost != null)
             {
@@ -83,27 +107,31 @@ internal static class QuickPanelItemReordering
         };
         list.PreviewMouseLeftButtonUp += (_, e) =>
         {
-            if (dragged == null) return;
-            e.Handled = true;
+            if (dragged == null)
+            {
+                if (suppressRelease) { e.Handled = true; suppressRelease = false; }
+                return;
+            }
+            var item = dragged;
             var point = e.GetPosition(list);
             var target = ItemAt(point);
             var slot = grid?.SlotAt(e.GetPosition(grid)) ?? -1;
-            var item = dragged;
-            ResetVisual();
-            dragged = null;
-            scroll.Stop();
-            list.ReleaseMouseCapture();
-            list.ClearValue(FrameworkElement.CursorProperty);
-            if (moved && list.DataContext is QuickPanelGroupViewModel { IsArranging: true } group)
+            var originalSlot = list.DataContext is QuickPanelGroupViewModel { UsesGridSlots: true } current
+                && current.GridSlots.TryGetValue(item.FullPath, out var savedSlot) ? savedSlot : list.Items.IndexOf(item);
+            var wasMoved = moved && list.DataContext is QuickPanelGroupViewModel { IsReordering: true };
+            var viewport = Helpers.Visuals.TreeWalk.Ancestor<System.Windows.Controls.ScrollViewer>(list);
+            var insideViewport = viewport == null || new Rect(0, 0, viewport.ActualWidth, viewport.ActualHeight).Contains(e.GetPosition(viewport));
+            var selected = list.SelectedItems.OfType<AppSearchResult>().Select(result => result.FullPath).ToArray();
+            Cancel();
+            if (!wasMoved) return;
+            e.Handled = true;
+            if (insideViewport && list.DataContext is QuickPanelGroupViewModel { CanArrange: true } group)
             {
-                if (slot >= 0) group.PlaceInGrid(new[] { item.FullPath }, slot);
+                if (slot >= 0 && point.Y < list.ActualHeight && (selected.Length > 1 || slot != originalSlot)) group.PlaceInGrid(selected.Length > 0 ? selected : new[] { item.FullPath }, slot);
                 else if (grid == null && target != null) group.MoveTo(item.FullPath, target.FullPath);
-                else if (grid == null && point.X >= 0 && point.X <= list.ActualWidth && point.Y >= list.ActualHeight)
-                    group.MoveTo(item.FullPath, null);
-                list.SelectedItem = item;
             }
         };
-        list.LostMouseCapture += (_, _) => Cancel();
+        list.LostMouseCapture += (_, _) => { if (moved && Mouse.Captured != list) Cancel(); };
         list.Unloaded += (_, _) => Cancel();
         list.PreviewKeyDown += (_, e) =>
         {
@@ -115,8 +143,14 @@ internal static class QuickPanelItemReordering
 
         void Cancel()
         {
+            var ownedCapture = moved;
+            suppressRelease |= ownedCapture;
             ResetVisual();
             dragged = null;
+            moved = false;
+            if (list.DataContext is QuickPanelGroupViewModel group) group.IsReordering = false;
+            if (ownedCapture) Controls.Results.ResultsDragDropHelper.CancelPendingDrag(list);
+            if (ownedCapture && Mouse.Captured == list) list.ReleaseMouseCapture();
             scroll.Stop();
             list.ClearValue(FrameworkElement.CursorProperty);
         }

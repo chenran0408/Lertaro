@@ -6,6 +6,8 @@ using System.Text.Json;
 namespace Lertaro.Core.Tests.Settings;
 
 [TestClass]
+// Installation locks temporarily change process-token privileges; isolate permission checks.
+[DoNotParallelize]
 public sealed class SettingsBackupRecoveryTests
 {
     private readonly string _root = Directory.CreateTempSubdirectory("LertaroBackupRecovery-").FullName;

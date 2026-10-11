@@ -20,7 +20,7 @@ internal sealed class QuickPanelNumberedWrapPanel : System.Windows.Controls.Pane
         new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender));
     public static readonly DependencyProperty ShowGridLinesProperty = DependencyProperty.Register(
         nameof(ShowGridLines), typeof(bool), typeof(QuickPanelNumberedWrapPanel),
-        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender));
     public bool ShowGridLines { get => (bool)GetValue(ShowGridLinesProperty); set => SetValue(ShowGridLinesProperty, value); }
     public IReadOnlyDictionary<string, int>? GridSlots { get => (IReadOnlyDictionary<string, int>?)GetValue(GridSlotsProperty); set => SetValue(GridSlotsProperty, value); }
     public bool UsesGridSlots { get => (bool)GetValue(UsesGridSlotsProperty); set => SetValue(UsesGridSlotsProperty, value); }
@@ -62,7 +62,7 @@ internal sealed class QuickPanelNumberedWrapPanel : System.Windows.Controls.Pane
         var rows = RowCount();
         var height = CellHeight();
         var iconHeight = QuickPanelTileMetrics.IconHeightFor(_slotWidth);
-        if (UsesGridSlots && (ShowGridLines || _targetSlot >= 0))
+        if (ShowGridLines || _targetSlot >= 0)
         {
             var outline = new System.Windows.Media.Pen(new SolidColorBrush(System.Windows.Media.Color.FromArgb(35, 128, 128, 128)), 1);
             for (var row = 0; row < rows; row++)
@@ -102,7 +102,7 @@ internal sealed class QuickPanelNumberedWrapPanel : System.Windows.Controls.Pane
         var count = UsesGridSlots && InternalChildren.Count > 0 ? Enumerable.Range(0, InternalChildren.Count).Max(SlotFor) + 1 : InternalChildren.Count;
         var rows = QuickPanelLineNumberLayout.RowsFor(count, Math.Max(1, _columns));
         // Keep a free row available for placing icons without squeezing existing cells together.
-        return UsesGridSlots ? rows + 1 : Math.Max(1, rows);
+        return UsesGridSlots || ShowGridLines ? rows + 1 : Math.Max(1, rows);
     }
 
     private void CalculateLayout(double width)

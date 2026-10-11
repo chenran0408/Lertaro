@@ -94,6 +94,7 @@ public sealed class UserConfigBackupsTests
         var settingsPath = Path.Combine(source.Path, "user-settings.json");
         File.WriteAllText(settingsPath, """{"Theme":"Dark"}""");
 
+        File.WriteAllText(Path.Combine(source.Path, "plugin-settings.json"), "{}");
         var exported = UserConfigBackups.Export(settingsPath, target.Path);
 
         Assert.IsNotNull(exported);
@@ -121,6 +122,7 @@ public sealed class UserConfigBackupsTests
         using var target = new TempDirectory();
         var path = Path.Combine(source.Path, "user-settings.json");
         File.WriteAllText(path, "{\"Theme\":\"Dark\"}");
+        File.WriteAllText(Path.Combine(source.Path, "plugin-settings.json"), "{}");
         File.SetAttributes(path, FileAttributes.ReadOnly);
         var exported = UserConfigBackups.Export(path, target.Path)!;
         try

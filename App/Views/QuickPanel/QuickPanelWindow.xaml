@@ -167,7 +167,6 @@
                                                      VerticalContentAlignment="Center"
                                                      AlternationCount="2147483647"
                                                      SelectionMode="Extended"
-                                                     MouseDoubleClick="ItemsList_MouseDoubleClick"
                                                      MouseDown="ItemsList_MouseDown"
                                                      PreviewMouseRightButtonUp="ItemsList_PreviewMouseRightButtonUp"
                                                      Loaded="GroupList_Loaded"
@@ -186,7 +185,7 @@
                                                             </Setter.Value>
                                                         </Setter>
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsArranging}" Value="True">
+                                                            <DataTrigger Binding="{Binding IsReordering}" Value="True">
                                                                 <Setter Property="helpers:RubberBandSelection.IsEnabled" Value="False"/>
                                                             </DataTrigger>
                                                             <DataTrigger Value="True"
@@ -198,7 +197,7 @@
                                                                     <Setter.Value>
                                                                         <ItemsPanelTemplate>
                                                                             <local:QuickPanelNumberedWrapPanel
-                                                                                GridSlots="{Binding GridSlots}" UsesGridSlots="{Binding UsesGridSlots}" ShowGridLines="{Binding IsArranging}"
+                                                                                GridSlots="{Binding GridSlots}" UsesGridSlots="{Binding UsesGridSlots}" ShowGridLines="{Binding IsReordering}"
                                                                                 MaximumItemCount="{Binding DataContext.LargestVisibleGroupItemCount, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                                                         </ItemsPanelTemplate>
                                                                     </Setter.Value>

@@ -100,7 +100,7 @@ public class QuickPanelGroupViewModel : ViewModelBase
         if (string.Equals(_filter, normalized, StringComparison.Ordinal)) return;
 
         _filter = normalized;
-        if (_filter.Length > 0) IsArranging = false;
+        if (_filter.Length > 0) IsReordering = false;
         OnPropertyChanged(nameof(CanArrange));
         Rebuild(resetMaterialization: true);
     }
@@ -168,7 +168,7 @@ public class QuickPanelGroupViewModel : ViewModelBase
         set
         {
             if (!SetProperty(ref _sortMode, value)) return;
-            if (value != QuickPanelSortMode.Custom) IsArranging = false;
+            if (value != QuickPanelSortMode.Custom) IsReordering = false;
             Rebuild();
         }
     }
@@ -178,19 +178,14 @@ public class QuickPanelGroupViewModel : ViewModelBase
     private List<string> _itemOrder;
     public IReadOnlyList<string> ItemOrder => _itemOrder;
     public bool CanArrange => !_isLoading && _filter.Length == 0;
-    private bool _isArranging;
-    public bool IsArranging
+    private bool _isReordering;
+    public bool IsReordering
     {
-        get => _isArranging;
+        get => _isReordering;
         set
         {
             if (value && !CanArrange) return;
-            if (value)
-            {
-                EnsureGridSlots();
-                SortMode = QuickPanelSortMode.Custom;
-            }
-            SetProperty(ref _isArranging, value);
+            SetProperty(ref _isReordering, value);
         }
     }
 
@@ -214,6 +209,8 @@ public class QuickPanelGroupViewModel : ViewModelBase
         // Keep absent entries in the saved arrangement until their source returns them again.
         var present = paths.ToHashSet(StringComparer.OrdinalIgnoreCase);
         _itemOrder = paths.Concat(_itemOrder.Where(saved => present.Add(saved))).ToList();
+        _gridSlots = _itemOrder.Select((path, index) => (path, index))
+            .ToDictionary(pair => pair.path, pair => pair.index, StringComparer.OrdinalIgnoreCase);
         _sortMode = QuickPanelSortMode.Custom;
         Rebuild();
         OnPropertyChanged(nameof(SortMode));
@@ -226,7 +223,11 @@ public class QuickPanelGroupViewModel : ViewModelBase
 
     public void PlaceInGrid(IEnumerable<string> paths, int slot)
     {
-        if (!CanArrange || slot < 0) return;
+        if (!CanArrange || slot < 0 || slot > QuickPanelGridLayout.MaximumSlot) return;
+        // An explicit drop starts from the order currently visible, not a hidden older grid.
+        if (SortMode != QuickPanelSortMode.Custom)
+            _gridSlots = OrderedItems().Select(pair => pair.Item.FullPath).Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select((path, index) => (path, index)).ToDictionary(pair => pair.path, pair => pair.index, StringComparer.OrdinalIgnoreCase);
         EnsureGridSlots();
         _gridSlots = QuickPanelGridLayout.Place(_gridSlots, paths, slot);
         _itemOrder = _gridSlots.OrderBy(pair => pair.Value).Select(pair => pair.Key).ToList();
@@ -265,7 +266,9 @@ public class QuickPanelGroupViewModel : ViewModelBase
         get => _isThumbnailView;
         set
         {
-            if (SetProperty(ref _isThumbnailView, value)) OnPropertyChanged(nameof(UsesGridSlots));
+            if (!SetProperty(ref _isThumbnailView, value)) return;
+            IsReordering = false;
+            OnPropertyChanged(nameof(UsesGridSlots));
         }
     }
 

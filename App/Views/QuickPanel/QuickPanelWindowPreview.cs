@@ -16,6 +16,7 @@ public partial class QuickPanelWindow
     /// </remarks>
     private bool TogglePreview()
     {
+        if (_activeList?.DataContext is ViewModels.QuickPanel.QuickPanelGroupViewModel { IsReordering: true }) return false;
         if (_activeList?.SelectedItem is not AppSearchResult { CanPreview: true } result) return false;
 
         QuickLookManager.Instance.Toggle(this, result.FullPath);
@@ -33,7 +34,7 @@ public partial class QuickPanelWindow
     private void GroupList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         if (sender is not System.Windows.Controls.ListBox list) return;
-        if (list.DataContext is ViewModels.QuickPanel.QuickPanelGroupViewModel { IsArranging: true }) return;
+        if (list.DataContext is ViewModels.QuickPanel.QuickPanelGroupViewModel { IsReordering: true }) return;
 
         if (list.SelectedItem is AppSearchResult { CanPreview: true } result)
         {

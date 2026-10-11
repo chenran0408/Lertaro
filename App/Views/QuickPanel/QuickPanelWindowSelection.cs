@@ -17,7 +17,7 @@ public partial class QuickPanelWindow
     /// </remarks>
     private void OpenSelected()
     {
-        if (_activeList?.DataContext is ViewModels.QuickPanel.QuickPanelGroupViewModel { IsArranging: true }) return;
+        if (_activeList?.DataContext is ViewModels.QuickPanel.QuickPanelGroupViewModel { IsReordering: true }) return;
         if (_activeList?.SelectedItem is not AppSearchResult result) return;
 
         FileExecutor.OpenFileOrFolder(result.FullPath);

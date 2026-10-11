@@ -23,7 +23,11 @@ public sealed class BrandIconTests
             window.Resources["AccentBlue"] = Brushes.Red;
             ThemedWindowIconHelper.Apply(window);
             ThemedWindowIconHelper.Apply(image, window);
-            Assert.AreSame(window.Icon, image.Source);
+            window.Content = image;
+            window.Show();
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            var physicalSize = (int)Math.Ceiling(image.ActualWidth * VisualTreeHelper.GetDpi(image).PixelsPerDip);
+            CollectionAssert.AreEqual(Pixels(ThemedWindowIconHelper.GetFrame(physicalSize)), Pixels(Assert.IsInstanceOfType<BitmapFrame>(image.Source)));
             Assert.IsTrue(window.Icon.IsFrozen);
             var source = Assert.IsInstanceOfType<BitmapFrame>(window.Icon);
             Assert.IsInstanceOfType<IconBitmapDecoder>(source.Decoder);
@@ -60,17 +64,24 @@ public sealed class BrandIconTests
     [STATestMethod]
     public void UseAppIcon_ImageIsResized_ChangesToMatchingFrame()
     {
-        var image = new System.Windows.Controls.Image();
-        ThemedWindowIconHelper.SetUseAppIcon(image, true);
-        image.Measure(new Size(16, 16));
-        image.Arrange(new Rect(0, 0, 16, 16));
-        image.UpdateLayout();
-        Assert.AreEqual(16, Assert.IsInstanceOfType<BitmapFrame>(image.Source).PixelWidth);
+        var image = new System.Windows.Controls.Image { Width = 16, Height = 16 };
+        var window = new Window { Content = image, Width = 160, Height = 160 };
+        try
+        {
+            ThemedWindowIconHelper.SetUseAppIcon(image, true);
+            window.Show();
+            CheckSize(16);
+            image.Width = image.Height = 24;
+            CheckSize(24);
+        }
+        finally { window.Close(); }
 
-        image.Measure(new Size(24, 24));
-        image.Arrange(new Rect(0, 0, 24, 24));
-        image.UpdateLayout();
-        Assert.AreEqual(24, Assert.IsInstanceOfType<BitmapFrame>(image.Source).PixelWidth);
+        void CheckSize(int size)
+        {
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            var requested = (int)Math.Ceiling(size * VisualTreeHelper.GetDpi(image).PixelsPerDip);
+            CollectionAssert.AreEqual(Pixels(ThemedWindowIconHelper.GetFrame(requested)), Pixels(Assert.IsInstanceOfType<BitmapFrame>(image.Source)));
+        }
     }
 
     [STATestMethod]

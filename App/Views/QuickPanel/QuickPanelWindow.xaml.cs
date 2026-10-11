@@ -39,6 +39,8 @@ public partial class QuickPanelWindow : Window,
         Loaded += (_, _) => Dispatcher.BeginInvoke(scrollSupport.Update, System.Windows.Threading.DispatcherPriority.Loaded);
         Helpers.Visuals.SystemMenuBlocker.Attach(this);
         DataContext = viewModel;
+        Deactivated += (_, _) => QuickPanelItemReordering.Cancel(this);
+        IsVisibleChanged += (_, _) => { if (!IsVisible) QuickPanelItemReordering.Cancel(this); };
 
         void OnViewModelChanged(object? _, System.ComponentModel.PropertyChangedEventArgs e)
         {
@@ -114,6 +116,12 @@ public partial class QuickPanelWindow : Window,
     // the list has focus and would consume the key first.
     private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
+        if (DataContext is QuickPanelViewModel vm && vm.Groups.Any(group => group.IsReordering))
+        {
+            if (e.Key == Key.Escape) QuickPanelItemReordering.Cancel(this);
+            e.Handled = true;
+            return;
+        }
         if (IsSizeMenuOpen)
         {
             if (e.Key == Key.Escape)
@@ -259,6 +267,13 @@ public partial class QuickPanelWindow : Window,
         list.ContextMenuOpening += (_, e) => e.Handled = true;
         QuickPanelItemReordering.Register(list);
         Controls.Results.ResultsDragDropHelper.Register(list);
+        // Open on release, so the second press of a double-click can still become a drag.
+        list.PreviewMouseLeftButtonUp += (_, args) =>
+        {
+            if (args.Handled || args.ClickCount != 2) return;
+            _activeList = list;
+            OpenSelected();
+        };
         list.SelectionChanged += GroupList_SelectionChanged;
         _activeList ??= list;
     }
@@ -281,17 +296,6 @@ public partial class QuickPanelWindow : Window,
             Source = sender,
         };
         (list.Parent as UIElement)?.RaiseEvent(bubbled);
-    }
-
-    private void ItemsList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-    {
-        // Control.MouseDoubleClickEvent fires for ANY button's double-click (left, right, or middle) --
-        // guard so double-right-clicking only opens the action flyout without launching the file.
-        if (e.ChangedButton != MouseButton.Left) return;
-        if (sender is not System.Windows.Controls.ListBox list) return;
-
-        _activeList = list;
-        OpenSelected();
     }
 
     private void ItemsList_MouseDown(object sender, MouseButtonEventArgs e)

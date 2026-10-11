@@ -6,6 +6,8 @@ using Lertaro.Core.Services.Installation;
 namespace Lertaro.Core.Tests.Services.Installation;
 
 [TestClass]
+// Installation locks temporarily change process-token privileges; isolate permission checks.
+[DoNotParallelize]
 public sealed class InstallDirectoryLockTests
 {
     // Every right that lets a holder change what a SYSTEM process later reads, runs or writes through.
