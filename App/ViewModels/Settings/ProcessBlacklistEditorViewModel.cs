@@ -25,8 +25,11 @@ public class ProcessBlacklistEditorViewModel : ViewModelBase
         ExportTextCommand = new RelayCommand(RefreshBulkText);
         RemoveProcessCommand = new RelayCommand<BlacklistProcessItem>(RemoveProcess);
         EditProcessCommand = new RelayCommand<BlacklistProcessItem>(EditProcess);
+        CancelEditCommand = new RelayCommand(CancelEdit);
+        Items.CollectionChanged += (_, _) => SyncRunningStates();
         RefreshProcessesCommand = new RelayCommand(() => _ = RefreshProcessesAsync(), () => !IsLoadingProcesses);
         AddSelectedProcessesCommand = new RelayCommand(AddSelectedProcesses, () => SelectedRunningCount > 0);
+        ClearProcessSelectionCommand = new RelayCommand(() => { foreach (var choice in _runningChoices) choice.IsSelected = false; }, () => SelectedRunningCount > 0);
     }
 
     public ObservableCollection<BlacklistProcessItem> Items { get; } = new();
@@ -36,8 +39,21 @@ public class ProcessBlacklistEditorViewModel : ViewModelBase
     public ICommand ExportTextCommand { get; }
     public ICommand RemoveProcessCommand { get; }
     public ICommand EditProcessCommand { get; }
+    public ICommand CancelEditCommand { get; }
+    private string? _editingOriginal;
+    public bool IsEditing => _editingOriginal != null;
+    private bool _isManualEditorOpen;
+    public bool IsManualEditorOpen
+    {
+        get => _isManualEditorOpen;
+        set => SetProperty(ref _isManualEditorOpen, value);
+    }
+    private string _manualError = string.Empty;
+    public string ManualError { get => _manualError; private set => SetProperty(ref _manualError, value); }
+    private bool _bulkTextDirty;
     public ICommand RefreshProcessesCommand { get; }
     public ICommand AddSelectedProcessesCommand { get; }
+    public ICommand ClearProcessSelectionCommand { get; }
     public ObservableCollection<RunningProcessChoice> RunningProcesses { get; } = new();
     private readonly List<RunningProcessChoice> _runningChoices = new();
     public int SelectedRunningCount => _runningChoices.Count(x => x.IsSelected);
@@ -104,7 +120,16 @@ public class ProcessBlacklistEditorViewModel : ViewModelBase
             choice.PropertyChanged += (_, _) => OnPropertyChanged(nameof(SelectedRunningCount));
             _runningChoices.Add(choice);
         }
+        SyncRunningStates();
         FilterProcesses();
+        OnPropertyChanged(nameof(SelectedRunningCount));
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    private void SyncRunningStates()
+    {
+        foreach (var choice in _runningChoices)
+            choice.IsAdded = Core.ProcessNameFilter.Matches(choice.Name, Items.Select(x => x.Value));
         OnPropertyChanged(nameof(SelectedRunningCount));
         CommandManager.InvalidateRequerySuggested();
     }
@@ -143,7 +168,7 @@ public class ProcessBlacklistEditorViewModel : ViewModelBase
     public string BulkText
     {
         get => _bulkText;
-        set => SetProperty(ref _bulkText, value);
+        set { if (SetProperty(ref _bulkText, value)) _bulkTextDirty = true; }
     }
 
     /// <summary>The list as it should be stored: trimmed, blanks and repeats dropped.</summary>
@@ -158,9 +183,27 @@ public class ProcessBlacklistEditorViewModel : ViewModelBase
 
     private void AddProcess()
     {
-        AddUnique(NewProcessName);
-        NewProcessName = string.Empty;
+        ApplyBulkText();
+        var normalized = NewProcessName.Trim().Trim('"');
+        if (normalized.Length == 0) return;
+        var original = Items.FirstOrDefault(x => string.Equals(x.Value, _editingOriginal, StringComparison.OrdinalIgnoreCase));
+        if (Core.ProcessNameFilter.Matches(normalized, Items.Where(x => x != original).Select(x => x.Value)))
+        {
+            ManualError = TranslationManager.Instance["Blacklist_Duplicate"];
+            return;
+        }
+        if (original != null) Items[Items.IndexOf(original)] = new BlacklistProcessItem(normalized);
+        else AddUnique(normalized);
+        CancelEdit();
         RefreshBulkText();
+    }
+
+    private void CancelEdit()
+    {
+        _editingOriginal = null;
+        NewProcessName = string.Empty;
+        ManualError = string.Empty;
+        OnPropertyChanged(nameof(IsEditing));
     }
 
     private void AddUnique(string value)
@@ -173,30 +216,38 @@ public class ProcessBlacklistEditorViewModel : ViewModelBase
 
     private void RemoveProcess(BlacklistProcessItem? item)
     {
-        if (item == null)
-            return;
-        Items.Remove(item);
+        if (item == null) return;
+        ApplyBulkText();
+        var current = Items.FirstOrDefault(x => string.Equals(x.Value, item.Value, StringComparison.OrdinalIgnoreCase));
+        if (current != null) Items.Remove(current);
+        if (string.Equals(_editingOriginal, item.Value, StringComparison.OrdinalIgnoreCase)) CancelEdit();
         RefreshBulkText();
     }
 
-    // Edit is remove-and-refill: the row has no editor of its own, so the entry goes back into the box
-    // it was typed in.
     private void EditProcess(BlacklistProcessItem? item)
     {
-        if (item == null)
-            return;
+        if (item == null) return;
+        ApplyBulkText();
+        if (!Items.Any(x => string.Equals(x.Value, item.Value, StringComparison.OrdinalIgnoreCase))) return;
+        _editingOriginal = item.Value;
         NewProcessName = item.Value;
-        Items.Remove(item);
-        RefreshBulkText();
+        ManualError = string.Empty;
+        IsManualEditorOpen = true;
+        OnPropertyChanged(nameof(IsEditing));
     }
 
     private void ApplyBulkText()
     {
+        if (!_bulkTextDirty) return;
         Items.Clear();
         foreach (var line in (BulkText ?? string.Empty).Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None))
             AddUnique(line);
         RefreshBulkText();
     }
 
-    private void RefreshBulkText() => BulkText = string.Join(Environment.NewLine, Items.Select(x => x.Value));
+    private void RefreshBulkText()
+    {
+        SetProperty(ref _bulkText, string.Join(Environment.NewLine, Items.Select(x => x.Value)), nameof(BulkText));
+        _bulkTextDirty = false;
+    }
 }

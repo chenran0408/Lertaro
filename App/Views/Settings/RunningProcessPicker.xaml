@@ -12,10 +12,18 @@
                 <Button DockPanel.Dock="Right" Command="{Binding RefreshProcessesCommand}"
                         Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_RefreshProcesses]}"
                         Style="{DynamicResource SettingsButton}" Margin="8,0,0,0"/>
+                <Grid>
                 <TextBox Text="{Binding ProcessSearch, UpdateSourceTrigger=PropertyChanged}"
                          Style="{DynamicResource RuleTextBox}"
                          ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_ProcessSearch]}"
                          AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_ProcessSearch]}"/>
+                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_ProcessSearch]}"
+                           Margin="10,0" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" IsHitTestVisible="False">
+                    <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers><DataTrigger Binding="{Binding ProcessSearch}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+                    </Style></TextBlock.Style>
+                </TextBlock>
+                </Grid>
             </DockPanel>
             <CheckBox IsChecked="{Binding ShowAllProcesses}" Margin="0,0,0,8"
                       Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_ShowAllProcesses]}"/>
@@ -35,11 +43,22 @@
             <ListBox ItemsSource="{Binding RunningProcesses}" MaxHeight="220" MinHeight="80"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto"
                      VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style></ListBox.ItemContainerStyle>
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Padding="3" HorizontalContentAlignment="Stretch">
+                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Padding="6" HorizontalContentAlignment="Stretch">
+                            <CheckBox.Style><Style TargetType="CheckBox"><Style.Triggers>
+                                <DataTrigger Binding="{Binding IsAdded}" Value="True"><Setter Property="IsEnabled" Value="False"/></DataTrigger>
+                            </Style.Triggers></Style></CheckBox.Style>
                             <StackPanel>
-                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_AlreadyAdded]}" Margin="10,0,0,0" Foreground="{DynamicResource TextSecondary}">
+                                        <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers><DataTrigger Binding="{Binding IsAdded}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+                                        </Style></TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                </DockPanel>
                                 <TextBlock Text="{Binding WindowTitle}" FontSize="12" TextTrimming="CharacterEllipsis"
                                            ToolTip="{Binding WindowTitle}" Foreground="{DynamicResource TextSecondary}"/>
                             </StackPanel>
@@ -72,6 +91,8 @@
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_SelectedCount]}"/>
                     <TextBlock Text="{Binding SelectedRunningCount}" Margin="6,0,0,0"/>
+                    <Button Command="{Binding ClearProcessSelectionCommand}" Style="{DynamicResource LinkButton}" Margin="10,0,0,0"
+                            Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_ClearSelection]}"/>
                 </StackPanel>
             </DockPanel>
         </StackPanel>

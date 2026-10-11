@@ -76,7 +76,7 @@ public sealed class BlacklistSettingsViewModelTests
     }
 
     [TestMethod]
-    public void EditProcessCommand_Execute_MovesValueBackIntoInputAndRemovesFromList()
+    public void EditProcessCommand_Execute_PreservesTheOriginalUntilConfirmed()
     {
         var vm = Build(newName: "a.exe");
         vm.Global.AddProcessCommand.Execute(null);
@@ -85,7 +85,11 @@ public sealed class BlacklistSettingsViewModelTests
         vm.Global.EditProcessCommand.Execute(item);
 
         Assert.AreEqual("a.exe", vm.Global.NewProcessName);
-        Assert.IsEmpty(vm.Global.Items);
+        Assert.HasCount(1, vm.Global.Items);
+        Assert.IsTrue(vm.Global.IsEditing);
+        vm.Global.CancelEditCommand.Execute(null);
+        Assert.AreEqual("a.exe", vm.Global.Items[0].Value);
+        Assert.IsFalse(vm.Global.IsEditing);
     }
 
     [TestMethod]

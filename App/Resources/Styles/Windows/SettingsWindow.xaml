@@ -8,6 +8,7 @@
         <ResourceDictionary Source="../Tokens/Colors.xaml"/>
         <!-- Controls.xaml supplies the shared TextBox base needed by the settings styles below. -->
         <ResourceDictionary Source="../Controls/Controls.xaml"/>
+        <ResourceDictionary Source="../Controls/Button.xaml"/>
         <!-- ComboBox chrome is kept separate because its popup template is self-contained. -->
         <ResourceDictionary Source="SettingsComboBox.xaml"/>
     </ResourceDictionary.MergedDictionaries>
@@ -270,29 +271,49 @@
 
     <DataTemplate x:Key="ProcessListEditorTemplate">
         <StackPanel>
-            <DockPanel Margin="0,0,0,10">
-                <Button DockPanel.Dock="Right"
-                        Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_AddBtn]}"
-                        Style="{StaticResource PrimarySettingsButton}"
-                        Command="{Binding AddProcessCommand}" Margin="10,0,0,0"/>
-                <TextBox Style="{StaticResource RuleTextBox}"
-                         Text="{Binding NewProcessName, UpdateSourceTrigger=PropertyChanged}"/>
-            </DockPanel>
-
-            <settings:RunningProcessPicker Margin="0,0,0,10"/>
-            <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource ProcessListRowTemplate}"/>
-
-            <TextBox Style="{StaticResource RuleBulkTextBox}" Margin="0,10,0,8"
-                     Text="{Binding BulkText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_GenerateBtn]}"
-                        Style="{StaticResource SettingsButton}"
-                        Command="{Binding ExportTextCommand}" Margin="0,0,8,0"/>
-                <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_ApplyBtn]}"
-                        Style="{StaticResource PrimarySettingsButton}"
-                        Command="{Binding ApplyTextCommand}"/>
+            <settings:RunningProcessPicker Margin="0,0,0,12"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_AddedList]}" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding Items.Count}" Foreground="{DynamicResource TextSecondary}" Margin="8,0,0,0"/>
             </StackPanel>
+            <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource ProcessListRowTemplate}"/>
+            </ScrollViewer>
+            <Expander Margin="0,12,0,0" IsExpanded="{Binding IsManualEditorOpen, Mode=TwoWay}"
+                      Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_ManualAndBulk]}">
+                <StackPanel Margin="0,10,0,0">
+                    <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_ProcessCardDesc]}"
+                               Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Command="{Binding AddProcessCommand}" Margin="8,0,0,0">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource PrimarySettingsButton}">
+                                    <Setter Property="Content" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_AddBtn]}"/>
+                                    <Style.Triggers><DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                        <Setter Property="Content" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_ConfirmEdit]}"/>
+                                    </DataTrigger></Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button DockPanel.Dock="Right" Command="{Binding CancelEditCommand}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Cancel]}" Margin="8,0,0,0">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource SettingsButton}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers><DataTrigger Binding="{Binding IsEditing}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+                            </Style></Button.Style>
+                        </Button>
+                        <TextBox Style="{StaticResource RuleTextBox}" Text="{Binding NewProcessName, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_AddBtn]}">
+                            <TextBox.InputBindings><KeyBinding Key="Enter" Command="{Binding AddProcessCommand}"/></TextBox.InputBindings>
+                        </TextBox>
+                    </DockPanel>
+                    <TextBlock Text="{Binding ManualError}" Foreground="{DynamicResource AccentColor}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_BulkLabel]}" Margin="0,12,0,6"/>
+                    <TextBox Style="{StaticResource RuleBulkTextBox}" Text="{Binding BulkText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_BulkLabel]}"/>
+                    <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_ApplyBtn]}"
+                            Style="{StaticResource SettingsButton}" Command="{Binding ApplyTextCommand}" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+                </StackPanel>
+            </Expander>
         </StackPanel>
     </DataTemplate>
 </ResourceDictionary>
