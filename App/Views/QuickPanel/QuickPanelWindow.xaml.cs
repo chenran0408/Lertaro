@@ -267,13 +267,7 @@ public partial class QuickPanelWindow : Window,
         list.ContextMenuOpening += (_, e) => e.Handled = true;
         QuickPanelItemReordering.Register(list);
         Controls.Results.ResultsDragDropHelper.Register(list);
-        // Open on release, so the second press of a double-click can still become a drag.
-        list.PreviewMouseLeftButtonUp += (_, args) =>
-        {
-            if (args.Handled || args.ClickCount != 2) return;
-            _activeList = list;
-            OpenSelected();
-        };
+        QuickPanelItemReordering.RegisterDoubleClick(list, () => { _activeList = list; OpenSelected(); });
         list.SelectionChanged += GroupList_SelectionChanged;
         _activeList ??= list;
     }

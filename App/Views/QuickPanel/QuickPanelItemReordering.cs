@@ -23,6 +23,21 @@ internal static class QuickPanelItemReordering
             Cancel(VisualTreeHelper.GetChild(root, index));
     }
 
+    internal static void RegisterDoubleClick(ListBox list, Action open)
+    {
+        // WPF reports ClickCount only on press. Remember it until release, when a drag has been ruled out.
+        var openOnRelease = false;
+        list.AddHandler(UIElement.PreviewMouseLeftButtonDownEvent, new MouseButtonEventHandler((_, args) =>
+            openOnRelease = args.ClickCount == 2), true);
+        list.AddHandler(UIElement.PreviewMouseLeftButtonUpEvent, new MouseButtonEventHandler((_, args) =>
+        {
+            var shouldOpen = openOnRelease;
+            openOnRelease = false;
+            if (args.Handled || !shouldOpen) return;
+            open();
+        }), true);
+    }
+
     internal static void Register(ListBox list)
     {
         AppSearchResult? dragged = null;
