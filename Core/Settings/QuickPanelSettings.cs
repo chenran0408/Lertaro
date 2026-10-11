@@ -5,6 +5,7 @@ public enum QuickPanelSortMode
 {
     ModifiedDescending,
     NameAscending,
+    Custom,
 }
 
 /// <summary>Where a folder source's items come from, and in what order.</summary>
@@ -79,6 +80,8 @@ public class QuickPanelSettings
     /// of its own to carry one, and the id is what everything else about it is keyed by.
     /// </summary>
     public List<string> ListViewPluginTabIds { get; set; } = new();
+
+    public Dictionary<string, QuickPanelGroupPreference> PluginGroupPreferences { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     public Dictionary<string, QuickPanelSortMode> PluginTabSortModes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
@@ -207,6 +210,7 @@ public class QuickPanelTab
                 Sort = pair.Value.Sort,
                 ThumbnailView = pair.Value.ThumbnailView,
                 Expanded = pair.Value.Expanded,
+                ItemOrder = new List<string>(pair.Value.ItemOrder),
             },
             StringComparer.OrdinalIgnoreCase),
     };
@@ -293,6 +297,8 @@ public class QuickPanelGroupPreference
         => (source.SortByModified || source.Kind == QuickPanelSourceKind.AllByModified || source.Kind == QuickPanelSourceKind.RecentFiles)
             ? QuickPanelSortMode.ModifiedDescending
             : QuickPanelSortMode.NameAscending;
+
+    public List<string> ItemOrder { get; set; } = new();
 
     public bool ThumbnailView { get; set; } = true;
 

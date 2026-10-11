@@ -157,10 +157,11 @@
                                                      MouseDoubleClick="ItemsList_MouseDoubleClick"
                                                      MouseDown="ItemsList_MouseDown"
                                                      PreviewMouseRightButtonUp="ItemsList_PreviewMouseRightButtonUp"
-                                                     Loaded="GroupList_Loaded" helpers:RubberBandSelection.IsEnabled="True"
+                                                     Loaded="GroupList_Loaded"
                                                      PreviewMouseWheel="GroupList_PreviewMouseWheel">
                                                 <ListBox.Style>
                                                     <Style TargetType="ListBox" BasedOn="{StaticResource SleekListBoxStyle}">
+                                                        <Setter Property="helpers:RubberBandSelection.IsEnabled" Value="True"/>
                                                         <Setter Property="ItemContainerStyle" Value="{StaticResource QuickPanelRowStyle}"/>
                                                         <Setter Property="ItemTemplate" Value="{StaticResource QuickPanelDetailRowTemplate}"/>
                                                         <Setter Property="ItemsPanel">
@@ -172,6 +173,9 @@
                                                             </Setter.Value>
                                                         </Setter>
                                                         <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsArranging}" Value="True">
+                                                                <Setter Property="helpers:RubberBandSelection.IsEnabled" Value="False"/>
+                                                            </DataTrigger>
                                                             <DataTrigger Value="True"
                                                                          Binding="{Binding IsThumbnailView}">
                                                                 <Setter Property="Padding" Value="0"/>

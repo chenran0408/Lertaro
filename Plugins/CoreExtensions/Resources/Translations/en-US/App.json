@@ -1,4 +1,8 @@
 {
+  "QuickPanel_SortCustom": "Custom",
+  "QuickPanel_Arrange": "Arrange",
+  "QuickPanel_ArrangeHint": "Turn on to drag an item before another, or below the list to move it last. Turn off when finished. Unavailable while searching or loading.",
+
   "Settings_LocalSend_SendCardTitle": "Send to another device",
   "Settings_LocalSend_SendCardHint": "Choose files, a folder, or text, then select a recipient. You can also drop files or folders here. The recipient needs LocalSend or Lertaro with LAN transfer enabled.",
   "Settings_LocalSend_SendFilesEntry": "Send files",

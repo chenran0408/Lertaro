@@ -1,4 +1,8 @@
 {
+  "QuickPanel_SortCustom": "Personalizado",
+  "QuickPanel_Arrange": "Ordenar",
+  "QuickPanel_ArrangeHint": "Activa para arrastrar un elemento delante de otro o debajo de la lista para moverlo al final. Desactiva al terminar. No disponible durante búsquedas o carga.",
+
   "Settings_LocalSend_SendCardTitle": "Enviar a otro dispositivo",
   "Settings_LocalSend_SendCardHint": "Elige archivos, una carpeta o texto y selecciona el destinatario. También puedes arrastrar archivos o carpetas aquí. El destinatario necesita LocalSend o Lertaro con transferencia LAN activada.",
   "Settings_LocalSend_SendFilesEntry": "Enviar archivos",

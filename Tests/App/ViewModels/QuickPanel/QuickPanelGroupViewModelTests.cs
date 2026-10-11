@@ -7,6 +7,56 @@ namespace Lertaro.App.Tests.ViewModels.QuickPanel;
 public sealed class QuickPanelGroupViewModelTests
 {
     [TestMethod]
+    public void CustomOrderKeepsSavedPathsAndAppendsNewItemsByName()
+    {
+        var group = new QuickPanelGroupViewModel("source", "Source", @"C:\source", Pairs("z", "new-z", "a", "new-a"),
+            QuickPanelSortMode.Custom, itemOrder: new[] { @"C:\SOURCE\z", @"C:\source\missing", @"C:\source\a", @"C:\source\z" });
+        CollectionAssert.AreEqual(new[] { "z", "a", "new-a", "new-z" }, group.Items.Select(item => item.Name).ToList());
+        group.MoveBefore(@"C:\source\a", @"C:\source\z");
+        CollectionAssert.AreEqual(new[] { "a", "z", "new-a", "new-z" }, group.Items.Select(item => item.Name).ToList());
+        Assert.IsTrue(group.ItemOrder.Contains(@"C:\source\missing"));
+        group.SortMode = QuickPanelSortMode.NameAscending;
+        group.SortMode = QuickPanelSortMode.Custom;
+        Assert.AreEqual("a", group.Items[0].Name);
+        group.Replace(Pairs("new-z", "a", "z", "new-a"));
+        Assert.AreEqual("a", group.Items[0].Name);
+    }
+
+    [TestMethod]
+    public void MovingToEndAndInvalidTargetsPreserveEveryItem()
+    {
+        var group = Group(80);
+        group.MoveBefore(@"C:\source\0000", null);
+        while (group.LoadNextPage()) { }
+        Assert.AreEqual("0000", group.Items.Last().Name);
+        Assert.HasCount(80, group.Items);
+        var before = group.ItemOrder.ToList();
+        group.MoveBefore(@"C:\source\0001", @"C:\source\unknown");
+        group.MoveBefore(@"C:\source\0001", @"C:\source\0001");
+        group.MoveBefore(@"C:\source\unknown", null);
+        CollectionAssert.AreEqual(before, group.ItemOrder.ToList());
+    }
+
+    [TestMethod]
+    public void SearchingAndLoadingPreventRearranging()
+    {
+        var group = Group(3);
+        group.IsArranging = true;
+        group.ApplyFilter("0001");
+        Assert.IsFalse(group.IsArranging);
+        Assert.IsFalse(group.CanArrange);
+        group.MoveBefore(@"C:\source\0001", null);
+        Assert.AreEqual(QuickPanelSortMode.NameAscending, group.SortMode);
+        group.ApplyFilter("");
+        Assert.IsTrue(group.CanArrange);
+        var loading = new QuickPanelGroupViewModel("source", "Source", "", Pairs("a", "b"), isLoading: true);
+        loading.IsArranging = true;
+        Assert.IsFalse(loading.IsArranging);
+        loading.Replace(Pairs("a", "b"));
+        Assert.IsTrue(loading.CanArrange);
+    }
+
+    [TestMethod]
     public void LargeGroup_MaterializesOnlyTheFirstPageUntilRequested()
     {
         var group = Group(300);

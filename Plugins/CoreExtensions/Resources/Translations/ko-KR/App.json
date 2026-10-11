@@ -1,4 +1,8 @@
 {
+  "QuickPanel_SortCustom": "사용자 지정",
+  "QuickPanel_Arrange": "순서 정리",
+  "QuickPanel_ArrangeHint": "켜고 항목을 다른 항목 앞으로 끌거나 목록 아래로 끌어 마지막으로 옮기세요. 완료 후 끄세요. 검색 또는 불러오기 중에는 사용할 수 없습니다.",
+
   "Settings_LocalSend_SendCardTitle": "다른 기기로 보내기",
   "Settings_LocalSend_SendCardHint": "파일, 폴더 또는 텍스트를 고른 후 수신 기기를 선택하세요. 파일이나 폴더를 여기에 끌어 놓을 수도 있습니다. 수신 기기에서 LocalSend 또는 LAN 전송이 활성화된 Lertaro가 필요합니다.",
   "Settings_LocalSend_SendFilesEntry": "파일 보내기",

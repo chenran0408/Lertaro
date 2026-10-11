@@ -29,6 +29,10 @@ public sealed class QuickPanelPluginTabSettingsTests
     {
         var settings = BuildSettings();
         settings.QuickPanel.PluginTabSortModes["unavailable"] = QuickPanelSortMode.NameAscending;
+        settings.QuickPanel.PluginGroupPreferences[@"available:C:\data"] = new QuickPanelGroupPreference
+        {
+            Sort = QuickPanelSortMode.Custom, ThumbnailView = false, ItemOrder = new() { @"C:\data\file.txt" }
+        };
         var vm = new QuickPanelSettingsViewModel(settings);
         var rows = Assert.IsInstanceOfType<List<QuickPanelPluginTabOption>>(vm.PluginTabs);
         rows.Add(new QuickPanelPluginTabOption("available", () => "Available", true, false)
@@ -39,6 +43,10 @@ public sealed class QuickPanelPluginTabSettingsTests
         vm.Save();
         Assert.AreEqual(QuickPanelSortMode.NameAscending, settings.QuickPanel.PluginTabSortModes["available"]);
         Assert.AreEqual(QuickPanelSortMode.NameAscending, settings.QuickPanel.PluginTabSortModes["unavailable"]);
+        var preference = settings.QuickPanel.PluginGroupPreferences[@"available:C:\data"];
+        Assert.AreEqual(QuickPanelSortMode.NameAscending, preference.Sort);
+        Assert.IsTrue(preference.ThumbnailView);
+        Assert.HasCount(1, preference.ItemOrder);
     }
 
     [TestMethod]

@@ -100,7 +100,8 @@ internal sealed class QuickPanelGroupLoader
             preference?.Expanded ?? true,
             source.AcceptsDrops,
             isLoading: isLoading,
-            maxItems: source.MaxItems);
+            maxItems: source.MaxItems,
+            itemOrder: preference?.ItemOrder);
 
     private static string TitleOf(QuickPanelFolderSource source, QuickPanelGroupPreference? preference)
         => string.IsNullOrWhiteSpace(preference?.DisplayName)

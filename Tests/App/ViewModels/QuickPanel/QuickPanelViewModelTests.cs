@@ -46,6 +46,35 @@ public sealed class QuickPanelViewModelTests
     }
 
     [TestMethod]
+    public async Task CustomOrderAndDisplayChoicesSurviveSavingAndReopening()
+    {
+        var settings = OneWorkspace(Folder(@"C:\data", "s1"));
+        var saves = 0;
+        Task<List<SearchResult>> Load(QuickPanelFolderSource source, CancellationToken _) => Task.FromResult(new List<SearchResult>
+        {
+            Entry(source.Path, "a.txt", new DateTime(2026, 1, 1)),
+            Entry(source.Path, "z.txt", new DateTime(2026, 1, 2))
+        });
+        var vm = new QuickPanelViewModel(() => settings, Load, saveSettings: () => saves++);
+        await vm.RefreshAsync();
+        var group = vm.Groups[0];
+        group.MoveBefore(@"C:\data\a.txt", @"C:\data\z.txt");
+        group.ToggleView();
+        group.IsExpanded = false;
+        Assert.IsGreaterThan(0, saves);
+        settings = System.Text.Json.JsonSerializer.Deserialize<QuickPanelSettings>(System.Text.Json.JsonSerializer.Serialize(settings))!;
+        var reopened = new QuickPanelViewModel(() => settings, Load, saveSettings: () => { });
+        await reopened.RefreshAsync();
+        Assert.AreEqual(QuickPanelSortMode.Custom, reopened.Groups[0].SortMode);
+        Assert.AreEqual("a.txt", reopened.Groups[0].Items[0].Name);
+        Assert.IsFalse(reopened.Groups[0].IsThumbnailView);
+        Assert.IsFalse(reopened.Groups[0].IsExpanded);
+        var clone = settings.Tabs[0].Clone();
+        clone.GroupPreferences["s1"].ItemOrder.Clear();
+        Assert.HasCount(2, settings.Tabs[0].GroupPreferences["s1"].ItemOrder);
+    }
+
+    [TestMethod]
     public async Task StoredSortingAndPanelTogglesSurviveRefresh()
     {
         var settings = OneWorkspace(Folder(@"C:\data", "s1"));

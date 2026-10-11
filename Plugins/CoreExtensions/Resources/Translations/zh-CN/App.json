@@ -1,4 +1,8 @@
 {
+  "QuickPanel_SortCustom": "自定义",
+  "QuickPanel_Arrange": "整理顺序",
+  "QuickPanel_ArrangeHint": "开启后，拖动图标到另一项前面；拖到列表下方可移到末尾。完成后关闭此按钮。搜索或加载时暂不可整理。",
+
   "Settings_LocalSend_SendCardTitle": "发送给其他设备",
   "Settings_LocalSend_SendCardHint": "选择文件、文件夹或文字，再选择接收设备。也可将文件或文件夹直接拖到这里；接收方需要运行 LocalSend 或启用局域网传输的 Lertaro。",
   "Settings_LocalSend_SendFilesEntry": "发送文件",

@@ -177,7 +177,10 @@ public partial class QuickPanelViewModel
             groups.Insert(at, group);
             group.PropertyChanged += (_, e) =>
             {
-                if (e.PropertyName == nameof(QuickPanelGroupViewModel.SortMode))
+                if (e.PropertyName is nameof(QuickPanelGroupViewModel.SortMode)
+                    or nameof(QuickPanelGroupViewModel.IsThumbnailView)
+                    or nameof(QuickPanelGroupViewModel.IsExpanded)
+                    or nameof(QuickPanelGroupViewModel.ItemOrder))
                     PersistGroupSort(tab, group);
             };
             _ranks[group.SourceId] = rank;

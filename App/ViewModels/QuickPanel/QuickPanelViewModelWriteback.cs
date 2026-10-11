@@ -14,17 +14,28 @@ public partial class QuickPanelViewModel
     private void PersistGroupSort(IQuickPanelTabSource tab, QuickPanelGroupViewModel group)
     {
         var settings = _readSettings();
+        Core.QuickPanelGroupPreference preference;
         var workspace = settings.Tabs.FirstOrDefault(candidate => candidate.Id.Equals(tab.Id, StringComparison.OrdinalIgnoreCase));
         if (workspace != null)
         {
-            if (!workspace.GroupPreferences.TryGetValue(group.SourceId, out var preference))
-                workspace.GroupPreferences[group.SourceId] = preference = new Core.QuickPanelGroupPreference();
-            preference.Sort = group.SortMode;
+            if (!workspace.GroupPreferences.TryGetValue(group.SourceId, out var stored))
+                workspace.GroupPreferences[group.SourceId] = stored = new Core.QuickPanelGroupPreference();
+            preference = stored;
+
         }
         else
         {
+            if (!settings.PluginGroupPreferences.TryGetValue(group.SourceId, out var stored))
+                settings.PluginGroupPreferences[group.SourceId] = stored = new Core.QuickPanelGroupPreference();
+            preference = stored;
             settings.PluginTabSortModes[tab.Id] = group.SortMode;
+            settings.ListViewPluginTabIds.RemoveAll(id => id.Equals(tab.Id, StringComparison.OrdinalIgnoreCase));
+            if (!group.IsThumbnailView) settings.ListViewPluginTabIds.Add(tab.Id);
         }
+        preference.Sort = group.SortMode;
+        preference.ThumbnailView = group.IsThumbnailView;
+        preference.Expanded = group.IsExpanded;
+        preference.ItemOrder = group.ItemOrder.ToList();
         _saveSettings();
     }
 

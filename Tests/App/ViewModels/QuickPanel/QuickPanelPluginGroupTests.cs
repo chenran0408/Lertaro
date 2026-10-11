@@ -11,6 +11,42 @@ namespace Lertaro.App.Tests.ViewModels.QuickPanel;
 public sealed class QuickPanelPluginGroupTests
 {
     [TestMethod]
+    public async Task SavedPluginGroupChoicesFollowTheFolderWhenProviderOrderChanges()
+    {
+        var settings = new Core.QuickPanelSettings();
+        settings.PluginGroupPreferences[@"plugin:C:\Projects"] = new Core.QuickPanelGroupPreference
+        {
+            Sort = Core.QuickPanelSortMode.Custom, ThumbnailView = false, Expanded = false,
+            ItemOrder = new() { @"C:\Projects\z.txt", @"C:\Projects\a.txt" }
+        };
+        var provider = new Provider();
+        var vm = new QuickPanelViewModel(() => settings, saveSettings: () => { });
+        var groups = new List<QuickPanelGroupViewModel>();
+        await vm.LoadPluginTabAsync(provider, "plugin", "Plugin", (group, _) => groups.Add(group), CancellationToken.None);
+        var saved = groups.Single(group => group.FolderPath == @"C:\Projects");
+        Assert.AreEqual("z.txt", saved.Items[0].Name);
+        Assert.IsFalse(saved.IsThumbnailView);
+        Assert.IsFalse(saved.IsExpanded);
+        provider.Reverse = true;
+        groups.Clear();
+        await vm.LoadPluginTabAsync(provider, "plugin", "Plugin", (group, _) => groups.Add(group), CancellationToken.None);
+        Assert.AreEqual(saved.SourceId, groups.Single(group => group.FolderPath == @"C:\Projects").SourceId);
+    }
+
+    private sealed class Provider : PluginSdk.Abstractions.Plugins.IQuickPanelTabProvider
+    {
+        public bool Reverse { get; set; }
+        public Task<IReadOnlyList<ISearchResult>> GetEntriesAsync(CancellationToken cancellationToken = default)
+        {
+            IEnumerable<ISearchResult> entries = new ISearchResult[]
+            {
+                new PluginItem(@"C:\Other\file.txt"), new PluginItem(@"C:\Projects\a.txt"), new PluginItem(@"C:\Projects\z.txt")
+            };
+            return Task.FromResult<IReadOnlyList<ISearchResult>>((Reverse ? entries.Reverse() : entries).ToList());
+        }
+    }
+
+    [TestMethod]
     public void ToUiResult_MapsAProvidersOwnResultType()
     {
         // Deliberately not an AppSearchResult: a provider lives in a plugin assembly that cannot see

@@ -201,7 +201,14 @@ public class QuickPanelSettingsViewModel : ViewModelBase
         panel.ClosedPluginTabIds = Merge(panel.ClosedPluginTabIds, listed, option => !option.IsOpen);
         panel.ListViewPluginTabIds = Merge(panel.ListViewPluginTabIds, listed, option => option.ShowAsList);
         foreach (var option in PluginTabs)
+        {
             panel.PluginTabSortModes[option.Id] = option.SortMode;
+            foreach (var pair in panel.PluginGroupPreferences.Where(pair => pair.Key.StartsWith(option.Id + ":", StringComparison.OrdinalIgnoreCase)))
+            {
+                pair.Value.Sort = option.SortMode;
+                pair.Value.ThumbnailView = !option.ShowAsList;
+            }
+        }
     }
 
     /// <summary>Rewrites one of the per-plugin-tab lists from the rows, keeping what has no row.</summary>

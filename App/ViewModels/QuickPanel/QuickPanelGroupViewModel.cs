@@ -41,7 +41,8 @@ public class QuickPanelGroupViewModel : ViewModelBase
         bool acceptsDrops = false,
         bool showsHeading = true,
         bool isLoading = false,
-        int maxItems = 0)
+        int maxItems = 0,
+        IEnumerable<string>? itemOrder = null)
     {
         SourceId = sourceId;
         Title = title;
@@ -50,6 +51,7 @@ public class QuickPanelGroupViewModel : ViewModelBase
         ShowsHeading = showsHeading;
         _maxItems = maxItems;
         _loaded = loaded;
+        _itemOrder = itemOrder?.ToList() ?? new();
         // The fields, not the properties: each setter rebuilds, and the group has nothing to rebuild
         // from until the call below.
         _sortMode = sortMode;
@@ -114,6 +116,8 @@ public class QuickPanelGroupViewModel : ViewModelBase
         if (string.Equals(_filter, normalized, StringComparison.Ordinal)) return;
 
         _filter = normalized;
+        if (_filter.Length > 0) IsArranging = false;
+        OnPropertyChanged(nameof(CanArrange));
         Rebuild(resetMaterialization: true);
     }
 
@@ -155,6 +159,7 @@ public class QuickPanelGroupViewModel : ViewModelBase
         _loaded.Clear();
         _loaded.AddRange(loaded);
         _isLoading = false;
+        OnPropertyChanged(nameof(CanArrange));
         Rebuild(resetMaterialization: true);
     }
 
@@ -179,9 +184,48 @@ public class QuickPanelGroupViewModel : ViewModelBase
         set
         {
             if (!SetProperty(ref _sortMode, value)) return;
+            if (value != QuickPanelSortMode.Custom) IsArranging = false;
             Rebuild();
         }
     }
+
+    public IReadOnlyList<Settings.QuickPanel.QuickPanelSortOption> SortOptions => Settings.QuickPanel.QuickPanelSortOption.All;
+
+    private List<string> _itemOrder;
+    public IReadOnlyList<string> ItemOrder => _itemOrder;
+    public bool CanArrange => !_isLoading && _filter.Length == 0;
+    private bool _isArranging;
+    public bool IsArranging
+    {
+        get => _isArranging;
+        set
+        {
+            if (value && !CanArrange) return;
+            SetProperty(ref _isArranging, value);
+        }
+    }
+
+    public void MoveBefore(string path, string? beforePath)
+    {
+        if (!CanArrange) return;
+        var paths = OrderedItems().Select(pair => pair.Item.FullPath).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var from = paths.FindIndex(candidate => candidate.Equals(path, StringComparison.OrdinalIgnoreCase));
+        if (from < 0 || string.Equals(path, beforePath, StringComparison.OrdinalIgnoreCase)) return;
+        if (beforePath != null && !paths.Contains(beforePath, StringComparer.OrdinalIgnoreCase)) return;
+        paths.RemoveAt(from);
+        var to = beforePath == null ? paths.Count : paths.FindIndex(candidate => candidate.Equals(beforePath, StringComparison.OrdinalIgnoreCase));
+        paths.Insert(to, path);
+        // Keep absent entries in the saved arrangement until their source returns them again.
+        var present = paths.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        _itemOrder = paths.Concat(_itemOrder.Where(saved => present.Add(saved))).ToList();
+        _sortMode = QuickPanelSortMode.Custom;
+        Rebuild();
+        OnPropertyChanged(nameof(SortMode));
+        OnPropertyChanged(nameof(ItemOrder));
+    }
+
+    private IEnumerable<(AppSearchResult Item, DateTime? Modified)> OrderedItems()
+        => QuickPanelItemOrdering.Order(_loaded, SortMode, _itemOrder);
 
     public void ToggleSort() => SortMode = SortMode == QuickPanelSortMode.ModifiedDescending
         ? QuickPanelSortMode.NameAscending
@@ -235,11 +279,7 @@ public class QuickPanelGroupViewModel : ViewModelBase
         // Ordered on the DateTime, not on the string the row shows: that string is formatted and
         // localised, so ordering by it would rank "3 days ago" against "10 minutes ago" alphabetically
         // and answer differently in every language. Items with no known time sort last either way.
-        IEnumerable<(AppSearchResult Item, DateTime? Modified)> ordered = _isLoading
-            ? matching
-            : SortMode == QuickPanelSortMode.NameAscending
-                ? matching.OrderBy(pair => pair.Item.Name, StringComparer.CurrentCultureIgnoreCase)
-                : matching.OrderByDescending(pair => pair.Modified ?? DateTime.MinValue);
+        var ordered = _isLoading ? matching : QuickPanelItemOrdering.Order(matching, SortMode, _itemOrder);
 
         _matchingCount = matching.Count;
         var visible = ordered.Take(Math.Min(_materializedItemCount, DisplayCount)).Select(pair => pair.Item).ToList();

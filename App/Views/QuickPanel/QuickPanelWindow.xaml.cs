@@ -236,6 +236,7 @@ public partial class QuickPanelWindow : Window,
     {
         if (sender is not System.Windows.Controls.ListBox list) return;
 
+        QuickPanelItemReordering.Register(list);
         Controls.Results.ResultsDragDropHelper.Register(list);
         list.SelectionChanged += GroupList_SelectionChanged;
         _activeList ??= list;

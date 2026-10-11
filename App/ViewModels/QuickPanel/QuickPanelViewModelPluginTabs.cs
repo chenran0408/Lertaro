@@ -71,16 +71,19 @@ public partial class QuickPanelViewModel
                 ? string.Empty
                 : dirPath;
 
+            var sourceId = $"{id}:{dirPath}";
+            _readSettings().PluginGroupPreferences.TryGetValue(sourceId, out var preference);
             var groupViewModel = new QuickPanelGroupViewModel(
-                $"{id}:{rank}",
+                sourceId,
                 groupTitle,
                 displayFolderPath,
                 group.ToList(),
-                _readSettings().PluginTabSortModes.GetValueOrDefault(id, QuickPanelSortMode.ModifiedDescending),
-                thumbnailView: !asList,
-                expanded: true,
+                preference?.Sort ?? _readSettings().PluginTabSortModes.GetValueOrDefault(id, QuickPanelSortMode.ModifiedDescending),
+                thumbnailView: preference?.ThumbnailView ?? !asList,
+                expanded: preference?.Expanded ?? true,
                 acceptsDrops: false,
-                showsHeading: !singleGroupNoPath);
+                showsHeading: !singleGroupNoPath,
+                itemOrder: preference?.ItemOrder);
 
             place(groupViewModel, rank);
         }

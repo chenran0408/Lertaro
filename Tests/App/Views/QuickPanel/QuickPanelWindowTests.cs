@@ -52,14 +52,40 @@ public sealed class QuickPanelWindowTests
     }
 
     [StaTestMethod]
+    public async Task ArrangingDisablesSelectionBandAndSortPickerShowsAllChoices()
+    {
+        var vm = BuildViewModel();
+        await vm.RefreshAsync();
+        var window = new Lertaro.App.Views.QuickPanel.QuickPanelWindow(vm) { Width = 700, Height = 500 };
+        try
+        {
+            window.Show();
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            var list = Find<System.Windows.Controls.ListBox>(window);
+            Assert.IsNotNull(list);
+            var group = Assert.IsInstanceOfType<QuickPanelGroupViewModel>(list.DataContext);
+            var picker = Find<System.Windows.Controls.ComboBox>(window);
+            Assert.IsNotNull(picker);
+            Assert.HasCount(3, picker.Items);
+            group.IsArranging = true;
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            Assert.IsFalse(Lertaro.App.Helpers.Visuals.RubberBandSelection.GetIsEnabled(list));
+            group.IsArranging = false;
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            Assert.IsTrue(Lertaro.App.Helpers.Visuals.RubberBandSelection.GetIsEnabled(list));
+        }
+        finally { window.Close(); }
+    }
+
+    [StaTestMethod]
     public async Task SortingAShownPanelKeepsItsPositionAndSize()
     {
         var vm = BuildViewModel();
         await vm.RefreshAsync();
         vm.Groups[0].Replace(new()
         {
-            (new Lertaro.App.AppSearchResult { Name = "z.txt", FullPath = @"C:\a\z.txt" }, new DateTime(2026, 1, 2)),
-            (new Lertaro.App.AppSearchResult { Name = "a.txt", FullPath = @"C:\a\a.txt" }, new DateTime(2026, 1, 1))
+            (new AppSearchResult { Name = "z.txt", FullPath = @"C:\a\z.txt" }, new DateTime(2026, 1, 2)),
+            (new AppSearchResult { Name = "a.txt", FullPath = @"C:\a\a.txt" }, new DateTime(2026, 1, 1))
         });
         var window = new Lertaro.App.Views.QuickPanel.QuickPanelWindow(vm)
         {
