@@ -92,6 +92,8 @@
                           SelectedValue="{Binding ThumbnailIconSize, Mode=TwoWay}"/>
             </Grid>
 
+            <local:QuickPanelWindowSizeEditor DataContext="{Binding WindowSize}" Margin="0,0,0,14"/>
+
             <!-- The page's own two halves. Stacked, they pushed each other off the screen: both are
                  lists that grow, and the plugin tabs sat below a workspace card tall enough to hide
                  them. Same tab row the pane inside the workspace card uses for its own two halves. -->

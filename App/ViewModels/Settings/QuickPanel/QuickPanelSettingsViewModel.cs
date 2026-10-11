@@ -28,6 +28,7 @@ public class QuickPanelSettingsViewModel : ViewModelBase
     {
         _userSettings = userSettings;
         var panel = userSettings.QuickPanel;
+        WindowSize = new QuickPanelWindowSizeSettingsViewModel(panel);
         _enabled = panel.Enabled;
         _thumbnailIconSize = panel.ThumbnailIconSize;
         _blacklistText = string.Join(Environment.NewLine, panel.BlacklistedProcesses);
@@ -175,12 +176,15 @@ public class QuickPanelSettingsViewModel : ViewModelBase
     public ICommand MoveTabUpCommand { get; }
     public ICommand MoveTabDownCommand { get; }
 
+    public QuickPanelWindowSizeSettingsViewModel WindowSize { get; }
+
     public void Save()
     {
         foreach (var tab in Tabs)
             tab.Save();
 
         var panel = _userSettings.QuickPanel;
+        WindowSize.Save(panel);
         panel.Enabled = Enabled;
         panel.ThumbnailIconSize = ThumbnailIconSize;
         // BlacklistedProcesses is not written here: it is edited on the Hotkeys page, beside the global

@@ -780,5 +780,11 @@
   "About_TutorialTitle": "Interactive Tutorial",
   "About_TutorialHint": "Learn and master the core high-efficiency features of Lertaro step-by-step",
   "About_TutorialBtn": "Start Guide",
-  "Search_WelcomeTitle": "Start typing to search files"
+  "Search_WelcomeTitle": "Start typing to search files",
+  "QuickPanel_CustomSize": "Use a custom opening size",
+  "QuickPanel_WindowWidth": "Width",
+  "QuickPanel_WindowHeight": "Height",
+  "QuickPanel_SizePreview": "Preview window",
+  "QuickPanel_SizeHint": "Drag the sliders or enter a size. Dimensions follow Windows display scaling; the panel fits the available screen area. Uncheck to size automatically.",
+  "QuickPanel_PreviewHint": "Adjust width and height in Settings to preview changes live. Save to apply."
 }

@@ -780,5 +780,11 @@
   "About_TutorialTitle": "新手引導教程",
   "About_TutorialHint": "透過一步步的互動引導，快速掌握 Lertaro 的核心效率特性",
   "About_TutorialBtn": "開始引導",
-  "Search_WelcomeTitle": "開始輸入以檢索檔案"
+  "Search_WelcomeTitle": "開始輸入以檢索檔案",
+  "QuickPanel_CustomSize": "自訂預設開啟大小",
+  "QuickPanel_WindowWidth": "寬度",
+  "QuickPanel_WindowHeight": "高度",
+  "QuickPanel_SizePreview": "預覽視窗",
+  "QuickPanel_SizeHint": "拖動滑桿或輸入尺寸，大小隨 Windows 顯示縮放；面板會限制在螢幕可用區域內。取消勾選恢復自動大小。",
+  "QuickPanel_PreviewHint": "在設定中調整寬高，即時查看大小變化。儲存後套用。"
 }

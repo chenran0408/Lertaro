@@ -780,5 +780,11 @@
   "About_TutorialTitle": "Tutorial Interactivo",
   "About_TutorialHint": "Aprende y domina paso a paso las funciones principales de alta eficiencia de Lertaro",
   "About_TutorialBtn": "Iniciar Guía",
-  "Search_WelcomeTitle": "Empieza a escribir para buscar archivos"
+  "Search_WelcomeTitle": "Empieza a escribir para buscar archivos",
+  "QuickPanel_CustomSize": "Personalizar el tamaño inicial",
+  "QuickPanel_WindowWidth": "Ancho",
+  "QuickPanel_WindowHeight": "Alto",
+  "QuickPanel_SizePreview": "Vista previa",
+  "QuickPanel_SizeHint": "Arrastra los controles o introduce un tamaño. Se respeta la escala de Windows y el área de pantalla. Desmarca para ajustar automáticamente.",
+  "QuickPanel_PreviewHint": "Ajusta el ancho y el alto en Configuración para ver los cambios al instante. Guarda para aplicar."
 }

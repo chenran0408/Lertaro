@@ -780,5 +780,11 @@
   "About_TutorialTitle": "대화형 튜토리얼",
   "About_TutorialHint": "Lertaro의 핵심 고효율 기능을 단계별로 배우고 익히세요",
   "About_TutorialBtn": "가이드 시작",
-  "Search_WelcomeTitle": "파일을 검색하려면 입력을 시작하세요"
+  "Search_WelcomeTitle": "파일을 검색하려면 입력을 시작하세요",
+  "QuickPanel_CustomSize": "기본 열기 크기 지정",
+  "QuickPanel_WindowWidth": "너비",
+  "QuickPanel_WindowHeight": "높이",
+  "QuickPanel_SizePreview": "창 미리 보기",
+  "QuickPanel_SizeHint": "슬라이더나 숫자로 조절합니다. Windows 배율을 따르며 화면 안에 맞춥니다. 선택을 해제하면 자동 조절합니다.",
+  "QuickPanel_PreviewHint": "설정에서 너비와 높이를 조절하면 즉시 미리 보기에 반영됩니다. 저장하면 적용됩니다."
 }

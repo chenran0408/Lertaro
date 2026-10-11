@@ -48,6 +48,12 @@ public class QuickPanelSettings
 {
     public bool Enabled { get; set; } = true;
 
+    public bool UseCustomWindowSize { get; set; }
+
+    public double WindowWidth { get; set; } = 640;
+
+    public double WindowHeight { get; set; } = 480;
+
     public List<QuickPanelTab> Tabs { get; set; } = new() { QuickPanelTab.CreateDefault() };
 
     /// <summary>The tab the panel reopens on. Falls back to the first tab when it no longer exists.</summary>

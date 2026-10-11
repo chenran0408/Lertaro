@@ -780,5 +780,11 @@
   "About_TutorialTitle": "インタラクティブチュートリアル",
   "About_TutorialHint": "Lertaro の中核となる高効率機能を、段階を追って学び習得できます",
   "About_TutorialBtn": "ガイドを開始",
-  "Search_WelcomeTitle": "入力を開始してファイルを検索"
+  "Search_WelcomeTitle": "入力を開始してファイルを検索",
+  "QuickPanel_CustomSize": "起動時のサイズを指定",
+  "QuickPanel_WindowWidth": "幅",
+  "QuickPanel_WindowHeight": "高さ",
+  "QuickPanel_SizePreview": "ウィンドウをプレビュー",
+  "QuickPanel_SizeHint": "スライダーまたは数値で調整します。Windows の表示倍率に従い、画面内に収まります。チェックを外すと自動調整します。",
+  "QuickPanel_PreviewHint": "設定で幅と高さを変更すると即座にプレビューされます。保存すると適用されます。"
 }

@@ -73,6 +73,10 @@ public sealed partial class QuickPanelManager
         double targetPhysTop;
         double targetDpiScale;
 
+        var settings = Core.UserSettings.Load().QuickPanel;
+        var preferredWidth = settings.UseCustomWindowSize ? settings.WindowWidth : 0;
+        var preferredHeight = settings.UseCustomWindowSize ? settings.WindowHeight : 0;
+
         var isDesktop = IsDesktopOrShellWindow(host);
 
         if (!isDesktop && host != IntPtr.Zero && GetWindowRect(host, out var rect) && (rect.Right - rect.Left > 100 && rect.Bottom - rect.Top > 100))
@@ -85,7 +89,7 @@ public sealed partial class QuickPanelManager
             (width, height, targetPhysLeft, targetPhysTop) = CalculatePhysicalDockPosition(
                 rect.Left, rect.Top, rect.Right, rect.Bottom,
                 dpi,
-                wa.Left, wa.Top, wa.Width, wa.Height);
+                wa.Left, wa.Top, wa.Width, wa.Height, preferredWidth, preferredHeight);
         }
         else
         {
@@ -111,7 +115,7 @@ public sealed partial class QuickPanelManager
             (width, height, targetPhysLeft, targetPhysTop) = CalculatePhysicalDockPosition(
                 mouseWa.Left, mouseWa.Top, mouseWa.Right, mouseWa.Bottom,
                 dpi,
-                mouseWa.Left, mouseWa.Top, mouseWa.Width, mouseWa.Height);
+                mouseWa.Left, mouseWa.Top, mouseWa.Width, mouseWa.Height, preferredWidth, preferredHeight);
         }
 
         _window.Width = width;
@@ -131,7 +135,8 @@ public sealed partial class QuickPanelManager
     internal static (double Width, double Height, double PhysLeft, double PhysTop) CalculatePhysicalDockPosition(
         int hostLeft, int hostTop, int hostRight, int hostBottom,
         uint hostDpi,
-        int waLeft, int waTop, int waWidth, int waHeight)
+        int waLeft, int waTop, int waWidth, int waHeight,
+        double preferredWidth = 0, double preferredHeight = 0)
     {
         const double margin = 12.0;
         var hostScale = hostDpi > 0 ? hostDpi / 96.0 : 1.0;
@@ -141,6 +146,16 @@ public sealed partial class QuickPanelManager
 
         var panelWidthDip = Math.Max(MinPanelWidth, hostWidthDip * PanelSideFactor);
         var panelHeightDip = Math.Max(MinPanelHeight, hostHeightDip * PanelSideFactor);
+
+        if (double.IsFinite(preferredWidth) && preferredWidth > 0)
+            panelWidthDip = Math.Max(MinPanelWidth, preferredWidth);
+        if (double.IsFinite(preferredHeight) && preferredHeight > 0)
+            panelHeightDip = Math.Max(MinPanelHeight, preferredHeight);
+        if (waWidth > 0 && waHeight > 0)
+        {
+            panelWidthDip = Math.Min(panelWidthDip, waWidth / hostScale);
+            panelHeightDip = Math.Min(panelHeightDip, waHeight / hostScale);
+        }
 
         var physPanelWidth = panelWidthDip * hostScale;
         var physPanelHeight = panelHeightDip * hostScale;
