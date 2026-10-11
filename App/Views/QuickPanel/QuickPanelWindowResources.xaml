@@ -188,10 +188,10 @@
          The name is allowed two lines before it is cut, a file called something long being the
          normal case rather than the exception at this width. -->
     <DataTemplate x:Key="QuickPanelTileTemplate" DataType="{x:Type app:AppSearchResult}">
-        <!-- No width of its own any more: the wrap panel hands each tile a slot five to a row (see
+        <!-- No width of its own any more: the wrap panel hands each tile a compact slot (see
              QuickPanelTileMetrics) and this fills it. The picture is sized from that same width, so a
-             panel docked to a wide window gets thumbnails worth looking at rather than more of them. -->
-        <Grid Margin="2,4,2,4">
+             wide panel shows more entries without enlarging the buttons. -->
+        <Grid Margin="2,2,2,2">
             <!-- A box every tile shares, with the picture fitted inside it keeping its own shape. The
                  box is wider than tall (see the converter): square left a band of empty tile above and
                  below every 16:9 thumbnail, and letting each picture set its own height made every row
@@ -204,7 +204,7 @@
                        HorizontalAlignment="Center" VerticalAlignment="Center"
                        RenderOptions.BitmapScalingMode="HighQuality"/>
             </Border>
-            <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Focusable="False" Margin="0,6,0,0"
+            <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Focusable="False" Margin="0,3,0,0"
                           conv:ScrollViewerHelper.BubbleMouseWheel="True">
                 <TextBlock FontSize="11"
                            conv:TextHighlighter.Text="{Binding Name}"
@@ -238,7 +238,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
                     <Border x:Name="TileBorder" Background="Transparent" CornerRadius="6"
-                            Margin="2" Padding="2" Cursor="Hand">
+                            Margin="2" Padding="1" Cursor="Hand">
                         <ContentPresenter/>
                     </Border>
                     <ControlTemplate.Triggers>

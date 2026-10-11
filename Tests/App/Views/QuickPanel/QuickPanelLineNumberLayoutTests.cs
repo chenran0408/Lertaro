@@ -33,7 +33,7 @@ public sealed class QuickPanelLineNumberLayoutTests
         QuickPanelTileMetrics.IconSize = QuickPanelThumbnailSize.ExtraLarge;
         try
         {
-            Assert.AreEqual(5, QuickPanelLineNumberLayout.ThumbnailColumnsFor(800, 36));
+            Assert.AreEqual(8, QuickPanelLineNumberLayout.ThumbnailColumnsFor(800, 36));
             Assert.AreEqual(3, QuickPanelLineNumberLayout.ThumbnailColumnsFor(380, 36));
         }
         finally

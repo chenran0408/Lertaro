@@ -18,6 +18,10 @@ internal sealed class QuickPanelNumberedWrapPanel : System.Windows.Controls.Pane
     public static readonly DependencyProperty UsesGridSlotsProperty = DependencyProperty.Register(
         nameof(UsesGridSlots), typeof(bool), typeof(QuickPanelNumberedWrapPanel),
         new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender));
+    public static readonly DependencyProperty ShowGridLinesProperty = DependencyProperty.Register(
+        nameof(ShowGridLines), typeof(bool), typeof(QuickPanelNumberedWrapPanel),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+    public bool ShowGridLines { get => (bool)GetValue(ShowGridLinesProperty); set => SetValue(ShowGridLinesProperty, value); }
     public IReadOnlyDictionary<string, int>? GridSlots { get => (IReadOnlyDictionary<string, int>?)GetValue(GridSlotsProperty); set => SetValue(GridSlotsProperty, value); }
     public bool UsesGridSlots { get => (bool)GetValue(UsesGridSlotsProperty); set => SetValue(UsesGridSlotsProperty, value); }
     private int _targetSlot = -1;
@@ -58,7 +62,7 @@ internal sealed class QuickPanelNumberedWrapPanel : System.Windows.Controls.Pane
         var rows = RowCount();
         var height = CellHeight();
         var iconHeight = QuickPanelTileMetrics.IconHeightFor(_slotWidth);
-        if (UsesGridSlots)
+        if (UsesGridSlots && (ShowGridLines || _targetSlot >= 0))
         {
             var outline = new System.Windows.Media.Pen(new SolidColorBrush(System.Windows.Media.Color.FromArgb(35, 128, 128, 128)), 1);
             for (var row = 0; row < rows; row++)
@@ -77,7 +81,7 @@ internal sealed class QuickPanelNumberedWrapPanel : System.Windows.Controls.Pane
 
     internal int SlotAt(System.Windows.Point point)
     {
-        if (_columns <= 0 || _slotWidth <= 0 || point.X < _gutterWidth || point.X >= ActualWidth || point.Y < 0 || point.Y >= ActualHeight) return -1;
+        if (_columns <= 0 || _slotWidth <= 0 || point.X < _gutterWidth || point.X >= _gutterWidth + _columns * _slotWidth || point.Y < 0 || point.Y >= ActualHeight) return -1;
         return (int)(point.Y / CellHeight()) * _columns + Math.Min(_columns - 1, (int)((point.X - _gutterWidth) / _slotWidth));
     }
 
