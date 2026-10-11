@@ -73,25 +73,25 @@ internal static class QuickPanelItemReordering
                     && Math.Abs(point.Y - start.Y) <= SystemParameters.MinimumVerticalDragDistance) return;
                 group.IsReordering = true;
                 if (!list.SelectedItems.Contains(dragged)) list.SelectedItem = dragged;
-            grid = QuickPanelNumberedWrapPanel.Find(list);
-            if (list.ItemContainerGenerator.ContainerFromItem(dragged) is ListBoxItem container)
-            {
-                offset = start - container.TranslatePoint(new Point(), list);
-                var dpi = VisualTreeHelper.GetDpi(container);
-                var bitmap = new RenderTargetBitmap(Math.Max(1, (int)Math.Ceiling(container.ActualWidth * dpi.DpiScaleX)),
-                    Math.Max(1, (int)Math.Ceiling(container.ActualHeight * dpi.DpiScaleY)), dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
-                var drawing = new DrawingVisual();
-                using (var context = drawing.RenderOpen())
-                    context.DrawRectangle(new VisualBrush(container), null, new Rect(0, 0, container.ActualWidth, container.ActualHeight));
-                bitmap.Render(drawing);
-                bitmap.Freeze();
-                ghost = new System.Windows.Controls.Primitives.Popup
+                grid = QuickPanelNumberedWrapPanel.Find(list);
+                if (list.ItemContainerGenerator.ContainerFromItem(dragged) is ListBoxItem container)
                 {
-                    PlacementTarget = list, Placement = System.Windows.Controls.Primitives.PlacementMode.Relative,
-                    AllowsTransparency = true, StaysOpen = true, IsHitTestVisible = false,
-                    Child = new System.Windows.Controls.Image { Source = bitmap, Width = container.ActualWidth, Height = container.ActualHeight, Opacity = 0.85, IsHitTestVisible = false }
-                };
-            }
+                    offset = start - container.TranslatePoint(new Point(), list);
+                    var dpi = VisualTreeHelper.GetDpi(container);
+                    var bitmap = new RenderTargetBitmap(Math.Max(1, (int)Math.Ceiling(container.ActualWidth * dpi.DpiScaleX)),
+                        Math.Max(1, (int)Math.Ceiling(container.ActualHeight * dpi.DpiScaleY)), dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
+                    var drawing = new DrawingVisual();
+                    using (var context = drawing.RenderOpen())
+                        context.DrawRectangle(new VisualBrush(container), null, new Rect(0, 0, container.ActualWidth, container.ActualHeight));
+                    bitmap.Render(drawing);
+                    bitmap.Freeze();
+                    ghost = new System.Windows.Controls.Primitives.Popup
+                    {
+                        PlacementTarget = list, Placement = System.Windows.Controls.Primitives.PlacementMode.Relative,
+                        AllowsTransparency = true, StaysOpen = true, IsHitTestVisible = false,
+                        Child = new System.Windows.Controls.Image { Source = bitmap, Width = container.ActualWidth, Height = container.ActualHeight, Opacity = 0.85, IsHitTestVisible = false }
+                    };
+                }
                 list.CaptureMouse();
                 moved = true;
                 scroll.Start();
