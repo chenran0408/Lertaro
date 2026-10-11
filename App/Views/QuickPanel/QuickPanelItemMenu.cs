@@ -11,15 +11,29 @@ using ListBox = System.Windows.Controls.ListBox;
 namespace Lertaro.App.Views.QuickPanel;
 
 // UI orchestration for panel-only item names and adding shortcuts to an explicitly selected cell.
-internal sealed class QuickPanelItemMenu(QuickPanelWindow window)
+internal sealed class QuickPanelItemMenu
 {
+    private readonly QuickPanelWindow window;
+    internal QuickPanelItemMenu(QuickPanelWindow window)
+    {
+        this.window = window;
+        window.PreviewMouseDown += (_, _) => { if (_building) Close(); };
+        window.Deactivated += (_, _) => { if (_building) Close(); };
+        window.IsVisibleChanged += (_, _) => { if (!window.IsVisible) Close(); };
+        window.Closed += (_, _) => Close();
+    }
     private ContextMenu? _menu;
     private bool _building;
     internal bool IsOpen => _building || _menu?.IsOpen == true;
-    internal async Task ShowAsync(ListBox list, QuickPanelGroupViewModel group, AppSearchResult? item, int slot)
+    internal void Close()
     {
         _building = false;
         _menu?.IsOpen = false;
+        _menu = null;
+    }
+    internal async Task ShowAsync(ListBox list, QuickPanelGroupViewModel group, AppSearchResult? item, int slot)
+    {
+        Close();
         var menu = new ContextMenu { PlacementTarget = list, Placement = PlacementMode.MousePoint };
         if (item == null)
         {

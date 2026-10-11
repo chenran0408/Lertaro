@@ -114,6 +114,18 @@ public partial class QuickPanelWindow : Window,
     // the list has focus and would consume the key first.
     private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
+        if (IsSizeMenuOpen)
+        {
+            if (e.Key == Key.Escape)
+            {
+                _itemMenu.Close();
+                SizeButton.ContextMenu?.IsOpen = false;
+                e.Handled = true;
+            }
+            return;
+        }
+        if (ActionFlyout.IsOpen) return;
+
         // Enter opens the selection, which is what a double-click does -- the filter box has the keyboard
         // after a summon and does not want Enter for anything, so the whole gesture is "type, then
         // press Enter" without ever leaving it.
@@ -160,10 +172,6 @@ public partial class QuickPanelWindow : Window,
             return;
         }
 
-
-        // The flyout closes on its own Escape and hangs its handler on this window too. Letting this
-        // one act as well would dismiss the panel out from under a menu the user was only closing.
-        if (ActionFlyout.IsOpen) return;
 
         // A filter in the box is undone first, and only a second Escape closes the panel. Anything else
         // means the one key that gets you out of a narrowed list also throws away the panel you were
@@ -219,7 +227,7 @@ public partial class QuickPanelWindow : Window,
     // act on that row instead of on whatever was selected before it.
     private void ItemsList_PreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not System.Windows.Controls.ListBox list) return;
+        if (sender is not System.Windows.Controls.ListBox list || Mouse.LeftButton == MouseButtonState.Pressed) return;
 
         if (list.DataContext is not QuickPanelGroupViewModel group) return;
         _activeList = list;
