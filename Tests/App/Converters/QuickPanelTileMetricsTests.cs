@@ -17,7 +17,7 @@ public sealed class QuickPanelTileMetricsTests
         listWidth, typeof(double), null!, CultureInfo.InvariantCulture);
 
     private static double Icon(double listWidth) => (double)new QuickPanelTileMetrics().Convert(
-        listWidth, typeof(double), "Icon", CultureInfo.InvariantCulture);
+        Slot(listWidth), typeof(double), "Icon", CultureInfo.InvariantCulture);
 
     private static int Columns(double listWidth) => (int)(listWidth / Slot(listWidth));
 
@@ -41,6 +41,24 @@ public sealed class QuickPanelTileMetricsTests
     // is worth tiles a few pixels smaller. The smaller sizes move both ends the count answers to -- the
     // wide end's ceiling and the narrow end's floor -- so the row has to stay full against whichever
     // ceiling and floor are current.
+    [TestMethod]
+    public void PictureAndGridUseTheSameMeasuredCellAcrossSizesAndPanelWidths()
+    {
+        foreach (var size in Enum.GetValues<QuickPanelThumbnailSize>())
+            AtSize(size, () =>
+            {
+                foreach (var width in new[] { 200.0, 380.0, 800.0, 1400.0 })
+                {
+                    var cell = QuickPanelTileMetrics.SlotFor(width);
+                    var converter = new QuickPanelTileMetrics();
+                    Assert.AreEqual(QuickPanelTileMetrics.IconWidthFor(cell), (double)converter.Convert(cell, typeof(double), "Icon", CultureInfo.InvariantCulture));
+                    Assert.AreEqual(QuickPanelTileMetrics.IconHeightFor(cell), (double)converter.Convert(cell, typeof(double), "IconHeight", CultureInfo.InvariantCulture));
+                    Assert.AreEqual(QuickPanelTileMetrics.CellHeightFor(cell), (double)converter.Convert(cell, typeof(double), "Cell", CultureInfo.InvariantCulture));
+                    Assert.AreEqual(cell - 24, QuickPanelTileMetrics.IconWidthFor(cell));
+                }
+            });
+    }
+
     [TestMethod]
     public void NoWidthEverLeavesRoomForAnotherTileAtTheEndOfTheRow()
     {
@@ -112,7 +130,7 @@ public sealed class QuickPanelTileMetricsTests
     public void ThePictureBoxIsWiderThanItIsTall()
     {
         var box = (double)new QuickPanelTileMetrics().Convert(
-            800.0, typeof(double), "IconHeight", CultureInfo.InvariantCulture);
+            Slot(800.0), typeof(double), "IconHeight", CultureInfo.InvariantCulture);
 
         Assert.IsLessThan(Icon(800), box, "square is what left a band of empty tile around 16:9 thumbnails");
         Assert.IsGreaterThan(Icon(800) * 0.5625, box, "and a 16:9 picture should very nearly fill it");
@@ -122,9 +140,9 @@ public sealed class QuickPanelTileMetricsTests
     public void TheCellIsThePictureBoxPlusRoomForTheName()
     {
         var box = (double)new QuickPanelTileMetrics().Convert(
-            800.0, typeof(double), "IconHeight", CultureInfo.InvariantCulture);
+            Slot(800.0), typeof(double), "IconHeight", CultureInfo.InvariantCulture);
         var cell = (double)new QuickPanelTileMetrics().Convert(
-            800.0, typeof(double), "Cell", CultureInfo.InvariantCulture);
+            Slot(800.0), typeof(double), "Cell", CultureInfo.InvariantCulture);
 
         Assert.IsGreaterThan(box, cell);
     }

@@ -99,7 +99,13 @@ public sealed class QuickPanelWindowTests
             group.PlaceInGrid(new[] { path }, 7);
             window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             var container = Assert.IsInstanceOfType<System.Windows.Controls.ListBoxItem>(list.ItemContainerGenerator.ContainerFromItem(group.Items.First(item => item.FullPath == path)));
-            var point = container.TranslatePoint(new System.Windows.Point(container.ActualWidth / 2, container.ActualHeight / 2), panel);
+            var borders = new List<System.Windows.Controls.Border>();
+            Collect(container, borders);
+            var iconBox = borders.Single(border => border.Name == "TileIcon");
+            Assert.AreEqual(Lertaro.App.Converters.QuickPanelTileMetrics.IconWidthFor(container.ActualWidth), iconBox.ActualWidth, 0.01);
+            Assert.AreEqual(Lertaro.App.Converters.QuickPanelTileMetrics.IconHeightFor(container.ActualWidth), iconBox.ActualHeight, 0.01);
+            Assert.AreEqual(Lertaro.App.Converters.QuickPanelTileMetrics.CellHeightFor(container.ActualWidth), container.ActualHeight, 0.01);
+            var point = container.TranslatePoint(new Point(container.ActualWidth / 2, container.ActualHeight / 2), panel);
             Assert.AreEqual(7, panel.SlotAt(point));
             group.SortMode = QuickPanelSortMode.NameAscending;
             Assert.IsFalse(group.UsesGridSlots);

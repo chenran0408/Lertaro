@@ -74,18 +74,14 @@ public sealed class QuickPanelTileMetrics : IValueConverter
         if (value is not double available || double.IsNaN(available) || available <= 0)
             return DependencyProperty.UnsetValue;
 
-        var slot = SlotFor(available);
-
-        // Leaving the name room underneath: the tile is the picture plus up to two lines of text, and a
-        // picture that took the whole slot would push the name out of it.
-        var iconWidth = Math.Max(48, slot - SlotChrome);
-
+        // Icon bindings already receive the measured cell width, not the whole list width.
+        // Dividing it into columns again makes the picture smaller than its grid cell.
         return (parameter as string) switch
         {
-            "Icon" => iconWidth,
-            "IconHeight" => IconHeightFor(slot),
-            "Cell" => CellHeightFor(slot),
-            _ => slot,
+            "Icon" => IconWidthFor(available),
+            "IconHeight" => IconHeightFor(available),
+            "Cell" => CellHeightFor(available),
+            _ => SlotFor(available),
         };
     }
 
@@ -103,8 +99,10 @@ public sealed class QuickPanelTileMetrics : IValueConverter
     /// the width a 16:9 picture very nearly fills it, and a square icon simply scales down to fit the
     /// height instead of stretching the row: both keep their own shape, and the grid stays a grid.
     /// </remarks>
+    internal static double IconWidthFor(double slotWidth) => Math.Max(0, slotWidth - SlotChrome);
+
     internal static double IconHeightFor(double slotWidth)
-        => Math.Floor(Math.Max(48, slotWidth - SlotChrome) * 2 / 3);
+        => Math.Floor(IconWidthFor(slotWidth) * 2 / 3);
 
     internal static double CellHeightFor(double slotWidth) => IconHeightFor(slotWidth) + TextRoom;
 
