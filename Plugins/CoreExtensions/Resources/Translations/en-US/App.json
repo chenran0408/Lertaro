@@ -207,7 +207,7 @@
   "QuickPanel_AcceptsDropsTooltip": "Files and folders dragged onto this group are copied into its folder, using Windows' own file copy. Always a copy, never a move.",
   "QuickPanel_FilterPattern": "Filter",
   "QuickPanel_FilterPatternTooltip": "Separate multiple patterns with ';' or ',' (e.g. *.mp4;*.mkv).\nPrefix a pattern with '!' to exclude matches (e.g. !*.tmp).\nYou can also use search filters such as :@doc or :@doc|img. Leave blank for no filtering.",
-  "QuickPanel_MaxItems": "At most",
+  "QuickPanel_MaxItems": "Limit (0 = all)",
   "QuickPanel_MaxAge": "Changed within (minutes)",
   "QuickPanel_ProcessesDesc": "Apps this workspace belongs to, one process name per line (chrome or chrome.exe). Summon the panel over one of them and it opens on this workspace.",
   "QuickPanel_BlacklistTitle": "Quick panel only",
@@ -786,5 +786,6 @@
   "QuickPanel_WindowHeight": "Height",
   "QuickPanel_SizePreview": "Preview window",
   "QuickPanel_SizeHint": "Drag the sliders or enter a size. Dimensions follow Windows display scaling; the panel fits the available screen area. Uncheck to size automatically.",
-  "QuickPanel_PreviewHint": "Adjust width and height in Settings to preview changes live. Save to apply."
+  "QuickPanel_PreviewHint": "Adjust width and height in Settings to preview changes live. Save to apply.",
+  "QuickPanel_FileOrder": "File order"
 }

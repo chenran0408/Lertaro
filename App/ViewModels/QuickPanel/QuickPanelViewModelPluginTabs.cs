@@ -76,7 +76,7 @@ public partial class QuickPanelViewModel
                 groupTitle,
                 displayFolderPath,
                 group.ToList(),
-                QuickPanelSortMode.ModifiedDescending,
+                _readSettings().PluginTabSortModes.GetValueOrDefault(id, QuickPanelSortMode.ModifiedDescending),
                 thumbnailView: !asList,
                 expanded: true,
                 acceptsDrops: false,

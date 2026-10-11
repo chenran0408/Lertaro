@@ -112,19 +112,20 @@ public class QuickPanelTabSettingsViewModel : ViewModelBase
         _model.DisabledGroupIds = Sources.Where(r => !r.IsVisible).Select(r => r.Id).ToList();
 
         // Only what the user actually overrode: a row left at its defaults gets no entry at all. What is
-        // left of a preference (sort, expanded) is the panel's own to write, so an entry that already
+        // left of a preference (expanded) is the panel's own to write, so an entry that already
         // exists is patched rather than replaced.
         foreach (var row in Sources)
         {
             var custom = row.DisplayName.Trim();
             if (!_model.GroupPreferences.TryGetValue(row.Id, out var preference))
             {
-                if (custom.Length == 0 && !row.ShowAsList)
+                if (custom.Length == 0 && !row.ShowAsList && row.SortMode == QuickPanelGroupPreference.DefaultSortFor(_model.Folders.First(f => f.Id == row.Id)))
                     continue;
                 _model.GroupPreferences[row.Id] = preference = new QuickPanelGroupPreference();
             }
             preference.DisplayName = custom;
             preference.ThumbnailView = !row.ShowAsList;
+            preference.Sort = row.SortMode;
         }
 
         // A source deleted here leaves nothing behind to accumulate in the settings file.
@@ -192,6 +193,7 @@ public class QuickPanelTabSettingsViewModel : ViewModelBase
         {
             row.DisplayName = preference.DisplayName;
             row.ShowAsList = !preference.ThumbnailView;
+            row.SortMode = preference.Sort;
         }
         return row;
     }

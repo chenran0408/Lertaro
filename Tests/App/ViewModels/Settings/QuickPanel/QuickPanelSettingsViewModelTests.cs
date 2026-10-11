@@ -23,6 +23,19 @@ public sealed class QuickPanelSettingsViewModelTests
     }
 
     [TestMethod]
+    public void SortingEditsAreStagedAndReopenedInSettings()
+    {
+        var settings = BuildSettings(@"C:\data");
+        var vm = new QuickPanelSettingsViewModel(settings);
+        vm.Tabs[0].Sources[0].SortMode = QuickPanelSortMode.NameAscending;
+        Assert.IsEmpty(settings.QuickPanel.Tabs[0].GroupPreferences);
+        vm.Save();
+        var reopened = new QuickPanelSettingsViewModel(settings);
+        Assert.AreEqual(QuickPanelSortMode.NameAscending, reopened.Tabs[0].Sources[0].SortMode);
+        Assert.AreEqual(QuickPanelSortMode.NameAscending, settings.QuickPanel.Tabs[0].GroupPreferences[vm.Tabs[0].Sources[0].Id].Sort);
+    }
+
+    [TestMethod]
     public void Save_WritesTheListOrderAndTheHiddenRows()
     {
         var settings = BuildSettings(@"C:\a", @"C:\b");

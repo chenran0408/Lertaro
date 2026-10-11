@@ -80,6 +80,8 @@ public class QuickPanelSettings
     /// </summary>
     public List<string> ListViewPluginTabIds { get; set; } = new();
 
+    public Dictionary<string, QuickPanelSortMode> PluginTabSortModes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
     /// The strip's order, left to right, over workspaces and plugin tabs at once. An id that isn't listed
     /// (a workspace just created, a plugin that just appeared) keeps its discovery-order position after
@@ -231,7 +233,7 @@ public class QuickPanelFolderSource
     public string FilterPattern { get; set; } = string.Empty;
 
     /// <summary>How many entries this group shows at most. 0 means everything the source has.</summary>
-    public int MaxItems { get; set; } = 20;
+    public int MaxItems { get; set; }
 
     /// <summary>Only entries changed within this many minutes qualify. 0 means no age limit at all.</summary>
     public int MaxAgeMinutes { get; set; }

@@ -46,6 +46,37 @@ public sealed class QuickPanelViewModelTests
     }
 
     [TestMethod]
+    public async Task StoredSortingAndPanelTogglesSurviveRefresh()
+    {
+        var settings = OneWorkspace(Folder(@"C:\data", "s1"));
+        settings.Tabs[0].GroupPreferences["s1"] = new QuickPanelGroupPreference { Sort = QuickPanelSortMode.NameAscending };
+        var vm = Build(settings, (source, _) => Task.FromResult(new List<SearchResult>
+        {
+            Entry(source.Path, "z.txt", new DateTime(2026, 1, 2)),
+            Entry(source.Path, "a.txt", new DateTime(2026, 1, 1))
+        }));
+        await vm.RefreshAsync();
+        Assert.AreEqual("a.txt", vm.Groups[0].Items[0].Name);
+        vm.Groups[0].ToggleSort();
+        Assert.AreEqual(QuickPanelSortMode.ModifiedDescending, settings.Tabs[0].GroupPreferences["s1"].Sort);
+        await vm.RefreshAsync();
+        Assert.AreEqual("z.txt", vm.Groups[0].Items[0].Name);
+    }
+
+    [TestMethod]
+    public async Task NewSourcesHaveNoTwentyItemLimit()
+    {
+        var source = QuickPanelFolderSource.For(@"C:\data", QuickPanelSourceKind.All);
+        Assert.AreEqual(0, source.MaxItems);
+        var vm = Build(OneWorkspace(source), (folder, _) => Task.FromResult(
+            Enumerable.Range(0, 100).Select(index => Entry(folder.Path, index.ToString("D3"), new DateTime(2026, 1, 1))).ToList()));
+        await vm.RefreshAsync();
+        Assert.AreEqual(100, vm.Groups[0].Count);
+        while (vm.Groups[0].LoadNextPage()) { }
+        Assert.HasCount(100, vm.Groups[0].Items);
+    }
+
+    [TestMethod]
     public async Task Refresh_BuildsOneGroupPerVisibleSource()
     {
         var settings = OneWorkspace(Folder(@"C:\a", "s1"), Folder(@"C:\b", "s2"));

@@ -28,7 +28,7 @@ public class QuickPanelSourceRowViewModel : ViewModelBase
         {
             _path = folder.Path,
             _kind = folder.Kind,
-            _sortByModified = folder.SortByModified || folder.Kind == QuickPanelSourceKind.AllByModified,
+            _sortMode = QuickPanelGroupPreference.DefaultSortFor(folder),
             _recursive = folder.Recursive,
             _filterPattern = folder.FilterPattern,
             _maxItems = folder.MaxItems,
@@ -182,6 +182,7 @@ public class QuickPanelSourceRowViewModel : ViewModelBase
     {
         _kindOptions = null;
         OnPropertyChanged(nameof(KindOptions));
+        OnPropertyChanged(nameof(SortOptions));
         OnPropertyChanged(nameof(Kind));
     }
 
@@ -199,11 +200,10 @@ public class QuickPanelSourceRowViewModel : ViewModelBase
     /// <summary>The age limit only means anything for a recent-files source, so the field hides otherwise.</summary>
     public bool IsRecentFiles => Kind == QuickPanelSourceKind.RecentFiles;
 
-    private bool _sortByModified;
     public bool SortByModified
     {
-        get => _sortByModified;
-        set => SetProperty(ref _sortByModified, value);
+        get => SortMode == QuickPanelSortMode.ModifiedDescending;
+        set => SortMode = value ? QuickPanelSortMode.ModifiedDescending : QuickPanelSortMode.NameAscending;
     }
 
     private bool _recursive;
@@ -220,7 +220,16 @@ public class QuickPanelSourceRowViewModel : ViewModelBase
         set => SetProperty(ref _filterPattern, value);
     }
 
-    private int _maxItems = 20;
+    public IReadOnlyList<QuickPanelSortOption> SortOptions => QuickPanelSortOption.All;
+
+    private QuickPanelSortMode _sortMode;
+    public QuickPanelSortMode SortMode
+    {
+        get => _sortMode;
+        set => SetProperty(ref _sortMode, value);
+    }
+
+    private int _maxItems;
 
     /// <summary>0 means everything the source has; the upper bound keeps one group from filling the panel.</summary>
     public int MaxItems
@@ -255,7 +264,7 @@ public class QuickPanelSourceRowViewModel : ViewModelBase
             return;
         _folder.Path = Path.Trim().Trim('"');
         _folder.Kind = Kind;
-        _folder.SortByModified = SortByModified;
+        _folder.SortByModified = SortMode == QuickPanelSortMode.ModifiedDescending;
         _folder.Recursive = Recursive;
         _folder.FilterPattern = FilterPattern.Trim();
         _folder.MaxItems = MaxItems;

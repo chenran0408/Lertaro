@@ -195,10 +195,10 @@
                                     <CheckBox Margin="14,0,0,0" VerticalAlignment="Center"
                                               IsChecked="{Binding ShowAsList, Mode=TwoWay}"
                                               Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_ViewList]}"/>
-                                    <CheckBox Margin="14,0,0,0" VerticalAlignment="Center"
-                                              Visibility="{Binding IsRecentFiles, Converter={StaticResource InvertBoolToVis}}"
-                                              IsChecked="{Binding SortByModified, Mode=TwoWay}"
-                                              Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_SortByModified]}"/>
+                                    <ComboBox Margin="14,0,0,0" MinWidth="160" VerticalAlignment="Center"
+                                              Style="{StaticResource SettingsComboBox}" ItemsSource="{Binding SortOptions}"
+                                              DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding SortMode, Mode=TwoWay}"
+                                              ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_FileOrder]}"/>
                                     <!-- Beside the display options rather than under the folder field: it is
                                          a thing this group does, not a property of the path. -->
                                     <CheckBox Margin="14,0,0,0" VerticalAlignment="Center"

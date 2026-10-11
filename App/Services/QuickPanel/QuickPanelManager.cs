@@ -29,6 +29,7 @@ public sealed partial class QuickPanelManager : IDisposable
 
     public static QuickPanelManager? Instance { get; private set; }
 
+    private System.Windows.Point? _userPanelPosition;
     private QuickPanelWindow? _window;
     private QuickPanelViewModel? _viewModel;
 
@@ -194,8 +195,11 @@ public sealed partial class QuickPanelManager : IDisposable
 
         // Closing is the only way out, so this is the one place the reference is dropped -- whether the
         // close came from Hide, from Escape, or from anything else that ever gets to close a window.
+        var shownWindow = _window;
         _window.Closed += (_, _) =>
         {
+            if (shownWindow.HasUserPosition)
+                _userPanelPosition = new System.Windows.Point(shownWindow.Left, shownWindow.Top);
             _window = null;
             QuickLookManager.Instance.PreviewFocusLost -= OnPreviewFocusLost;
 
@@ -227,6 +231,12 @@ public sealed partial class QuickPanelManager : IDisposable
         // and jump, which reads as a flicker every time the panel opens. A brand-new window has no old
         // location, but it does have a default one, and that is just as wrong to paint first.
         PositionAgainst(host);
+        if (_userPanelPosition is { } position)
+        {
+            _window.HasUserPosition = true;
+            _window.Left = position.X;
+            _window.Top = position.Y;
+        }
         _window.Show();
 
         // After Show, and only then: the window has to exist as a real HWND before it can be given the

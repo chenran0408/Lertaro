@@ -95,7 +95,7 @@ internal sealed class QuickPanelGroupLoader
             TitleOf(source, preference),
             FavoritePathResolver.Resolve(source.Path),
             items,
-            QuickPanelGroupPreference.DefaultSortFor(source),
+            preference?.Sort ?? QuickPanelGroupPreference.DefaultSortFor(source),
             preference?.ThumbnailView ?? true,
             preference?.Expanded ?? true,
             source.AcceptsDrops,

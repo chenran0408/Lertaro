@@ -25,6 +25,23 @@ public sealed class QuickPanelPluginTabSettingsTests
     // state alone. Rebuilt from the rows alone it would come back open the moment the plugin did -- and
     // the user closed it deliberately.
     [TestMethod]
+    public void SaveStoresPluginSortingAndPreservesUnavailablePlugins()
+    {
+        var settings = BuildSettings();
+        settings.QuickPanel.PluginTabSortModes["unavailable"] = QuickPanelSortMode.NameAscending;
+        var vm = new QuickPanelSettingsViewModel(settings);
+        var rows = Assert.IsInstanceOfType<List<QuickPanelPluginTabOption>>(vm.PluginTabs);
+        rows.Add(new QuickPanelPluginTabOption("available", () => "Available", true, false)
+        {
+            SortMode = QuickPanelSortMode.NameAscending
+        });
+        Assert.IsFalse(settings.QuickPanel.PluginTabSortModes.ContainsKey("available"));
+        vm.Save();
+        Assert.AreEqual(QuickPanelSortMode.NameAscending, settings.QuickPanel.PluginTabSortModes["available"]);
+        Assert.AreEqual(QuickPanelSortMode.NameAscending, settings.QuickPanel.PluginTabSortModes["unavailable"]);
+    }
+
+    [TestMethod]
     public void Save_KeepsTheClosedStateOfATabItCannotSee()
     {
         var settings = BuildSettings("Gone::QuickPanelTabProvider::Nothing");

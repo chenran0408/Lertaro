@@ -63,7 +63,7 @@ public sealed partial class QuickPanelManager
         if (!_dpiSubscribed)
         {
             _dpiSubscribed = true;
-            _window.DpiChanged += (_, _) => { if (_window != null && _window.IsVisible) PositionAgainst(_lastHost); };
+            _window.DpiChanged += (_, _) => { if (_window != null && _window.IsVisible && !_window.HasUserPosition) PositionAgainst(_lastHost); };
             _window.Closed += (_, _) => _dpiSubscribed = false;
         }
 

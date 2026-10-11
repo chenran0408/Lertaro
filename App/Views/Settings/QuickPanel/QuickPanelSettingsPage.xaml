@@ -335,8 +335,14 @@
                                         <!-- The one display choice a plugin tab has. A folder source is
                                              asked this on its own row in a workspace's source list; a
                                              plugin tab has no such row, so it is asked here. -->
-                                        <CheckBox Grid.Column="1" IsChecked="{Binding ShowAsList, Mode=TwoWay}"
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <ComboBox Margin="0,0,14,0" MinWidth="160" Style="{StaticResource SettingsComboBox}"
+                                                  ItemsSource="{Binding SortOptions}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                                  SelectedValue="{Binding SortMode, Mode=TwoWay}"
+                                                  ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_FileOrder]}"/>
+                                        <CheckBox IsChecked="{Binding ShowAsList, Mode=TwoWay}"
                                                   Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_ViewList]}"/>
+                                        </StackPanel>
                                     </Grid>
                                 </Border>
                             </DataTemplate>

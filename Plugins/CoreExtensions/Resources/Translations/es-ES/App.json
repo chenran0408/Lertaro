@@ -207,7 +207,7 @@
   "QuickPanel_AcceptsDropsTooltip": "Los archivos y carpetas que sueltes en este grupo se copian en su carpeta con la copia de archivos de Windows. Siempre copia, nunca mueve.",
   "QuickPanel_FilterPattern": "Filtro",
   "QuickPanel_FilterPatternTooltip": "Separe varios patrones con ';' o ',' (p. ej., *.mp4;*.mkv).\nAnteponer '!' a un patrón excluye las coincidencias (p. ej., !*.tmp).\nTambién puede usar filtros de búsqueda como :@doc o :@doc|img. Déjelo vacío para no filtrar.",
-  "QuickPanel_MaxItems": "Como máximo",
+  "QuickPanel_MaxItems": "Límite (0 = todos)",
   "QuickPanel_MaxAge": "Modificados hace (minutos)",
   "QuickPanel_ProcessesDesc": "Aplicaciones a las que pertenece este espacio de trabajo, un nombre de proceso por línea (chrome o chrome.exe). Al abrir el panel sobre una de ellas, se abrirá en este espacio de trabajo.",
   "QuickPanel_BlacklistTitle": "Solo el panel rápido",
@@ -786,5 +786,6 @@
   "QuickPanel_WindowHeight": "Alto",
   "QuickPanel_SizePreview": "Vista previa",
   "QuickPanel_SizeHint": "Arrastra los controles o introduce un tamaño. Se respeta la escala de Windows y el área de pantalla. Desmarca para ajustar automáticamente.",
-  "QuickPanel_PreviewHint": "Ajusta el ancho y el alto en Configuración para ver los cambios al instante. Guarda para aplicar."
+  "QuickPanel_PreviewHint": "Ajusta el ancho y el alto en Configuración para ver los cambios al instante. Guarda para aplicar.",
+  "QuickPanel_FileOrder": "Orden de archivos"
 }

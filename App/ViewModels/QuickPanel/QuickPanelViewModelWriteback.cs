@@ -4,16 +4,30 @@ namespace Lertaro.App.ViewModels.QuickPanel;
 // Split out purely to keep QuickPanelViewModel.cs under the repo's per-file line limit; it has no state
 // of its own and only ever operates on the one view model it is part of.
 //
-// Everything else the panel offers is per-session -- a group's sort, its view, whether it is collapsed --
-// and is deliberately not written anywhere. These two are, because they change what the strip IS rather
-// than how one open of it looks: a closed tab that came back on the next summon, or an order that
-// forgot itself, would not read as a preference at all.
+// Group sorting is also saved so the panel and the settings page describe the same order.
 //
 // The caveat that comes with writing from here: the Quick Panel settings page edits a staged copy and
 // puts it back on Save, so a page left open across one of these ends up overwriting it. Same rule as
 // anywhere else two surfaces write one setting -- whoever saves last wins.
 public partial class QuickPanelViewModel
 {
+    private void PersistGroupSort(IQuickPanelTabSource tab, QuickPanelGroupViewModel group)
+    {
+        var settings = _readSettings();
+        var workspace = settings.Tabs.FirstOrDefault(candidate => candidate.Id.Equals(tab.Id, StringComparison.OrdinalIgnoreCase));
+        if (workspace != null)
+        {
+            if (!workspace.GroupPreferences.TryGetValue(group.SourceId, out var preference))
+                workspace.GroupPreferences[group.SourceId] = preference = new Core.QuickPanelGroupPreference();
+            preference.Sort = group.SortMode;
+        }
+        else
+        {
+            settings.PluginTabSortModes[tab.Id] = group.SortMode;
+        }
+        _saveSettings();
+    }
+
     /// <summary>Writes the strip's order down as the order it now is.</summary>
     /// <remarks>
     /// One list over both kinds of tab, which is what makes a plugin tab draggable to between two

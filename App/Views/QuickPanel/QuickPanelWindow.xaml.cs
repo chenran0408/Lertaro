@@ -184,12 +184,15 @@ public partial class QuickPanelWindow : Window,
     /// </remarks>
     public bool IsDraggingWindow { get; private set; }
 
+    internal bool HasUserPosition { get; set; }
+
     private void DragArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ChangedButton != MouseButton.Left) return;
 
         try
         {
+            HasUserPosition = true;
             IsDraggingWindow = true;
             DragMove();
         }

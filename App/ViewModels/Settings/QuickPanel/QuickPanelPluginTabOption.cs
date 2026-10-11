@@ -1,3 +1,5 @@
+using Lertaro.Core;
+
 namespace Lertaro.App.ViewModels.Settings.QuickPanel;
 
 /// <summary>One plugin-provided tab, and whether the strip currently shows it.</summary>
@@ -19,6 +21,14 @@ public sealed class QuickPanelPluginTabOption : ViewModelBase
         _showAsList = showAsList;
     }
 
+    public IReadOnlyList<QuickPanelSortOption> SortOptions => QuickPanelSortOption.All;
+    private QuickPanelSortMode _sortMode = QuickPanelSortMode.ModifiedDescending;
+    public QuickPanelSortMode SortMode
+    {
+        get => _sortMode;
+        set => SetProperty(ref _sortMode, value);
+    }
+
     public string Id { get; }
 
     private readonly Func<string> _name;
@@ -33,7 +43,11 @@ public sealed class QuickPanelPluginTabOption : ViewModelBase
     public string Name => _name();
 
     /// <summary>Re-reads <see cref="Name"/> after a language switch.</summary>
-    public void NotifyLanguageChanged() => OnPropertyChanged(nameof(Name));
+    public void NotifyLanguageChanged()
+    {
+        OnPropertyChanged(nameof(Name));
+        OnPropertyChanged(nameof(SortOptions));
+    }
 
     private bool _isOpen;
 

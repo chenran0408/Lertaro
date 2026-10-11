@@ -22,7 +22,10 @@ internal static class QuickPanelPluginTabCatalog
                     // The provider, not its Name: asking it again is what makes a language switch land.
                     () => provider.Name,
                     !settings.ClosedPluginTabIds.Contains(id, StringComparer.OrdinalIgnoreCase),
-                    settings.ListViewPluginTabIds.Contains(id, StringComparer.OrdinalIgnoreCase));
+                    settings.ListViewPluginTabIds.Contains(id, StringComparer.OrdinalIgnoreCase))
+                {
+                    SortMode = settings.PluginTabSortModes.GetValueOrDefault(id, QuickPanelSortMode.ModifiedDescending)
+                };
             })
             .ToList();
 }

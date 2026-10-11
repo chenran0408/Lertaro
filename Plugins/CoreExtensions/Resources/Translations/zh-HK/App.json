@@ -207,7 +207,7 @@
   "QuickPanel_AcceptsDropsTooltip": "拖到這個分組上的檔案和資料夾會被複製進它的資料夾,使用 Windows 自己的檔案複製。永遠是複製,不會移動。",
   "QuickPanel_FilterPattern": "篩選",
   "QuickPanel_FilterPatternTooltip": "可以用「;」或者「,」分隔多個模式（例如 *.mp4;*.mkv）。\n在模式前加「!」即可排除符合項目（例如 !*.tmp）。\n亦可以使用搜尋篩選器（例如 :@doc 或 :@doc|img）。留空代表不篩選。",
-  "QuickPanel_MaxItems": "最多",
+  "QuickPanel_MaxItems": "最多（0 表示全部）",
   "QuickPanel_MaxAge": "修改於幾多分鐘內",
   "QuickPanel_ProcessesDesc": "呢個工作區對應嘅應用程式,每行一個處理程序名(chrome 或者 chrome.exe)。喺呢啲應用程式上面呼出面板就會自動切去呢個工作區。",
   "QuickPanel_BlacklistTitle": "淨係快速面板",
@@ -786,5 +786,6 @@
   "QuickPanel_WindowHeight": "高度",
   "QuickPanel_SizePreview": "預覽視窗",
   "QuickPanel_SizeHint": "拖動滑桿或輸入尺寸，大小隨 Windows 顯示縮放；面板會限制在螢幕可用區域內。取消勾選恢復自動大小。",
-  "QuickPanel_PreviewHint": "在設定中調整闊高，即時查看大小變化。儲存後套用。"
+  "QuickPanel_PreviewHint": "在設定中調整闊高，即時查看大小變化。儲存後套用。",
+  "QuickPanel_FileOrder": "檔案順序"
 }

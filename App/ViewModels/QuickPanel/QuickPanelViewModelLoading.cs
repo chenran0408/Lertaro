@@ -175,6 +175,11 @@ public partial class QuickPanelViewModel
             var at = groups.FindIndex(existing => RankOf(existing.SourceId) > rank);
             if (at < 0) at = groups.Count;
             groups.Insert(at, group);
+            group.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(QuickPanelGroupViewModel.SortMode))
+                    PersistGroupSort(tab, group);
+            };
             _ranks[group.SourceId] = rank;
 
             if (tab.Id.Equals(_activeTabId, StringComparison.OrdinalIgnoreCase))

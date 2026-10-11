@@ -52,6 +52,33 @@ public sealed class QuickPanelWindowTests
     }
 
     [StaTestMethod]
+    public async Task SortingAShownPanelKeepsItsPositionAndSize()
+    {
+        var vm = BuildViewModel();
+        await vm.RefreshAsync();
+        vm.Groups[0].Replace(new()
+        {
+            (new Lertaro.App.AppSearchResult { Name = "z.txt", FullPath = @"C:\a\z.txt" }, new DateTime(2026, 1, 2)),
+            (new Lertaro.App.AppSearchResult { Name = "a.txt", FullPath = @"C:\a\a.txt" }, new DateTime(2026, 1, 1))
+        });
+        var window = new Lertaro.App.Views.QuickPanel.QuickPanelWindow(vm)
+        {
+            Left = 120, Top = 80, Width = 700, Height = 500, HasUserPosition = true
+        };
+        try
+        {
+            window.Show();
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            var before = new Rect(window.Left, window.Top, window.ActualWidth, window.ActualHeight);
+            vm.Groups[0].ToggleSort();
+            Assert.AreEqual("a.txt", vm.Groups[0].Items[0].Name);
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            Assert.AreEqual(before, new Rect(window.Left, window.Top, window.ActualWidth, window.ActualHeight));
+        }
+        finally { window.Close(); }
+    }
+
+    [StaTestMethod]
     public async Task Window_BuildsWithEveryResourceItReferences()
     {
         var viewModel = BuildViewModel();
