@@ -46,6 +46,25 @@ public sealed class QuickPanelViewModelTests
     }
 
     [TestMethod]
+    public async Task GridCellsSurviveSettingsSerializationAndAutomaticSorting()
+    {
+        var settings = OneWorkspace(Folder(@"C:\data", "s1"));
+        var vm = Build(settings);
+        await vm.RefreshAsync();
+        var path = vm.Groups[0].Items[0].FullPath;
+        vm.Groups[0].PlaceInGrid(new[] { path }, 8);
+        vm.Groups[0].SortMode = QuickPanelSortMode.NameAscending;
+        settings = System.Text.Json.JsonSerializer.Deserialize<QuickPanelSettings>(System.Text.Json.JsonSerializer.Serialize(settings))!;
+        var reopened = Build(settings);
+        await reopened.RefreshAsync();
+        Assert.IsFalse(reopened.Groups[0].UsesGridSlots);
+        Assert.AreEqual(8, reopened.Groups[0].GridSlots[path]);
+        reopened.Groups[0].SortMode = QuickPanelSortMode.Custom;
+        Assert.IsTrue(reopened.Groups[0].UsesGridSlots);
+        Assert.AreEqual(8, reopened.Groups[0].GridSlots[path]);
+    }
+
+    [TestMethod]
     public async Task CustomOrderAndDisplayChoicesSurviveSavingAndReopening()
     {
         var settings = OneWorkspace(Folder(@"C:\data", "s1"));

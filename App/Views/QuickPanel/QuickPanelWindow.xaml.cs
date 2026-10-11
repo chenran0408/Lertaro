@@ -221,7 +221,7 @@ public partial class QuickPanelWindow : Window,
         if (selection.Count == 0) return;
 
         e.Handled = true;
-        ActionFlyout.Show(selection, this, this, list, System.Windows.Controls.Primitives.PlacementMode.MousePoint);
+        ActionFlyout.Show(selection, this, this, list, System.Windows.Controls.Primitives.PlacementMode.MousePoint, includeShellActions: false);
     }
 
     /// <summary>The list the user last touched, which is what a keystroke acts on.</summary>
@@ -232,10 +232,15 @@ public partial class QuickPanelWindow : Window,
     /// </remarks>
     private System.Windows.Controls.ListBox? _activeList;
 
+    private static readonly DependencyProperty InteractionRegisteredProperty = DependencyProperty.RegisterAttached("InteractionRegistered", typeof(bool), typeof(QuickPanelWindow), new PropertyMetadata(false));
+
     private void GroupList_Loaded(object sender, RoutedEventArgs e)
     {
         if (sender is not System.Windows.Controls.ListBox list) return;
 
+        if ((bool)list.GetValue(InteractionRegisteredProperty)) return;
+        list.SetValue(InteractionRegisteredProperty, true);
+        list.ContextMenuOpening += (_, e) => e.Handled = true;
         QuickPanelItemReordering.Register(list);
         Controls.Results.ResultsDragDropHelper.Register(list);
         list.SelectionChanged += GroupList_SelectionChanged;

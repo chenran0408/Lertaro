@@ -5,20 +5,6 @@ using Lertaro.Core.SearchIndex;
 namespace Lertaro.App.ViewModels.QuickPanel;
 
 /// <summary>One source's worth of the quick panel, with its own order.</summary>
-/// <remarks>
-/// Keyed by the source it was built from rather than by the folder it happens to point at: order,
-/// visibility and per-group preferences are all stored against a source id, and plugin-provided sources
-/// will share that id space without having a path to be keyed by at all.
-///
-/// The panel used to group through a CollectionView, which was simpler but cannot do this: sorting on
-/// a view is a property of the whole view, so every group necessarily shared one order. Ordering per
-/// group means the groups have to be real objects that each hold their own items, which is what this
-/// is.
-///
-/// The trade that comes with it: each group renders its own list, so a selection belongs to one group
-/// rather than spanning them. Acting on a set of files from two different folders at once is no longer
-/// possible, and rubber-banding across a group boundary does nothing.
-/// </remarks>
 public class QuickPanelGroupViewModel : ViewModelBase
 {
     // Enough rows or tiles to cover the largest normal panel viewport plus a small scroll-ahead buffer.
@@ -42,7 +28,8 @@ public class QuickPanelGroupViewModel : ViewModelBase
         bool showsHeading = true,
         bool isLoading = false,
         int maxItems = 0,
-        IEnumerable<string>? itemOrder = null)
+        IEnumerable<string>? itemOrder = null,
+        IReadOnlyDictionary<string, int>? gridSlots = null)
     {
         SourceId = sourceId;
         Title = title;
@@ -52,6 +39,7 @@ public class QuickPanelGroupViewModel : ViewModelBase
         _maxItems = maxItems;
         _loaded = loaded;
         _itemOrder = itemOrder?.ToList() ?? new();
+        _gridSlots = new Dictionary<string, int>(gridSlots ?? new Dictionary<string, int>(), StringComparer.OrdinalIgnoreCase);
         // The fields, not the properties: each setter rebuilds, and the group has nothing to rebuild
         // from until the call below.
         _sortMode = sortMode;
@@ -101,15 +89,6 @@ public class QuickPanelGroupViewModel : ViewModelBase
     private string _filter = string.Empty;
 
     /// <summary>Narrows the group to the entries whose name the query matches.</summary>
-    /// <remarks>
-    /// The same matching every other box in this app does: <see cref="FuzzyMatcher.IsMatch"/>, which is
-    /// the index scan's own fzf rule reached through the seam built for callers that need identical
-    /// semantics without running a scan. So "rdm" finds readme.md here exactly as it does in the search
-    /// window, and a pinyin alias works because that matcher already consults the alias providers.
-    ///
-    /// What it does not do is reorder: each group keeps the order its source kind gives it, because that
-    /// order is a setting the user chose per source rather than something a query should override.
-    /// </remarks>
     public void ApplyFilter(string? query)
     {
         var normalized = query?.Trim() ?? string.Empty;
@@ -201,19 +180,31 @@ public class QuickPanelGroupViewModel : ViewModelBase
         set
         {
             if (value && !CanArrange) return;
+            if (value)
+            {
+                EnsureGridSlots();
+                SortMode = QuickPanelSortMode.Custom;
+            }
             SetProperty(ref _isArranging, value);
         }
     }
 
     public void MoveBefore(string path, string? beforePath)
+        => Move(path, beforePath, insertBefore: true);
+
+    public void MoveTo(string path, string? targetPath)
+        => Move(path, targetPath, insertBefore: false);
+
+    private void Move(string path, string? beforePath, bool insertBefore)
     {
         if (!CanArrange) return;
         var paths = OrderedItems().Select(pair => pair.Item.FullPath).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         var from = paths.FindIndex(candidate => candidate.Equals(path, StringComparison.OrdinalIgnoreCase));
         if (from < 0 || string.Equals(path, beforePath, StringComparison.OrdinalIgnoreCase)) return;
         if (beforePath != null && !paths.Contains(beforePath, StringComparer.OrdinalIgnoreCase)) return;
+        var to = beforePath == null ? paths.Count - 1 : paths.FindIndex(candidate => candidate.Equals(beforePath, StringComparison.OrdinalIgnoreCase));
+        if (insertBefore && beforePath != null && from < to) to--;
         paths.RemoveAt(from);
-        var to = beforePath == null ? paths.Count : paths.FindIndex(candidate => candidate.Equals(beforePath, StringComparison.OrdinalIgnoreCase));
         paths.Insert(to, path);
         // Keep absent entries in the saved arrangement until their source returns them again.
         var present = paths.ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -223,6 +214,25 @@ public class QuickPanelGroupViewModel : ViewModelBase
         OnPropertyChanged(nameof(SortMode));
         OnPropertyChanged(nameof(ItemOrder));
     }
+
+    private Dictionary<string, int> _gridSlots;
+    public IReadOnlyDictionary<string, int> GridSlots => _gridSlots;
+    public bool UsesGridSlots => SortMode == QuickPanelSortMode.Custom && _isThumbnailView && CanArrange;
+
+    public void PlaceInGrid(IEnumerable<string> paths, int slot)
+    {
+        if (!CanArrange || slot < 0) return;
+        EnsureGridSlots();
+        _gridSlots = QuickPanelGridLayout.Place(_gridSlots, paths, slot);
+        _itemOrder = _gridSlots.OrderBy(pair => pair.Value).Select(pair => pair.Key).ToList();
+        _sortMode = QuickPanelSortMode.Custom;
+        Rebuild();
+        OnPropertyChanged(nameof(SortMode));
+        OnPropertyChanged(nameof(GridSlots));
+        OnPropertyChanged(nameof(ItemOrder));
+    }
+
+    private void EnsureGridSlots() => _gridSlots = QuickPanelGridLayout.Merge(_gridSlots, OrderedItems().Select(pair => pair.Item.FullPath));
 
     private IEnumerable<(AppSearchResult Item, DateTime? Modified)> OrderedItems()
         => QuickPanelItemOrdering.Order(_loaded, SortMode, _itemOrder);
@@ -248,7 +258,10 @@ public class QuickPanelGroupViewModel : ViewModelBase
     public bool IsThumbnailView
     {
         get => _isThumbnailView;
-        set => SetProperty(ref _isThumbnailView, value);
+        set
+        {
+            if (SetProperty(ref _isThumbnailView, value)) OnPropertyChanged(nameof(UsesGridSlots));
+        }
     }
 
     public void ToggleView() => IsThumbnailView = !IsThumbnailView;
@@ -269,6 +282,9 @@ public class QuickPanelGroupViewModel : ViewModelBase
 
     private void Rebuild(bool resetMaterialization = false)
     {
+        if (UsesGridSlots) EnsureGridSlots();
+        OnPropertyChanged(nameof(GridSlots));
+        OnPropertyChanged(nameof(UsesGridSlots));
         if (resetMaterialization)
             _materializedItemCount = InitialMaterializedItemCount;
 

@@ -1,10 +1,10 @@
 {
-  "QuickPanel_DropHint": "先釘住面板，再將檔案、資料夾或程式拖到這裡，新增捷徑。",
+  "QuickPanel_DropHint": "先釘住面板，再拖到目標格子新增捷徑。原檔案保留，面板切換為固定網格。",
   "QuickPanel_DropFailed": "無法新增捷徑",
 
-  "QuickPanel_SortCustom": "自訂",
-  "QuickPanel_Arrange": "整理順序",
-  "QuickPanel_ArrangeHint": "開啟後，拖曳圖示到另一項前面；拖到清單下方可移到末尾。完成後關閉此按鈕。搜尋或載入時暫不可整理。",
+  "QuickPanel_SortCustom": "固定網格",
+  "QuickPanel_Arrange": "整理圖示",
+  "QuickPanel_ArrangeHint": "開啟後，拖曳圖示到目標格子。空格保留原來的空位，已有圖示的格子會交換位置。切換排列方式會保留網格配置。",
 
   "Settings_LocalSend_SendCardTitle": "傳送至其他裝置",
   "Settings_LocalSend_SendCardHint": "選擇檔案、資料夾或文字，再選擇接收裝置。也可將檔案或資料夾拖曳到這裡；接收方需執行 LocalSend 或已啟用區域網絡傳輸的 Lertaro。",

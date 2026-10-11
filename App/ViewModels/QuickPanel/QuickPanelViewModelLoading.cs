@@ -180,7 +180,8 @@ public partial class QuickPanelViewModel
                 if (e.PropertyName is nameof(QuickPanelGroupViewModel.SortMode)
                     or nameof(QuickPanelGroupViewModel.IsThumbnailView)
                     or nameof(QuickPanelGroupViewModel.IsExpanded)
-                    or nameof(QuickPanelGroupViewModel.ItemOrder))
+                    or nameof(QuickPanelGroupViewModel.ItemOrder)
+                    or nameof(QuickPanelGroupViewModel.GridSlots))
                     PersistGroupSort(tab, group);
             };
             _ranks[group.SourceId] = rank;

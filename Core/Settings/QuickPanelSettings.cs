@@ -211,6 +211,7 @@ public class QuickPanelTab
                 ThumbnailView = pair.Value.ThumbnailView,
                 Expanded = pair.Value.Expanded,
                 ItemOrder = new List<string>(pair.Value.ItemOrder),
+                GridSlots = new Dictionary<string, int>(pair.Value.GridSlots, StringComparer.OrdinalIgnoreCase),
             },
             StringComparer.OrdinalIgnoreCase),
     };
@@ -297,6 +298,8 @@ public class QuickPanelGroupPreference
             : QuickPanelSortMode.NameAscending;
 
     public List<string> ItemOrder { get; set; } = new();
+
+    public Dictionary<string, int> GridSlots { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     public bool ThumbnailView { get; set; } = true;
 

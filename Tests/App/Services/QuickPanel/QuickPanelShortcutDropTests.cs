@@ -29,7 +29,8 @@ public sealed class QuickPanelShortcutDropTests
             File.WriteAllText(document, "original content");
             var folder = Directory.CreateDirectory(Path.Combine(source, "folder.v2")).FullName;
             File.WriteAllText(Path.Combine(panel, "report.lnk"), "existing item");
-            QuickPanelShortcutDrop.Add(new[] { document, folder, document, Path.Combine(source, "missing.txt") }, panel);
+            var added = QuickPanelShortcutDrop.Add(new[] { document, folder, document, Path.Combine(source, "missing.txt") }, panel);
+            CollectionAssert.AreEqual(new[] { Path.Combine(panel, "report (2).lnk"), Path.Combine(panel, "folder.v2.lnk") }, added);
             Assert.AreEqual("original content", File.ReadAllText(document));
             Assert.IsTrue(Directory.Exists(folder));
             Assert.AreEqual("existing item", File.ReadAllText(Path.Combine(panel, "report.lnk")));

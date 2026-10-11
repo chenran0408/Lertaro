@@ -36,6 +36,7 @@ public partial class QuickPanelViewModel
         preference.ThumbnailView = group.IsThumbnailView;
         preference.Expanded = group.IsExpanded;
         preference.ItemOrder = group.ItemOrder.ToList();
+        preference.GridSlots = new Dictionary<string, int>(group.GridSlots, StringComparer.OrdinalIgnoreCase);
         _saveSettings();
     }
 

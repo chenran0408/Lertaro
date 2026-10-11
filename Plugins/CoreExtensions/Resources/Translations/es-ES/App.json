@@ -1,10 +1,10 @@
 {
-  "QuickPanel_DropHint": "Fija el panel y arrastra archivos, carpetas o aplicaciones aquí para añadir accesos directos.",
+  "QuickPanel_DropHint": "Fija el panel y suelta en una celda para añadir accesos directos. Los originales se conservan y la carpeta cambia a la cuadrícula fija.",
   "QuickPanel_DropFailed": "No se pudieron añadir los accesos directos",
 
-  "QuickPanel_SortCustom": "Personalizado",
-  "QuickPanel_Arrange": "Ordenar",
-  "QuickPanel_ArrangeHint": "Activa para arrastrar un elemento delante de otro o debajo de la lista para moverlo al final. Desactiva al terminar. No disponible durante búsquedas o carga.",
+  "QuickPanel_SortCustom": "Cuadrícula fija",
+  "QuickPanel_Arrange": "Organizar iconos",
+  "QuickPanel_ArrangeHint": "Arrastra iconos a una celda. Una celda vacía deja libre la posición anterior; una ocupada intercambia los iconos. Cambiar el orden conserva la cuadrícula.",
 
   "Settings_LocalSend_SendCardTitle": "Enviar a otro dispositivo",
   "Settings_LocalSend_SendCardHint": "Elige archivos, una carpeta o texto y selecciona el destinatario. También puedes arrastrar archivos o carpetas aquí. El destinatario necesita LocalSend o Lertaro con transferencia LAN activada.",

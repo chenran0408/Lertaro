@@ -3,6 +3,16 @@ namespace Lertaro.Core.Tests.Settings;
 [TestClass]
 public sealed class QuickPanelGroupOrderingTests
 {
+    [TestMethod]
+    public void CloneKeepsGridPositionsWithoutSharingMutableState()
+    {
+        var tab = new Lertaro.Core.QuickPanelTab();
+        tab.GroupPreferences["source"] = new Lertaro.Core.QuickPanelGroupPreference { GridSlots = new() { ["file"] = 7 } };
+        var clone = tab.Clone();
+        clone.GroupPreferences["source"].GridSlots["file"] = 2;
+        Assert.AreEqual(7, tab.GroupPreferences["source"].GridSlots["file"]);
+    }
+
     private static readonly string[] Available = { "downloads", "desktop", "favorites" };
 
     [TestMethod]

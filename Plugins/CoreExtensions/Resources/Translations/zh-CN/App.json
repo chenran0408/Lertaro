@@ -1,10 +1,10 @@
 {
-  "QuickPanel_DropHint": "先钉住面板，再将文件、文件夹或程序拖到这里，添加快捷方式。",
+  "QuickPanel_DropHint": "先钉住面板，再拖到目标格子添加快捷方式。原文件保留，面板切换为固定网格。",
   "QuickPanel_DropFailed": "未能添加快捷方式",
 
-  "QuickPanel_SortCustom": "自定义",
-  "QuickPanel_Arrange": "整理顺序",
-  "QuickPanel_ArrangeHint": "开启后，拖动图标到另一项前面；拖到列表下方可移到末尾。完成后关闭此按钮。搜索或加载时暂不可整理。",
+  "QuickPanel_SortCustom": "固定网格",
+  "QuickPanel_Arrange": "整理图标",
+  "QuickPanel_ArrangeHint": "开启后，拖动图标到目标格子。空格保留原来的空位，已有图标的格子会交换位置。切换排列方式会保留网格布局。",
 
   "Settings_LocalSend_SendCardTitle": "发送给其他设备",
   "Settings_LocalSend_SendCardHint": "选择文件、文件夹或文字，再选择接收设备。也可将文件或文件夹直接拖到这里；接收方需要运行 LocalSend 或启用局域网传输的 Lertaro。",

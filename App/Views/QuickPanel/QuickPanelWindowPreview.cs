@@ -33,6 +33,7 @@ public partial class QuickPanelWindow
     private void GroupList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         if (sender is not System.Windows.Controls.ListBox list) return;
+        if (list.DataContext is ViewModels.QuickPanel.QuickPanelGroupViewModel { IsArranging: true }) return;
 
         if (list.SelectedItem is AppSearchResult { CanPreview: true } result)
         {

@@ -1,10 +1,10 @@
 {
-  "QuickPanel_DropHint": "Pin the panel, then drag files, folders or apps here to add shortcuts.",
+  "QuickPanel_DropHint": "Pin the panel, then drop onto a cell to add shortcuts. Originals stay in place and this folder switches to the fixed grid.",
   "QuickPanel_DropFailed": "Could not add shortcuts",
 
-  "QuickPanel_SortCustom": "Custom",
-  "QuickPanel_Arrange": "Arrange",
-  "QuickPanel_ArrangeHint": "Turn on to drag an item before another, or below the list to move it last. Turn off when finished. Unavailable while searching or loading.",
+  "QuickPanel_SortCustom": "Fixed grid",
+  "QuickPanel_Arrange": "Arrange icons",
+  "QuickPanel_ArrangeHint": "Drag icons to a grid cell. Empty cells leave the old position empty; occupied cells swap the two icons. Switching the sort keeps your grid layout.",
 
   "Settings_LocalSend_SendCardTitle": "Send to another device",
   "Settings_LocalSend_SendCardHint": "Choose files, a folder, or text, then select a recipient. You can also drop files or folders here. The recipient needs LocalSend or Lertaro with LAN transfer enabled.",

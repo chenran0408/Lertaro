@@ -196,6 +196,7 @@
                                                                     <Setter.Value>
                                                                         <ItemsPanelTemplate>
                                                                             <local:QuickPanelNumberedWrapPanel
+                                                                                GridSlots="{Binding GridSlots}" UsesGridSlots="{Binding UsesGridSlots}"
                                                                                 MaximumItemCount="{Binding DataContext.LargestVisibleGroupItemCount, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                                                         </ItemsPanelTemplate>
                                                                     </Setter.Value>

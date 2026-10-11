@@ -18,6 +18,8 @@ public partial class QuickPanelWindow
 
     private IntPtr PathRequestWindowProc(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
+        // The panel owns its action flyout; suppress the default native context menu.
+        if (message == 0x007B) { handled = true; return IntPtr.Zero; }
         if (message != WmCopyData || wParam == IntPtr.Zero)
             return IntPtr.Zero;
 

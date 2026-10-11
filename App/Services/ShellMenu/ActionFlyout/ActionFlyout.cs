@@ -42,7 +42,8 @@ public static class ActionFlyout
         IPluginSearchWindow view,
         Window ownerWindow,
         UIElement anchor,
-        PlacementMode placement)
+        PlacementMode placement,
+        bool includeShellActions = true)
     {
         Close();
         if (selection == null || selection.Count == 0) return;
@@ -70,7 +71,7 @@ public static class ActionFlyout
                 BuildAndShow(items, selection, cmdMap, subMap, view, ownerWindow, anchor, placement);
                 return true;
             }).Task.ConfigureAwait(false);
-            if (!shown) return;
+            if (!shown || !includeShellActions) return;
 
             List<ActionMenuItem>? dynamicItems = null;
             try

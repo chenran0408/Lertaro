@@ -74,7 +74,7 @@ public sealed class QuickPanelWindowTests
     }
 
     [StaTestMethod]
-    public async Task ArrangingDisablesSelectionBandAndSortPickerShowsAllChoices()
+    public async Task ArrangingDisablesSelectionBandAndSwitchingSortKeepsGridPositions()
     {
         var vm = BuildViewModel();
         await vm.RefreshAsync();
@@ -89,6 +89,22 @@ public sealed class QuickPanelWindowTests
             var picker = Find<System.Windows.Controls.ComboBox>(window);
             Assert.IsNotNull(picker);
             Assert.HasCount(3, picker.Items);
+            group.IsArranging = true;
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            var panel = Find<Lertaro.App.Views.QuickPanel.QuickPanelNumberedWrapPanel>(list);
+            Assert.IsNotNull(panel);
+            Assert.IsTrue(panel.UsesGridSlots);
+            Assert.IsGreaterThan(0.0, panel.ActualHeight);
+            var path = group.Items[0].FullPath;
+            group.PlaceInGrid(new[] { path }, 7);
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            var container = Assert.IsInstanceOfType<System.Windows.Controls.ListBoxItem>(list.ItemContainerGenerator.ContainerFromItem(group.Items.First(item => item.FullPath == path)));
+            var point = container.TranslatePoint(new System.Windows.Point(container.ActualWidth / 2, container.ActualHeight / 2), panel);
+            Assert.AreEqual(7, panel.SlotAt(point));
+            group.SortMode = QuickPanelSortMode.NameAscending;
+            Assert.IsFalse(group.UsesGridSlots);
+            group.SortMode = QuickPanelSortMode.Custom;
+            Assert.AreEqual(7, group.GridSlots[path]);
             group.IsArranging = true;
             window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             Assert.IsFalse(Lertaro.App.Helpers.Visuals.RubberBandSelection.GetIsEnabled(list));

@@ -7,6 +7,21 @@ namespace Lertaro.App.Tests.ViewModels.QuickPanel;
 public sealed class QuickPanelGroupViewModelTests
 {
     [TestMethod]
+    public void DraggingToTheNextSlotMovesForwardInsteadOfDoingNothing()
+    {
+        var group = Group(3);
+        group.MoveTo(@"C:\source\0000", @"C:\source\0001");
+        CollectionAssert.AreEqual(new[] { "0001", "0000", "0002" }, group.Items.Select(item => item.Name).ToList());
+        group.MoveTo(@"C:\source\0002", @"C:\source\0001");
+        CollectionAssert.AreEqual(new[] { "0002", "0001", "0000" }, group.Items.Select(item => item.Name).ToList());
+        group.MoveTo(@"C:\source\0002", @"C:\source\0000");
+        CollectionAssert.AreEqual(new[] { "0001", "0000", "0002" }, group.Items.Select(item => item.Name).ToList());
+        Assert.AreEqual(QuickPanelSortMode.Custom, group.SortMode);
+        group.MoveTo(@"C:\source\0001", null);
+        Assert.AreEqual("0001", group.Items.Last().Name);
+    }
+
+    [TestMethod]
     public void CustomOrderKeepsSavedPathsAndAppendsNewItemsByName()
     {
         var group = new QuickPanelGroupViewModel("source", "Source", @"C:\source", Pairs("z", "new-z", "a", "new-a"),
@@ -45,8 +60,10 @@ public sealed class QuickPanelGroupViewModelTests
         group.ApplyFilter("0001");
         Assert.IsFalse(group.IsArranging);
         Assert.IsFalse(group.CanArrange);
-        group.MoveBefore(@"C:\source\0001", null);
-        Assert.AreEqual(QuickPanelSortMode.NameAscending, group.SortMode);
+        var before = group.GridSlots.ToList();
+        group.PlaceInGrid(new[] { @"C:\source\0001" }, 9);
+        CollectionAssert.AreEqual(before, group.GridSlots.ToList());
+        Assert.AreEqual(QuickPanelSortMode.Custom, group.SortMode);
         group.ApplyFilter("");
         Assert.IsTrue(group.CanArrange);
         var loading = new QuickPanelGroupViewModel("source", "Source", "", Pairs("a", "b"), isLoading: true);

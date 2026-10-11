@@ -83,7 +83,7 @@ public partial class QuickPanelViewModel
                 expanded: preference?.Expanded ?? true,
                 acceptsDrops: false,
                 showsHeading: !singleGroupNoPath,
-                itemOrder: preference?.ItemOrder);
+                itemOrder: preference?.ItemOrder, gridSlots: preference?.GridSlots);
 
             place(groupViewModel, rank);
         }

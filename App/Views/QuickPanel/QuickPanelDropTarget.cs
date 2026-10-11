@@ -56,12 +56,15 @@ public partial class QuickPanelWindow
         e.Handled = true;
 
         group?.IsDropTarget = allowed;
+        if (sender is DependencyObject root && QuickPanelNumberedWrapPanel.Find(root) is { } panel)
+            panel.TargetSlot = allowed ? panel.SlotAt(e.GetPosition(panel)) : -1;
     }
 
     private void Group_DragLeave(object sender, DragEventArgs e)
     {
         if (GroupOf(sender) is { } group)
             group.IsDropTarget = false;
+        if (sender is DependencyObject root && QuickPanelNumberedWrapPanel.Find(root) is { } panel) panel.TargetSlot = -1;
     }
 
     private void Group_Drop(object sender, DragEventArgs e)
@@ -72,6 +75,9 @@ public partial class QuickPanelWindow
         if (!CanDrop(group, e)) return;
 
         e.Handled = true;
+        var grid = sender is DependencyObject root ? QuickPanelNumberedWrapPanel.Find(root) : null;
+        var slot = grid?.SlotAt(e.GetPosition(grid)) ?? -1;
+        grid?.TargetSlot = -1;
 
         if (e.Data.GetData(DataFormats.FileDrop) is string[] droppedPaths)
         {
@@ -80,9 +86,10 @@ public partial class QuickPanelWindow
             {
                 try
                 {
-                    Services.QuickPanel.QuickPanelShortcutDrop.Add(droppedPaths, folder);
+                    var added = Services.QuickPanel.QuickPanelShortcutDrop.Add(droppedPaths, folder);
                     Dispatcher.BeginInvoke(new Action(() =>
                     {
+                        group.PlaceInGrid(added, slot >= 0 ? slot : group.GridSlots.Values.DefaultIfEmpty(-1).Max() + 1);
                         if (DataContext is QuickPanelViewModel viewModel) _ = viewModel.ReloadGroupAsync(group);
                     }));
                 }
@@ -116,7 +123,16 @@ public partial class QuickPanelWindow
         // means. The callback is only for sweeping up the staging folder, once the copy that reads from
         // it is done with it.
         ShellPasteHelper.PasteAsync(sources, group!.FolderPath, move: false,
-            onCompleted: () => TryDelete(staging));
+            onCompleted: () =>
+            {
+                var added = sources.Select(source => Path.Combine(group.FolderPath, Path.GetFileName(source))).Where(File.Exists).ToList();
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    group.PlaceInGrid(added, slot >= 0 ? slot : group.GridSlots.Values.DefaultIfEmpty(-1).Max() + 1);
+                    if (DataContext is QuickPanelViewModel viewModel) _ = viewModel.ReloadGroupAsync(group);
+                }));
+                TryDelete(staging);
+            });
     }
 
     /// <summary>Removes the staging folder, if there was one. Never worth failing a drop over.</summary>

@@ -1,10 +1,10 @@
 {
-  "QuickPanel_DropHint": "パネルをピン留めして、ファイル、フォルダーやアプリをここへドラッグするとショートカットを追加できます。",
+  "QuickPanel_DropHint": "パネルを固定してから目的のマスへドロップしてショートカットを追加します。元のファイルを保持し、固定グリッドに切り替えます。",
   "QuickPanel_DropFailed": "ショートカットを追加できませんでした",
 
-  "QuickPanel_SortCustom": "カスタム",
-  "QuickPanel_Arrange": "並べ替え",
-  "QuickPanel_ArrangeHint": "オンにして項目を別の項目の前へドラッグします。一覧の下へドラッグすると末尾に移動します。完了後はオフにしてください。検索中や読み込み中は利用できません。",
+  "QuickPanel_SortCustom": "固定グリッド",
+  "QuickPanel_Arrange": "アイコンを整理",
+  "QuickPanel_ArrangeHint": "アイコンを目的のマスへドラッグします。空きマスなら元の位置は空きになり、使用中なら2つのアイコンを交換します。並べ替えを切り替えても配置を保持します。",
 
   "Settings_LocalSend_SendCardTitle": "ほかのデバイスへ送信",
   "Settings_LocalSend_SendCardHint": "ファイル、フォルダー、またはテキストを選び、受信デバイスを選択します。ここにファイルやフォルダーをドロップすることもできます。受信側では LocalSend または LAN転送を有効にした Lertaro が必要です。",

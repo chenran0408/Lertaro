@@ -8,9 +8,10 @@ namespace Lertaro.App.Services.QuickPanel;
 internal static class QuickPanelShortcutDrop
 {
     // Called on the shell STA worker. Existing links are copied intact to retain arguments and icons.
-    internal static void Add(IEnumerable<string> sources, string folder)
+    internal static List<string> Add(IEnumerable<string> sources, string folder)
     {
         if (!Directory.Exists(folder)) throw new DirectoryNotFoundException(folder);
+        var added = new List<string>();
         foreach (var source in sources.Distinct(StringComparer.OrdinalIgnoreCase))
         {
             var isDirectory = Directory.Exists(source);
@@ -23,6 +24,7 @@ internal static class QuickPanelShortcutDrop
             if (isLink)
             {
                 File.Copy(source, destination, overwrite: false);
+                added.Add(destination);
                 continue;
             }
 
@@ -36,6 +38,7 @@ internal static class QuickPanelShortcutDrop
                 link.SetPath(source);
                 link.SetWorkingDirectory(isDirectory ? source : Path.GetDirectoryName(source)!);
                 ((IPersistFile)linkObject).Save(destination, true);
+                added.Add(destination);
             }
             catch
             {
@@ -47,6 +50,7 @@ internal static class QuickPanelShortcutDrop
                 if (linkObject != null) Marshal.FinalReleaseComObject(linkObject);
             }
         }
+        return added;
     }
 
     internal static string ShortcutName(string source, bool isDirectory)

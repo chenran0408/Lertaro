@@ -1,10 +1,10 @@
 {
-  "QuickPanel_DropHint": "패널을 고정한 다음 파일, 폴더 또는 앱을 여기로 끌어 바로 가기를 추가하세요.",
+  "QuickPanel_DropHint": "패널을 고정하고 원하는 칸에 놓아 바로 가기를 추가하세요. 원본은 유지되고 폴더는 고정 격자로 전환됩니다.",
   "QuickPanel_DropFailed": "바로 가기를 추가하지 못했습니다",
 
-  "QuickPanel_SortCustom": "사용자 지정",
-  "QuickPanel_Arrange": "순서 정리",
-  "QuickPanel_ArrangeHint": "켜고 항목을 다른 항목 앞으로 끌거나 목록 아래로 끌어 마지막으로 옮기세요. 완료 후 끄세요. 검색 또는 불러오기 중에는 사용할 수 없습니다.",
+  "QuickPanel_SortCustom": "고정 격자",
+  "QuickPanel_Arrange": "아이콘 정리",
+  "QuickPanel_ArrangeHint": "아이콘을 원하는 칸으로 끌어 놓으세요. 빈 칸이면 원래 칸은 비워 두고, 사용 중이면 두 아이콘의 위치를 바꿉니다. 정렬을 바꿔도 격자 배치는 유지됩니다.",
 
   "Settings_LocalSend_SendCardTitle": "다른 기기로 보내기",
   "Settings_LocalSend_SendCardHint": "파일, 폴더 또는 텍스트를 고른 후 수신 기기를 선택하세요. 파일이나 폴더를 여기에 끌어 놓을 수도 있습니다. 수신 기기에서 LocalSend 또는 LAN 전송이 활성화된 Lertaro가 필요합니다.",
