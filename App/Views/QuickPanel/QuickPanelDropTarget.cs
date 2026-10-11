@@ -8,13 +8,12 @@ using DragEventArgs = System.Windows.DragEventArgs;
 
 namespace Lertaro.App.Views.QuickPanel;
 
-// Dropping files onto a group copies them into that group's folder. Split out of QuickPanelWindow so
+// Dropping files onto a group adds shortcuts to that group's folder. Split out of QuickPanelWindow so
 // the window file stays under the repo's per-file line limit; it has no state of its own and works
 // entirely off the group each handler's own DataContext names.
 //
-// The copy is Windows' own (IFileOperation, via ShellPasteHelper): one native progress dialog for the
-// whole batch, the real "this file already exists" prompt, and an undo entry -- all things a hand-rolled
-// File.Copy loop would have to reinvent badly.
+// Virtual attachments retain the Windows copy operation because their temporary bytes cannot be
+// used as permanent shortcut targets.
 public partial class QuickPanelWindow
 {
     /// <summary>Whether a drag hovering over this group is one it should take.</summary>
@@ -51,10 +50,9 @@ public partial class QuickPanelWindow
         var group = GroupOf(sender);
         var allowed = CanDrop(group, e);
 
-        // Copy, never Move, whatever the source offered or the user is holding down. The panel is
-        // somewhere to put a copy of something; a drag into it that could silently take the original
-        // away from wherever it came from is a different and much more expensive thing to get wrong.
-        e.Effects = allowed ? DragDropEffects.Copy : DragDropEffects.None;
+        // Physical files become shortcuts; virtual attachments still need a copy of their bytes.
+        // Neither operation moves or deletes the original.
+        e.Effects = !allowed ? DragDropEffects.None : e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Link : DragDropEffects.Copy;
         e.Handled = true;
 
         group?.IsDropTarget = allowed;
@@ -75,21 +73,31 @@ public partial class QuickPanelWindow
 
         e.Handled = true;
 
-        // Real paths if the drag has them, otherwise the bytes written out to somewhere they do have
-        // one. Either way what reaches the copy below is a list of files on disk, so there is one path
-        // through the shell rather than two.
-        var staging = (string?)null;
-        List<string> sources;
-        if (e.Data.GetData(DataFormats.FileDrop) is string[] paths)
+        if (e.Data.GetData(DataFormats.FileDrop) is string[] droppedPaths)
         {
-            sources = paths.Where(path => File.Exists(path) || Directory.Exists(path)).ToList();
+            var folder = group!.FolderPath;
+            Services.ShellThread.Run("Add quick panel shortcuts", () =>
+            {
+                try
+                {
+                    Services.QuickPanel.QuickPanelShortcutDrop.Add(droppedPaths, folder);
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        if (DataContext is QuickPanelViewModel viewModel) _ = viewModel.ReloadGroupAsync(group);
+                    }));
+                }
+                catch (Exception ex)
+                {
+                    Core.Logger.Log($"[QuickPanel] Adding shortcuts failed: {ex.Message}", Core.LogLevel.Error);
+                    PluginSdk.Services.PluginNotificationService.Show(Services.TranslationManager.Instance["QuickPanel_DropFailed"], ex.Message);
+                }
+            });
+            return;
         }
-        else
-        {
-            staging = Path.Combine(Path.GetTempPath(), "Lertaro", "Drop", Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(staging);
-            sources = VirtualFileExtractor.Extract(e.Data, staging);
-        }
+        // Virtual attachments have no permanent target for a shortcut, so preserve their bytes.
+        var staging = Path.Combine(Path.GetTempPath(), "Lertaro", "Drop", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(staging);
+        var sources = VirtualFileExtractor.Extract(e.Data, staging);
 
         if (sources.Count == 0)
         {

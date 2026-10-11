@@ -7,6 +7,10 @@ namespace Lertaro.Core.Tests.Settings;
 public sealed class QuickPanelSourceDefaultsTests
 {
     [TestMethod]
+    public void NewFolderSourcesAcceptShortcutDrops()
+        => Assert.IsTrue(QuickPanelFolderSource.For(@"C:\data").AcceptsDrops);
+
+    [TestMethod]
     public void DefaultName_IsTheFoldersOwnName()
         => Assert.AreEqual("Downloads", QuickPanelFolderSource.DefaultName(@"C:\Users\me\Downloads"));
 

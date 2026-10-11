@@ -8,6 +8,24 @@ namespace Lertaro.App.Tests.ViewModels.QuickPanel.Loading;
 public sealed class QuickPanelGroupLoaderTests
 {
     [TestMethod]
+    public async Task EmptyExistingFolderRemainsAvailableForAddingShortcuts()
+    {
+        var loader = new QuickPanelGroupLoader((_, _, _) => Task.FromResult(new List<SearchResult>()), mapOnBackground: false);
+        var source = QuickPanelFolderSource.For(System.IO.Path.GetTempPath(), QuickPanelSourceKind.All);
+        QuickPanelGroupViewModel? group = null;
+        await loader.LoadAsync(new QuickPanelTab(), source, loaded => group = loaded, CancellationToken.None);
+        Assert.IsNotNull(group);
+        Assert.IsTrue(group.HasMatches);
+        Assert.AreEqual(0, group.Count);
+        group.ApplyFilter("missing");
+        Assert.IsFalse(group.HasMatches);
+        source.AcceptsDrops = false;
+        group = null;
+        await loader.LoadAsync(new QuickPanelTab(), source, loaded => group = loaded, CancellationToken.None);
+        Assert.IsNull(group);
+    }
+
+    [TestMethod]
     public async Task LoadAsync_PublishesArrivalBatchBeforeApplyingFinalSort()
     {
         var finished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);

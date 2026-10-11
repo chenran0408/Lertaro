@@ -1,4 +1,7 @@
 {
+  "QuickPanel_DropHint": "パネルをピン留めして、ファイル、フォルダーやアプリをここへドラッグするとショートカットを追加できます。",
+  "QuickPanel_DropFailed": "ショートカットを追加できませんでした",
+
   "QuickPanel_SortCustom": "カスタム",
   "QuickPanel_Arrange": "並べ替え",
   "QuickPanel_ArrangeHint": "オンにして項目を別の項目の前へドラッグします。一覧の下へドラッグすると末尾に移動します。完了後はオフにしてください。検索中や読み込み中は利用できません。",
@@ -207,8 +210,8 @@
   "QuickPanel_KindLauncher": "すべての項目(名前順)",
   "QuickPanel_SourcePath": "フォルダー",
   "QuickPanel_Recursive": "サブフォルダーを含める",
-  "QuickPanel_AcceptsDrops": "ドロップされたファイルを受け取る",
-  "QuickPanel_AcceptsDropsTooltip": "このグループにドラッグしたファイルやフォルダーは、Windows 自身のファイルコピーでこのフォルダーにコピーされます。常にコピーで、移動はしません。",
+  "QuickPanel_AcceptsDrops": "ドロップを許可",
+  "QuickPanel_AcceptsDropsTooltip": "先にパネルをピン留めし、ファイル、フォルダーやアプリをドラッグしてください。このフォルダーにショートカットを追加し、元のファイルは移動しません。",
   "QuickPanel_FilterPattern": "フィルター",
   "QuickPanel_FilterPatternTooltip": "「;」または「,」で複数のパターンを区切れます（例: *.mp4;*.mkv）。\nパターンの先頭に「!」を付けると一致する項目を除外できます（例: !*.tmp）。\n:@doc や :@doc|img のような検索フィルターも使えます。空欄はフィルターなしです。",
   "QuickPanel_MaxItems": "上限（0 = すべて）",

@@ -78,7 +78,7 @@ public class QuickPanelGroupViewModel : ViewModelBase
     /// <summary>The folder itself, shown in full beside the heading, and where a drop lands.</summary>
     public string FolderPath { get; }
 
-    /// <summary>Whether files dragged onto this group are copied into its folder.</summary>
+    /// <summary>Whether files dragged onto this group add shortcuts in its folder.</summary>
     public bool AcceptsDrops { get; }
 
     private bool _isDropTarget;
@@ -122,7 +122,7 @@ public class QuickPanelGroupViewModel : ViewModelBase
     }
 
     /// <summary>Whether anything survived the filter -- a group with nothing left is hidden entirely.</summary>
-    public bool HasMatches => _matchingCount > 0;
+    public bool HasMatches => _matchingCount > 0 || (AcceptsDrops && _filter.Length == 0);
 
     private bool _isLoading;
 

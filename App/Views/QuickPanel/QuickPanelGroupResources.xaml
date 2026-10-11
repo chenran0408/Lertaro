@@ -85,6 +85,9 @@
                 </StackPanel>
             </Border>
             <ControlTemplate.Triggers>
+                <DataTrigger Binding="{Binding AcceptsDrops}" Value="True">
+                    <Setter Property="ToolTip" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_DropHint]}"/>
+                </DataTrigger>
                 <Trigger Property="IsExpanded" Value="True"><Setter TargetName="Body" Property="Visibility" Value="Visible"/></Trigger>
                 <DataTrigger Binding="{Binding IsDropTarget}" Value="True"><Setter TargetName="DropOutline" Property="BorderBrush" Value="{DynamicResource AccentBlue}"/></DataTrigger>
             </ControlTemplate.Triggers>

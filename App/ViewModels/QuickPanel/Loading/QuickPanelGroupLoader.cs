@@ -69,7 +69,7 @@ internal sealed class QuickPanelGroupLoader
             : Map(results);
         if (group == null)
         {
-            if (completeItems.Count == 0)
+            if (completeItems.Count == 0 && (!source.AcceptsDrops || !System.IO.Directory.Exists(FavoritePathResolver.Resolve(source.Path))))
                 return;
 
             group = Create(source, preference, completeItems, isLoading: false);

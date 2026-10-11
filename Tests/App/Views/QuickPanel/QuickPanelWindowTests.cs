@@ -52,6 +52,28 @@ public sealed class QuickPanelWindowTests
     }
 
     [StaTestMethod]
+    public async Task EmptyFolderHasAVisibleDropArea()
+    {
+        var tab = new QuickPanelTab { Id = "empty" };
+        tab.Folders.Add(QuickPanelFolderSource.For(System.IO.Path.GetTempPath(), QuickPanelSourceKind.All));
+        var settings = new QuickPanelSettings { Tabs = new() { tab } };
+        var vm = new QuickPanelViewModel(() => settings, (_, _) => Task.FromResult(new List<SearchResult>()), () => { });
+        await vm.RefreshAsync();
+        var window = new Lertaro.App.Views.QuickPanel.QuickPanelWindow(vm) { Width = 700, Height = 500 };
+        try
+        {
+            window.Show();
+            window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            var list = Find<System.Windows.Controls.ListBox>(window);
+            Assert.IsNotNull(list);
+            Assert.IsTrue(list.IsVisible);
+            Assert.IsGreaterThanOrEqualTo(50.0, list.ActualHeight);
+            Assert.AreEqual(0, list.Items.Count);
+        }
+        finally { window.Close(); }
+    }
+
+    [StaTestMethod]
     public async Task ArrangingDisablesSelectionBandAndSortPickerShowsAllChoices()
     {
         var vm = BuildViewModel();

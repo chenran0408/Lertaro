@@ -146,6 +146,17 @@
                                                  describing the view it is not. Read straight off the
                                                  group now: which view suits a folder is a property of
                                                  that folder, the same as its order. -->
+                                            <Grid>
+                                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_DropHint]}"
+                                                       TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary2}"
+                                                       Margin="16,12" MinHeight="50" VerticalAlignment="Center">
+                                                <TextBlock.Style><Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers><DataTrigger Binding="{Binding Count}" Value="0">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger></Style.Triggers>
+                                                </Style></TextBlock.Style>
+                                            </TextBlock>
                                             <ListBox ItemsSource="{Binding Items}"
                                                      Background="Transparent" BorderThickness="0" Padding="0"
                                                      Margin="0,2,0,6"
@@ -194,6 +205,7 @@
                                                     </Style>
                                                 </ListBox.Style>
                                             </ListBox>
+                                            </Grid>
                                         </Expander>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

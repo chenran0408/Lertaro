@@ -243,15 +243,13 @@ public class QuickPanelFolderSource
     public int MaxAgeMinutes { get; set; }
 
     /// <summary>
-    /// Whether this source's group is a drop target: files dragged onto it are copied into this folder.
-    /// Off by default, and asked per source rather than once for the panel -- a folder kept as an inbox
-    /// wants this, and a "recent files" source pointing somewhere you only ever read from does not, and
-    /// there is no way to tell those apart except by asking.
+    /// Whether this source accepts dragged files as shortcuts in its folder.
+    /// New sources accept drops; an existing source keeps the user's saved choice.
     /// </summary>
     public bool AcceptsDrops { get; set; }
 
     public static QuickPanelFolderSource For(string path, QuickPanelSourceKind kind = QuickPanelSourceKind.RecentFiles)
-        => new() { Id = QuickPanelTab.NewId(), Path = path, Kind = kind };
+        => new() { Id = QuickPanelTab.NewId(), Path = path, Kind = kind, AcceptsDrops = true };
 
     /// <summary>
     /// What the group is called when the user has not renamed it: the folder's own name, or the path

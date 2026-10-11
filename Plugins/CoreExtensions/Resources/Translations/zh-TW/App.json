@@ -1,4 +1,7 @@
 {
+  "QuickPanel_DropHint": "先釘住面板，再將檔案、資料夾或程式拖到這裡，新增捷徑。",
+  "QuickPanel_DropFailed": "無法新增捷徑",
+
   "QuickPanel_SortCustom": "自訂",
   "QuickPanel_Arrange": "整理順序",
   "QuickPanel_ArrangeHint": "開啟後，拖曳圖示到另一項前面；拖到清單下方可移到末尾。完成後關閉此按鈕。搜尋或載入時暫不可整理。",
@@ -207,8 +210,8 @@
   "QuickPanel_KindLauncher": "全部內容,依名稱排序",
   "QuickPanel_SourcePath": "資料夾",
   "QuickPanel_Recursive": "包含子資料夾",
-  "QuickPanel_AcceptsDrops": "接收拖入的檔案",
-  "QuickPanel_AcceptsDropsTooltip": "拖到這個分組上的檔案和資料夾會被複製進它的資料夾,使用 Windows 自己的檔案複製。永遠是複製,不會移動。",
+  "QuickPanel_AcceptsDrops": "允許拖入",
+  "QuickPanel_AcceptsDropsTooltip": "先點右上角圖釘保持面板開啟，再拖入檔案、資料夾或程式。捷徑會放到此資料夾，原檔案留在原處。",
   "QuickPanel_FilterPattern": "篩選",
   "QuickPanel_FilterPatternTooltip": "可用「;」或「,」分隔多個模式（例如 *.mp4;*.mkv）。\n在模式前加「!」即可排除符合項目（例如 !*.tmp）。\n也可以使用搜尋篩選器（例如 :@doc 或 :@doc|img）。留空代表不篩選。",
   "QuickPanel_MaxItems": "最多（0 表示全部）",

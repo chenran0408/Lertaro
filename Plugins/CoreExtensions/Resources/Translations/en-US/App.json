@@ -1,4 +1,7 @@
 {
+  "QuickPanel_DropHint": "Pin the panel, then drag files, folders or apps here to add shortcuts.",
+  "QuickPanel_DropFailed": "Could not add shortcuts",
+
   "QuickPanel_SortCustom": "Custom",
   "QuickPanel_Arrange": "Arrange",
   "QuickPanel_ArrangeHint": "Turn on to drag an item before another, or below the list to move it last. Turn off when finished. Unavailable while searching or loading.",
@@ -207,8 +210,8 @@
   "QuickPanel_KindLauncher": "Everything, by name",
   "QuickPanel_SourcePath": "Folder",
   "QuickPanel_Recursive": "Include subfolders",
-  "QuickPanel_AcceptsDrops": "Accept dropped files",
-  "QuickPanel_AcceptsDropsTooltip": "Files and folders dragged onto this group are copied into its folder, using Windows' own file copy. Always a copy, never a move.",
+  "QuickPanel_AcceptsDrops": "Allow drops",
+  "QuickPanel_AcceptsDropsTooltip": "Pin the panel first, then drag files, folders or apps here. Shortcuts go into this folder; originals stay where they are.",
   "QuickPanel_FilterPattern": "Filter",
   "QuickPanel_FilterPatternTooltip": "Separate multiple patterns with ';' or ',' (e.g. *.mp4;*.mkv).\nPrefix a pattern with '!' to exclude matches (e.g. !*.tmp).\nYou can also use search filters such as :@doc or :@doc|img. Leave blank for no filtering.",
   "QuickPanel_MaxItems": "Limit (0 = all)",

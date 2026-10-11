@@ -1,4 +1,7 @@
 {
+  "QuickPanel_DropHint": "先钉住面板，再将文件、文件夹或程序拖到这里，添加快捷方式。",
+  "QuickPanel_DropFailed": "未能添加快捷方式",
+
   "QuickPanel_SortCustom": "自定义",
   "QuickPanel_Arrange": "整理顺序",
   "QuickPanel_ArrangeHint": "开启后，拖动图标到另一项前面；拖到列表下方可移到末尾。完成后关闭此按钮。搜索或加载时暂不可整理。",
@@ -207,8 +210,8 @@
   "QuickPanel_KindLauncher": "全部内容,按名称排序",
   "QuickPanel_SourcePath": "文件夹",
   "QuickPanel_Recursive": "包含子文件夹",
-  "QuickPanel_AcceptsDrops": "接收拖入的文件",
-  "QuickPanel_AcceptsDropsTooltip": "拖到这个分组上的文件和文件夹会被复制进它的文件夹,使用 Windows 自己的文件复制。永远是复制,不会移动。",
+  "QuickPanel_AcceptsDrops": "允许拖入",
+  "QuickPanel_AcceptsDropsTooltip": "先点右上角图钉保持面板打开，再拖入文件、文件夹或程序。快捷方式会放到此文件夹，原文件留在原处。",
   "QuickPanel_FilterPattern": "过滤",
   "QuickPanel_FilterPatternTooltip": "可用「;」或「,」分隔多个模式（例如 *.mp4;*.mkv）。\n在模式前加「!」可排除匹配项（例如 !*.tmp）。\n也可以使用搜索过滤器（例如 :@doc 或 :@doc|img）。留空代表不过滤。",
   "QuickPanel_MaxItems": "最多（0 表示全部）",

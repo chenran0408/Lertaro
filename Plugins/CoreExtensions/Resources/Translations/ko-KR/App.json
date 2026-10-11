@@ -1,4 +1,7 @@
 {
+  "QuickPanel_DropHint": "패널을 고정한 다음 파일, 폴더 또는 앱을 여기로 끌어 바로 가기를 추가하세요.",
+  "QuickPanel_DropFailed": "바로 가기를 추가하지 못했습니다",
+
   "QuickPanel_SortCustom": "사용자 지정",
   "QuickPanel_Arrange": "순서 정리",
   "QuickPanel_ArrangeHint": "켜고 항목을 다른 항목 앞으로 끌거나 목록 아래로 끌어 마지막으로 옮기세요. 완료 후 끄세요. 검색 또는 불러오기 중에는 사용할 수 없습니다.",
@@ -207,8 +210,8 @@
   "QuickPanel_KindLauncher": "전체 항목(이름순)",
   "QuickPanel_SourcePath": "폴더",
   "QuickPanel_Recursive": "하위 폴더 포함",
-  "QuickPanel_AcceptsDrops": "끌어다 놓은 파일 받기",
-  "QuickPanel_AcceptsDropsTooltip": "이 그룹에 끌어다 놓은 파일과 폴더는 Windows 자체 파일 복사로 이 폴더에 복사됩니다. 항상 복사이며 이동하지 않습니다.",
+  "QuickPanel_AcceptsDrops": "끌어 놓기 허용",
+  "QuickPanel_AcceptsDropsTooltip": "먼저 패널을 고정한 다음 파일, 폴더 또는 앱을 끌어 놓으세요. 이 폴더에 바로 가기가 추가되며 원본은 그대로 유지됩니다.",
   "QuickPanel_FilterPattern": "필터",
   "QuickPanel_FilterPatternTooltip": "';' 또는 ','로 여러 패턴을 구분할 수 있습니다(예: *.mp4;*.mkv).\n패턴 앞에 '!'를 붙이면 일치하는 항목을 제외합니다(예: !*.tmp).\n:@doc 또는 :@doc|img 같은 검색 필터도 사용할 수 있습니다. 비워 두면 필터링하지 않습니다.",
   "QuickPanel_MaxItems": "최대 수 (0 = 모두)",

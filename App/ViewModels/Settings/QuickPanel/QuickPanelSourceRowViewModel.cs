@@ -82,9 +82,7 @@ public class QuickPanelSourceRowViewModel : ViewModelBase
     private bool _acceptsDrops;
 
     /// <summary>
-    /// Whether this group takes files dragged onto it, copying them into its folder. Off unless asked
-    /// for: a panel that quietly wrote into whatever folder the pointer happened to be over would be a
-    /// worse thing to get wrong than one that ignores a drop.
+    /// Whether this group accepts dragged files as shortcuts in its folder.
     /// </summary>
     public bool AcceptsDrops
     {

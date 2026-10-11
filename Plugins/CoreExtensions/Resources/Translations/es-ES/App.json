@@ -1,4 +1,7 @@
 {
+  "QuickPanel_DropHint": "Fija el panel y arrastra archivos, carpetas o aplicaciones aquí para añadir accesos directos.",
+  "QuickPanel_DropFailed": "No se pudieron añadir los accesos directos",
+
   "QuickPanel_SortCustom": "Personalizado",
   "QuickPanel_Arrange": "Ordenar",
   "QuickPanel_ArrangeHint": "Activa para arrastrar un elemento delante de otro o debajo de la lista para moverlo al final. Desactiva al terminar. No disponible durante búsquedas o carga.",
@@ -207,8 +210,8 @@
   "QuickPanel_KindLauncher": "Todo, por nombre",
   "QuickPanel_SourcePath": "Carpeta",
   "QuickPanel_Recursive": "Incluir subcarpetas",
-  "QuickPanel_AcceptsDrops": "Aceptar archivos soltados",
-  "QuickPanel_AcceptsDropsTooltip": "Los archivos y carpetas que sueltes en este grupo se copian en su carpeta con la copia de archivos de Windows. Siempre copia, nunca mueve.",
+  "QuickPanel_AcceptsDrops": "Permitir arrastrar",
+  "QuickPanel_AcceptsDropsTooltip": "Fija el panel primero y arrastra archivos, carpetas o aplicaciones aquí. Los accesos directos se guardan en esta carpeta; los originales permanecen en su ubicación.",
   "QuickPanel_FilterPattern": "Filtro",
   "QuickPanel_FilterPatternTooltip": "Separe varios patrones con ';' o ',' (p. ej., *.mp4;*.mkv).\nAnteponer '!' a un patrón excluye las coincidencias (p. ej., !*.tmp).\nTambién puede usar filtros de búsqueda como :@doc o :@doc|img. Déjelo vacío para no filtrar.",
   "QuickPanel_MaxItems": "Límite (0 = todos)",
