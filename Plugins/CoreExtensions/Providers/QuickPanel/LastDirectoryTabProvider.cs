@@ -18,9 +18,6 @@ namespace Lertaro.Plugins.CoreExtensions.Providers.QuickPanel;
 /// </remarks>
 public class LastDirectoryTabProvider : IQuickPanelTabProvider
 {
-    // A folder can hold far more than a tab should ever put on screen at once.
-    private const int MaxItems = 100;
-
     public string Name => TranslationService.Get("QuickPanel_TabLastDirectory");
 
     public async Task<IReadOnlyList<ISearchResult>> GetEntriesAsync(CancellationToken cancellationToken = default)
@@ -30,7 +27,7 @@ public class LastDirectoryTabProvider : IQuickPanelTabProvider
 
         var entries = new List<ISearchResult>();
         await foreach (var entry in DirectoryIndexerService
-            .EnumerateDirectoryAsync(path!, recursive: false, limit: MaxItems, token: cancellationToken)
+            .EnumerateDirectoryAsync(path!, recursive: false, limit: 0, token: cancellationToken)
             .ConfigureAwait(false))
         {
             entries.Add(entry);

@@ -66,7 +66,9 @@ public sealed class CoreDirectoryIndexManager
             try
             {
                 await IndexedDirectoryEnumerator.EnumerateAsync(directoryPath, recursive, filterPattern,
-                    result => channel.Writer.TryWrite(result), limit, cts.Token).ConfigureAwait(false);
+                    // Enumeration callbacks are synchronous and run on this background producer.
+                    // Wait for capacity instead of silently losing entries beyond the channel buffer.
+                    result => channel.Writer.WriteAsync(result, cts.Token).AsTask().GetAwaiter().GetResult(), limit, cts.Token).ConfigureAwait(false);
                 channel.Writer.TryComplete();
             }
             catch (OperationCanceledException)

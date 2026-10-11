@@ -23,6 +23,20 @@ public sealed class QuickPanelSettingsViewModelTests
     }
 
     [TestMethod]
+    public void ExplicitSourceLimitsCanExceedTwoHundredAndZeroShowsEverything()
+    {
+        var source = QuickPanelFolderSource.For(@"C:\data");
+        var row = QuickPanelSourceRowViewModel.ForFolder(source);
+        row.MaxItems = 10000;
+        row.SaveFolderFields();
+        Assert.AreEqual(10000, source.MaxItems);
+        row.MaxItems = 0;
+        row.SaveFolderFields();
+        Assert.AreEqual(0, source.MaxItems);
+        Assert.Throws<ArgumentOutOfRangeException>(() => row.MaxItems = -1);
+    }
+
+    [TestMethod]
     public void SortingEditsAreStagedAndReopenedInSettings()
     {
         var settings = BuildSettings(@"C:\data");

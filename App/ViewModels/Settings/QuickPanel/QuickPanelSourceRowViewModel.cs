@@ -231,14 +231,14 @@ public class QuickPanelSourceRowViewModel : ViewModelBase
 
     private int _maxItems;
 
-    /// <summary>0 means everything the source has; the upper bound keeps one group from filling the panel.</summary>
+    /// <summary>0 means everything the source has; positive values set an explicit cap.</summary>
     public int MaxItems
     {
         get => _maxItems;
         set
         {
-            if (value < 0 || value > 200)
-                throw new ArgumentOutOfRangeException(nameof(value), "Count must be between 0 and 200.");
+            if (value < 0)
+                throw new ArgumentOutOfRangeException(nameof(value), "Count must be zero or greater.");
             SetProperty(ref _maxItems, value);
         }
     }
