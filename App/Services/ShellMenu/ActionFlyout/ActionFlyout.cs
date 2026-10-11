@@ -51,8 +51,7 @@ public static class ActionFlyout
         var cmdMap = new Dictionary<uint, IDynamicActionProvider>();
         var subMap = new Dictionary<IntPtr, IDynamicActionProvider>();
 
-        // Build the shell group off the UI thread (2s cap), then the built-in actions on the UI thread,
-        // and show once ready — a slow shell extension never freezes the window.
+        // Show built-in actions first; shell extensions must not delay opening the popup.
         _ = Task.Run(async () =>
         {
             // Spans the whole build, the UI-thread half included, so every action's own
@@ -62,6 +61,16 @@ public static class ActionFlyout
             // first missing path exactly as those All() gates do, so this is never more work than before.
             using var existence = PathExistenceCache.BeginScope();
             PathExistenceCache.PrimeResults(selection);
+
+            var shown = await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                if (generation != _generation || !ownerWindow.IsVisible) return false;
+                var items = ActionMenuBuilder.FinalizeItems(ActionMenuBuilder.BuildStatic(selection, MenuWindowType));
+                if (items.Count == 0) return false;
+                BuildAndShow(items, selection, cmdMap, subMap, view, ownerWindow, anchor, placement);
+                return true;
+            }).Task.ConfigureAwait(false);
+            if (!shown) return;
 
             List<ActionMenuItem>? dynamicItems = null;
             try
@@ -84,12 +93,10 @@ public static class ActionFlyout
                 if (generation != _generation || !ownerWindow.IsVisible)
                     return;
 
-                var merged = ActionMenuBuilder.BuildStatic(selection, MenuWindowType);
-                if (dynamicItems != null) merged.AddRange(dynamicItems);
-                var finalItems = ActionMenuBuilder.FinalizeItems(merged);
-                if (finalItems.Count == 0) return;
-
-                BuildAndShow(finalItems, selection, cmdMap, subMap, view, ownerWindow, anchor, placement);
+                if (dynamicItems == null || dynamicItems.Count == 0 || _popup?.Child is not Border { Child: System.Windows.Controls.Menu menu }) return;
+                var style = (Style)Application.Current.FindResource("ActionFlyoutMenuItemStyle");
+                ActionFlyoutItems.PopulateMenu(menu, ActionMenuBuilder.FinalizeItems(dynamicItems), selection,
+                    cmdMap, subMap, MenuWindowType, view, style, closeFlyout: Close);
             }).Task.ConfigureAwait(false);
         });
     }

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:services="clr-namespace:Lertaro.App.Services"
+             xmlns:local="clr-namespace:Lertaro.App.Views.Settings.LocalSend"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="700">
     <UserControl.Resources>
@@ -25,6 +26,7 @@
                        Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_Description]}"
                        Margin="0,4,0,16"/>
 
+            <local:LocalSendSendCard x:Name="SendEntry" Margin="0,0,0,15"/>
             <Border Style="{StaticResource SettingsCard}">
                 <StackPanel>
                     <!-- Status Indicator Row -->

@@ -8,6 +8,18 @@ namespace Lertaro.App.Tests.Services;
 public sealed class ExplorerLocateHelperTests
 {
     [TestMethod]
+    [DataRow(true, 0)]
+    [DataRow(false, 1)]
+    public void LocateOrFallback_OnlyFallsBackAfterFailure(bool located, int expectedFallbacks)
+    {
+        var attempts = 0;
+        var fallbacks = 0;
+        ExplorerLocateHelper.LocateOrFallback(() => { attempts++; return located; }, () => fallbacks++);
+        Assert.AreEqual(1, attempts);
+        Assert.AreEqual(expectedFallbacks, fallbacks);
+    }
+
+    [TestMethod]
     public void ResolveContainingFolder_Folder_IsItsOwnTarget() =>
         Assert.AreEqual(
             @"C:\folder\sub",

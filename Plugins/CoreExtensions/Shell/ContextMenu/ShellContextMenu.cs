@@ -45,6 +45,7 @@ public class ShellMenuItem
 // ==========================================
 public class ShellMenuSession : IDisposable
 {
+    private readonly Dispatcher _ownerDispatcher = Dispatcher.CurrentDispatcher;
     private IntPtr _pidl;
     private IntPtr _parentFolderPtr;
     private IntPtr _contextMenuPtr;
@@ -110,7 +111,7 @@ public class ShellMenuSession : IDisposable
         }
     }
 
-    public List<ShellMenuItem> EnumerateItems(IntPtr hMenu = default) => TryInvoke(() => EnumerateItemsCore(hMenu)) ?? new List<ShellMenuItem>();
+    public List<ShellMenuItem> EnumerateItems(IntPtr hMenu = default) => TryInvoke(() => EnumerateItemsCore(hMenu), _ownerDispatcher) ?? new List<ShellMenuItem>();
 
     private List<ShellMenuItem> EnumerateItemsCore(IntPtr hMenu)
     {
@@ -202,7 +203,7 @@ public class ShellMenuSession : IDisposable
     }
 
 
-    public void InvokeCommand(uint commandId, IntPtr ownerHwnd) => TryInvoke(() => { InvokeCommandCore(commandId, ownerHwnd); return true; });
+    public void InvokeCommand(uint commandId, IntPtr ownerHwnd) => TryInvoke(() => { InvokeCommandCore(commandId, ownerHwnd); return true; }, _ownerDispatcher);
 
     private void InvokeCommandCore(uint commandId, IntPtr ownerHwnd)
     {
@@ -224,11 +225,13 @@ public class ShellMenuSession : IDisposable
         }
     }
 
-    public void Dispose() => TryInvoke(() => { DisposeCore(); return true; });
+    // Closing the actions menu must not wait for a hung extension. Keep COM release on the
+    // apartment that created the session, even if its worker has since been abandoned.
+    public void Dispose() => ShellMenuStaWorker.PostCleanup(_ownerDispatcher, DisposeCore);
 
-    private static T? TryInvoke<T>(Func<T> callback)
+    private static T? TryInvoke<T>(Func<T> callback, Dispatcher? dispatcher = null)
     {
-        var dispatcher = ShellMenuStaWorker.StaDispatcher;
+        dispatcher ??= ShellMenuStaWorker.StaDispatcher;
         if (dispatcher == null)
             return default;
 
@@ -236,7 +239,7 @@ public class ShellMenuSession : IDisposable
         if (operation.Wait(TimeSpan.FromMilliseconds(ShellMenuStaWorker.InvokeTimeoutMs)) == DispatcherOperationStatus.Completed)
             return operation.Result;
 
-        Logger.Log($"[ShellMenuSession] STA dispatcher call timed out after {ShellMenuStaWorker.InvokeTimeoutMs}ms; a shell extension appears hung. Killing the worker thread and starting a fresh one.", LogLevel.Error);
+        Logger.Log($"[ShellMenuSession] STA dispatcher call timed out after {ShellMenuStaWorker.InvokeTimeoutMs}ms; a shell extension appears hung. Abandoning the worker for future sessions.", LogLevel.Error);
         ShellMenuStaWorker.KillWedgedStaWorker(dispatcher);
         return default;
     }

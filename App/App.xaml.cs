@@ -191,7 +191,7 @@ public partial class App : Application
 
         // Force load all plugins (actions and alias providers) on startup
         _ = PluginManager.Instance;
-        _ = Task.Delay(10000).ContinueWith(_ => Win32Api.TrimWorkingSet());
+        IdleWorkingSetTrimmer.RequestTrim();
 
         try
         {

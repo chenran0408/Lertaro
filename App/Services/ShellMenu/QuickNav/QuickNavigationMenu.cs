@@ -196,7 +196,7 @@ public static class QuickNavigationMenu
                 _ = Task.Delay(100).ContinueWith(_ =>
                 {
                     try { ShellIconHelper.ClearCache(); } catch { }
-                    try { Core.Win32Api.TrimWorkingSet(); } catch { }
+                    IdleWorkingSetTrimmer.RequestTrim();
                 });
             }
         };

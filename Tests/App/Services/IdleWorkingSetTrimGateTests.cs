@@ -9,6 +9,20 @@ namespace Lertaro.App.Tests.Services;
 [TestClass]
 public sealed class IdleWorkingSetTrimGateTests
 {
+    [TestMethod]
+    public void MinuteIdleWindow_KeepsPagesWarmAcrossNormalSummonPauses()
+    {
+        var gate = new IdleWorkingSetTrimGate(60_000);
+        for (var now = 0L; now < 30_000; now += 5_000)
+        {
+            gate.WindowShowing();
+            gate.WindowHidden(now);
+            Assert.IsFalse(gate.ShouldTrim(now + 4_000));
+        }
+        Assert.IsFalse(gate.ShouldTrim(84_999));
+        Assert.IsTrue(gate.ShouldTrim(85_000));
+    }
+
     private const long IdleMs = 15_000;
 
     private static IdleWorkingSetTrimGate Gate() => new(IdleMs);

@@ -77,6 +77,18 @@ internal static class ShellMenuStaWorker
         }
     }
 
+    internal static void PostCleanup(Dispatcher owner, Action cleanup)
+    {
+        void Release()
+        {
+            try { cleanup(); }
+            catch (Exception ex) { Logger.Log($"[ShellMenuSession] Cleanup failed: {ex.Message}", LogLevel.Error); }
+        }
+
+        if (owner.CheckAccess()) Release();
+        else owner.InvokeAsync(Release);
+    }
+
     // A shell extension stuck in a native call can wedge this thread forever. TerminateThread is not a
     // safe way out (no stack unwind, no COM release, and it can leave process-wide locks held), so the
     // wedged background STA thread is simply abandoned and a fresh worker is created for the next call.

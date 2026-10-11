@@ -250,7 +250,7 @@ public static class FileExecutor
 
     public static void LocateInExplorer(string path) => ExplorerLocateHelper.LocateInExplorer(path);
 
-    public static bool TryLocateInExistingExplorer(string path, IntPtr explorerHwnd) => ExplorerLocateHelper.TryLocateInExistingExplorer(path, explorerHwnd);
+    public static void LocateInExistingExplorer(string path, IntPtr explorerHwnd, Action fallback) => ExplorerLocateHelper.LocateInExistingExplorer(path, explorerHwnd, fallback);
 
     private enum AssocStr { Executable = 2 }
 

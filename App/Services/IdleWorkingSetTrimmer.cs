@@ -7,16 +7,10 @@ namespace Lertaro.App.Services;
 /// </summary>
 internal static class IdleWorkingSetTrimmer
 {
-    // How long the process has to stay quiet before the working set is handed back. Matches the service's
-    // own IdleTrimGate (SearchEngine.IdleTrimAfterMs), which this class is documented as mirroring -- the
-    // two had drifted to 15s versus 3s for no reason anyone recorded.
-    //
-    // 3s still collapses a summon burst with a wide margin (the trace shows show/hide cycles 300ms apart),
-    // which is the only thing this delay exists to protect: trimming evicts pages the NEXT summon has to
-    // fault back in, measured at ~17MB and 70% of that summon's time. Work that must not be interrupted is
-    // tracked explicitly rather than being covered by this window -- background CLI searches via
-    // BackgroundSearchStarted/Finished, plugin bursts via RequestTrim -- so it does not have to outlast them.
-    private const long IdleMs = 3_000;
+    // Keep pages resident between ordinary searches and summons, not just sub-second bursts.
+    // A three-second pause is still interactive use; evicting then makes the next summon cold.
+    // Match SearchEngine's quiet period while still returning memory after a longer idle interval.
+    private const long IdleMs = 60_000;
 
     // How often the gate is polled once armed. Must stay below IdleMs or the poll interval, not the
     // threshold, becomes the real delay -- at the previous 5s poll a 3s threshold could not fire until

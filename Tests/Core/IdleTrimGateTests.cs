@@ -4,6 +4,21 @@ namespace Lertaro.Core.Tests;
 [TestClass]
 public sealed class IdleTrimGateTests
 {
+    [TestMethod]
+    public void MinuteIdleWindow_KeepsCachesWarmBetweenNormalSearches()
+    {
+        var gate = new IdleTrimGate(60_000, 0);
+        for (var now = 0L; now < 30_000; now += 5_000)
+        {
+            gate.SearchStarted(now);
+            gate.SearchFinished(now + 100);
+            Assert.IsFalse(gate.ShouldTrim(now + 4_000));
+        }
+        Assert.IsFalse(gate.ShouldTrim(85_099));
+        Assert.IsFalse(gate.ShouldTrim(85_100));
+        Assert.IsTrue(gate.ShouldTrim(85_101));
+    }
+
     private const long IdleMs = 3000;
 
     private static IdleTrimGate At(long start = 0) => new(IdleMs, start);

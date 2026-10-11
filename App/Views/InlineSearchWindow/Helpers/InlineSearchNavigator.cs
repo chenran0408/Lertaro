@@ -18,9 +18,11 @@ public static class InlineSearchNavigator
         var tracker = window.Manager.ExplorerTracker;
 
         // An Explorer window that is already open is driven in place.
-        if (ExplorerShellWindowsHelper.IsExplorerWindow(tracker.ActiveHwnd)
-            && FileExecutor.TryLocateInExistingExplorer(path, tracker.ActiveHwnd))
+        if (ExplorerShellWindowsHelper.IsExplorerWindow(tracker.ActiveHwnd))
         {
+            var targetHwnd = tracker.ActiveHwnd;
+            window.HideWindow();
+            FileExecutor.LocateInExistingExplorer(path, targetHwnd, () => FileExecutor.LocateInExplorer(path));
             return;
         }
 
@@ -179,7 +181,7 @@ public static class InlineSearchNavigator
     /// search, not an open.
     ///
     /// The same rule already guards the other shortcut of this kind
-    /// (ExplorerLocateHelper.TryLocateInExistingExplorer, which refuses outright when the setting is on).
+    /// (ExplorerLocateHelper.LocateInExistingExplorer, which falls back when the setting is on).
     /// This one never had it, so a folder opened from the desktop went to Explorer -- and only sometimes,
     /// since an adapter call that timed out fell through to the fallback chain, which does honour it.
     /// </remarks>
@@ -226,11 +228,16 @@ public static class InlineSearchNavigator
 
             && !tracker.IsDesktop
 
-            && tracker.ActiveHwnd != IntPtr.Zero
-
-            && FileExecutor.TryLocateInExistingExplorer(path, tracker.ActiveHwnd))
+            && tracker.ActiveHwnd != IntPtr.Zero)
         {
+            var targetHwnd = tracker.ActiveHwnd;
+            var fallbackSearchText = window.SearchText;
             window.HideWindow();
+            FileExecutor.LocateInExistingExplorer(path, targetHwnd, () =>
+            {
+                if (asAdmin) FileExecutor.OpenFileOrFolderAsAdmin(path, fallbackSearchText);
+                else FileExecutor.OpenFileOrFolder(path, fallbackSearchText);
+            });
             return;
         }
 

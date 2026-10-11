@@ -72,10 +72,18 @@ internal static class ExplorerLocateHelper
         => directoryExists(path) ? path : Path.GetDirectoryName(path);
 
     /// <summary>
-    /// Selects <paramref name="path"/> inside an Explorer window that is already open.
+    /// Queues selection inside an existing Explorer window without waiting for its COM calls.
+    /// The fallback runs on the shell worker and must not access UI state.
     /// </summary>
-    /// <returns><see langword="false"/> when no open window could be driven, so the caller falls back.</returns>
-    public static bool TryLocateInExistingExplorer(string path, IntPtr explorerHwnd)
+    public static void LocateInExistingExplorer(string path, IntPtr explorerHwnd, Action fallback) =>
+        ShellThread.Run("ExplorerLocateExisting", () => LocateOrFallback(() => TryLocateInExistingExplorer(UserPathResolver.Expand(path), explorerHwnd), fallback));
+
+    internal static void LocateOrFallback(Func<bool> locate, Action fallback)
+    {
+        if (!locate()) fallback();
+    }
+
+    private static bool TryLocateInExistingExplorer(string path, IntPtr explorerHwnd)
     {
         if (explorerHwnd == IntPtr.Zero) return false;
         // A configured default file manager should win over this Explorer shortcut -- refusing it here

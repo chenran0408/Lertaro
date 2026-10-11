@@ -23,7 +23,8 @@ public class SearchEngine : IDisposable
     private readonly SearchCancellationRegistry _searchCancellations = new();
     private static readonly string IndexCacheDir = LocalDriveCacheLocator.DefaultCacheDir;
 
-    private const long IdleTrimAfterMs = 3000;
+    // Keep path caches warm between ordinary searches; reclaim only after a full minute of quiet.
+    private const long IdleTrimAfterMs = 60_000;
     private readonly IdleTrimGate _idleTrim = new(IdleTrimAfterMs, Environment.TickCount64);
     private readonly Timer? _idleTimer;
 
@@ -61,7 +62,7 @@ public class SearchEngine : IDisposable
         // merge this does is the biggest allocation of the two, and the trim that follows reclaims it.
         _indexer.CompactIdleDeltas(IndexCacheDir);
 
-        Logger.Log("[SearchEngine] Service has been idle for 3s. Trimming working set...", LogLevel.Debug);
+        Logger.Log("[SearchEngine] Service has been idle for 60s. Trimming working set...", LogLevel.Debug);
         _indexer.ClearCaches();
         // No compaction: the working-set trim below is what hands memory back to the OS, and compacting
         // the large-object heap only lengthens the pause the next query pays.

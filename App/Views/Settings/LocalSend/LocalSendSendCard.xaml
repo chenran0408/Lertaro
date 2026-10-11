@@ -1,0 +1,39 @@
+<UserControl x:Class="Lertaro.App.Views.Settings.LocalSend.LocalSendSendCard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:services="clr-namespace:Lertaro.App.Services"
+             AllowDrop="True" DragOver="Card_DragOver" Drop="Card_Drop">
+    <!-- Split the sending entry out to keep the settings page within the per-file line limit. -->
+    <Border Style="{DynamicResource SettingsCard}">
+        <StackPanel>
+            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_SendCardTitle]}"
+                       FontWeight="SemiBold" FontSize="14"/>
+            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_SendCardHint]}"
+                       Style="{DynamicResource SettingsHintText}" TextWrapping="Wrap" Margin="0,5,0,12"/>
+            <WrapPanel IsEnabled="{Binding IsServiceRunning}">
+                <Button x:Name="SendFilesButton" Click="SendFiles_Click" Margin="0,0,8,8"
+                        Style="{DynamicResource PrimarySettingsButton}"
+                        Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_SendFilesEntry]}"/>
+                <Button Click="SendFolder_Click" Margin="0,0,8,8" Style="{DynamicResource SettingsButton}"
+                        Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_SendFolderEntry]}"/>
+                <Button Click="SendText_Click" Margin="0,0,0,8" Style="{DynamicResource SettingsButton}"
+                        Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_SendTextEntry]}"/>
+            </WrapPanel>
+            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_EnableBeforeSend]}"
+                       TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+                        <Setter Property="FontSize" Value="11"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsServiceRunning}" Value="False">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </StackPanel>
+    </Border>
+</UserControl>
