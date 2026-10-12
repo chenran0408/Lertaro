@@ -63,7 +63,7 @@ if errorlevel 1 (
 echo.
 echo Extracting application version...
 for /f "usebackq tokens=*" %%v in (`powershell -NoProfile -Command "([xml](Get-Content '%ROOT%App\App.csproj')).Project.PropertyGroup.Version"`) do set "APP_VER=%%v"
-for /f "usebackq tokens=*" %%v in (`powershell -NoProfile -Command "$a = '%APP_VER%.0.0.0' -split '\.'; $a[0..3] -join '.'"`) do set "APP_VER_4=%%v"
+for /f "usebackq tokens=*" %%v in (`powershell -NoProfile -Command "$numeric = ('%APP_VER%' -split '[-+]')[0]; $a = ($numeric + '.0.0.0') -split '\.'; $a[0..3] -join '.'"`) do set "APP_VER_4=%%v"
 echo App Version: %APP_VER% (PE Version: %APP_VER_4%)
 
 

@@ -26,3 +26,9 @@ Before writing any code, stop at the first rung that holds:
 Not lazy about: input validation at trust boundaries, error handling that prevents data loss, security, accessibility, the calibration real hardware needs (the platform is never the spec ideal, a clock drifts, a sensor reads off), anything explicitly requested. Lazy code without its check is unfinished: non-trivial logic needs real MSTest coverage as part of the same change --- see rule 10 for what counts as worth testing and rules 11/14 for how to write and structure it. Trivial one-liners and pure UI/XAML glue need no test.
 
 (Yes, this file also applies to agents working on this repo's own tooling and guidelines --- including edits to `AGENTS.md` itself. Especially to them.)
+
+## Fork release preferences
+
+- Use Beta releases for iterative changes and publish a stable release after several Beta rounds have been verified. Batch related small changes instead of frequently increasing stable versions.
+- Mark Beta releases as GitHub prereleases so they do not replace the latest stable release. Public Beta names may use `5.9.9beta1`; .NET project versions use the valid equivalent `5.9.9-beta1`.
+- Release notes must be brief and written for nontechnical users: visible improvements, practical benefits, and concise download guidance. Do not use raw commit logs or implementation jargon.
