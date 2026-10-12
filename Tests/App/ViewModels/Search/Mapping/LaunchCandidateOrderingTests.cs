@@ -58,6 +58,44 @@ public sealed class LaunchCandidateOrderingTests
     }
 
     [TestMethod]
+    public void QQApplicationKeepsItsTitleAndLaunchCallbackInsteadOfTheIndexedShortcutRow()
+    {
+        var fuzzy = FuzzyQuery.Parse("qq");
+        var link = Candidate("QQ.lnk", @"C:\StartMenu\QQ.lnk")
+            with { TypeRank = 0, Match = fuzzy.Rank("QQ.lnk") };
+        var application = Candidate("QQ", link.Result.FullPath, application: true)
+            with { TypeRank = 1, Match = fuzzy.Rank("QQ") };
+        application.Result.InstantResultOnExecute = () => { };
+        var results = LaunchCandidateOrdering.Order(new() { link, application }, "qq",
+            _ => new(@"C:\Apps\QQ\QQ.exe", "", @"C:\Apps\QQ"));
+        Assert.AreSame(application.Result, Assert.ContainsSingle(results).Result);
+        Assert.AreEqual("QQ", results[0].Result.Name);
+        Assert.IsNotNull(results[0].Result.InstantResultOnExecute);
+    }
+
+    [TestMethod]
+    public void CatalogApplicationWinsAnEquivalentCopiedShortcutEvenWhenItsPathIsLonger()
+    {
+        var link = Candidate("QQ.lnk", @"C:\Panel\QQ.lnk") with { TypeRank = 0 };
+        var application = Candidate("QQ", @"C:\StartMenu\Programs\Tencent\QQ.lnk", application: true)
+            with { TypeRank = 1 };
+        var results = LaunchCandidateOrdering.Order(new() { link, application }, "qq",
+            _ => new(@"C:\Apps\QQ\QQ.exe", "", ""));
+        Assert.AreSame(application.Result, Assert.ContainsSingle(results).Result);
+    }
+
+    [TestMethod]
+    public void FolderShortcutLabeledApplicationDoesNotTakeTheApplicationTitlePreference()
+    {
+        var file = Candidate("Workspace notes", @"C:\Work\notes.txt") with { TypeRank = 0 };
+        var folder = Candidate("Workspace link", @"C:\Links\Workspace.lnk", application: true)
+            with { TypeRank = 1 };
+        var results = LaunchCandidateOrdering.Order(new() { folder, file }, "work",
+            _ => new(@"C:\Work", "", ""));
+        Assert.AreSame(file.Result, results[0].Result);
+    }
+
+    [TestMethod]
     public void ExactDocumentBeatsFuzzyApplicationAndOldHistory()
     {
         var exact = Candidate("report.docx", @"C:\Work\report.docx", .4);

@@ -48,6 +48,9 @@ internal static class LaunchCandidateOrdering
             // near matches without letting an unrelated old result outrank a much stronger match.
             .ThenByDescending(entry => Math.Floor(entry.Score.Match.Weight * 10))
             .ThenBy(entry => LaunchRank(entry.Candidate.Result, entry.Link))
+            // Preserve the catalog's app title/icon/callback when the index returns that same shortcut.
+            // The files-first setting otherwise replaces "QQ" with the raw "QQ.lnk" file row.
+            .ThenByDescending(entry => entry.Candidate.Result.IsApplication && LaunchRank(entry.Candidate.Result, entry.Link) == 0)
             .ThenBy(entry => entry.Candidate.TypeRank)
             .ThenByDescending(entry => entry.Candidate.IsCurated)
             .ThenBy(entry => entry.Candidate.Priority)
