@@ -30,5 +30,5 @@ Not lazy about: input validation at trust boundaries, error handling that preven
 ## Fork release preferences
 
 - Use Beta releases for iterative changes and publish a stable release after several Beta rounds have been verified. Batch related small changes instead of frequently increasing stable versions.
-- Mark Beta releases as GitHub prereleases so they do not replace the latest stable release. Public Beta names may use `5.9.9beta1`; .NET project versions use the valid equivalent `5.9.9-beta1`.
+- Mark Beta releases as GitHub prereleases so they do not replace the latest stable release. Use the next stable version as the Beta base, e.g. `5.10.0-beta1`, `5.10.0-beta2`, then stable `5.10.0`. Use this same version in project metadata and Git tags (with a `v` prefix). Do not reuse an already published stable version as the Beta base.
 - Release notes must be brief and written for nontechnical users: visible improvements, practical benefits, and concise download guidance. Do not use raw commit logs or implementation jargon.
