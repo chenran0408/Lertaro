@@ -4,6 +4,8 @@ using Lertaro.PluginSdk.Services;
 namespace Lertaro.Plugins.FlowLauncherBridge.Tests.Engine;
 
 [TestClass]
+// Cache churn and forced GC in this class must not race other preview-cache tests.
+[DoNotParallelize]
 public sealed class PluginPreviewCacheTests
 {
     [TestMethod]
