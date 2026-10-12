@@ -40,12 +40,15 @@ internal static class LaunchCandidateOrdering
         var results = new List<SearchResultMapper.RankedCandidate>();
         foreach (var entry in rankedEntries
             .OrderByDescending(entry => ExactName(entry.Score.Result, query))
-            .ThenBy(entry => entry.Candidate.TypeRank)
+            // Equal exact names are a launch request: Steam.exe/Steam.lnk must beat a Steam folder,
+            // even though the extension lowers coverage and the default type order prefers files.
+            .ThenBy(entry => ExactName(entry.Score.Result, query) ? LaunchRank(entry.Candidate.Result, entry.Link) : 0)
             .ThenBy(entry => entry.Score.Match.Start)
             // Coverage weights are 0..1. A tenth-wide band allows usage/launch preferences to settle
             // near matches without letting an unrelated old result outrank a much stronger match.
             .ThenByDescending(entry => Math.Floor(entry.Score.Match.Weight * 10))
             .ThenBy(entry => LaunchRank(entry.Candidate.Result, entry.Link))
+            .ThenBy(entry => entry.Candidate.TypeRank)
             .ThenByDescending(entry => entry.Candidate.IsCurated)
             .ThenBy(entry => entry.Candidate.Priority)
             .ThenByDescending(entry => entry.Score.Match.Weight)

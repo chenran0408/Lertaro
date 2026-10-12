@@ -12,6 +12,52 @@ public sealed class LaunchCandidateOrderingTests
             history, history ? 0 : int.MaxValue, int.MaxValue, new MatchRank(0, 0, weight), path);
 
     [TestMethod]
+    public void ExactSteamLaunchBeatsSameNamedFoldersWithTheDefaultFilesFirstOrder()
+    {
+        var fuzzy = FuzzyQuery.Parse("steam");
+        var folder = Candidate("Steam", @"C:\Apps\Steam", directory: true, history: true)
+            with { TypeRank = 0, Match = fuzzy.Rank("Steam") };
+        var executable = Candidate("steam.exe", @"C:\Apps\Steam\steam.exe")
+            with { TypeRank = 0, Match = fuzzy.Rank("steam.exe") };
+        var shortcut = Candidate("Steam", @"C:\StartMenu\Steam.lnk", application: true)
+            with { TypeRank = 1, Match = fuzzy.Rank("Steam") };
+        var results = LaunchCandidateOrdering.Order(new() { folder, executable, shortcut }, "steam",
+            _ => new(@"C:\Apps\Steam\steam.exe", "", @"C:\Apps\Steam"));
+        Assert.AreSame(shortcut.Result, results[0].Result);
+        Assert.AreSame(folder.Result, results[1].Result);
+        Assert.HasCount(2, results);
+    }
+
+    [TestMethod]
+    public void ExactExecutableBeatsSameNamedFolderEvenWithoutAnApplicationProvider()
+    {
+        var fuzzy = FuzzyQuery.Parse("steam");
+        var folder = Candidate("Steam", @"C:\Apps\Steam", directory: true)
+            with { Match = fuzzy.Rank("Steam") };
+        var executable = Candidate("steam.exe", @"C:\Apps\Steam\steam.exe")
+            with { Match = fuzzy.Rank("steam.exe") };
+        Assert.AreSame(executable.Result, Order("steam", folder, executable)[0].Result);
+    }
+
+    [TestMethod]
+    public void FilesFirstTypeOrderDoesNotOverrideLaunchPreferenceForSimilarMatches()
+    {
+        var file = Candidate("Editor notes", @"C:\Work\notes.txt") with { TypeRank = 0 };
+        var application = Candidate("Editor Professional", @"shell:AppsFolder\editor", application: true)
+            with { TypeRank = 1 };
+        Assert.AreSame(application.Result, Order("edi", file, application)[0].Result);
+    }
+
+    [TestMethod]
+    public void AStrongerFileMatchStillBeatsAFuzzyApplicationWithFilesOrderedLast()
+    {
+        var file = Candidate("Notes", @"C:\Work\Notes.txt", .85) with { TypeRank = 1 };
+        var application = Candidate("Notes Tool", @"C:\Apps\NotesTool.exe", .4, application: true)
+            with { TypeRank = 0 };
+        Assert.AreSame(file.Result, Order("note", application, file)[0].Result);
+    }
+
+    [TestMethod]
     public void ExactDocumentBeatsFuzzyApplicationAndOldHistory()
     {
         var exact = Candidate("report.docx", @"C:\Work\report.docx", .4);
