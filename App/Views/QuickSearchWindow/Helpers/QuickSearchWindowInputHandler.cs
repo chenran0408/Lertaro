@@ -31,10 +31,10 @@ public class QuickSearchWindowInputHandler
 
     public void HandleWindowPreviewKeyDown(KeyEventArgs e)
     {
-        if (QuickSearchLaunchPanelInputHelper.Handle(e, _window))
+        if (SearchInputHelper.HandleCommonSearchKeys(e, _window, _window.MenuPresenter))
             return;
 
-        if (SearchInputHelper.HandleCommonSearchKeys(e, _window, _window.MenuPresenter))
+        if (QuickSearchLaunchPanelInputHelper.Handle(e, _window))
             return;
 
         if (e.Key == Key.Escape && Keyboard.Modifiers == ModifierKeys.None)

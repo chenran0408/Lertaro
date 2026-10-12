@@ -33,7 +33,7 @@ internal static class FavoriteHotkeyConflicts
         };
     }
 
-    internal static IEnumerable<string> HostHotkeys(HotkeyPageSettings settings)
+    internal static IEnumerable<string> HostHotkeys(HotkeyPageSettings settings, bool includeSelectJump = true)
     {
         string[] hotkeys = [settings.ToggleWindowHotkey, settings.QuickSwitchHotkey,
             settings.QuickPanelHotkey, settings.QuickNavigationHotkey, settings.NextItemHotkey,
@@ -42,7 +42,7 @@ internal static class FavoriteHotkeyConflicts
             settings.KeywordHistoryDeleteHotkey, settings.OpenFullWindowHotkey, settings.LocalSendSendWindowHotkey,
             settings.StayOpenHotkey];
         foreach (var hotkey in hotkeys) yield return hotkey;
-        if (string.IsNullOrWhiteSpace(settings.SelectJumpModifier)) yield break;
+        if (!includeSelectJump || string.IsNullOrWhiteSpace(settings.SelectJumpModifier)) yield break;
         for (var number = 1; number <= 9; number++)
         {
             yield return $"{settings.SelectJumpModifier}+{number}";
@@ -62,9 +62,8 @@ internal static class FavoriteHotkeyConflicts
             || settings.DisabledPluginComponents.Contains(
                 "Lertaro.Plugins.CustomActions.dll::DynamicActionProvider::DynamicActionProvider", StringComparer.OrdinalIgnoreCase))
             yield break;
-        var actions = ConfigValueHelper.UnpackValue(settings.GetPluginSetting<object?>(
-            "Lertaro.Plugins.CustomActions", "Actions", null)) as System.Collections.IEnumerable;
-        if (actions == null) yield break;
+        if (ConfigValueHelper.UnpackValue(settings.GetPluginSetting<object?>(
+            "Lertaro.Plugins.CustomActions", "Actions", null)) is not System.Collections.IEnumerable actions) yield break;
         foreach (var action in actions)
             if (ConfigValueHelper.UnpackValue(action) is IDictionary<string, object> fields
                 && (!fields.TryGetValue("Enabled", out var enabled) || enabled is not false)

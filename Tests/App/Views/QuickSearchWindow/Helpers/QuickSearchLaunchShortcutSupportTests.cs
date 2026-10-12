@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using Lertaro.Core;
 using Lertaro.App.Views.QuickSearchWindow.Helpers;
 
 namespace Lertaro.App.Tests.Views.QuickSearchWindow.Helpers;
@@ -21,6 +22,38 @@ public sealed class QuickSearchLaunchShortcutSupportTests
 
     [TestMethod]
     public void NonShortcutKeyIsRejected() => Assert.AreEqual(-1, QuickSearchLaunchShortcutSupport.GetShortcutIndex(Key.Enter));
+
+    [TestMethod]
+    [DataRow(Key.F)]
+    [DataRow(Key.S)]
+    [DataRow(Key.T)]
+    [DataRow(Key.N)]
+    [DataRow(Key.P)]
+    [DataRow(Key.O)]
+    [DataRow(Key.A)]
+    [DataRow(Key.C)]
+    [DataRow(Key.V)]
+    [DataRow(Key.X)]
+    [DataRow(Key.Y)]
+    [DataRow(Key.Z)]
+    public void WindowCommandsAndEditingChordsAreNeverLaunchShortcuts(Key key) =>
+        Assert.IsTrue(QuickSearchLaunchShortcutSupport.IsReservedShortcut(key, ModifierKeys.Control, new()));
+
+    [TestMethod]
+    public void UnreservedNumbersAndLettersRemainAvailable()
+    {
+        Assert.IsFalse(QuickSearchLaunchShortcutSupport.IsReservedShortcut(Key.D1, ModifierKeys.Control, new()));
+        Assert.IsFalse(QuickSearchLaunchShortcutSupport.IsReservedShortcut(Key.B, ModifierKeys.Control, new()));
+    }
+
+    [TestMethod]
+    public void ReboundWindowAndPluginChordsRemainReserved()
+    {
+        var settings = new HotkeyPageSettings { OpenFullWindowHotkey = "Alt+B", PluginActionHotkeys = new() { ["plugin"] = new() { ["action"] = "Ctrl+L" } } };
+        Assert.IsTrue(QuickSearchLaunchShortcutSupport.IsReservedShortcut(Key.B, ModifierKeys.Alt, settings));
+        Assert.IsTrue(QuickSearchLaunchShortcutSupport.IsReservedShortcut(Key.L, ModifierKeys.Control, settings));
+        Assert.IsFalse(QuickSearchLaunchShortcutSupport.IsReservedShortcut(Key.F, ModifierKeys.Control, settings));
+    }
 
     [TestMethod]
     public void LabelsUseDigitsThenZeroThenLetters()

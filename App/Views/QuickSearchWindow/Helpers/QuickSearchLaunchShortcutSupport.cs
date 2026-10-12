@@ -3,6 +3,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using Lertaro.App.Helpers;
 using Lertaro.Core;
+using Lertaro.App.Services.Favorites;
 using WpfListView = System.Windows.Controls.ListView;
 
 namespace Lertaro.App.Views.QuickSearchWindow.Helpers;
@@ -40,6 +41,7 @@ internal sealed class QuickSearchLaunchShortcutSupport
     internal AppSearchResult? GetItem(Key key)
     {
         var shortcutIndex = GetShortcutIndex(key);
+        if (IsReservedShortcut(key, Keyboard.Modifiers, UserSettings.Load().Hotkeys)) return null;
         var items = _itemsProvider();
         if (shortcutIndex < 0 || items == null)
             return null;
@@ -67,7 +69,8 @@ internal sealed class QuickSearchLaunchShortcutSupport
             if (!showBadges
                 || string.IsNullOrEmpty(modifier)
                 || shortcutIndex < 0
-                || shortcutIndex >= MaxShortcutCount)
+                || shortcutIndex >= MaxShortcutCount
+                || IsReservedShortcut(GetShortcutKey(shortcutIndex), WpfUiHelper.GetWpfModifier(modifier), settings.Hotkeys))
             {
                 ClearHint(items[i]);
                 continue;
@@ -77,6 +80,23 @@ internal sealed class QuickSearchLaunchShortcutSupport
             items[i].ShortcutVisibility = System.Windows.Visibility.Visible;
         }
     }
+
+    // Window commands and text editing own their chords before launch-panel letter shortcuts.
+    // Share this decision with the badge renderer so unavailable chords are never advertised.
+    internal static bool IsReservedShortcut(Key key, ModifierKeys modifiers, HotkeyPageSettings settings)
+        => (modifiers == ModifierKeys.Control && key is Key.A or Key.C or Key.V or Key.X or Key.Y or Key.Z)
+            || (modifiers == (ModifierKeys.Control | ModifierKeys.Shift) && key == Key.Z)
+            || FavoriteHotkeyConflicts.HostHotkeys(settings, includeSelectJump: false)
+                .Concat(settings.PluginActionHotkeys.Values.SelectMany(overrides => overrides.Values))
+                .Any(hotkey => WpfUiHelper.MatchesHotkey(hotkey, modifiers, key));
+
+    private static Key GetShortcutKey(int index) => index switch
+    {
+        >= 0 and <= 8 => Key.D1 + index,
+        9 => Key.D0,
+        >= 10 and < MaxShortcutCount => Key.A + index - 10,
+        _ => Key.None
+    };
 
     internal static int GetShortcutIndex(Key key)
     {

@@ -85,6 +85,8 @@
 
         <TextBlock x:Name="RowSelectionTitle" Style="{StaticResource SettingsSubHeading}" FontSize="15"
                    Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectionTitle]}"/>
+        <TextBlock Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"
+                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SearchWindowScopeHint]}"/>
 
         <Grid x:Name="RowSelectNext" Margin="0,4,0,0">
             <Grid.ColumnDefinitions>

@@ -25,7 +25,7 @@ internal static class QuickSearchLaunchPanelInputHelper
             Key.Right => (0, 1),
             _ => (0, 0),
         };
-        if (rowDelta != 0 || columnDelta != 0)
+        if (Keyboard.Modifiers == ModifierKeys.None && (rowDelta != 0 || columnDelta != 0))
         {
             window.ViewModel.MoveLaunchPanelSelection(rowDelta, columnDelta);
             window.LaunchPanel.ScrollSelectedItemIntoView(window.ViewModel.SelectedLaunchPanelItem);
