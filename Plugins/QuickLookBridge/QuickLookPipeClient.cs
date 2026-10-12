@@ -44,67 +44,12 @@ internal static class QuickLookPipeClient
     private static readonly string PipeName =
         "QuickLook.App.Pipe." + (WindowsIdentity.GetCurrent().User?.Value ?? string.Empty);
 
-    // IsAvailable() is called synchronously from CanPreview, on the UI thread, once per navigated-to
-    // file -- during a burst of typing that's once per keystroke. A blocking pipe probe there (even a
-    // successful one is a real cross-process round trip, not free) reads as UI stutter, and hammering the
-    // pipe that rapidly also raises the odds of catching QuickLook's server between
-    // Disconnect()/WaitForConnection() cycles (it handles one connection at a time) and reading that as a
-    // spurious failure. So this never blocks the caller: it always returns the last known value instantly
-    // and kicks off a background refresh, at most once per RefreshIntervalMs and never more than one at a
-    // time, to keep that value from going stale for more than about a second.
-    private const int RefreshIntervalMs = 1000;
-    private static long _lastRefreshStartedTicks;
-    private static int _refreshInFlight;
-    private static volatile bool _cachedAvailable;
+    private static readonly QuickLookAvailability Availability = new(
+        () => TrySend(PingMessage, string.Empty, string.Empty), QuickLookWindowPositioner.Reset);
 
-    // The one exception to "never blocks": _cachedAvailable defaults to false, so without this the very
-    // first call in the process's lifetime would always report unavailable even if QuickLook is actually
-    // running, since the background refresh hasn't had a chance to complete yet -- a real cold-start
-    // failure, not a caching-staleness one, so a shorter TTL wouldn't have fixed it either. This blocks
-    // synchronously exactly once (a bounded, one-time cost, not a per-navigation one) so that first real
-    // answer is trustworthy; every call after it goes through the non-blocking path above.
-    private static int _hasCheckedOnce;
-
-    public static bool IsAvailable()
-    {
-        if (Interlocked.CompareExchange(ref _hasCheckedOnce, 1, 0) == 0)
-        {
-            SetCachedAvailable(TrySend(PingMessage, string.Empty, string.Empty));
-            Interlocked.Exchange(ref _lastRefreshStartedTicks, DateTime.UtcNow.Ticks);
-            return _cachedAvailable;
-        }
-
-        MaybeStartBackgroundRefresh();
-        return _cachedAvailable;
-    }
-
-    // A true -> false transition here is a strong signal QuickLook's process itself just exited (or
-    // crashed), covering the case TryClosePreview's own Reset() call can't: the process disappearing out
-    // from under us entirely, e.g. between navigations rather than because we asked it to close.
-    private static void SetCachedAvailable(bool available)
-    {
-        if (_cachedAvailable && !available)
-            QuickLookWindowPositioner.Reset();
-        _cachedAvailable = available;
-    }
-
-    private static void MaybeStartBackgroundRefresh()
-    {
-        var nowTicks = DateTime.UtcNow.Ticks;
-        var lastTicks = Interlocked.Read(ref _lastRefreshStartedTicks);
-        if (nowTicks - lastTicks < RefreshIntervalMs * TimeSpan.TicksPerMillisecond)
-            return;
-
-        if (Interlocked.CompareExchange(ref _refreshInFlight, 1, 0) != 0)
-            return; // a refresh is already running
-
-        Interlocked.Exchange(ref _lastRefreshStartedTicks, nowTicks);
-        Task.Run(() =>
-        {
-            try { SetCachedAvailable(TrySend(PingMessage, string.Empty, string.Empty)); }
-            finally { Interlocked.Exchange(ref _refreshInFlight, 0); }
-        });
-    }
+    // Automatic preview retains its first-use availability check. Menus always return immediately.
+    public static bool IsAvailable() => Availability.Read(waitForInitial: true);
+    public static bool IsAvailableForMenu() => Availability.Read(waitForInitial: false);
 
     // Also called synchronously from the UI thread on every single navigation (CreatePreview/
     // TrySetTarget/EndPreviewSession). Originally queued strictly in order (one Task.ContinueWith chain),
