@@ -142,7 +142,10 @@ internal static class SearchableItemCache
                             .ToList()
                         : new List<string>();
                     if (provider.EnableAlias && item.ResultKind == "Application")
+                        {
                         aliases.AddRange(ApplicationSearchAliases.Collect(item.Title, item.ActionArgument ?? "", LaunchShortcutCache.Read));
+                        aliases.AddRange(item.Keywords);
+                    }
                     entries.Add(new CacheEntry(item, aliases.Distinct(StringComparer.OrdinalIgnoreCase).ToList(), MaterializeIcon(item)));
                 }
                 if (generation != Volatile.Read(ref _generation))

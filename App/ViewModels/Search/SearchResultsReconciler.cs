@@ -49,7 +49,9 @@ internal static class SearchResultsReconciler
     internal static bool ItemsEqual(AppSearchResult a, AppSearchResult b) =>
         string.Equals(a.FullPath, b.FullPath, StringComparison.OrdinalIgnoreCase) &&
         string.Equals(a.Name, b.Name, StringComparison.Ordinal) &&
-        string.Equals(a.ResultKind, b.ResultKind, StringComparison.Ordinal);
+        string.Equals(a.ResultKind, b.ResultKind, StringComparison.Ordinal) &&
+        string.Equals(a.ApplicationArguments, b.ApplicationArguments, StringComparison.Ordinal) &&
+        string.Equals(a.ApplicationWorkingDirectory, b.ApplicationWorkingDirectory, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Copies the per-paint values a surviving row cannot derive on its own from <paramref name="target"/>

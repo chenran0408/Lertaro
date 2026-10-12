@@ -24,12 +24,12 @@ internal static class LaunchCandidateOrdering
         var preferredLinks = new HashSet<string>(StringComparer.Ordinal);
         if (!explicitExtension)
             foreach (var entry in entries.Where(entry => entry.Link.HasValue && IsExecutable(entry.Link.Value.Target)))
-                preferredLinks.Add(Identity(entry.Link!.Value.Target, entry.Link.Value.Arguments, entry.Link.Value.WorkingDirectory));
+                preferredLinks.Add(Identity(entry.Link!.Value.Target, entry.Link.Value.Arguments, LinkDirectory(entry.Candidate.Result, entry.Link.Value)));
         // An equivalent exe may match better than its differently named shortcut. Keep that relevance
         // when replacing it, rather than dropping the useful launch result to the bottom of the list.
         string? LaunchIdentity(AppSearchResult result, LaunchShortcut? link) => result.IsDir ? null
-            : link is { } resolved && IsExecutable(resolved.Target) ? Identity(resolved.Target, resolved.Arguments, resolved.WorkingDirectory)
-            : IsExecutable(result.FullPath) ? Identity(result.FullPath, "", "") : null;
+            : link is { } resolved && IsExecutable(resolved.Target) ? Identity(resolved.Target, resolved.Arguments, LinkDirectory(result, resolved))
+            : IsExecutable(result.FullPath) ? Identity(result.FullPath, result.ApplicationArguments, result.ApplicationWorkingDirectory) : null;
         var scores = entries.Where(entry => LaunchIdentity(entry.Candidate.Result, entry.Link) != null)
             .GroupBy(entry => LaunchIdentity(entry.Candidate.Result, entry.Link)!, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Select(entry => entry.Candidate)
@@ -39,7 +39,7 @@ internal static class LaunchCandidateOrdering
         var rankedEntries = entries.Select(entry => (entry.Candidate, entry.Link,
             Score: !explicitExtension && LaunchIdentity(entry.Candidate.Result, entry.Link) is { } identity
                 ? scores[identity] : entry.Candidate));
-        var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var paths = new HashSet<string>(StringComparer.Ordinal);
         var launches = new HashSet<string>(StringComparer.Ordinal);
         var results = new List<SearchResultMapper.RankedCandidate>();
         foreach (var entry in rankedEntries
@@ -65,12 +65,15 @@ internal static class LaunchCandidateOrdering
             .ThenBy(entry => entry.Candidate.NormalizedPath, StringComparer.OrdinalIgnoreCase))
         {
             var result = entry.Candidate.Result;
-            if (!paths.Add(entry.Candidate.NormalizedPath)) continue;
+            var pathKey = entry.Candidate.NormalizedPath.ToUpperInvariant();
+            if (result.IsApplication && (!string.IsNullOrEmpty(result.ApplicationArguments) || !string.IsNullOrEmpty(result.ApplicationWorkingDirectory)))
+                pathKey += "\0" + result.ApplicationArguments + "\0" + result.ApplicationWorkingDirectory.ToUpperInvariant();
+            if (!paths.Add(pathKey)) continue;
             if (!explicitExtension && !result.IsDir)
             {
                 var identity = entry.Link is { } link && IsExecutable(link.Target)
-                    ? Identity(link.Target, link.Arguments, link.WorkingDirectory)
-                    : IsExecutable(result.FullPath) ? Identity(result.FullPath, "", "") : null;
+                    ? Identity(link.Target, link.Arguments, LinkDirectory(result, link))
+                    : IsExecutable(result.FullPath) ? Identity(result.FullPath, result.ApplicationArguments, result.ApplicationWorkingDirectory) : null;
                 if (identity != null)
                 {
                     if (entry.Link == null && preferredLinks.Contains(identity)) continue;
@@ -116,6 +119,9 @@ internal static class LaunchCandidateOrdering
             || name.EndsWith("Uninstaller", StringComparison.OrdinalIgnoreCase)
             || name.Contains("卸载", StringComparison.Ordinal) || name.Contains("更新", StringComparison.Ordinal);
     }
+
+    private static string LinkDirectory(AppSearchResult result, LaunchShortcut link)
+        => string.IsNullOrWhiteSpace(result.ApplicationWorkingDirectory) ? link.WorkingDirectory : result.ApplicationWorkingDirectory;
 
     private static string Identity(string target, string arguments, string directory)
     {

@@ -63,27 +63,7 @@ public class CoreExtensionsPlugin : IPlugin, IActionProvider, IConfigurable
                     }
                 }
             },
-            new PluginConfigField
-            {
-                Key = "CustomFoldersGroup",
-                LabelKey = "CoreExtensions_Config_CustomFoldersGroupLabel",
-                FieldType = ConfigFieldType.Group,
-                SubFields = new List<PluginConfigField>
-                {
-                    new PluginConfigField
-                    {
-                        Key = "CustomFolders",
-                        LabelKey = "CoreExtensions_Config_CustomFoldersLabel",
-                        DescriptionKey = "CoreExtensions_Config_CustomFoldersDesc",
-                        FieldType = ConfigFieldType.StringList,
-                        // Windows' own "all apps" folder, so the field starts out naming the one app source
-                        // that is meaningful without the user inventing a path. Read from the roots helper
-                        // rather than written out again: it is also what the provider falls back to when the
-                        // saved list is empty, and the two must not drift.
-                        DefaultValue = new List<string>(Providers.Indexing.StartMenuAppFolderRoots.DefaultCustomFolders)
-                    }
-                }
-            },
+            Providers.Indexing.AdditionalApplicationSettings.Config(),
             // The quick panel's Recent Files tab, whose settings belong to whoever provides that tab
             // rather than to the panel: the panel knows about folders and tabs, not about what any one
             // tab needs to be told. Defaults matter here -- they are what the tab shows before anybody

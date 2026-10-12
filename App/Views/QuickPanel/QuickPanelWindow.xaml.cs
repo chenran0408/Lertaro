@@ -26,6 +26,8 @@ public partial class QuickPanelWindow : Window,
     // not ISearchWindow: that larger interface is built around an in-window actions pane, which is what
     // ShellMenuPresenter drives and what this panel has no equivalent of. The flyout asks only for these.
     public void LocateInExplorerExternal(string path) => FileExecutor.LocateInExplorer(path);
+    public void OpenSearchResultExternal(PluginSdk.Abstractions.ISearchResult result, bool asAdmin = false)
+        => Services.Plugin.ApplicationLaunchDispatcher.OpenExternal(result, this, asAdmin);
     public void OpenFileOrFolderExternal(string path) => FileExecutor.OpenFileOrFolder(path);
     public void OpenFileOrFolderAsAdminExternal(string path) => FileExecutor.OpenFileOrFolderAsAdmin(path);
     public void HideWindow() => Services.QuickPanel.QuickPanelManager.Instance?.Hide();

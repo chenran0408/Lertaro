@@ -224,7 +224,7 @@
                                                 <Path Data="{Binding IconField.Value}" Fill="{DynamicResource DefaultPluginIconColor}" Width="11" Height="11" Stretch="Uniform"/>
                                             </Border>
                                             <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding TitleField.Value, Converter={StaticResource EmptyOrPlaceholder}}" FontSize="12" Foreground="{DynamicResource TextPrimary}" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding DisplayTitle, Converter={StaticResource EmptyOrPlaceholder}}" FontSize="12" Foreground="{DynamicResource TextPrimary}" TextTrimming="CharacterEllipsis"/>
                                                 <Border Background="{DynamicResource BadgeBackground}" BorderBrush="{DynamicResource BadgeBorderBrush}" BorderThickness="1"
                                                         CornerRadius="4" Padding="5,0,5,1" Margin="0,3,0,0" HorizontalAlignment="Left"
                                                         Visibility="{Binding BadgeField, Converter={StaticResource BadgeFieldToVis}}">

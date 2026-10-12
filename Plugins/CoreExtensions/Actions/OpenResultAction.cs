@@ -20,7 +20,7 @@ public class OpenResultAction : ISearchResultAction
     public void Execute(IReadOnlyList<ISearchResult> results, IPluginSearchWindow view)
     {
         foreach (var result in results)
-            view.OpenFileOrFolderExternal(result.FullPath);
+            view.OpenSearchResultExternal(result);
     }
 
     internal static bool HasExistingPath(ISearchResult result)
@@ -53,6 +53,6 @@ public class OpenResultAsAdminAction : ISearchResultAction
     public void Execute(IReadOnlyList<ISearchResult> results, IPluginSearchWindow view)
     {
         foreach (var result in results)
-            view.OpenFileOrFolderAsAdminExternal(result.FullPath);
+            view.OpenSearchResultExternal(result, asAdmin: true);
     }
 }

@@ -214,4 +214,16 @@ public sealed class SearchResultsReconcilerTests
 
         Assert.AreEqual("new", live[0].SearchQuery);
     }
+    [TestMethod]
+    public void SameNamedApplicationProfilesHaveDifferentRowIdentities()
+    {
+        var normal = Result(@"C:\Apps\Editor.exe", "Editor", "Application");
+        var work = Result(normal.FullPath, normal.Name, normal.ResultKind);
+        work.ApplicationArguments = "--work";
+        Assert.IsFalse(SearchResultsReconciler.ItemsEqual(normal, work));
+        work.ApplicationArguments = "";
+        work.ApplicationWorkingDirectory = @"C:\Work";
+        Assert.IsFalse(SearchResultsReconciler.ItemsEqual(normal, work));
+    }
+
 }

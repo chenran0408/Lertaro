@@ -193,6 +193,8 @@ public partial class QuickSearchWindow : Window, ISearchWindow, IHasVisibleConte
     public void SuppressNextForegroundRestore() => _controller.SuppressNextRestore();
     public void ToggleStayOpen() => _controller.ToggleStayOpen();
     public void ToggleVisibility() => _controller.ToggleVisibility();
+    public void OpenSearchResultExternal(PluginSdk.Abstractions.ISearchResult result, bool asAdmin = false)
+        => Services.Plugin.ApplicationLaunchDispatcher.OpenExternal(result, this, asAdmin);
     public void OpenFileOrFolderExternal(string path)
     {
         RecordKeywordHistory();

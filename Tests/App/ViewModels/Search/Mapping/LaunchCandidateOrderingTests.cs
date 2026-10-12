@@ -258,6 +258,28 @@ public sealed class LaunchCandidateOrderingTests
         bool foldersOnly, string? trigger, bool expected)
         => Assert.AreEqual(expected, LaunchCandidateOrdering.Applies(inline, scope, filtered, foldersOnly, trigger));
 
+    [TestMethod]
+    public void SameExecutableWithDifferentParametersAndWorkingFoldersRemainsSelectable()
+    {
+        var normal = Candidate("Editor", @"C:\Apps\Editor.exe", application: true);
+        var work = Candidate("Editor", normal.Result.FullPath, application: true);
+        work.Result.ApplicationArguments = "--profile Work";
+        var lower = Candidate("Editor", normal.Result.FullPath, application: true);
+        lower.Result.ApplicationArguments = "--profile work";
+        var folder = Candidate("Editor", normal.Result.FullPath, application: true);
+        folder.Result.ApplicationWorkingDirectory = @"C:\Projects";
+        Assert.HasCount(4, Order("Editor", normal, work, lower, folder));
+    }
+
+    [TestMethod]
+    public void ShortcutWithCustomWorkingFolderRemainsSeparateFromDefaultLaunch()
+    {
+        var normal = Candidate("Editor", @"C:\Links\Editor.lnk", application: true);
+        var custom = Candidate("Work editor", normal.Result.FullPath, application: true);
+        custom.Result.ApplicationWorkingDirectory = @"C:\Projects";
+        Assert.HasCount(2, LaunchCandidateOrdering.Order([normal, custom], "edi", _ => new(@"C:\Apps\Editor.exe", "", @"C:\Apps")));
+    }
+
     private static List<SearchResultMapper.RankedCandidate> Order(string query, params SearchResultMapper.RankedCandidate[] candidates)
         => LaunchCandidateOrdering.Order(candidates.ToList(), query, _ => null);
 }

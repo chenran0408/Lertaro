@@ -14,6 +14,13 @@ public interface IPluginSearchWindow
     /// <summary>Opens the specified file or folder with administrator privileges.</summary>
     void OpenFileOrFolderAsAdminExternal(string path);
 
+    /// <summary>Opens a result while allowing the host to preserve application launch options.</summary>
+    void OpenSearchResultExternal(ISearchResult result, bool asAdmin = false)
+    {
+        if (asAdmin) OpenFileOrFolderAsAdminExternal(result.FullPath);
+        else OpenFileOrFolderExternal(result.FullPath);
+    }
+
     /// <summary>Closes or hides the search window.</summary>
     void HideWindow();
 }

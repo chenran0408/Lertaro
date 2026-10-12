@@ -201,6 +201,8 @@ public static class SearchableItemMapper
             IconOverride = iconOverride,
             InstantResultActionType = item.ActionType ?? "Copy",
             InstantResultActionArgument = item.ActionArgument ?? string.Empty,
+            ApplicationArguments = item.LaunchArguments,
+            ApplicationWorkingDirectory = item.LaunchWorkingDirectory,
             InstantResultOnExecute = item.OnExecute,
             InstantResultOnExecuteFunc = item.OnExecuteFunc,
             TabCompletion = item.TabCompletion,

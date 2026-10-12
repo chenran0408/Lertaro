@@ -44,4 +44,14 @@ public sealed class ApplicationSearchAliasesTests
         Assert.IsFalse(ApplicationSearchAliases.IsExactMatch("sakurafrpqd", aliases, ['\u0002']));
         Assert.IsFalse(ApplicationSearchAliases.IsExactMatch("", aliases, ['\u0002']));
     }
+    [TestMethod]
+    [DataRow("Microsoft Word", "Word")]
+    [DataRow("AutoCAD 2026", "AutoCAD")]
+    [DataRow("JetBrains IntelliJ IDEA", "IDEA")]
+    public void ApplicationWordsRemainSearchableWhenExecutableNamesDiffer(string title, string query)
+    {
+        var aliases = ApplicationSearchAliases.Collect(title, @"C:\Apps\internal.exe", _ => null);
+        Assert.IsTrue(aliases.Any(alias => alias.Equals(query, StringComparison.OrdinalIgnoreCase)));
+    }
+
 }

@@ -14,6 +14,10 @@ internal sealed class StartMenuAppRuntimeSupport : IDisposable
     private readonly object _lock = new();
     private IDisposable? _directoryWatch;
     private bool _disposed;
+    private System.Threading.Timer? _registryTimer;
+    private string? _registeredFingerprint;
+    private int _registryReadRunning;
+    private int _directoryGeneration;
 
     public StartMenuAppRuntimeSupport(StartMenuAppItemProvider owner)
     {
@@ -40,14 +44,65 @@ internal sealed class StartMenuAppRuntimeSupport : IDisposable
 
                 _directoryWatch = DirectoryIndexerService.WatchDirectories(
                     RegistrationId, _owner.NotifyItemsChanged);
-                _owner.RefreshDirectoryRegistrations();
+                RequestDirectoryRefresh();
+                _registryTimer = new System.Threading.Timer(_ => RefreshRegisteredApplications(), null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
                 return;
             }
 
+            _registryTimer?.Dispose();
+            _registryTimer = null;
             _directoryWatch?.Dispose();
             _directoryWatch = null;
             DirectoryIndexerService.UnregisterDirectories(RegistrationId);
         }
+    }
+
+    internal List<RegisteredApplication> ReadRegisteredApplications()
+    {
+        var entries = RegisteredApplicationDiscovery.Read();
+        var fingerprint = RegisteredApplicationDiscovery.RuntimeFingerprint(entries);
+        lock (_lock) _registeredFingerprint = fingerprint;
+        return entries;
+    }
+
+    internal void RequestDirectoryRefresh()
+    {
+        var generation = Interlocked.Increment(ref _directoryGeneration);
+        Task.Run(() =>
+        {
+            try
+            {
+                var roots = StartMenuAppItemProvider.GetRoots();
+                lock (_lock)
+                {
+                    if (_disposed || generation != _directoryGeneration || _directoryWatch == null) return;
+                    _owner.RefreshDirectoryRegistrations(roots);
+                }
+                _owner.NotifyItemsChanged();
+            }
+            catch (Exception ex) { PluginSdk.Logger.Log($"[ApplicationCatalog] Folder refresh failed: {ex.Message}", PluginSdk.LogLevel.Warn); }
+        });
+    }
+
+    internal void ObserveRegisteredApplications(string fingerprint)
+    {
+        lock (_lock)
+        {
+            if (_disposed || _registryTimer == null || _registeredFingerprint == fingerprint) return;
+            _registeredFingerprint = fingerprint;
+        }
+        _owner.NotifyItemsChanged();
+    }
+
+    private void RefreshRegisteredApplications()
+    {
+        if (Interlocked.Exchange(ref _registryReadRunning, 1) != 0) return;
+        try
+        {
+            ObserveRegisteredApplications(RegisteredApplicationDiscovery.RuntimeFingerprint(RegisteredApplicationDiscovery.Read()));
+        }
+        catch (Exception ex) { PluginSdk.Logger.Log($"[ApplicationCatalog] Registry refresh failed: {ex.Message}", PluginSdk.LogLevel.Warn); }
+        finally { Volatile.Write(ref _registryReadRunning, 0); }
     }
 
     public void Dispose()
@@ -58,6 +113,8 @@ internal sealed class StartMenuAppRuntimeSupport : IDisposable
                 return;
 
             _disposed = true;
+            _registryTimer?.Dispose();
+            _registryTimer = null;
             _directoryWatch?.Dispose();
             _directoryWatch = null;
             PluginSettingsService.ComponentEnablementChanged -= UpdateRuntimeState;

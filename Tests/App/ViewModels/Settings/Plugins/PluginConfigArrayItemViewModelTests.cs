@@ -180,4 +180,17 @@ public sealed class PluginConfigArrayItemViewModelTests
 
         Assert.AreEqual(ConfigFieldType.Boolean, item.SimpleValueViewModel!.FieldType);
     }
+    [TestMethod]
+    public void OptionalNameShowsChosenPathAndUpdatesImmediatelyWhenRenamed()
+    {
+        var parent = ArrayField([new() { Key = "Name", FieldType = ConfigFieldType.Text, DefaultValue = "" }, new() { Key = "Path", FieldType = ConfigFieldType.FilePath, DefaultValue = "" }]);
+        var item = new PluginConfigArrayItemViewModel(parent, new Dictionary<string, object> { ["Path"] = @"D:\Portable\Editor.exe" }, () => { });
+        Assert.AreEqual("Editor.exe", item.DisplayTitle);
+        var changed = false;
+        item.PropertyChanged += (_, e) => changed |= e.PropertyName == nameof(item.DisplayTitle);
+        item.Children[0].Value = "Work editor";
+        Assert.IsTrue(changed);
+        Assert.AreEqual("Work editor", item.DisplayTitle);
+    }
+
 }

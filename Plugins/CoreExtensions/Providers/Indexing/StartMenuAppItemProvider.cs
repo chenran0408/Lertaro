@@ -36,13 +36,14 @@ public class StartMenuAppItemProvider : ISearchableItemProvider, IDisposable
     private void OnSettingChanged(string pluginId, string key)
     {
         if (string.Equals(pluginId, PluginId, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(key, CustomFoldersKey, StringComparison.OrdinalIgnoreCase))
+            && (string.Equals(key, CustomFoldersKey, StringComparison.OrdinalIgnoreCase)
+                || key == AdditionalApplicationSettings.ProgramsKey || key == AdditionalApplicationSettings.FoldersKey))
         {
             if (!IsComponentEnabled)
                 return;
 
-            RefreshDirectoryRegistrations();
-            ItemsChanged?.Invoke();
+            if (key == AdditionalApplicationSettings.ProgramsKey) ItemsChanged?.Invoke();
+            else _runtime.RequestDirectoryRefresh();
         }
     }
 
@@ -104,7 +105,9 @@ public class StartMenuAppItemProvider : ISearchableItemProvider, IDisposable
 
             list.Add(new SearchableItem
             {
-                Title = entry.Name,
+                Title = Path.GetExtension(capturedPath).Equals(".exe", StringComparison.OrdinalIgnoreCase)
+                    ? RegisteredApplicationDiscovery.GetTitle(capturedPath)?.Trim() is { Length: > 0 } friendly ? friendly : entry.Name
+                    : entry.Name,
                 Description = desc,
                 ResultKind = "Application",
                 HBitmapIcon = IntPtr.Zero,
@@ -128,23 +131,23 @@ public class StartMenuAppItemProvider : ISearchableItemProvider, IDisposable
             });
         }
 
-        // 5. Add modern packaged (UWP/MSIX) apps from shell:AppsFolder — Calculator, Notepad, Terminal,
-        //    etc. have no .lnk on disk so the scan above misses them. Classic apps are mirrored into
-        //    AppsFolder too, so dedupe by display name against what we already indexed (entriesByName
-        //    holds every scanned shortcut name); only genuinely-new names (the packaged apps) survive.
-        AppendAppsFolderApps(list, entriesByName.Keys);
+        // Keep distinct targets even when their display names match. Equivalent shortcut/executable
+        // entries are deduplicated by launch identity in the host after all sources have been collected.
+        AppendAppsFolderApps(list);
+        list.AddRange(RegisteredApplicationDiscovery.GetItems(_runtime.ReadRegisteredApplications()));
+        list.AddRange(AdditionalApplicationSettings.GetItems());
 
         return list;
     }
 
-    internal void RefreshDirectoryRegistrations()
+    internal void RefreshDirectoryRegistrations(IReadOnlyList<string>? preparedRoots = null)
     {
         try
         {
             // Replacing the complete set is required when a setting removed a folder as well as when
             // it added one. The provider's cache is invalidated separately by the settings event.
             DirectoryIndexerService.UnregisterDirectories(RegistrationId);
-            foreach (var root in GetRoots())
+            foreach (var root in preparedRoots ?? GetRoots())
                 DirectoryIndexerService.RegisterDirectory(RegistrationId, root, recursive: true, filterPattern: StartMenuShortcutResolver.AppFilePattern);
         }
         catch (Exception ex)
@@ -153,8 +156,8 @@ public class StartMenuAppItemProvider : ISearchableItemProvider, IDisposable
         }
     }
 
-    private static IReadOnlyList<string> GetRoots()
-        => StartMenuAppFolderRoots.Merge(StartMenuShortcutResolver.GetStartMenuRoots(), GetCustomFolders(), Directory.Exists);
+    internal static IReadOnlyList<string> GetRoots()
+        => StartMenuAppFolderRoots.Merge(StartMenuShortcutResolver.GetStartMenuRoots(), GetCustomFolders().Concat(AdditionalApplicationSettings.Folders()), Directory.Exists);
 
     private static IEnumerable<string> GetCustomFolders()
     {
@@ -216,9 +219,9 @@ public class StartMenuAppItemProvider : ISearchableItemProvider, IDisposable
         return files;
     }
 
-    private static void AppendAppsFolderApps(List<SearchableItem> list, IEnumerable<string> alreadyIndexedNames)
+    private static void AppendAppsFolderApps(List<SearchableItem> list)
     {
-        var existingNames = new HashSet<string>(alreadyIndexedNames, StringComparer.OrdinalIgnoreCase);
+        var existingTargets = new HashSet<string>(list.Select(item => item.ActionArgument), StringComparer.OrdinalIgnoreCase);
         var appDesc = TranslationService.Get("Search_ResultApp");
 
         List<AppsFolderEnumerator.AppEntry> apps;
@@ -234,14 +237,15 @@ public class StartMenuAppItemProvider : ISearchableItemProvider, IDisposable
 
         foreach (var app in apps)
         {
-            if (string.IsNullOrWhiteSpace(app.Name) || !existingNames.Add(app.Name))
-                continue; // already covered by a Start Menu shortcut (classic app), or a duplicate name
+            if (string.IsNullOrWhiteSpace(app.Name) || string.IsNullOrWhiteSpace(app.Aumid))
+                continue; // malformed shell entry
 
             var aumid = app.Aumid;
             // Packaged apps launch by AUMID via shell:AppsFolder; a classic entry may expose a real
             // file path instead (rare here, since those are usually deduped away) — launch it directly.
             var looksLikePath = aumid.Length > 2 && aumid[1] == ':';
             var launchTarget = looksLikePath ? aumid : $"shell:AppsFolder\\{aumid}";
+            if (!existingTargets.Add(launchTarget)) continue;
 
             list.Add(new SearchableItem
             {

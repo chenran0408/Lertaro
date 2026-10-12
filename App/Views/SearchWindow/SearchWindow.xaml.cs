@@ -166,6 +166,8 @@ public partial class SearchWindow : Window, ISearchWindow, IHasVisibleContentIns
         Keyboard.Focus(SearchBox.SearchTextBox);
     }
 
+    public void OpenSearchResultExternal(PluginSdk.Abstractions.ISearchResult result, bool asAdmin = false)
+        => Services.Plugin.ApplicationLaunchDispatcher.OpenExternal(result, this, asAdmin);
     public void OpenFileOrFolderExternal(string path) => FileExecutor.OpenFileOrFolder(path);
     public void OpenFileOrFolderAsAdminExternal(string path) => FileExecutor.OpenFileOrFolderAsAdmin(path);
     public void LocateInExplorerExternal(string path) => FileExecutor.LocateInExplorer(path);

@@ -43,6 +43,8 @@ internal sealed class AppSearchResultExtras
     public System.Windows.Media.ImageSource? IconOverride;
     public string InstantResultActionType = "Copy";
     public string InstantResultActionArgument = string.Empty;
+    public string ApplicationArguments = string.Empty;
+    public string ApplicationWorkingDirectory = string.Empty;
     public Action? InstantResultOnExecute;
     public Func<bool>? InstantResultOnExecuteFunc;
     public string? TabCompletion;

@@ -19,7 +19,19 @@ public class PluginConfigArrayItemViewModel : ViewModelBase
 
     // Master-list summary: best-effort picks from the item's own sub-fields, since the schema
     // varies per plugin (there's no dedicated "name"/"keyword" concept in PluginConfigField).
-    public PluginConfigFieldViewModel? TitleField => Children.FirstOrDefault(c => c.FieldType == ConfigFieldType.Text);
+    public PluginConfigFieldViewModel? TitleField => Children.FirstOrDefault(c => c.FieldType == ConfigFieldType.Text)
+        ?? Children.FirstOrDefault(c => c.FieldType is ConfigFieldType.FilePath or ConfigFieldType.FolderPath);
+    public string DisplayTitle
+    {
+        get
+        {
+            var name = TitleField?.Value?.ToString();
+            if (!string.IsNullOrWhiteSpace(name)) return name;
+            var path = Children.FirstOrDefault(child => child.FieldType is ConfigFieldType.FilePath or ConfigFieldType.FolderPath)?.Value?.ToString();
+            if (string.IsNullOrWhiteSpace(path)) return "";
+            return System.IO.Path.GetFileName(path.TrimEnd('\\', '/')) is { Length: > 0 } fileName ? fileName : path;
+        }
+    }
     public PluginConfigFieldViewModel? BadgeField => Children
         .Where(c => c.FieldType == ConfigFieldType.Text && !c.IsIconField)
         .Skip(1)
@@ -63,6 +75,7 @@ public class PluginConfigArrayItemViewModel : ViewModelBase
                 {
                     LocalValueStore = valToUse
                 };
+                subFieldVM.PropertyChanged += (_, _) => OnPropertyChanged(nameof(DisplayTitle));
                 Children.Add(subFieldVM);
             }
         }

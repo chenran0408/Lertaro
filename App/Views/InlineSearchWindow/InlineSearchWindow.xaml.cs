@@ -249,6 +249,8 @@ public partial class InlineSearchWindow : Window, ISearchWindow
         Keyboard.Focus(SearchBox.SearchTextBox);
     }
     public void LaunchByShortcutIndex(int num) => _inputHandler.LaunchByShortcutIndex(num);
+    public void OpenSearchResultExternal(PluginSdk.Abstractions.ISearchResult result, bool asAdmin = false)
+        => Services.Plugin.ApplicationLaunchDispatcher.OpenExternal(result, this, asAdmin);
     public void OpenFileOrFolderExternal(string path) => InlineSearchNavigator.OpenFileOrFolderExternal(this, path);
     public void OpenFileOrFolderAsAdminExternal(string path) => InlineSearchNavigator.OpenFileOrFolderAsAdminExternal(this, path);
     public void LocateInExplorerExternal(string path) => InlineSearchNavigator.LocateInExplorerExternal(this, path);

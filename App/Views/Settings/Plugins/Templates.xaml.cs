@@ -130,6 +130,12 @@ public partial class PluginConfigTemplates : ResourceDictionary
         else
         {
             var dlg = new Microsoft.Win32.OpenFileDialog();
+            if (btn.DataContext is PluginConfigFieldViewModel field && !string.IsNullOrWhiteSpace(field.SchemaField.FilePathPattern)
+                && !field.SchemaField.FilePathPattern.Contains('|'))
+            {
+                dlg.Filter = field.Label.Replace('|', '/') + "|" + field.SchemaField.FilePathPattern;
+                dlg.DereferenceLinks = false;
+            }
             if (dlg.ShowDialog() == true)
             {
                 textBox.Text = dlg.FileName;

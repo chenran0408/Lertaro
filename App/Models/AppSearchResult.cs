@@ -218,6 +218,8 @@ public class AppSearchResult : System.ComponentModel.INotifyPropertyChanged, Plu
     string? PluginSdk.Abstractions.ISearchResult.InstantActionArgument =>
         string.IsNullOrEmpty(InstantResultActionArgument) ? null : InstantResultActionArgument;
 
+    public string ApplicationArguments { get => _extras?.ApplicationArguments ?? string.Empty; set => Extras.ApplicationArguments = value; }
+    public string ApplicationWorkingDirectory { get => _extras?.ApplicationWorkingDirectory ?? string.Empty; set => Extras.ApplicationWorkingDirectory = value; }
     public Action? InstantResultOnExecute { get => _extras?.InstantResultOnExecute; set => Extras.InstantResultOnExecute = value; }
     public Func<bool>? InstantResultOnExecuteFunc { get => _extras?.InstantResultOnExecuteFunc; set => Extras.InstantResultOnExecuteFunc = value; }
     public string? TabCompletion { get => _extras?.TabCompletion; set => Extras.TabCompletion = value; }

@@ -10,6 +10,7 @@ internal static class ApplicationSearchAliases
     {
         var aliases = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var words = Regex.Matches(Regex.Replace(title, @"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", " "), @"[A-Za-z0-9]+").Select(match => match.Value).ToArray();
+        foreach (Match word in Regex.Matches(title, @"[A-Za-z][A-Za-z0-9]+")) aliases.Add(word.Value);
         if (words.Length > 1)
         {
             aliases.Add(string.Concat(words));

@@ -25,6 +25,8 @@ public class PluginConfigField
     public string DescriptionKey { get; set; } = string.Empty;
     public ConfigFieldType FieldType { get; set; }
     public object DefaultValue { get; set; } = null!;
+    /// <summary>Optional FilePath picker patterns, separated by semicolons. The field label names the filter.</summary>
+    public string? FilePathPattern { get; set; }
     public List<string>? Choices { get; set; }
     /// <summary>Choice values with separate persisted values and localized display labels.</summary>
     public List<PluginConfigChoice>? ChoiceOptions { get; set; }

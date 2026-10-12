@@ -54,6 +54,10 @@ public class SearchableItem
     /// <summary>The argument associated with the action (e.g. the text to copy).</summary>
     public string ActionArgument { get; set; } = string.Empty;
 
+    /// <summary>Application launch parameters, kept separate for identity and duplicate detection.</summary>
+    public string LaunchArguments { get; set; } = string.Empty;
+    public string LaunchWorkingDirectory { get; set; } = string.Empty;
+
     /// <summary>Optional custom text to fill the search box with when Tab is pressed.</summary>
     public string? TabCompletion { get; set; }
 
