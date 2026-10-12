@@ -47,7 +47,17 @@ public static class PortableDirectoryLock
         using var local = DirectoryLockNativeMethods.OpenWithoutFollowing("Local", appData, migration: true);
         RejectLink(local);
         var directory = Path.Combine(profile, "AppData", "Local", "Lertaro");
-        return Directory.Exists(directory) ? RepairUserDirectory(directory, user) : new Report();
+        if (!Directory.Exists(directory)) return new Report();
+        var report = RepairUserDirectory(directory, user);
+
+        // A repair that returns without having changed the owner is the failure issue #342 could not see: the
+        // walk reported success, every later start refused again, and the user had nothing to go on. The owner
+        // is read back here, while the walk's own result is still in hand, and a mismatch is reported rather
+        // than assumed away -- the App turns a non-empty Failed list into the reason it shows.
+        var owner = UserDataAccess.TryGetOwner(directory);
+        if (owner != null && !string.Equals(owner, user.Value, StringComparison.OrdinalIgnoreCase))
+            report.Failed.Add($"{directory}: owner is still {owner}, expected {user.Value}");
+        return report;
 
         static void RejectLink(Microsoft.Win32.SafeHandles.SafeFileHandle handle)
         {
@@ -114,7 +124,7 @@ public static class PortableDirectoryLock
         appDirectory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(appDirectory));
         if (SettingsFileReader.ReadIfPresent(Path.Combine(appDirectory, RevisionFile)) != PermissionsRevision) return false;
         return IsCurrent(appDirectory, Directory.Exists(Path.Combine(appDirectory, "Data")),
-            UserProfiles.Read().Keys, (folder, zone) => Directory.Exists(folder) && InstallDirectoryLock.GrantsAtLeast(folder, zone));
+            UserProfiles.Read().Keys, (folder, zone) => Directory.Exists(folder) && GrantsAtLeast(folder, zone));
     }
 
     internal static bool IsCurrent(string appDirectory, bool hasPortableData, IEnumerable<string> profileSids,

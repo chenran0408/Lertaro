@@ -38,7 +38,10 @@ public class UserSettings
     // page's own update button ignores them, because a request that was just clicked is not a retry.
     public string LastFailedUpdateTag { get; set; } = "";
     public long LastFailedUpdateUtcTicks { get; set; }
-    // Applied only to QuickSearchWindow (Window_Loaded), not process-wide -- see GitHub issue #82
+    // The newest silent-update verdict already shown to this user. The updater result lives beside
+    // the installation, so keep its shown-once marker in this user's own settings.
+    public long LastReportedUpdateResultUtcTicks { get; set; }
+    // Applied only to QuickSearchWindow (Window_Loaded), not process-wide: see GitHub issue #82
     // (NVIDIA Advanced Optimus GPU hot-switch blocked by this window's persistent DirectX composition
     // surface, since it's created once at startup and only ever hidden, never closed). Requires a
     // restart to take effect, since the window's HwndTarget.RenderMode is only set once at load.

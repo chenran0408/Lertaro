@@ -1,3 +1,4 @@
+using Lertaro.Core.Services.Installation;
 using System.Reflection;
 using System.Text.Json;
 
@@ -65,7 +66,8 @@ internal static class SettingsBackupInventory
 
         if (applicationDirectory != null)
         {
-            using var installed = new SettingsBackupPaths(applicationDirectory);
+            // Resolve the installation root's relocation before walking it; links below it stay refused.
+            using var installed = new SettingsBackupPaths(DataDirectoryResolver.ResolveFinalTarget(applicationDirectory));
             foreach (var file in installed.Files("Plugins").Where(p => Path.GetFileName(p).StartsWith("Lertaro.Plugins.", StringComparison.OrdinalIgnoreCase)
                          && p.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)))
             {
