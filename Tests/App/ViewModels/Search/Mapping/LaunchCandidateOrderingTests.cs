@@ -96,6 +96,63 @@ public sealed class LaunchCandidateOrderingTests
     }
 
     [TestMethod]
+    [DataRow("wx", 0)]
+    [DataRow("weixin", 2)]
+    public void CompletePinyinAndInitialsMatchBeatsAnExactlyNamedFolder(string query, int tier)
+    {
+        var application = Candidate("微信", @"C:\StartMenu\Weixin.lnk", application: true)
+            with { TypeRank = 1, Match = new MatchRank(tier, 0, 1) };
+        var folder = Candidate(query, @"C:\Work\folder", 1, directory: true) with { TypeRank = 0 };
+        var results = LaunchCandidateOrdering.Order(new() { folder, application }, query,
+            _ => new(@"C:\Apps\Weixin.exe", "", ""));
+        Assert.AreSame(application.Result, results[0].Result);
+    }
+
+    [TestMethod]
+    public void PartialAliasDoesNotOverrideAnExactFileName()
+    {
+        var application = Candidate("微信工具", @"C:\Apps\WeixinTools.exe", .7, application: true);
+        var file = Candidate("wx", @"C:\Work\wx.txt", .7);
+        Assert.AreSame(file.Result, Order("wx", application, file)[0].Result);
+    }
+
+    [TestMethod]
+    public void FullAliasCoverageDoesNotOverrideAnExplicitFileExtension()
+    {
+        var application = Candidate("微信", @"C:\Apps\Weixin.exe", 1, application: true) with { IsExactAliasMatch = true };
+        var file = Candidate("wx.txt", @"C:\Work\wx.txt", .7);
+        Assert.AreSame(file.Result, Order("wx.txt", application, file)[0].Result);
+    }
+
+    [TestMethod]
+    public void AnExplicitlyRequestedSupportApplicationBeatsItsSameNamedFolder()
+    {
+        var application = Candidate("Uninstall Editor", @"C:\Apps\unins000.exe", 1, application: true);
+        var folder = Candidate("Uninstall Editor", @"C:\Work\Uninstall Editor", 1, directory: true);
+        Assert.AreSame(application.Result, Order("Uninstall Editor", folder, application)[0].Result);
+    }
+
+    [TestMethod]
+    public void CompleteMixedLanguageAliasKeepsItsExactPreferenceDespiteWordAveragedWeight()
+    {
+        var application = Candidate("Office 语言首选项", @"C:\Apps\OfficeLanguage.exe", .46, application: true)
+            with { IsExactAliasMatch = true };
+        var folder = Candidate("officeyysxx", @"C:\Work\officeyysxx", 1, directory: true);
+        Assert.AreSame(application.Result, Order("officeyysxx", folder, application)[0].Result);
+    }
+
+    [TestMethod]
+    [DataRow("Lertaro.App")]
+    [DataRow("Battle.net Launcher")]
+    public void DotInAnExactApplicationAliasIsNotMistakenForARequestedFileExtension(string query)
+    {
+        var application = Candidate("Friendly name", @"C:\Apps\launcher.exe", 1, application: true)
+            with { IsExactAliasMatch = true };
+        var folder = Candidate(query, @"C:\Work\folder", 1, directory: true);
+        Assert.AreSame(application.Result, Order(query, folder, application)[0].Result);
+    }
+
+    [TestMethod]
     public void ExactDocumentBeatsFuzzyApplicationAndOldHistory()
     {
         var exact = Candidate("report.docx", @"C:\Work\report.docx", .4);

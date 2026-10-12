@@ -51,9 +51,9 @@ public static class SearchableItemMapper
     // the caller (SearchResultMapper.BuildQuickResults) merges these into one globally sorted list
     // alongside favorites/history-matched files/file-search results, rather than always showing every
     // searchable item ahead of every file result regardless of which actually matched better.
-    public static List<(AppSearchResult Result, MatchRank Match)> CollectSearchableItemResults(string query, bool isInlineWindow)
+    public static List<(AppSearchResult Result, MatchRank Match, bool IsExactAlias)> CollectSearchableItemResults(string query, bool isInlineWindow)
     {
-        var candidates = new List<(AppSearchResult Result, MatchRank Match)>();
+        var candidates = new List<(AppSearchResult Result, MatchRank Match, bool IsExactAlias)>();
         if (isInlineWindow) return candidates;
 
         var q = query?.Trim() ?? string.Empty;
@@ -121,7 +121,7 @@ public static class SearchableItemMapper
 
     // Split out of the matches loop below purely to keep this file's per-method length down -- no
     // other caller.
-    private static (AppSearchResult Result, MatchRank Match) BuildCandidate(SearchableItemCache.CacheEntry entry, ISearchableItemProvider provider, string activeQuery, MatchRank match)
+    private static (AppSearchResult Result, MatchRank Match, bool IsExactAlias) BuildCandidate(SearchableItemCache.CacheEntry entry, ISearchableItemProvider provider, string activeQuery, MatchRank match)
     {
         var item = entry.Item;
         System.Windows.Media.ImageSource? iconOverride = null;
@@ -205,6 +205,7 @@ public static class SearchableItemMapper
             InstantResultOnExecuteFunc = item.OnExecuteFunc,
             TabCompletion = item.TabCompletion,
             SourceProvider = provider
-        }, match);
+        }, match, isApplication && ApplicationSearchAliases.IsExactMatch(activeQuery ?? "", entry.Aliases,
+            AliasProviderRegistry.GetActiveProviders().Select(aliasProvider => aliasProvider.SyllableSeparator)));
     }
 }

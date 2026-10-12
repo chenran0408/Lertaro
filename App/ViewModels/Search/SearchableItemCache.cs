@@ -4,6 +4,7 @@ using Lertaro.App.Services;
 
 using Lertaro.App.Services.Plugin;
 using Lertaro.Core.SearchIndex;
+using Lertaro.App.ViewModels.Search.Mapping;
 namespace Lertaro.App.ViewModels.Search;
 
 // Owns the per-provider load/cache lifecycle for ISearchableItemProvider -- split out of
@@ -140,7 +141,9 @@ internal static class SearchableItemCache
                             .SelectMany(p => PluginPerformanceMonitor.Measure(p, () => p.GetAliases(item.Title)?.ToList() ?? new List<string>()))
                             .ToList()
                         : new List<string>();
-                    entries.Add(new CacheEntry(item, aliases, MaterializeIcon(item)));
+                    if (provider.EnableAlias && item.ResultKind == "Application")
+                        aliases.AddRange(ApplicationSearchAliases.Collect(item.Title, item.ActionArgument ?? "", LaunchShortcutCache.Read));
+                    entries.Add(new CacheEntry(item, aliases.Distinct(StringComparer.OrdinalIgnoreCase).ToList(), MaterializeIcon(item)));
                 }
                 if (generation != Volatile.Read(ref _generation))
                     return;

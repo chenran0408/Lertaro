@@ -13,7 +13,11 @@ internal static class LaunchCandidateOrdering
     internal static List<SearchResultMapper.RankedCandidate> Order(List<SearchResultMapper.RankedCandidate> candidates,
         string query, Func<string, LaunchShortcut?> readShortcut)
     {
-        var explicitExtension = !string.IsNullOrEmpty(Path.GetExtension(query.Trim()));
+        var queryName = query.Trim();
+        var explicitExtension = !string.IsNullOrEmpty(Path.GetExtension(queryName))
+            && (!candidates.Any(candidate => candidate.IsExactAliasMatch)
+                || candidates.Any(candidate => !candidate.Result.IsApplication && !candidate.Result.IsDir
+                    && queryName.Equals(Path.GetFileName(candidate.Result.FullPath), StringComparison.OrdinalIgnoreCase)));
         var entries = candidates.Select(candidate => (Candidate: candidate,
             Link: Path.GetExtension(candidate.Result.FullPath).Equals(".lnk", StringComparison.OrdinalIgnoreCase)
                 ? readShortcut(candidate.Result.FullPath) : null)).ToList();
@@ -29,7 +33,7 @@ internal static class LaunchCandidateOrdering
         var scores = entries.Where(entry => LaunchIdentity(entry.Candidate.Result, entry.Link) != null)
             .GroupBy(entry => LaunchIdentity(entry.Candidate.Result, entry.Link)!, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Select(entry => entry.Candidate)
-                .OrderByDescending(candidate => ExactName(candidate.Result, query))
+                .OrderByDescending(candidate => ExactMatch(candidate, query, explicitExtension))
                 .ThenBy(candidate => candidate.Match.Start).ThenByDescending(candidate => candidate.Match.Weight)
                 .ThenBy(candidate => candidate.Match.Tier).First(), StringComparer.Ordinal);
         var rankedEntries = entries.Select(entry => (entry.Candidate, entry.Link,
@@ -39,10 +43,10 @@ internal static class LaunchCandidateOrdering
         var launches = new HashSet<string>(StringComparer.Ordinal);
         var results = new List<SearchResultMapper.RankedCandidate>();
         foreach (var entry in rankedEntries
-            .OrderByDescending(entry => ExactName(entry.Score.Result, query))
+            .OrderByDescending(entry => ExactMatch(entry.Score, query, explicitExtension))
             // Equal exact names are a launch request: Steam.exe/Steam.lnk must beat a Steam folder,
             // even though the extension lowers coverage and the default type order prefers files.
-            .ThenBy(entry => ExactName(entry.Score.Result, query) ? LaunchRank(entry.Candidate.Result, entry.Link) : 0)
+            .ThenBy(entry => ExactMatch(entry.Score, query, explicitExtension) ? LaunchRank(entry.Candidate.Result, entry.Link, exact: true) : 0)
             .ThenBy(entry => entry.Score.Match.Start)
             // Coverage weights are 0..1. A tenth-wide band allows usage/launch preferences to settle
             // near matches without letting an unrelated old result outrank a much stronger match.
@@ -78,6 +82,12 @@ internal static class LaunchCandidateOrdering
         return results;
     }
 
+    // A full pinyin/initials alias is as exact as the display name. Requiring full coverage avoids
+    // promoting a weak fuzzy hit; an explicit extension still means the user requested that file.
+    private static bool ExactMatch(SearchResultMapper.RankedCandidate candidate, string query, bool explicitExtension)
+        => ExactName(candidate.Result, query) || (!explicitExtension
+            && (candidate.IsExactAliasMatch || (candidate.Match.IsMatch && candidate.Match.Start == 0 && candidate.Match.Weight >= 1)));
+
     internal static bool ExactName(AppSearchResult result, string query)
     {
         query = query.Trim();
@@ -86,11 +96,11 @@ internal static class LaunchCandidateOrdering
                 && query.Equals(Path.GetFileNameWithoutExtension(result.FullPath), StringComparison.OrdinalIgnoreCase));
     }
 
-    internal static int LaunchRank(AppSearchResult result, LaunchShortcut? link)
+    internal static int LaunchRank(AppSearchResult result, LaunchShortcut? link, bool exact = false)
     {
         if (result.IsDir) return 2;
         var target = link?.Target ?? result.FullPath;
-        if (IsExecutable(target)) return IsSupportExecutable(target) ? 3 : link.HasValue || result.IsApplication ? 0 : 1;
+        if (IsExecutable(target)) return !exact && IsSupportExecutable(target) ? 3 : link.HasValue || result.IsApplication ? 0 : 1;
         // A successfully read folder/document link stays an ordinary file even if a provider labeled it Application.
         return link.HasValue || Path.GetExtension(result.FullPath).Equals(".lnk", StringComparison.OrdinalIgnoreCase) ? 2 : result.IsApplication ? 0 : 2;
     }

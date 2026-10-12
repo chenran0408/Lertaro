@@ -179,7 +179,7 @@ public static class SearchResultMapper
         // routing hid these too (its "Case B").
         if (fileFilterScope == null)
         {
-            foreach (var (result, match) in SearchableItemMapper.CollectSearchableItemResults(query, isInlineWindow))
+            foreach (var (result, match, exactAlias) in SearchableItemMapper.CollectSearchableItemResults(query, isInlineWindow))
             {
                 var typeId = result.SourceProvider is ISearchableItemProvider provider
                     ? SearchResultTypePriority.GetProviderTypeId(provider)
@@ -199,7 +199,8 @@ public static class SearchResultMapper
                     hasHistory ? priority : int.MaxValue,
                     SearchResultTypePriority.Rank(typeId, typeOrder),
                     match,
-                    SearchResultHelper.NormalizePath(result.FullPath)));
+                    SearchResultHelper.NormalizePath(result.FullPath),
+                    IsExactAliasMatch: exactAlias));
             }
         }
 
@@ -277,7 +278,7 @@ public static class SearchResultMapper
 
     // TypeRank: this candidate's position in UserSettings.ResultTypeOrder -- see RankedCandidateOrdering,
     // which owns the ordering ladder these candidates are fed through.
-    internal readonly record struct RankedCandidate(AppSearchResult Result, bool IsCurated, int Priority, int TypeRank, MatchRank Match, string NormalizedPath);
+    internal readonly record struct RankedCandidate(AppSearchResult Result, bool IsCurated, int Priority, int TypeRank, MatchRank Match, string NormalizedPath, bool IsExactAliasMatch = false);
 
     // Shared by both search groups the inline window shows (its own "Current Folder" matches via
     // ExplorerSearchHelper, and this "Global Search" tier below) so a file scores the same way regardless
