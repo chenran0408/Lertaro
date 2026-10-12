@@ -87,26 +87,9 @@ public class StartMenuAppItemProvider : ISearchableItemProvider, IDisposable
             }
         }
 
-        // 3. Deduplicate entries that have the same name by target executable path
-        var deduped = new List<(string Name, string Path)>();
-        foreach (var group in entriesByName.Values)
-        {
-            if (group.Count == 1)
-            {
-                deduped.Add(group[0]);
-                continue;
-            }
-
-            var seenTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var entry in group)
-            {
-                var target = StartMenuShortcutResolver.ResolveShortcutTarget(entry.Path) ?? entry.Path;
-                if (seenTargets.Add(target))
-                {
-                    deduped.Add(entry);
-                }
-            }
-        }
+        // Retain distinct launch entries, including links with different arguments or working directories.
+        // The global launch mapper deduplicates equivalent entry points after resolving their full launch identity.
+        var deduped = entriesByName.Values.SelectMany(entries => entries);
 
         // 4. Map to SearchableItem list with dynamic icon loading
         var descTemplate = TranslationService.Get("Search_ResultAppDir");

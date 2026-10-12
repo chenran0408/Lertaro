@@ -189,7 +189,7 @@ internal sealed class SearchDispatchController
             _getIsInlineSearchContext(),
             fileLimit,
             appLimit,
-            (resp, contextDir) => SearchResultMapper.BuildQuickResults(resp, searchQuery, hasScope ? null : _getIsInlineSearchContext() ? null : _getSearchScope(), contextDir, _getIsInlineSearchContext(), originalValue, skipDisplayCap: hasTokens || hasScope, fileFilterScope: scopeDirective, folderScope: folderScope, instantPass: instantPass),
+            (resp, contextDir) => SearchResultMapper.BuildQuickResults(resp, searchQuery, hasScope ? null : _getIsInlineSearchContext() ? null : _getSearchScope(), contextDir, _getIsInlineSearchContext(), originalValue, skipDisplayCap: hasTokens || hasScope, fileFilterScope: scopeDirective, folderScope: folderScope, instantPass: instantPass, preferLaunches: !hasTokens && !hasScope),
             state => _setIsSearching(state),
             (results, status, final) => ApplySearchResults(originalValue, searchQuery, results, status, final),
             HandleLocalServiceUnavailable,

@@ -58,7 +58,7 @@ public static class SearchResultMapper
     // silently drops the token's real matches whenever they don't also happen to be in the top ~50 by
     // plain filename weight (e.g. a common substring like "1080" already fills that cap with unrelated
     // files before the directory filter gets a chance to run at all).
-    internal static List<AppSearchResult> BuildQuickResults(List<SearchResult>? fileResults, string query, string? scope, string? contextDirectory, bool isInlineWindow, string? rawQuery = null, bool skipDisplayCap = false, FileFilterScopeDirective? fileFilterScope = null, bool folderScope = false, InstantPassCache? instantPass = null)
+    internal static List<AppSearchResult> BuildQuickResults(List<SearchResult>? fileResults, string query, string? scope, string? contextDirectory, bool isInlineWindow, string? rawQuery = null, bool skipDisplayCap = false, FileFilterScopeDirective? fileFilterScope = null, bool folderScope = false, InstantPassCache? instantPass = null, bool preferLaunches = true)
     {
         var uiResults = new List<AppSearchResult>();
         // One pass over the plugin providers per search, not per paint. This method IS a paint callback --
@@ -95,11 +95,8 @@ public static class SearchResultMapper
 
         var historySnapshot = SearchHistoryStore.Snapshot();
 
-        // Quick-window-only: a user-orderable hard tier between history priority and match-quality
-        // weight (RankedCandidate.TypeRank) -- lets e.g. Applications always outrank Files regardless
-        // of which matched the query text better, without a small weight bonus getting lost against a
-        // much better textual match. Empty by default (every candidate's Rank falls back to the same
-        // int.MaxValue), so an untouched order list is a complete no-op. See SearchResultTypePriority.
+        // Keep explicit result-type preferences. Ordinary global queries additionally protect exact
+        // names and use launch-entry preferences; inline/scoped queries retain their existing order.
         var typeOrder = isInlineWindow ? new List<string>() : UserSettings.Load().ResultTypeOrder;
 
         // Quick-window-only exclusive filter: if the first character the user actually typed matches a
@@ -129,11 +126,8 @@ public static class SearchResultMapper
             }
         }
 
-        // Favorites, history-matched files, searchable items (apps/settings), and remaining file
-        // results all compete on ONE list now: history priority first (an explicit "you've opened
-        // this before" signal -- items with no history sort after every item that has one), then
-        // match-quality weight -- instead of every favorite always beating every app always beating
-        // every file regardless of which one actually matched the query text better.
+        // Collect every candidate before choosing the context's ordering ladder. Usage is an auxiliary
+        // signal for global launch searches, while inline/scoped searches keep their existing policy.
         var candidates = new List<RankedCandidate>();
 
         // Parsed once for this whole result set. The file loop below runs once per file result (thousands
@@ -164,11 +158,8 @@ public static class SearchResultMapper
                 if (!match.IsMatch || !Helpers.FavoritePathResolver.IsPathAvailable(fav.Path))
                     continue;
 
-                // A favorite is curated by the user regardless of whether it also has USAGE history --
-                // that's a stronger signal than "matched the query text well" or "happens to be an
-                // application", so it stays ahead of both. TypeRank never actually differentiates a
-                // favorite from anything else (IsCurated already does), so it's given the Files id here
-                // simply as the closest match to what a favorited path actually is.
+                // Retain the explicit favorite signal; global launch ranking uses it within similar
+                // matches, while the existing scoped/inline ordering still gives it a hard priority.
                 var normalizedFavPath = Helpers.FavoritePathResolver.NormalizeForComparison(fav.Path);
                 if (normalizedScopeFolders != null && !InFileFilterScope(normalizedFavPath))
                     continue;
@@ -190,7 +181,7 @@ public static class SearchResultMapper
         {
             foreach (var (result, match) in SearchableItemMapper.CollectSearchableItemResults(query, isInlineWindow))
             {
-                var typeId = result.SourceProvider is PluginSdk.Abstractions.Plugins.ISearchableItemProvider provider
+                var typeId = result.SourceProvider is ISearchableItemProvider provider
                     ? SearchResultTypePriority.GetProviderTypeId(provider)
                     : SearchResultTypePriority.FilesTypeId;
                 if (triggeredTypeId != null && typeId != triggeredTypeId)
@@ -238,7 +229,9 @@ public static class SearchResultMapper
         if (folderScope)
             candidates.RemoveAll(c => !c.Result.IsDir);
 
-        var ranked = RankAndDedupe(candidates);
+        var ranked = preferLaunches && !string.IsNullOrWhiteSpace(query) && LaunchCandidateOrdering.Applies(isInlineWindow, scope, fileFilterScope != null, folderScope, triggeredTypeId) && !System.IO.Path.IsPathFullyQualified(query)
+            ? LaunchCandidateOrdering.Order(candidates, query, LaunchShortcutCache.Read).Select(candidate => candidate.Result).ToList()
+            : RankAndDedupe(candidates);
         // Capped here (not deferred to the caller) because this display cap has to respect whatever
         // header/grouping layout the caller (or InlineListSearchHelper.MergeLocalMatches, downstream)
         // builds around these rows -- e.g. the inline window's "Current Folder"/"Global Search" split
