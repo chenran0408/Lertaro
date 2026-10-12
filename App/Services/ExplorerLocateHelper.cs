@@ -8,11 +8,9 @@ using MessageBoxImage = System.Windows.MessageBoxImage;
 
 namespace Lertaro.App.Services;
 
-// "Select this item in Explorer" -- split out of FileExecutor to keep that file under the line-count
-// limit. Routes through the shell (SHOpenFolderAndSelectItems for the fallback, an already-open window's
-// own Navigate2 for the in-place case) so it respects the user's default file manager instead of always
-// opening explorer.exe. The live-window half of that -- ShellWindows COM, tab handles -- lives in
-// ExplorerShellWindowsHelper.
+// Split out of FileExecutor to keep its launch and locate concerns small. Configured file managers
+// take precedence; physical items are handed to an external Explorer process so a stalled selection
+// API cannot consume an in-process shell worker. Virtual items still use the shell namespace route.
 internal static class ExplorerLocateHelper
 {
     /// <summary>
@@ -54,9 +52,10 @@ internal static class ExplorerLocateHelper
             }
         }
 
-        if (fileManager.OpenFoldersInNewExplorerTabs && FileExecutor.TryLocateInNewExplorerTab(path, () => ShellOpenHelper.TryRevealInFolder(path)))
+        if (fileManager.OpenFoldersInNewExplorerTabs && FileExecutor.TryLocateInNewExplorerTab(path, () => TryRevealWithExplorerProcess(path)))
             return;
 
+        if (TryRevealWithExplorerProcess(path)) return;
         RevealWithShell(path, folder);
     }
 
@@ -127,6 +126,25 @@ internal static class ExplorerLocateHelper
         {
             ExplorerShellWindowsHelper.ReleaseComObject(window);
         }
+    }
+
+    internal static ProcessStartInfo? BuildExplorerReveal(string path)
+    {
+        if (!Path.IsPathFullyQualified(path) || UserPathResolver.IsVirtualPath(path)) return null;
+        return new ProcessStartInfo
+        {
+            FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"),
+            Arguments = (string.Equals(Path.GetPathRoot(path), path, StringComparison.OrdinalIgnoreCase) ? "" : "/select,") + ArgQuoting.Quote(path),
+            UseShellExecute = false
+        };
+    }
+
+    private static bool TryRevealWithExplorerProcess(string path)
+    {
+        var start = BuildExplorerReveal(path);
+        if (start == null) return false;
+        try { Process.Start(start)?.Dispose(); return true; }
+        catch (Exception ex) { Logger.Log($"[ExplorerLocate] Explorer launch failed: {ex.Message}", LogLevel.Warn); return false; }
     }
 
     // Last resort for a locate: the documented shell routes, in decreasing fidelity. Selecting the item

@@ -28,6 +28,25 @@ public sealed class ShellMenuActionProviderTests
     }
 
     [TestMethod]
+    [DataRow(".exe")]
+    [DataRow(".lnk")]
+    [DataRow(".url")]
+    public void LaunchFilesDoNotLoadNativeShellMenuHandlers(string extension)
+    {
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + extension);
+        File.WriteAllText(path, "fixture");
+        try { Assert.IsFalse(new ShellMenuActionProvider().CanProvide(new[] { new FakeResult { FullPath = path } })); }
+        finally { File.Delete(path); }
+    }
+
+    [TestMethod]
+    public void ApplicationProvidersKeepTheBuiltInActionsWithoutANativeMenu()
+    {
+        using var file = new TempFile();
+        Assert.IsFalse(new ShellMenuActionProvider().CanProvide(new[] { new FakeResult { FullPath = file.Path, IsApplication = true } }));
+    }
+
+    [TestMethod]
     public void CanProvide_EmptyResults_ReturnsFalse() =>
         Assert.IsFalse(new ShellMenuActionProvider().CanProvide(Array.Empty<ISearchResult>()));
 

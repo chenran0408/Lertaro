@@ -17,34 +17,9 @@ public class ShellMenuActionProvider : IDynamicActionProvider
     private ShellMenuSession? _session;
     private string? _lastPath;
 
-    // Called by the host right as the actions menu starts opening (see ShellMenuPresenter.EnterActionsMode),
-    // well before CanProvide/GetMenuItems run for real -- unlike triggering the warm-up from inside
-    // CanProvide itself, this gives it a genuine head start instead of racing the real GetMenuItems
-    // call that follows moments later on the same shared, single-threaded STA worker (a race the
-    // warm-up would usually lose, making it pure overhead instead of actually warming anything). Still
-    // the same risky in-process COM call a buggy shell extension could crash on (see GetMenuItems
-    // below); moving the trigger doesn't remove that risk, but a crash here can now only happen once
-    // the app is already up and the user is opening an actions menu, not on every single launch
-    // regardless of whether they ever touch this feature. The host guarantees this is only ever called
-    // once per process, so there's no need to self-guard against repeat calls here. Runs on a
-    // background task so it never delays the actions menu the user is looking at right now.
-    public void Init() => _ = Task.Run(() =>
-                               {
-                                   try
-                                   {
-                                       var warmPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                                       if (!string.IsNullOrEmpty(warmPath) && Directory.Exists(warmPath))
-                                       {
-                                           var session = ShellMenuSession.Create(warmPath);
-                                           session?.EnumerateItems();
-                                           session?.Dispose();
-                                       }
-                                   }
-                                   catch
-                                   {
-                                       // Warm-up is best-effort.
-                                   }
-                               });
+    // Build only when a supported file menu is requested. Warming a folder menu for an application
+    // click loads unrelated third-party handlers into the process before CanProvide can reject it.
+    public void Init() { }
 
     public bool CanProvide(IReadOnlyList<ISearchResult> results)
     {
@@ -52,7 +27,11 @@ public class ShellMenuActionProvider : IDynamicActionProvider
         // hide it when more than one result is selected.
         if (results.Count != 1) return false;
         var result = results[0];
-        if (result == null || string.IsNullOrEmpty(result.FullPath)) return false;
+        if (result == null || string.IsNullOrEmpty(result.FullPath) || result.IsApplication) return false;
+        var extension = Path.GetExtension(result.FullPath);
+        if (!result.IsDir && (extension.Equals(".exe", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".url", StringComparison.OrdinalIgnoreCase))) return false;
         return PluginSdk.Helpers.PathExistenceCache.ExistsResult(result);
     }
 

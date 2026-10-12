@@ -91,16 +91,19 @@ internal static class ShellMenuStaWorker
 
     // A shell extension stuck in a native call can wedge this thread forever. TerminateThread is not a
     // safe way out (no stack unwind, no COM release, and it can leave process-wide locks held), so the
-    // wedged background STA thread is simply abandoned and a fresh worker is created for the next call.
+    // wedged background STA thread is abandoned and native menus stay disabled until process restart.
     public static void KillWedgedStaWorker(Dispatcher wedgedDispatcher)
     {
         lock (_staLock)
         {
-            if (_staDispatcher != wedgedDispatcher) return; // already replaced by another caller's timeout
+            if (_staDispatcher != wedgedDispatcher) return; // another caller already disabled the worker
 
+            _staInitFailed = true;
             _staDispatcher = null;
             _staThreadId = 0;
-            Logger.Log("[ShellMenuSession] Abandoned wedged STA worker; a fresh worker will start on the next call.", LogLevel.Warn);
+            // A hung extension may hold the loader lock too. Starting replacements after that can
+            // block Thread.Start before the worker timeout even begins; keep built-in actions available.
+            Logger.Log("[ShellMenuSession] Native menus disabled after a hung shell extension; built-in actions remain available.", LogLevel.Warn);
         }
     }
 }

@@ -13,12 +13,34 @@ namespace Lertaro.App.Views.QuickSearchWindow.Helpers;
 public class QuickSearchWindowResultExecutor
 {
     private readonly Lertaro.App.QuickSearchWindow _window;
+    private readonly Controls.Results.ResultClickGesture _click = new();
+    private System.Windows.Point _pressPosition;
 
-    public QuickSearchWindowResultExecutor(Lertaro.App.QuickSearchWindow window) => _window = window;
+    public QuickSearchWindowResultExecutor(Lertaro.App.QuickSearchWindow window)
+    {
+        _window = window;
+        window.IsVisibleChanged += (_, _) => { if (!window.IsVisible) _click.Cancel(); };
+    }
+
+    public void HandlePreviewMouseLeftButtonDown(MouseButtonEventArgs e)
+    {
+        var item = Lertaro.App.QuickSearchWindow.FindVisualParentExternal<ListBoxItem>(e.OriginalSource as DependencyObject);
+        _pressPosition = e.GetPosition(_window.LstResults);
+        _click.Press(item?.Content as AppSearchResult, !e.Handled && _window.MenuPresenter?.IsInActionsMode != true);
+    }
+
+    public void HandlePreviewMouseMove(System.Windows.Input.MouseEventArgs e)
+    {
+        var point = e.GetPosition(_window.LstResults);
+        if (e.LeftButton != MouseButtonState.Pressed
+            || Math.Abs(point.X - _pressPosition.X) > SystemParameters.MinimumHorizontalDragDistance
+            || Math.Abs(point.Y - _pressPosition.Y) > SystemParameters.MinimumVerticalDragDistance) _click.Cancel();
+    }
 
     public void HandlePreviewMouseLeftButtonUp(MouseButtonEventArgs e)
     {
         var item = Lertaro.App.QuickSearchWindow.FindVisualParentExternal<ListBoxItem>(e.OriginalSource as DependencyObject);
+        if (!_click.Release(item?.Content as AppSearchResult, !e.Handled && _window.MenuPresenter?.IsInActionsMode != true)) return;
         if (item != null && item.Content is AppSearchResult result && !result.IsEmptyResult && !result.IsSearchSectionHeader)
         {
             e.Handled = true;
@@ -29,6 +51,7 @@ public class QuickSearchWindowResultExecutor
 
     public void HandlePreviewMouseRightButtonUp(MouseButtonEventArgs e)
     {
+        _click.Cancel();
         var item = Lertaro.App.QuickSearchWindow.FindVisualParentExternal<ListBoxItem>(e.OriginalSource as DependencyObject);
         if (item != null && item.Content is AppSearchResult result && !result.IsEmptyResult && !result.IsSearchSectionHeader)
         {

@@ -1,4 +1,5 @@
 using System.Windows.Media;
+using Lertaro.App.Services;
 using Lertaro.App.Services.Plugin;
 using Lertaro.PluginSdk.Abstractions;
 using Lertaro.PluginSdk.Abstractions.Plugins;
@@ -70,6 +71,42 @@ public sealed class PluginActionExecutorTests
 
         Assert.IsFalse(success);
         Assert.IsFalse(fakeView.HideWindowCalled);
+    }
+
+    [TestMethod]
+    public async Task ApplicationLaunchReturnsWhileTheShellCallbackIsBlocked()
+    {
+        ShellThread.Start();
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var callerThread = Environment.CurrentManagedThreadId;
+        var launchThread = callerThread;
+        var apartment = ApartmentState.Unknown;
+        var result = new AppSearchResult
+        {
+            ResultKind = "Application",
+            InstantResultOnExecute = () =>
+            {
+                launchThread = Environment.CurrentManagedThreadId;
+                apartment = Thread.CurrentThread.GetApartmentState();
+                entered.Set();
+                release.Wait(TimeSpan.FromSeconds(5));
+                completed.SetResult();
+            }
+        };
+        var view = new FakePluginSearchWindow();
+        try
+        {
+            var invocation = Task.Run(() => PluginActionExecutor.TryExecute(result, view));
+            Assert.IsTrue(await invocation.WaitAsync(TimeSpan.FromSeconds(2)));
+            Assert.IsTrue(entered.Wait(TimeSpan.FromSeconds(2)));
+            Assert.IsTrue(view.HideWindowCalled);
+            Assert.IsFalse(completed.Task.IsCompleted, "A blocked shell callback must not block its caller.");
+            Assert.AreNotEqual(callerThread, launchThread);
+            Assert.AreEqual(ApartmentState.STA, apartment);
+        }
+        finally { release.Set(); await completed.Task.WaitAsync(TimeSpan.FromSeconds(5)); }
     }
 
     private sealed class FakeSearchAction : ISearchResultAction

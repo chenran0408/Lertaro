@@ -136,6 +136,8 @@ public partial class QuickSearchWindow : Window, ISearchWindow, IHasVisibleConte
             SearchBox.IsIconDraggable = ShouldAllowIconDrag(UserSettings.Load().SearchWindow.LockPosition);
         SearchBox.IconClickHint = TranslationManager.Instance["QuickSearch_LogoDragResetHint"];
         PreviewMouseDown += (_, e) => _inputHandler.HandleWindowPreviewMouseDown(e);
+        LstResults.PreviewMouseMove += (s, e) => _resultExecutor.HandlePreviewMouseMove(e);
+        LstResults.PreviewMouseLeftButtonDown += (s, e) => _resultExecutor.HandlePreviewMouseLeftButtonDown(e);
         LstResults.PreviewMouseLeftButtonUp += (s, e) => _resultExecutor.HandlePreviewMouseLeftButtonUp(e);
         LstResults.PreviewMouseRightButtonUp += (s, e) => _resultExecutor.HandlePreviewMouseRightButtonUp(e);
         LstResults.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(OnResultsScrollChanged));

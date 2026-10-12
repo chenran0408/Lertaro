@@ -7,10 +7,11 @@ public static class PluginActionExecutor
 {
     public static bool TryExecute(AppSearchResult result, PluginSdk.Abstractions.IPluginSearchWindow view, bool asAdmin = false)
     {
-        // Apps (Start Menu shortcuts, packaged apps) launch through the same OnExecute delegate as an
-        // instant result -- they just carry ResultKind "Application" instead so they get a real FullPath
-        // and can be acted on (copy, locate in explorer, ...) like a normal file result.
-        if (result.IsInstantResult || result.IsApplication)
+        if (result.IsApplication) return ApplicationLaunchDispatcher.Execute(result, view, asAdmin);
+
+        // Instant-result callbacks may update UI controls, so only application launch callbacks use
+        // the STA dispatch path above. Keep clipboard/settings/provider UI actions on the caller.
+        if (result.IsInstantResult)
         {
             try
             {

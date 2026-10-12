@@ -8,6 +8,30 @@ namespace Lertaro.App.Tests.Services;
 public sealed class ExplorerLocateHelperTests
 {
     [TestMethod]
+    public void RevealFileUsesASeparateExplorerProcessAndQuotesTheSelectedPath()
+    {
+        var start = ExplorerLocateHelper.BuildExplorerReveal(@"C:\Folder with spaces\Steam.lnk");
+        Assert.IsNotNull(start);
+        Assert.IsFalse(start.UseShellExecute, "Never re-enter ShellExecute in the Lertaro process.");
+        Assert.AreEqual("explorer.exe", System.IO.Path.GetFileName(start.FileName));
+        Assert.AreEqual("/select,\"C:\\Folder with spaces\\Steam.lnk\"", start.Arguments);
+    }
+
+    [TestMethod]
+    public void DriveRootOpensDirectlyWithoutTryingToSelectItsNonexistentParent()
+    {
+        var start = ExplorerLocateHelper.BuildExplorerReveal(@"C:\");
+        Assert.IsNotNull(start);
+        Assert.AreEqual(@"C:\", start.Arguments);
+    }
+
+    [TestMethod]
+    [DataRow("shell:AppsFolder")]
+    [DataRow("Steam.lnk")]
+    public void VirtualAndRelativeTargetsKeepTheirOwnShellRoute(string path)
+        => Assert.IsNull(ExplorerLocateHelper.BuildExplorerReveal(path));
+
+    [TestMethod]
     [DataRow(true, 0)]
     [DataRow(false, 1)]
     public void LocateOrFallback_OnlyFallsBackAfterFailure(bool located, int expectedFallbacks)
