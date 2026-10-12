@@ -15,12 +15,17 @@ internal static class SettingsBackupInventory
         var disabledAssemblies = settings.RootElement.TryGetProperty("DisabledPluginAssemblies", out var assemblies) && assemblies.ValueKind == JsonValueKind.Array
             ? assemblies.EnumerateArray().Where(c => c.ValueKind == JsonValueKind.String).Select(c => c.GetString()!).ToHashSet(StringComparer.OrdinalIgnoreCase) : [];
         string[] Disabled(string key) => disabledComponents.Where(c => c.StartsWith(key + ".dll::", StringComparison.OrdinalIgnoreCase)).ToArray();
-        using var parameterStream = source.Read(PluginSettingsStore.FileName);
-        using var parameters = JsonDocument.Parse(SettingsBackupFormat.ReadJson(parameterStream));
-        var native = parameters.RootElement;
-        if (native.ValueKind == JsonValueKind.Object)
-            foreach (var entry in native.EnumerateObject())
-                plugins.Add(new(null, entry.Name, "native", null, null, null, [entry.Name], null, disabledAssemblies.Contains(entry.Name + ".dll"), DisabledComponents: Disabled(entry.Name)));
+        // Optional, like it is in Export: a profile that never saved a plugin setting has no such file, and
+        // requiring one here failed the whole inventory -- and so the whole export -- with FileNotFoundException.
+        if (source.Exists(PluginSettingsStore.FileName))
+        {
+            using var parameterStream = source.Read(PluginSettingsStore.FileName);
+            using var parameters = JsonDocument.Parse(SettingsBackupFormat.ReadJson(parameterStream));
+            var native = parameters.RootElement;
+            if (native.ValueKind == JsonValueKind.Object)
+                foreach (var entry in native.EnumerateObject())
+                    plugins.Add(new(null, entry.Name, "native", null, null, null, [entry.Name], null, disabledAssemblies.Contains(entry.Name + ".dll"), DisabledComponents: Disabled(entry.Name)));
+        }
 
         // This set is intentionally independent of loaded/enabled plugin instances.
         var states = new Dictionary<string, bool?>(StringComparer.OrdinalIgnoreCase);
