@@ -163,6 +163,16 @@ public sealed class HookProcess : IDisposable
             {
                 using var app = System.Diagnostics.Process.GetProcessById((int)pid);
                 await app.WaitForExitAsync().ConfigureAwait(false);
+                try
+                {
+                    var exitCode = app.ExitCode;
+                    Logger.Log($"[HookProcess] App pid {pid} exit code: {exitCode} (0x{unchecked((uint)exitCode):X8}).", LogLevel.Info);
+                }
+                catch (Exception ex)
+                {
+                    // Failure to read the status must not keep hooks alive after a confirmed exit.
+                    Logger.Log($"[HookProcess] App pid {pid} exit status unavailable: {ex.Message}", LogLevel.Warn);
+                }
             }
             catch (ArgumentException)
             {
