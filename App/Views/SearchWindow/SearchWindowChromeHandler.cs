@@ -1,4 +1,5 @@
 using System.Windows;
+using Lertaro.Core;
 using System.Windows.Input;
 using Lertaro.App.Helpers.Visuals;
 using TextBox = System.Windows.Controls.TextBox;
@@ -60,5 +61,9 @@ public class SearchWindowChromeHandler
             ? WindowState.Normal
             : WindowState.Maximized;
 
-    public void Close() => _window.Close();
+    public void Close()
+    {
+        Logger.Log("[AppLifecycle] Full search close button clicked.");
+        _window.Close();
+    }
 }

@@ -82,7 +82,9 @@ public partial class App : Application
             return;
         }
         // Initialize logger only after the user's data is accessible.
-        Logger.Initialize("app.log", overwrite: true);
+        Logger.Initialize("app.log", overwrite: false);
+        Logger.Log($"[AppLifecycle] Starting process {Environment.ProcessId}.");
+        SessionEnding += (_, args) => Logger.Log($"[AppLifecycle] Windows session ending: {args.ReasonSessionEnding}.");
 
         // Global exception handlers, registered as early as possible: anything thrown before the old
         // registration point (UserSettings.Load, hook client startup, ...) crashed with no log at all.
@@ -337,6 +339,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        Logger.Log($"[AppLifecycle] Exiting process {Environment.ProcessId}; code={e.ApplicationExitCode}; initialized={_startupInitialized}.");
         if (!_startupInitialized)
         {
             _settingsSession?.Dispose();

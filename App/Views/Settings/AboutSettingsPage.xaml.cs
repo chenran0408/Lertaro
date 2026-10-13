@@ -229,7 +229,7 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
         {
             TxtUpdateStatus.Text = TranslationManager.Instance["About_Success"];
             // Quit App so batch script can replace files
-            TrayCleanExitHelper.CleanExit();
+            TrayCleanExitHelper.CleanExit("update from settings");
         }
         else
         {

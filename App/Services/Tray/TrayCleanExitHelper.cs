@@ -8,9 +8,10 @@ internal static class TrayCleanExitHelper
 {
     private static int _exiting;
 
-    public static async void CleanExit()
+    public static async void CleanExit(string reason = "clean exit")
     {
         if (Interlocked.Exchange(ref _exiting, 1) != 0) return;
+        Logger.Log($"[AppLifecycle] Clean exit requested: {reason}.");
         try
         {
             try
