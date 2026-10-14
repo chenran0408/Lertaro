@@ -1,3 +1,4 @@
+﻿using Microsoft.Data.Sqlite;
 using Lertaro.Plugins.ContentSearch.Indexing;
 
 namespace Lertaro.Plugins.ContentSearch.Storage;
