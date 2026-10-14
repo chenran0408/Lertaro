@@ -147,7 +147,9 @@ public sealed class MenuBuilderGetMenuItemsTests
             // proves the enumeration actually descended into This PC: a bare HasSubMenu check would also
             // pass on the fallback root menu, whose lone "This PC" row is a submenu too.
             Assert.IsTrue(children.Count > 0, "This PC should enumerate at least its drives.");
-            Assert.IsTrue(children.All(child => child.HasSubMenu), "Every This PC child should be a folder submenu.");
+            // Third-party shell extensions may add actionable virtual shortcuts alongside the drives.
+            Assert.IsTrue(children.All(child => child.HasSubMenu || child.OnExecute != null),
+                "This PC children should be navigable folders or actionable virtual shortcuts.");
             Assert.IsTrue(
                 children.Any(child =>
                 {
