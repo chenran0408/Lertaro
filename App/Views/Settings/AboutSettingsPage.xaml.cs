@@ -228,8 +228,8 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
         if (success)
         {
             TxtUpdateStatus.Text = TranslationManager.Instance["About_Success"];
-            // Quit App so batch script can replace files
-            TrayCleanExitHelper.CleanExit("update from settings");
+            // The updater owns the service stop/restart.
+            TrayCleanExitHelper.CleanExit("update from settings", stopService: false);
         }
         else
         {

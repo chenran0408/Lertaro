@@ -1,5 +1,10 @@
-using Lertaro.Core.Services.Everything;
+﻿using Lertaro.Core.Services.Everything;
 using Lertaro.Core.Services.Search;
+using Lertaro.Core.Services;
+using Lertaro.Core.IndexV2.Space;
+using Lertaro.Core.Wire;
+using System.IO.Pipes;
+using System.Security.Principal;
 
 namespace Lertaro.Core.Tests.Services.Everything;
 
@@ -45,27 +50,31 @@ public class EverythingSearchDataProviderTests
     }
 
     [TestMethod]
-    public async Task QueryFolderSubtree_UnindexedFolder_ReturnsEmptyResult()
+    public async Task SpaceQuery_UnindexedFolder_ReturnsEmptyResultThroughWire()
     {
-        using var searchService = new SearchService();
-        var provider = new EverythingSearchDataProvider(searchService);
+        // Use a fresh engine and an actual wire round trip, not the machine's installed service.
+        // The installed service may still use the previous protocol while a new build is tested.
+        using var engine = new SearchEngine();
+        using var stream = new MemoryStream();
+        await SearchRequestBinarySerializer.WriteSearchRequestAsync(stream, new SearchRequestMessage
+        {
+            Id = SearchRequestId.GetSpaceEntries,
+            Drive = @"Z:\NonExistentDriveXYZ\",
+            SpaceOptions = SpaceEntryFilters.IncludeSystemItems | SpaceEntryFilters.SkipCallerRowAccessChecks
+        });
+        stream.Position = 0;
+        var request = await SearchRequestBinarySerializer.ReadSearchRequestAsync(stream);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var pipeName = "LertaroEmptySpace_" + Guid.NewGuid().ToString("N");
+        using var server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+        using var client = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous, TokenImpersonationLevel.Impersonation);
+        await Task.WhenAll(server.WaitForConnectionAsync(timeout.Token), client.ConnectAsync(timeout.Token));
+        await Task.WhenAll(client.WriteAsync(new byte[] { 1 }, timeout.Token).AsTask(), server.ReadExactlyAsync(new byte[1], timeout.Token).AsTask());
+        using var visibility = CallerVisibility.ForClient(server);
+        var result = await UsnServicePipeRequestProcessor.ProcessAsync(engine, request, timeout.Token, server, visibility);
 
-        var request = new EverythingQueryRequest(
-            ReplyHwnd: IntPtr.Zero,
-            ReplyCopyDataMessage: 0,
-            SearchFlags: 0,
-            Offset: 0,
-            MaxResults: 100,
-            RequestFlags: 0x110,
-            SortType: 0,
-            SearchString: @"""Z:\NonExistentDriveXYZ\""",
-            IsUnicode: true,
-            IsQuery2: true);
-
-        var result = await provider.ExecuteQueryAsync(request);
-
-        Assert.AreEqual(0u, result.TotalItems);
-        Assert.IsEmpty(result.Items);
+        Assert.AreEqual(PipeResponseKind.SpaceEntries, result.Kind);
+        Assert.IsEmpty(result.SpaceEntries!);
     }
 
     [TestMethod]
