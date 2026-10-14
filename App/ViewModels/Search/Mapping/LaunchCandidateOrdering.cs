@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.RegularExpressions;
 
 namespace Lertaro.App.ViewModels.Search.Mapping;
@@ -34,7 +34,7 @@ internal static class LaunchCandidateOrdering
             .GroupBy(entry => LaunchIdentity(entry.Candidate.Result, entry.Link)!, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Select(entry => entry.Candidate)
                 .OrderByDescending(candidate => ExactMatch(candidate, query, explicitExtension))
-                .ThenBy(candidate => candidate.Match.Start).ThenByDescending(candidate => candidate.Match.Weight)
+                .ThenBy(candidate => candidate.Match.Shape).ThenBy(candidate => candidate.Match.Start).ThenByDescending(candidate => candidate.Match.Weight)
                 .ThenBy(candidate => candidate.Match.Tier).First(), StringComparer.Ordinal);
         var rankedEntries = entries.Select(entry => (entry.Candidate, entry.Link,
             Score: !explicitExtension && LaunchIdentity(entry.Candidate.Result, entry.Link) is { } identity
@@ -47,6 +47,7 @@ internal static class LaunchCandidateOrdering
             // Equal exact names are a launch request: Steam.exe/Steam.lnk must beat a Steam folder,
             // even though the extension lowers coverage and the default type order prefers files.
             .ThenBy(entry => ExactMatch(entry.Score, query, explicitExtension) ? LaunchRank(entry.Candidate.Result, entry.Link, exact: true) : 0)
+            .ThenBy(entry => entry.Score.Match.Shape)
             .ThenBy(entry => entry.Score.Match.Start)
             // Coverage weights are 0..1. A tenth-wide band allows usage/launch preferences to settle
             // near matches without letting an unrelated old result outrank a much stronger match.
@@ -58,6 +59,8 @@ internal static class LaunchCandidateOrdering
             .ThenBy(entry => entry.Candidate.TypeRank)
             .ThenByDescending(entry => entry.Candidate.IsCurated)
             .ThenBy(entry => entry.Candidate.Priority)
+            .ThenBy(entry => entry.Candidate.RecencyBand)
+            .ThenBy(entry => entry.Candidate.Depth)
             .ThenByDescending(entry => entry.Score.Match.Weight)
             .ThenBy(entry => entry.Score.Match.Tier)
             .ThenBy(entry => entry.Link?.Arguments.Length > 0 ? 1 : 0)

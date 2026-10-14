@@ -1,4 +1,4 @@
-using Lertaro.App.ViewModels.Search.Mapping;
+﻿using Lertaro.App.ViewModels.Search.Mapping;
 using Lertaro.Core.SearchIndex;
 
 namespace Lertaro.App.Tests.ViewModels.Search.Mapping;
@@ -278,6 +278,28 @@ public sealed class LaunchCandidateOrderingTests
         var custom = Candidate("Work editor", normal.Result.FullPath, application: true);
         custom.Result.ApplicationWorkingDirectory = @"C:\Projects";
         Assert.HasCount(2, LaunchCandidateOrdering.Order([normal, custom], "edi", _ => new(@"C:\Apps\Editor.exe", "", @"C:\Apps")));
+    }
+
+    [TestMethod]
+    public void WholeWordFileBeatsScatteredApplicationWithoutChangingExactLaunchPreference()
+    {
+        var fuzzy = FuzzyQuery.Parse("atlas");
+        var whole = Candidate("code-atlas", @"C:\Work\code-atlas.txt") with { Match = fuzzy.Rank("code-atlas") };
+        var scattered = Candidate("AutofillStates", @"C:\Apps\AutofillStates.exe", application: true)
+            with { Match = fuzzy.Rank("AutofillStates") };
+        Assert.AreSame(whole.Result, Order("atlas", scattered, whole)[0].Result);
+    }
+
+    [TestMethod]
+    public void ComparableFilesPreferRecentThenShallowPaths()
+    {
+        var old = Candidate("report-a", @"C:\Work\a.txt") with { RecencyBand = RankSignals.BandOlder, Depth = 1 };
+        var deep = Candidate("report-b", @"C:\Work\Deep\b.txt") with { RecencyBand = RankSignals.BandToday, Depth = 9 };
+        var shallow = Candidate("report-c", @"C:\Work\c.txt") with { RecencyBand = RankSignals.BandToday, Depth = 3 };
+        var results = Order("rep", old, deep, shallow);
+        Assert.AreSame(shallow.Result, results[0].Result);
+        Assert.AreSame(deep.Result, results[1].Result);
+        Assert.AreSame(old.Result, results[2].Result);
     }
 
     private static List<SearchResultMapper.RankedCandidate> Order(string query, params SearchResultMapper.RankedCandidate[] candidates)
