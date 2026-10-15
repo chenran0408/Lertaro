@@ -12,14 +12,11 @@
   "QuickPanel_HideIconName": "隐藏名称",
   "QuickPanel_ResetIconName": "恢复原名称",
   "QuickPanel_MoreActions": "文件操作…",
-
   "QuickPanel_DropHint": "先钉住面板，再拖到目标格子添加快捷方式。原文件保留，面板切换为固定网格。",
   "QuickPanel_DropFailed": "未能添加快捷方式",
-
   "QuickPanel_SortCustom": "固定网格",
   "QuickPanel_Arrange": "整理图标",
   "QuickPanel_ArrangeHint": "开启后，拖动图标到目标格子。空格保留原来的空位，已有图标的格子会交换位置。切换排列方式会保留网格布局。",
-
   "Settings_LocalSend_SendCardTitle": "发送给其他设备",
   "Settings_LocalSend_SendCardHint": "选择文件、文件夹或文字，再选择接收设备。也可将文件或文件夹直接拖到这里；接收方需要运行 LocalSend 或启用局域网传输的 Lertaro。",
   "Settings_LocalSend_SendFilesEntry": "发送文件",
@@ -817,17 +814,8 @@
   "QuickPanel_FileOrder": "文件顺序",
   "Background_Title": "窗口背景",
   "Background_Hint": "调节后立即预览；点击应用或确定保存。取消或关闭设置将撤销未保存的背景更改。",
-  "Background_Theme": "跟随主题",
-  "Background_Solid": "纯色",
-  "Background_Gradient": "渐变",
-  "Background_Image": "图片",
-  "Background_FirstColor": "选择颜色",
-  "Background_SecondColor": "第二种颜色",
-  "Background_Angle": "渐变方向",
   "Background_Browse": "选择图片",
   "Background_Fit": "完整显示图片",
-  "Background_Blur": "图片模糊",
-  "Background_Tint": "背景遮罩（越高越清晰易读）",
   "Background_Preview": "文字与图标保持清晰",
   "Background_Undo": "撤销预览",
   "Background_Reset": "恢复主题背景",
@@ -840,10 +828,7 @@
   "Appearance_TaskbarOpacity": "任务栏不透明度",
   "Appearance_TaskbarPreviewFailed": "预览未能完成，请检查下方提示。",
   "Appearance_TaskbarOptions": "调整任务栏",
-  "Background_SystemMaterial": "系统磨砂 / 云母",
-  "Background_Mica": "云母",
-  "Background_Acrylic": "亚克力磨砂",
-  "Background_MaterialHint": "首次启用系统材质，请保存设置后重启 Lertaro。可先打开预览窗口查看，继续调节会立即更新预览。",
-  "Background_MaterialPreview": "查看材质预览",
-  "Background_MaterialUnsupported": "当前 Windows 不支持此系统材质，将使用清晰底色。此功能需要 Windows 11 22H2 或更新版本。"
+  "Background_EnableImage": "使用自定义背景图片",
+  "Background_Opacity": "图片不透明度",
+  "Background_OpacityHint": "0% 隐藏图片，100% 完全显示。只调整背景图片，不会让文字和按钮变淡。"
 }

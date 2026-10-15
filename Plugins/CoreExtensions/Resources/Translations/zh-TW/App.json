@@ -12,14 +12,11 @@
   "QuickPanel_HideIconName": "隱藏名稱",
   "QuickPanel_ResetIconName": "恢復原名稱",
   "QuickPanel_MoreActions": "檔案操作…",
-
   "QuickPanel_DropHint": "先釘住面板，再拖到目標格子新增捷徑。原檔案保留，面板切換為固定網格。",
   "QuickPanel_DropFailed": "無法新增捷徑",
-
   "QuickPanel_SortCustom": "固定網格",
   "QuickPanel_Arrange": "整理圖示",
   "QuickPanel_ArrangeHint": "開啟後，拖曳圖示到目標格子。空格保留原來的空位，已有圖示的格子會交換位置。切換排列方式會保留網格配置。",
-
   "Settings_LocalSend_SendCardTitle": "傳送至其他裝置",
   "Settings_LocalSend_SendCardHint": "選擇檔案、資料夾或文字，再選擇接收裝置。也可將檔案或資料夾拖曳到這裡；接收方需執行 LocalSend 或已啟用區域網路傳輸的 Lertaro。",
   "Settings_LocalSend_SendFilesEntry": "傳送檔案",
@@ -817,17 +814,8 @@
   "QuickPanel_FileOrder": "檔案順序",
   "Background_Title": "視窗背景",
   "Background_Hint": "調整後立即預覽；按套用或確定儲存。取消或關閉設定會還原未儲存的背景變更。",
-  "Background_Theme": "跟隨主題",
-  "Background_Solid": "純色",
-  "Background_Gradient": "漸層",
-  "Background_Image": "圖片",
-  "Background_FirstColor": "選擇顏色",
-  "Background_SecondColor": "第二種顏色",
-  "Background_Angle": "漸層方向",
   "Background_Browse": "選擇圖片",
   "Background_Fit": "完整顯示圖片",
-  "Background_Blur": "圖片模糊",
-  "Background_Tint": "背景遮罩（越高越清楚易讀）",
   "Background_Preview": "文字與圖示保持清晰",
   "Background_Undo": "復原預覽",
   "Background_Reset": "還原主題背景",
@@ -840,10 +828,7 @@
   "Appearance_TaskbarOpacity": "工作列不透明度",
   "Appearance_TaskbarPreviewFailed": "無法完成預覽，請查看下方提示。",
   "Appearance_TaskbarOptions": "調整工作列",
-  "Background_SystemMaterial": "系統磨砂 / 雲母",
-  "Background_Mica": "雲母",
-  "Background_Acrylic": "壓克力磨砂",
-  "Background_MaterialHint": "首次啟用系統材質，請儲存設定後重新啟動 Lertaro。可先開啟預覽視窗，調整會立即更新預覽。",
-  "Background_MaterialPreview": "查看材質預覽",
-  "Background_MaterialUnsupported": "目前的 Windows 不支援此系統材質，將使用清晰底色。需要 Windows 11 22H2 或更新版本。"
+  "Background_EnableImage": "使用自訂背景圖片",
+  "Background_Opacity": "圖片不透明度",
+  "Background_OpacityHint": "0% 隱藏圖片，100% 完全顯示。只調整背景圖片，不會讓文字和按鈕變淡。"
 }

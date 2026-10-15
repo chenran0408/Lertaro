@@ -71,6 +71,7 @@ public class UserSettings
     public string LogLevel { get; set; } = "Info";
     public string PreferredLanguage { get; set; } = GetDefaultSystemLanguage();
     public string Theme { get; set; } = "Light";
+    public BackgroundSettings Background { get; set; } = new();
     public bool ThemeFollowSystem { get; set; } = false;
     // Empty means "unset"; ThemeManager.ResolveLightDarkThemeId falls back to the first available theme,
     // including the host's Light/Dark resources when the theme plugins are disabled.

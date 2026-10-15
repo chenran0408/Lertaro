@@ -12,14 +12,11 @@
   "QuickPanel_HideIconName": "名前を非表示",
   "QuickPanel_ResetIconName": "元の名前に戻す",
   "QuickPanel_MoreActions": "ファイル操作…",
-
   "QuickPanel_DropHint": "パネルを固定してから目的のマスへドロップしてショートカットを追加します。元のファイルを保持し、固定グリッドに切り替えます。",
   "QuickPanel_DropFailed": "ショートカットを追加できませんでした",
-
   "QuickPanel_SortCustom": "固定グリッド",
   "QuickPanel_Arrange": "アイコンを整理",
   "QuickPanel_ArrangeHint": "アイコンを目的のマスへドラッグします。空きマスなら元の位置は空きになり、使用中なら2つのアイコンを交換します。並べ替えを切り替えても配置を保持します。",
-
   "Settings_LocalSend_SendCardTitle": "ほかのデバイスへ送信",
   "Settings_LocalSend_SendCardHint": "ファイル、フォルダー、またはテキストを選び、受信デバイスを選択します。ここにファイルやフォルダーをドロップすることもできます。受信側では LocalSend または LAN転送を有効にした Lertaro が必要です。",
   "Settings_LocalSend_SendFilesEntry": "ファイルを送信",
@@ -817,17 +814,8 @@
   "QuickPanel_FileOrder": "ファイルの順序",
   "Background_Title": "ウィンドウの背景",
   "Background_Hint": "変更はすぐにプレビューされます。適用または OK で保存し、キャンセルや設定を閉じると未保存の背景変更を元に戻します。",
-  "Background_Theme": "テーマに合わせる",
-  "Background_Solid": "単色",
-  "Background_Gradient": "グラデーション",
-  "Background_Image": "画像",
-  "Background_FirstColor": "色を選択",
-  "Background_SecondColor": "2 番目の色",
-  "Background_Angle": "グラデーションの方向",
   "Background_Browse": "画像を選択",
   "Background_Fit": "画像全体を表示",
-  "Background_Blur": "画像のぼかし",
-  "Background_Tint": "背景のベール（高いほど読みやすい）",
   "Background_Preview": "文字とアイコンは鮮明なまま",
   "Background_Undo": "プレビューを元に戻す",
   "Background_Reset": "テーマの背景に戻す",
@@ -840,10 +828,7 @@
   "Appearance_TaskbarOpacity": "タスクバーの不透明度",
   "Appearance_TaskbarPreviewFailed": "プレビューできませんでした。以下の詳細をご確認ください。",
   "Appearance_TaskbarOptions": "タスクバーを調整",
-  "Background_SystemMaterial": "システムのアクリル / マイカ",
-  "Background_Mica": "マイカ",
-  "Background_Acrylic": "アクリル",
-  "Background_MaterialHint": "システム素材を初めて有効にするときは保存後に Lertaro を再起動してください。プレビューウィンドウでは調整をすぐに確認できます。",
-  "Background_MaterialPreview": "素材をプレビュー",
-  "Background_MaterialUnsupported": "この Windows ではシステム素材を使用できないため、単色の背景を使用します。Windows 11 22H2 以降が必要です。"
+  "Background_EnableImage": "背景画像を使う",
+  "Background_Opacity": "画像の不透明度",
+  "Background_OpacityHint": "0% で非表示、100% ではっきり表示します。文字やボタンの不透明度は変わりません。"
 }

@@ -1,5 +1,6 @@
 <Window x:Class="Lertaro.App.SearchWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:app="clr-namespace:Lertaro.App"
         xmlns:converters="clr-namespace:Lertaro.App.Converters"
@@ -24,7 +25,7 @@
         </ResourceDictionary>
     </Window.Resources>
     <!-- Main border with shadow -->
-    <Border x:Name="MainBorder" CornerRadius="{StaticResource CornerRadiusWindow}" Background="{DynamicResource ContentBg}"
+    <Border x:Name="MainBorder" CornerRadius="{StaticResource CornerRadiusWindow}" Background="{DynamicResource ContentBg}" helpers:BackgroundReveal.Resource="ContentBg"
             BorderBrush="{DynamicResource WindowBorderBrush}" BorderThickness="1" Margin="8">
         <!-- ClipToBounds ignores CornerRadius (a WPF limitation, not a bug here): helpers:RoundedClip
              builds a real rounded-rect Clip instead: child content flush to the edge would otherwise show
@@ -39,6 +40,7 @@
                     <!-- Status Bar -->
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
+                <surface:BackgroundSurface Grid.RowSpan="99" Grid.ColumnSpan="99"/>
                 <!-- ═══════════ 1. Title Bar + Search ═══════════ -->
                 <Border Grid.Row="0" Background="{DynamicResource HeaderBg}"
                         BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1"
@@ -175,7 +177,7 @@
                     <!-- Sidebar -->
                     <controls:SearchSidebarControl Grid.Column="0"/>
                     <!-- Main Results Grid -->
-                    <Grid Grid.Column="1" Background="{DynamicResource ContentBg}">
+                    <Grid Grid.Column="1" Background="{DynamicResource ContentBg}" helpers:BackgroundReveal.Resource="ContentBg">
                         <!-- Shared ResultsControl component in Grid Mode -->
                         <results:ResultsControl x:Name="ResultsPanelControl"
                                             ItemsSource="{Binding FilteredResults}"

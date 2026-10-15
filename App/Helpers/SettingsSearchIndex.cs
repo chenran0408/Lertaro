@@ -117,6 +117,8 @@ public static class SettingsSearchIndex
 
         // Appearance
         new("Settings_Appearance", "Appearance"),
+        new("Background_Title", "Appearance", TargetElementName: "BackgroundSection/RowBackgroundImage"),
+        new("Background_Opacity", "Appearance", TargetElementName: "BackgroundSection/RowBackgroundOpacity", TabLabelKey: "Background_Title"),
         new("Appearance_TaskbarTitle", "Appearance", TargetElementName: "RowTaskbarSettings"),
         new("Appearance_ModeGroupTitle", "Appearance", TargetElementName: "RowThemeModeCards"),
         new("Appearance_ModeLight", "Appearance", TargetElementName: "RowThemeModeCards", TabLabelKey: "Appearance_ModeGroupTitle"),

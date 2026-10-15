@@ -12,14 +12,11 @@
   "QuickPanel_HideIconName": "Ocultar nombre",
   "QuickPanel_ResetIconName": "Restaurar nombre original",
   "QuickPanel_MoreActions": "Acciones de archivo…",
-
   "QuickPanel_DropHint": "Fija el panel y suelta en una celda para añadir accesos directos. Los originales se conservan y la carpeta cambia a la cuadrícula fija.",
   "QuickPanel_DropFailed": "No se pudieron añadir los accesos directos",
-
   "QuickPanel_SortCustom": "Cuadrícula fija",
   "QuickPanel_Arrange": "Organizar iconos",
   "QuickPanel_ArrangeHint": "Arrastra iconos a una celda. Una celda vacía deja libre la posición anterior; una ocupada intercambia los iconos. Cambiar el orden conserva la cuadrícula.",
-
   "Settings_LocalSend_SendCardTitle": "Enviar a otro dispositivo",
   "Settings_LocalSend_SendCardHint": "Elige archivos, una carpeta o texto y selecciona el destinatario. También puedes arrastrar archivos o carpetas aquí. El destinatario necesita LocalSend o Lertaro con transferencia LAN activada.",
   "Settings_LocalSend_SendFilesEntry": "Enviar archivos",
@@ -817,17 +814,8 @@
   "QuickPanel_FileOrder": "Orden de archivos",
   "Background_Title": "Fondo de ventana",
   "Background_Hint": "Los cambios se previsualizan al instante. Aplicar o Aceptar los guarda; cancelar o cerrar los ajustes restaura el último fondo guardado.",
-  "Background_Theme": "Seguir el tema",
-  "Background_Solid": "Color liso",
-  "Background_Gradient": "Degradado",
-  "Background_Image": "Imagen",
-  "Background_FirstColor": "Elegir color",
-  "Background_SecondColor": "Segundo color",
-  "Background_Angle": "Dirección del degradado",
   "Background_Browse": "Elegir imagen",
   "Background_Fit": "Mostrar imagen completa",
-  "Background_Blur": "Desenfoque de imagen",
-  "Background_Tint": "Velo de fondo (más alto mejora la lectura)",
   "Background_Preview": "El texto y los iconos se mantienen nítidos",
   "Background_Undo": "Deshacer vista previa",
   "Background_Reset": "Restaurar fondo del tema",
@@ -840,10 +828,7 @@
   "Appearance_TaskbarOpacity": "Opacidad de la barra",
   "Appearance_TaskbarPreviewFailed": "No se pudo completar la vista previa. Consulta los detalles.",
   "Appearance_TaskbarOptions": "Personalizar la barra",
-  "Background_SystemMaterial": "Acrílico / mica del sistema",
-  "Background_Mica": "Mica",
-  "Background_Acrylic": "Acrílico",
-  "Background_MaterialHint": "Al activar materiales del sistema por primera vez, guarda y reinicia Lertaro. Abre la ventana de vista previa para ver los ajustes al instante.",
-  "Background_MaterialPreview": "Ver material",
-  "Background_MaterialUnsupported": "Esta versión de Windows no admite el material; se usa un fondo liso. Se requiere Windows 11 22H2 o posterior."
+  "Background_EnableImage": "Usar una imagen de fondo",
+  "Background_Opacity": "Opacidad de la imagen",
+  "Background_OpacityHint": "El 0% oculta la imagen y el 100% la muestra por completo. El texto y los botones mantienen su opacidad."
 }

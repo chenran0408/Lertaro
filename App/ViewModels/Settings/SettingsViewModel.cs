@@ -232,10 +232,13 @@ public class SettingsViewModel : ViewModelBase
             QuickLaunch.Save();
             QuickPanel.Save();
             LocalSend.Apply();
+            _deferred.ExistingAppearance?.StageBackground();
             if (!_userSettings.Save())
             {
+                _deferred.ExistingAppearance?.RejectBackgroundSave();
                 throw new IOException($"Could not save settings to {UserSettings.SettingsPath}.");
             }
+            _deferred.ExistingAppearance?.AcceptBackground();
             _isSaved = true;
             SettingsApplyHelpers.RebindFavoriteHotkeys(Favorites);
             Core.Services.LocalSend.LocalSendServiceManager.Instance.ApplySettings(_userSettings);

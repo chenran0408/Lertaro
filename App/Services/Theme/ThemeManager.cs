@@ -81,67 +81,28 @@ public class ThemeManager
             return false;
         }
 
-        _currentThemeId = theme.Id;
-        _activeTheme = theme;
-
         try
         {
             var newDict = theme.GetResources();
 
-            if (_activeThemeDictionary == null)
+            var app = System.Windows.Application.Current;
+            if (app == null || !app.Dispatcher.CheckAccess() || app.Dispatcher.HasShutdownStarted) return false;
+            var dictionaries = app.Resources.MergedDictionaries;
+            if (!ReferenceEquals(newDict, _activeThemeDictionary))
             {
-                // Synchronous application for initial startup
-                var appResources = System.Windows.Application.Current.Resources;
-                appResources.MergedDictionaries.Add(newDict);
+                // Commit one palette on the UI thread. No delayed swap can overwrite a later choice.
+                dictionaries.Add(newDict);
+                if (_activeThemeDictionary != null) dictionaries.Remove(_activeThemeDictionary);
                 _activeThemeDictionary = newDict;
-
-                foreach (Window window in System.Windows.Application.Current.Windows)
-                {
-                    WindowEffectHelper.ApplyThemeEffects(window, theme);
-                }
-                ThemeChanged?.Invoke();
             }
-            else
+            _currentThemeId = theme.Id;
+            _activeTheme = theme;
+            foreach (Window window in app.Windows)
             {
-                // Fade-out transition
-                foreach (Window window in System.Windows.Application.Current.Windows)
-                {
-                    if (window.Content is UIElement content)
-                    {
-                        var fadeOut = new System.Windows.Media.Animation.DoubleAnimation(0.1, TimeSpan.FromMilliseconds(120));
-                        content.BeginAnimation(UIElement.OpacityProperty, fadeOut);
-                    }
-                }
-
-                // Swap dictionaries and Fade-in transition
-                Task.Run(async () =>
-                {
-                    await Task.Delay(120);
-                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        var appResources = System.Windows.Application.Current.Resources;
-                        if (_activeThemeDictionary != null)
-                        {
-                            appResources.MergedDictionaries.Remove(_activeThemeDictionary);
-                        }
-
-                        appResources.MergedDictionaries.Add(newDict);
-                        _activeThemeDictionary = newDict;
-
-                        foreach (Window window in System.Windows.Application.Current.Windows)
-                        {
-                            WindowEffectHelper.ApplyThemeEffects(window, theme);
-                            if (window.Content is UIElement content)
-                            {
-                                var targetOpacity = theme.WindowOpacity;
-                                var fadeIn = new System.Windows.Media.Animation.DoubleAnimation(targetOpacity, TimeSpan.FromMilliseconds(180));
-                                content.BeginAnimation(UIElement.OpacityProperty, fadeIn);
-                            }
-                        }
-                        ThemeChanged?.Invoke();
-                    });
-                });
+                if (window.Content is UIElement content) content.BeginAnimation(UIElement.OpacityProperty, null);
+                WindowEffectHelper.ApplyThemeEffects(window, theme);
             }
+            ThemeChanged?.Invoke();
 
             Logger.Log($"[ThemeManager] Theme applied successfully: '{theme.DisplayName}' (Dark: {theme.IsDark})");
 

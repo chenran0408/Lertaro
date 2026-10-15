@@ -12,14 +12,11 @@
   "QuickPanel_HideIconName": "이름 숨기기",
   "QuickPanel_ResetIconName": "원래 이름 복원",
   "QuickPanel_MoreActions": "파일 작업…",
-
   "QuickPanel_DropHint": "패널을 고정하고 원하는 칸에 놓아 바로 가기를 추가하세요. 원본은 유지되고 폴더는 고정 격자로 전환됩니다.",
   "QuickPanel_DropFailed": "바로 가기를 추가하지 못했습니다",
-
   "QuickPanel_SortCustom": "고정 격자",
   "QuickPanel_Arrange": "아이콘 정리",
   "QuickPanel_ArrangeHint": "아이콘을 원하는 칸으로 끌어 놓으세요. 빈 칸이면 원래 칸은 비워 두고, 사용 중이면 두 아이콘의 위치를 바꿉니다. 정렬을 바꿔도 격자 배치는 유지됩니다.",
-
   "Settings_LocalSend_SendCardTitle": "다른 기기로 보내기",
   "Settings_LocalSend_SendCardHint": "파일, 폴더 또는 텍스트를 고른 후 수신 기기를 선택하세요. 파일이나 폴더를 여기에 끌어 놓을 수도 있습니다. 수신 기기에서 LocalSend 또는 LAN 전송이 활성화된 Lertaro가 필요합니다.",
   "Settings_LocalSend_SendFilesEntry": "파일 보내기",
@@ -817,17 +814,8 @@
   "QuickPanel_FileOrder": "파일 순서",
   "Background_Title": "창 배경",
   "Background_Hint": "변경 사항이 즉시 미리 보기에 반영됩니다. 적용 또는 확인으로 저장하며, 취소하거나 설정을 닫으면 저장하지 않은 배경 변경을 되돌립니다.",
-  "Background_Theme": "테마 따르기",
-  "Background_Solid": "단색",
-  "Background_Gradient": "그라데이션",
-  "Background_Image": "이미지",
-  "Background_FirstColor": "색상 선택",
-  "Background_SecondColor": "두 번째 색상",
-  "Background_Angle": "그라데이션 방향",
   "Background_Browse": "이미지 선택",
   "Background_Fit": "전체 이미지 표시",
-  "Background_Blur": "이미지 흐림",
-  "Background_Tint": "배경 가림 (높을수록 읽기 쉬움)",
   "Background_Preview": "텍스트와 아이콘은 선명하게 유지됩니다",
   "Background_Undo": "미리 보기 취소",
   "Background_Reset": "테마 배경 복원",
@@ -840,10 +828,7 @@
   "Appearance_TaskbarOpacity": "작업 표시줄 불투명도",
   "Appearance_TaskbarPreviewFailed": "미리 보기를 완료할 수 없습니다. 아래 내용을 확인하세요.",
   "Appearance_TaskbarOptions": "작업 표시줄 조정",
-  "Background_SystemMaterial": "시스템 아크릴 / 운모",
-  "Background_Mica": "운모",
-  "Background_Acrylic": "아크릴",
-  "Background_MaterialHint": "시스템 재질을 처음 활성화할 때는 저장 후 Lertaro를 다시 시작하세요. 미리 보기 창에서 조정 결과를 즉시 확인할 수 있습니다.",
-  "Background_MaterialPreview": "재질 미리 보기 열기",
-  "Background_MaterialUnsupported": "이 Windows 버전은 해당 재질을 지원하지 않아 단색 배경을 사용합니다. Windows 11 22H2 이상이 필요합니다."
+  "Background_EnableImage": "사용자 지정 배경 이미지 사용",
+  "Background_Opacity": "이미지 불투명도",
+  "Background_OpacityHint": "0%는 이미지를 숨기고 100%는 완전히 표시합니다. 글자와 버튼의 불투명도는 바뀌지 않습니다."
 }

@@ -12,14 +12,11 @@
   "QuickPanel_HideIconName": "Hide name",
   "QuickPanel_ResetIconName": "Restore original name",
   "QuickPanel_MoreActions": "File actions…",
-
   "QuickPanel_DropHint": "Pin the panel, then drop onto a cell to add shortcuts. Originals stay in place and this folder switches to the fixed grid.",
   "QuickPanel_DropFailed": "Could not add shortcuts",
-
   "QuickPanel_SortCustom": "Fixed grid",
   "QuickPanel_Arrange": "Arrange icons",
   "QuickPanel_ArrangeHint": "Drag icons to a grid cell. Empty cells leave the old position empty; occupied cells swap the two icons. Switching the sort keeps your grid layout.",
-
   "Settings_LocalSend_SendCardTitle": "Send to another device",
   "Settings_LocalSend_SendCardHint": "Choose files, a folder, or text, then select a recipient. You can also drop files or folders here. The recipient needs LocalSend or Lertaro with LAN transfer enabled.",
   "Settings_LocalSend_SendFilesEntry": "Send files",
@@ -817,17 +814,8 @@
   "QuickPanel_FileOrder": "File order",
   "Background_Title": "Window background",
   "Background_Hint": "Changes preview immediately. Apply or OK saves them; canceling or closing settings restores the last saved background.",
-  "Background_Theme": "Follow theme",
-  "Background_Solid": "Solid color",
-  "Background_Gradient": "Gradient",
-  "Background_Image": "Image",
-  "Background_FirstColor": "Choose color",
-  "Background_SecondColor": "Second color",
-  "Background_Angle": "Gradient direction",
   "Background_Browse": "Choose image",
   "Background_Fit": "Show entire image",
-  "Background_Blur": "Image blur",
-  "Background_Tint": "Background veil (higher improves readability)",
   "Background_Preview": "Text and icons stay sharp",
   "Background_Undo": "Undo preview",
   "Background_Reset": "Restore theme background",
@@ -840,10 +828,7 @@
   "Appearance_TaskbarOpacity": "Taskbar opacity",
   "Appearance_TaskbarPreviewFailed": "Preview could not be completed. See the details below.",
   "Appearance_TaskbarOptions": "Customize taskbar",
-  "Background_SystemMaterial": "System acrylic / mica",
-  "Background_Mica": "Mica",
-  "Background_Acrylic": "Acrylic",
-  "Background_MaterialHint": "When enabling system materials for the first time, save and restart Lertaro. Open the preview window to see adjustments immediately.",
-  "Background_MaterialPreview": "Open material preview",
-  "Background_MaterialUnsupported": "This Windows version does not support the material. A solid background is used. Windows 11 22H2 or later is required."
+  "Background_EnableImage": "Use a custom background image",
+  "Background_Opacity": "Image opacity",
+  "Background_OpacityHint": "0% hides the image; 100% shows it fully. Text and buttons keep their normal opacity."
 }
