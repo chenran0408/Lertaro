@@ -86,7 +86,9 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <ScrollViewer x:Name="PageScroll" VerticalScrollBarVisibility="Auto" CanContentScroll="False"
+                  PreviewMouseWheel="PageScroll_PreviewMouseWheel" PreviewMouseDown="PageScroll_StopAnimation"
+                  PreviewKeyDown="PageScroll_StopAnimation">
         <StackPanel>
             <TextBlock Style="{StaticResource SettingsSectionTitle}"
                         Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_Title]}"/>
