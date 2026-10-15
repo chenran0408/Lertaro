@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -49,6 +49,7 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
             ActionFlyout.Close();
             return;
         }
+        _refreshWatcher.AttachDeviceNotifications(this);
         if (!_initialized)
         {
             _initialized = true;
@@ -64,7 +65,13 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
         _previewSupport.SetVisible(true);
         await ReloadAsync();
     }
-    private Task ReloadFromEventAsync() => _isLoading || !IsVisible ? Task.CompletedTask : ReloadAsync(background: true);
+    private Task ReloadFromEventAsync()
+    {
+        if (!IsVisible) return Task.CompletedTask;
+        if (!_isLoading) return ReloadAsync(background: true);
+        _refreshWatcher.RequestRefresh();
+        return Task.CompletedTask;
+    }
     private Task ValidateLocationFromEventAsync() => _isLoading || !IsVisible ? Task.CompletedTask : ReloadAsync(true, true);
     private async Task ReloadAsync(bool background = false, bool onlyIfLocationUnavailable = false)
     {
@@ -81,17 +88,12 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
         try
         {
             var locationChanged = background && await SpaceAnalyzerLocationResolver.TrimUnavailableAsync(
-                _history, (path, tok) => _searchService.GetSpaceEntriesAsync(path, tok), token);
+                _history, async (path, tok) => (await SpaceBrowserLoader.LoadAsync(_searchService, path, tok)).Select(item => item.Entry).ToList(), token);
             if (onlyIfLocationUnavailable && !locationChanged)
                 return;
-            var entries = await _searchService.GetSpaceEntriesAsync(_history[^1].Path, token);
+            var items = await SpaceBrowserLoader.LoadAsync(_searchService, _history[^1].Path, token);
             token.ThrowIfCancellationRequested();
-            var totalSize = entries.Aggregate(0L, static (sum, entry) => sum > long.MaxValue - entry.Size ? long.MaxValue : sum + entry.Size);
-            _items = entries.Select(entry => new SpaceDisplayItem
-            {
-                Entry = entry,
-                RelativePercentage = SpaceSizeFormatter.RelativePercentage(entry.Size, totalSize)
-            }).ToList();
+            _items = items;
             ShowCurrentLocation(selectedPath);
         }
         catch (OperationCanceledException)
@@ -132,6 +134,11 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
     }
     private async void ActivateItem(SpaceDisplayItem item)
     {
+        if (item.OpenInFileManager)
+        {
+            FileExecutor.OpenFileOrFolder(item.Path);
+            return;
+        }
         if (!item.IsDirectory)
         {
             FileExecutor.LocateInExplorer(item.Path);
@@ -221,6 +228,7 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
     private void UpdateSummary()
     {
         var total = _items.Aggregate(0L, static (sum, item) => sum > long.MaxValue - item.Size ? long.MaxValue : sum + item.Size);
+        LogicalSizeHint.Text = TranslationManager.Instance[_history.Count == 1 ? "Space_VolumeCapacityHint" : "Space_LogicalSize"];
         SummaryText.Text = string.Format(TranslationManager.Instance["Space_Summary"], _items.Count, SpaceSizeFormatter.Format(total));
     }
 

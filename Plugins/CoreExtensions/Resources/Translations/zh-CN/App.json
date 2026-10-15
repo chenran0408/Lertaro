@@ -1,4 +1,4 @@
-{
+﻿{
   "Blacklist_ClearSelection": "清空选择",
   "Blacklist_Duplicate": "这个程序已经添加，请使用其他名称。",
   "Blacklist_AlreadyAdded": "已添加",
@@ -655,6 +655,10 @@
   "Space_Folder": "文件夹",
   "Space_File": "文件",
   "Space_LogicalSize": "显示逻辑大小 · 硬链接仅计入一次",
+  "Space_VolumeCapacity": "已用 {0} · 剩余 {1} · 共 {2}",
+  "Space_VolumeUnavailable": "设备未就绪或无法读取容量",
+  "Space_VolumeUnindexed": "未建立索引 · 双击在文件管理器中打开",
+  "Space_VolumeCapacityHint": "磁盘容量 · 文件夹大小仅统计已索引内容",
   "Space_Summary": "{0} 个项目 · {1}",
   "Tray_About": "关于",
   "Tray_CleanExit": "干净退出",

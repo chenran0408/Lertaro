@@ -1,4 +1,4 @@
-{
+﻿{
   "Blacklist_ClearSelection": "清除選取",
   "Blacklist_Duplicate": "這個程式已經加入，請使用其他名稱。",
   "Blacklist_AlreadyAdded": "已加入",
@@ -655,6 +655,10 @@
   "Space_Folder": "資料夾",
   "Space_File": "檔案",
   "Space_LogicalSize": "顯示邏輯大小 · 硬連結僅計入一次",
+  "Space_VolumeCapacity": "已用 {0} · 剩餘 {1} · 共 {2}",
+  "Space_VolumeUnavailable": "裝置尚未就緒或無法讀取容量",
+  "Space_VolumeUnindexed": "尚未建立索引 · 按兩下在檔案總管中開啟",
+  "Space_VolumeCapacityHint": "磁碟容量 · 資料夾大小僅統計已索引內容",
   "Space_Summary": "{0} 個項目 · {1}",
   "Tray_About": "關於",
   "Tray_CleanExit": "乾淨退出",

@@ -1,10 +1,19 @@
-using Lertaro.App.Views.SpaceAnalyzer;
+﻿using Lertaro.App.Views.SpaceAnalyzer;
 
 namespace Lertaro.App.Tests.Views.SpaceAnalyzer;
 
 [TestClass]
 public sealed class SpaceAnalyzerRefreshWatcherTests
 {
+    [TestMethod]
+    [DataRow(0x0219, 0x8000, true)]
+    [DataRow(0x0219, 0x8004, true)]
+    [DataRow(0x0219, 0x0007, true)]
+    [DataRow(0x0219, 0x8001, false)]
+    [DataRow(0x0010, 0x8000, false)]
+    public void DeviceNotificationsRefreshForArrivalAndRemoval(int message, int kind, bool expected)
+        => Assert.AreEqual(expected, SpaceAnalyzerRefreshWatcher.IsVolumeChange(message, kind));
+
     [TestMethod]
     public void ResolveWatchedPaths_RootLocationWatchesEveryDriveLetter()
     {

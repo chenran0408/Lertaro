@@ -1,4 +1,4 @@
-{
+﻿{
   "Blacklist_ClearSelection": "Borrar selección",
   "Blacklist_Duplicate": "Este programa ya está añadido. Usa otro nombre.",
   "Blacklist_AlreadyAdded": "Ya añadido",
@@ -655,6 +655,10 @@
   "Space_Folder": "Carpeta",
   "Space_File": "Archivo",
   "Space_LogicalSize": "Tamaño lógico · vínculos físicos contados una vez",
+  "Space_VolumeCapacity": "Usado {0} · Libre {1} · Total {2}",
+  "Space_VolumeUnavailable": "Dispositivo no disponible o capacidad desconocida",
+  "Space_VolumeUnindexed": "Sin índice · Doble clic para abrir en el gestor de archivos",
+  "Space_VolumeCapacityHint": "Capacidad del disco · Las carpetas solo incluyen contenido indexado",
   "Space_Summary": "{0} elementos · {1}",
   "Tray_About": "Acerca de",
   "Tray_CleanExit": "Salida Limpia",

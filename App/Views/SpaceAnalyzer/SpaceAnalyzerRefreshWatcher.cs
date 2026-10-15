@@ -1,4 +1,6 @@
-using System.Windows.Threading;
+﻿using System.Windows.Threading;
+using System.Windows.Media;
+using System.Windows.Interop;
 using Lertaro.Core.Services.Network;
 using Lertaro.Core.Services.Plugin.DirectoryIndex;
 using Lertaro.Core.Services.Search;
@@ -24,6 +26,25 @@ internal sealed class SpaceAnalyzerRefreshWatcher : IDisposable
     private bool _isReloading;
     private volatile bool _disposed;
     private int _pending;
+    private HwndSource? _source;
+
+    public void AttachDeviceNotifications(Visual view)
+    {
+        var source = System.Windows.PresentationSource.FromVisual(view) as HwndSource;
+        if (source == _source) return;
+        _source?.RemoveHook(OnWindowMessage);
+        _source = source;
+        _source?.AddHook(OnWindowMessage);
+    }
+
+    internal static bool IsVolumeChange(int message, nint kind)
+        => message == 0x0219 && kind is 0x8000 or 0x8004 or 0x0007;
+
+    private nint OnWindowMessage(nint hwnd, int message, nint wParam, nint lParam, ref bool handled)
+    {
+        if (IsVolumeChange(message, wParam)) ScheduleRefresh(SpaceAnalyzerRefreshKind.Reload);
+        return 0;
+    }
 
     public SpaceAnalyzerRefreshWatcher(Dispatcher dispatcher, Func<Task> reload, Func<Task> validateLocation)
     {
@@ -125,6 +146,8 @@ internal sealed class SpaceAnalyzerRefreshWatcher : IDisposable
             WatchedDirectoryMatcher.Match(_watchedPaths, changedDirectories)));
     }
 
+    public void RequestRefresh() => ScheduleRefresh(SpaceAnalyzerRefreshKind.Reload);
+
     private void ScheduleRefresh(SpaceAnalyzerRefreshKind kind)
     {
         if (_disposed || !_active || kind == SpaceAnalyzerRefreshKind.None)
@@ -177,6 +200,8 @@ internal sealed class SpaceAnalyzerRefreshWatcher : IDisposable
 
     public void Dispose()
     {
+        _source?.RemoveHook(OnWindowMessage);
+        _source = null;
         _disposed = true;
         Pause();
         _timer.Tick -= OnTimerTick;

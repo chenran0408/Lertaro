@@ -1,4 +1,4 @@
-{
+﻿{
   "Blacklist_ClearSelection": "선택 지우기",
   "Blacklist_Duplicate": "이미 추가된 프로그램입니다. 다른 이름을 사용하세요.",
   "Blacklist_AlreadyAdded": "이미 추가됨",
@@ -655,6 +655,10 @@
   "Space_Folder": "폴더",
   "Space_File": "파일",
   "Space_LogicalSize": "논리적 크기 · 하드 링크는 한 번만 계산",
+  "Space_VolumeCapacity": "사용 {0} · 여유 {1} · 전체 {2}",
+  "Space_VolumeUnavailable": "장치가 준비되지 않았거나 용량을 읽을 수 없습니다",
+  "Space_VolumeUnindexed": "색인 없음 · 두 번 클릭하여 파일 관리자에서 열기",
+  "Space_VolumeCapacityHint": "디스크 용량 · 폴더 크기는 색인된 내용만 포함",
   "Space_Summary": "항목 {0}개 · {1}",
   "Tray_About": "정보",
   "Tray_CleanExit": "완전히 종료",

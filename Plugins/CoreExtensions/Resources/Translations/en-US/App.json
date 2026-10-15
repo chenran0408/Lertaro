@@ -1,4 +1,4 @@
-{
+﻿{
   "Blacklist_ClearSelection": "Clear selection",
   "Blacklist_Duplicate": "This program is already added. Use a different name.",
   "Blacklist_AlreadyAdded": "Already added",
@@ -655,6 +655,10 @@
   "Space_Folder": "Folder",
   "Space_File": "File",
   "Space_LogicalSize": "Logical size · hard links counted once",
+  "Space_VolumeCapacity": "Used {0} · Free {1} · Total {2}",
+  "Space_VolumeUnavailable": "Device not ready or capacity unavailable",
+  "Space_VolumeUnindexed": "Not indexed · Double-click to open in file manager",
+  "Space_VolumeCapacityHint": "Disk capacity · Folder sizes include indexed content only",
   "Space_Summary": "{0} items · {1}",
   "Tray_About": "About",
   "Tray_CleanExit": "Clean Exit",

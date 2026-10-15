@@ -1,4 +1,4 @@
-{
+﻿{
   "Blacklist_ClearSelection": "選択を解除",
   "Blacklist_Duplicate": "このプログラムは追加済みです。別の名前を使用してください。",
   "Blacklist_AlreadyAdded": "追加済み",
@@ -655,6 +655,10 @@
   "Space_Folder": "フォルダー",
   "Space_File": "ファイル",
   "Space_LogicalSize": "論理サイズ · ハードリンクは一度だけ計上",
+  "Space_VolumeCapacity": "使用済み {0} · 空き {1} · 合計 {2}",
+  "Space_VolumeUnavailable": "デバイスが未準備、または容量を取得できません",
+  "Space_VolumeUnindexed": "未索引 · ダブルクリックでファイルマネージャーを開く",
+  "Space_VolumeCapacityHint": "ディスク容量 · フォルダーサイズは索引済みの内容のみ",
   "Space_Summary": "{0} 項目 · {1}",
   "Tray_About": "バージョン情報",
   "Tray_CleanExit": "完全終了",
