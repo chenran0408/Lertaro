@@ -26,6 +26,11 @@ public sealed class QuickPanelWakeSettingsTests
         {
             window.Show(); window.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
             Assert.AreSame(page.FindResource("TextPrimary"), page.Foreground);
+            var testButtons = FindButtons(page).Where(b => ReferenceEquals(b.Command, vm.QuickPanelWake.TestCommand)).ToList();
+            Assert.HasCount(3, testButtons, "Every rule must have a working Test command binding.");
+            Assert.IsTrue(testButtons[0].Command!.CanExecute(testButtons[0].CommandParameter));
+            testButtons[0].Command!.Execute(testButtons[0].CommandParameter);
+            Assert.IsNotEmpty(vm.QuickPanelWake.TestMessage, "Testing must report success or a connection problem, never silently do nothing.");
             var desktop = (CheckBox)page.FindName("RowMouseAllowDesktop");
             var hold = vm.QuickPanelWake.Rows.Single(r => r.Kind == QuickPanelWakeKind.Hold);
             Assert.IsFalse(hold.Enabled); Assert.AreEqual(true, desktop.IsChecked);
@@ -49,6 +54,15 @@ public sealed class QuickPanelWakeSettingsTests
             Assert.IsEmpty(settings.BlacklistedProcesses); Assert.IsEmpty(settings.QuickPanel.BlacklistedProcesses);
         }
         finally { window.Close(); vm.Cleanup(); }
+    }
+    private static IEnumerable<Button> FindButtons(System.Windows.DependencyObject root)
+    {
+        for (var i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is Button button) yield return button;
+            foreach (var nested in FindButtons(child)) yield return nested;
+        }
     }
     [TestMethod]
     public void AlternateShortcutUsesConflictProbeAndMouseWhitelistDoesNotAffectKeys()

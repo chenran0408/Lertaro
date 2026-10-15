@@ -9,6 +9,6 @@ public partial class QuickPanelSettingsPage : System.Windows.Controls.UserContro
     {
         if (System.Windows.Window.GetWindow(this) is SettingsWindow window)
             window.ActivateSearchResult(new Helpers.SettingsSearchResultItem("", "", "Hotkeys",
-                vm => vm.Hotkeys.SelectedTab = "Global", "TabGlobal/QuickPanelWakeSection/RowAddWake"));
+                vm => vm.Hotkeys.SelectedTab = "Global", "TabGlobal/QuickPanelWakeSection/RowQuickPanel"));
     }
 }
