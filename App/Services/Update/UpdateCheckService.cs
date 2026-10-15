@@ -41,8 +41,7 @@ public static class UpdateCheckService
             if (release == null)
                 return;
 
-            var currentVersion = typeof(App).Assembly.GetName().Version;
-            if (!IsNewerVersion(release.TagName, currentVersion, out _))
+            if (!UpdateVersion.IsNewer(release.TagName, UpdateVersion.Current))
                 return;
 
             if (IsInCooldown(settings, release.TagName, DateTimeOffset.UtcNow))

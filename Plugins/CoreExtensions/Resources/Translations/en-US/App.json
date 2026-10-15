@@ -916,5 +916,7 @@
   "Wake_KeyTaken": "This key combination is used by Windows or another app. Choose another one.",
   "Wake_RowError": "Shortcut {0}: {1}",
   "Wake_TestTooShort": "The hold was too short. Hold the button a little longer.",
-  "Wake_Manage": "Manage shortcuts"
+  "Wake_Manage": "Manage shortcuts",
+  "About_UpdateBusy": "Update checks are temporarily busy. Try later or open the download page.",
+  "About_UpdateUnavailable": "Unable to check for updates. Check your connection or open the download page."
 }

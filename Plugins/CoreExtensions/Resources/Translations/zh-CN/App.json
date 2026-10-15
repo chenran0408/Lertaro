@@ -916,5 +916,7 @@
   "Wake_KeyTaken": "这组按键已被系统或其他软件占用，请换一个。",
   "Wake_RowError": "第 {0} 条：{1}",
   "Wake_TestTooShort": "按住时间还不够，请稍微多按一会儿。",
-  "Wake_Manage": "设置唤醒方式"
+  "Wake_Manage": "设置唤醒方式",
+  "About_UpdateBusy": "检查更新暂时繁忙，请稍后再试，或前往下载页手动更新。",
+  "About_UpdateUnavailable": "暂时无法检查更新，请检查网络，或前往下载页手动更新。"
 }

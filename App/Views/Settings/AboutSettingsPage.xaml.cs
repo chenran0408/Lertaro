@@ -45,8 +45,7 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
     {
         get
         {
-            var version = typeof(AboutSettingsPage).Assembly.GetName().Version;
-            return string.Format(TranslationManager.Instance["About_Version"], version?.ToString(3));
+            return string.Format(TranslationManager.Instance["About_Version"], UpdateVersion.Current);
         }
     }
 
@@ -132,6 +131,8 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
     private async void BtnCheckUpdate_Click(object sender, RoutedEventArgs e)
     {
         BtnCheckUpdate.IsEnabled = false;
+        _latestRelease = null;
+        BtnAutoUpdate.Visibility = Visibility.Collapsed;
         TxtUpdateStatus.Text = TranslationManager.Instance["About_Checking"];
         SpUpdateActions.Visibility = Visibility.Collapsed;
         TxtNoAdminWarning.Visibility = Visibility.Collapsed;
@@ -144,10 +145,8 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
 
             if (release == null)
             {
-                TxtUpdateStatus.Text = TranslationManager.Instance["About_Failed"];
-                var msg = TranslationManager.Instance["About_CheckUpdateNull"];
-                var title = TranslationManager.Instance["About_CheckUpdateStatusTitle"];
-                MessageBox.Show(msg, title, MessageBoxButton.OK, MessageBoxImage.Warning);
+                TxtUpdateStatus.Text = TranslationManager.Instance["About_UpdateUnavailable"];
+                SpUpdateActions.Visibility = Visibility.Visible;
                 return;
             }
 
@@ -155,27 +154,25 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
         }
         catch (Exception ex)
         {
+            Logger.Log($"[AboutSettingsPage] Update check failed: {ex}", LogLevel.Warn);
             BtnCheckUpdate.IsEnabled = true;
-            TxtUpdateStatus.Text = TranslationManager.Instance["About_Failed"];
-            var msgFormat = TranslationManager.Instance["About_CheckUpdateError"];
-            var msg = string.Format(msgFormat, ex.Message, ex.StackTrace);
-            var title = TranslationManager.Instance["About_CheckUpdateErrorTitle"];
-            MessageBox.Show(msg, title, MessageBoxButton.OK, MessageBoxImage.Error);
+            TxtUpdateStatus.Text = TranslationManager.Instance[ex is UpdateCheckException { RateLimited: true }
+                ? "About_UpdateBusy" : "About_UpdateUnavailable"];
+            SpUpdateActions.Visibility = Visibility.Visible;
             return;
         }
 
         // Compare versions
-        var currentVersion = typeof(AboutSettingsPage).Assembly.GetName().Version;
-        var cleanTag = release.TagName.TrimStart('v', 'V');
-        if (Version.TryParse(cleanTag, out var latestVersion))
+        if (UpdateVersion.Compare(release.TagName, UpdateVersion.Current) is { } comparison)
         {
-            if (latestVersion > currentVersion)
+            if (comparison > 0)
             {
                 var newVerFormat = TranslationManager.Instance["About_NewVersionAvailable"];
                 TxtUpdateStatus.Text = string.Format(newVerFormat, release.TagName);
 
                 // Show update actions
                 SpUpdateActions.Visibility = Visibility.Visible;
+                BtnAutoUpdate.Visibility = Visibility.Visible;
 
                 // If user is not admin, show warning and disable auto-update button
                 if (!ElevationHelper.IsUserAdmin())
@@ -195,7 +192,8 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
         }
         else
         {
-            TxtUpdateStatus.Text = TranslationManager.Instance["About_Failed"];
+            TxtUpdateStatus.Text = TranslationManager.Instance["About_UpdateUnavailable"];
+            SpUpdateActions.Visibility = Visibility.Visible;
         }
     }
 
@@ -243,8 +241,7 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
 
     private void BtnGoToPage_Click(object sender, RoutedEventArgs e)
     {
-        if (_latestRelease == null) return;
-        Helpers.UrlLauncher.Open(_latestRelease.HtmlUrl);
+        Helpers.UrlLauncher.Open(_latestRelease?.HtmlUrl ?? UpdateChecker.ReleasesPageUrl);
     }
 
     private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
