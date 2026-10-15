@@ -170,7 +170,12 @@
                                             <Style.Triggers><DataTrigger Binding="{Binding IsVolume}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
                                         </Style></StackPanel.Style>
                                         <TextBlock Text="{Binding CapacityText}" TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
-                                        <TextBlock Text="{Binding IndexStatusText}" TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
+                                        <TextBlock Text="{Binding IndexStatusText}" TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource TextSecondary}">
+                                            <TextBlock.Style><Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers><DataTrigger Binding="{Binding IsIndexed}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+                                            </Style></TextBlock.Style>
+                                        </TextBlock>
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>
