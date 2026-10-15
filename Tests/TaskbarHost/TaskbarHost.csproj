@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0-windows</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><IsPackable>false</IsPackable><AssemblyName>Lertaro.TaskbarHost.Tests</AssemblyName><RootNamespace>Lertaro.TaskbarHost.Tests</RootNamespace></PropertyGroup>
+  <ItemGroup><PackageReference Include="MSTest" Version="4.4.1"/><Using Include="Microsoft.VisualStudio.TestTools.UnitTesting"/><ProjectReference Include="../../TaskbarHost/TaskbarHost.csproj"/></ItemGroup>
+</Project>

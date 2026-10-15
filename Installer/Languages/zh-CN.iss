@@ -9,3 +9,5 @@ zh_CN.DotNetInstallFailed=安装 .NET 10.0 Desktop Runtime 失败（错误码: %
 zh_CN.CommandLineTools=命令行工具
 zh_CN.AddLffToPath=将 lff 命令行搜索工具添加到 PATH
 
+
+zh_CN.TaskbarCloseFailed=任务栏组件尚未退出，请稍候再重试安装。

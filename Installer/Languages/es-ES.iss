@@ -8,3 +8,5 @@ es_ES.DotNetDownloadFailed=Error al descargar .NET 10.0 Desktop Runtime. Por fav
 es_ES.DotNetInstallFailed=Error al instalar .NET 10.0 Desktop Runtime (Código: %1).
 es_ES.CommandLineTools=Herramientas de línea de comandos
 es_ES.AddLffToPath=Añadir la herramienta de búsqueda de línea de comandos lff a PATH
+
+es_ES.TaskbarCloseFailed=El componente de la barra se está cerrando. Espera un momento y vuelve a intentar la instalación.

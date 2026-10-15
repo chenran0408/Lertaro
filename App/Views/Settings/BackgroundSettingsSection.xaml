@@ -1,0 +1,79 @@
+﻿<UserControl x:Class="Lertaro.App.Views.Settings.BackgroundSettingsSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:services="clr-namespace:Lertaro.App.Services"
+             xmlns:controls="clr-namespace:Lertaro.App.Views.Controls">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles/Windows/SettingsWindow.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="Button" BasedOn="{StaticResource SettingsButton}"/>
+            <Style TargetType="TextBox" BasedOn="{StaticResource ThemedTextBox}"/>
+            <Style TargetType="ComboBox" BasedOn="{StaticResource SettingsComboBox}"/>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <StackPanel>
+        <TextBlock Style="{DynamicResource SettingsGroupTitle}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Title]}"/>
+        <Border Style="{DynamicResource SettingsCard}">
+            <StackPanel>
+                <TextBlock Style="{DynamicResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Hint]}"/>
+                <ComboBox x:Name="RowBackgroundKind" SelectedIndex="{Binding Kind}" Margin="0,8" HorizontalAlignment="Left" MinWidth="180">
+                    <ComboBoxItem Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Theme]}"/>
+                    <ComboBoxItem Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Solid]}"/>
+                    <ComboBoxItem Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Gradient]}"/>
+                    <ComboBoxItem Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Image]}"/>
+                    <ComboBoxItem IsEnabled="{Binding IsMaterialSupported}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_SystemMaterial]}"/>
+                </ComboBox>
+                <StackPanel Visibility="{Binding IsMaterial, Converter={StaticResource BoolToVis}}" Margin="0,8">
+                    <ComboBox SelectedIndex="{Binding Material}" HorizontalAlignment="Left" MinWidth="180">
+                        <ComboBoxItem Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Mica]}"/>
+                        <ComboBoxItem Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Acrylic]}"/>
+                    </ComboBox>
+                    <TextBlock Style="{DynamicResource SettingsHintText}" Text="{Binding MaterialHint}" Margin="0,8"/>
+                    <Button Command="{Binding PreviewMaterialCommand}" HorizontalAlignment="Left" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_MaterialPreview]}"/>
+                </StackPanel>
+                <StackPanel Visibility="{Binding IsColor, Converter={StaticResource BoolToVis}}">
+                    <WrapPanel Margin="0,4">
+                        <Button Command="{Binding PickColorCommand}" CommandParameter="First" Padding="12,6" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_FirstColor]}"/>
+                        <TextBox Text="{Binding FirstColor, UpdateSourceTrigger=LostFocus}" Width="100" Margin="8,0"/>
+                        <Button Command="{Binding PickColorCommand}" CommandParameter="Second" Padding="12,6" Visibility="{Binding IsGradient, Converter={StaticResource BoolToVis}}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_SecondColor]}"/>
+                        <TextBox Text="{Binding SecondColor, UpdateSourceTrigger=LostFocus}" Width="100" Margin="8,0" Visibility="{Binding IsGradient, Converter={StaticResource BoolToVis}}"/>
+                    </WrapPanel>
+                    <StackPanel Visibility="{Binding IsGradient, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Angle]}" Foreground="{DynamicResource TextPrimary}"/>
+                        <Slider AutoToolTipPlacement="TopLeft" IsSnapToTickEnabled="True" TickFrequency="1" Minimum="0" Maximum="360" Value="{Binding Angle}" ToolTip="{Binding Angle, StringFormat={}{0:0}°}"/>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Visibility="{Binding IsImage, Converter={StaticResource BoolToVis}}">
+                    <DockPanel Margin="0,8">
+                        <Button DockPanel.Dock="Right" Command="{Binding BrowseCommand}" Padding="12,6" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Browse]}"/>
+                        <TextBox Text="{Binding ImagePath, UpdateSourceTrigger=LostFocus}" IsReadOnly="True" Margin="0,0,8,0"/>
+                    </DockPanel>
+                    <CheckBox IsChecked="{Binding FitImage}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Fit]}"/>
+                    <TextBlock Margin="0,8,0,0" Foreground="{DynamicResource TextPrimary}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Blur]}"/>
+                    <Slider AutoToolTipPlacement="TopLeft" IsSnapToTickEnabled="True" TickFrequency="1" Minimum="0" Maximum="30" Value="{Binding Blur}" ToolTip="{Binding Blur, StringFormat={}{0:0}}"/>
+                </StackPanel>
+                <StackPanel Visibility="{Binding IsCustom, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Margin="0,8,0,0" Foreground="{DynamicResource TextPrimary}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Tint]}"/>
+                    <Slider AutoToolTipPlacement="TopLeft" IsSnapToTickEnabled="True" TickFrequency="1" Minimum="0" Maximum="100" Value="{Binding Tint}" ToolTip="{Binding Tint, StringFormat={}{0:0}%}"/>
+                </StackPanel>
+                <Border CornerRadius="8" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" Margin="0,12" ClipToBounds="True">
+                    <Grid Height="110" Background="{DynamicResource ContentBg}">
+                        <controls:BackgroundSurface/>
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="Lertaro" Foreground="{DynamicResource TextPrimary}" FontWeight="SemiBold" FontSize="24" HorizontalAlignment="Center"/>
+                            <TextBlock Foreground="{DynamicResource TextSecondary}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Preview]}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <TextBlock Text="{Binding Status}" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
+                <WrapPanel Margin="0,8,0,0">
+                    <Button Command="{Binding CancelCommand}" Padding="12,6" Margin="0,0,8,0" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Undo]}"/>
+                    <Button Command="{Binding ResetCommand}" Padding="12,6" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Reset]}"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

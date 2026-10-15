@@ -43,6 +43,7 @@ public class ThemeSettingsViewModel : ViewModelBase
         // record value-equality to "just work".
         _translationHandler = (s, e) =>
         {
+            _background?.RefreshLanguage();
             _themeOptions = null;
             _lightThemeOptions = null;
             _darkThemeOptions = null;
@@ -280,5 +281,15 @@ public class ThemeSettingsViewModel : ViewModelBase
         }
     }
 
-    public void Cleanup() => TranslationManager.Instance.PropertyChanged -= _translationHandler;
+    private BackgroundSettingsViewModel? _background;
+    public BackgroundSettingsViewModel Background => _background ??= new BackgroundSettingsViewModel(_userSettings);
+    public void StageBackground() => _background?.Stage();
+    public void AcceptBackground() => _background?.Accept();
+    public void RejectBackgroundSave() => _background?.RejectSave();
+
+    public void Cleanup()
+    {
+        TranslationManager.Instance.PropertyChanged -= _translationHandler;
+        _background?.Cleanup();
+    }
 }

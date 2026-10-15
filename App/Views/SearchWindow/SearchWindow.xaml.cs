@@ -26,7 +26,7 @@ public partial class SearchWindow : Window, ISearchWindow, IHasVisibleContentIns
     private readonly SearchWindowInputHandler _inputHandler;
     private readonly ShellMenuPresenter _menuPresenter;
     // Must match SearchWindow.xaml's MainBorder Margin.
-    public Thickness VisibleContentInset => new(8);
+    public Thickness VisibleContentInset => AllowsTransparency ? new(8) : new(0);
 
     // Whether to reopen the preview once this window has a first result to show it for. Applied then
     // rather than now because there is nothing to preview yet, and because the quick window this is
@@ -37,6 +37,7 @@ public partial class SearchWindow : Window, ISearchWindow, IHasVisibleContentIns
     public SearchWindow(string initialQuery = "", bool restorePreview = false, IReadOnlyList<AppSearchResult>? quickSearchRows = null)
     {
         InitializeComponent();
+        Lertaro.App.Helpers.Visuals.NativeMaterialHost.Prepare(this);
         _restorePreviewOnFirstResult = restorePreview;
 
         // Menu only, same as the settings window: custom chrome makes the OS system menu a clipped box

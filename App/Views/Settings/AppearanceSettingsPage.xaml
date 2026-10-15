@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Lertaro.App.Views.Settings"
              xmlns:services="clr-namespace:Lertaro.App.Services"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="700">
@@ -194,6 +195,9 @@
                     </StackPanel>
                 </StackPanel>
             </Border>
+
+            <local:BackgroundSettingsSection x:Name="BackgroundSection" DataContext="{Binding Appearance.Background}"/>
+            <local:TaskbarSettingsSection x:Name="RowTaskbarSettings"/>
 
             <!-- Manual mode: one grid, filtered to whichever flavor (light/dark) is currently active. -->
             <StackPanel x:Name="GroupManualTheme" Visibility="{Binding Appearance.IsManualThemeEnabled, Converter={StaticResource BoolToVis}}">

@@ -94,7 +94,9 @@ public class PluginInfoViewModel : ViewModelBase
         Action? onRollback = null,
         string? websiteUrl = null,
         string? websiteLabel = null,
-        bool isPluginEnabled = true)
+        bool isPluginEnabled = true,
+        Func<Task>? onSaveAsync = null,
+        Func<IReadOnlyDictionary<string, object?>, Task>? onPreviewAsync = null)
     {
         _isPluginEnabled = isPluginEnabled && (!components.Any(c => c.IsToggleable) || components.Any(c => c.IsToggleable && c.IsEnabled));
         Name = name;
@@ -106,6 +108,8 @@ public class PluginInfoViewModel : ViewModelBase
         _configTabState = new PluginConfigTabState(this);
         Description = description;
         OnSave = onSave;
+        OnSaveAsync = onSaveAsync;
+        OnPreviewAsync = onPreviewAsync;
         OnRollback = onRollback;
         WebsiteUrl = websiteUrl;
         WebsiteLabel = websiteLabel;
@@ -256,6 +260,8 @@ public class PluginInfoViewModel : ViewModelBase
     }
 
     public Action? OnSave { get; }
+    public Func<Task>? OnSaveAsync { get; }
+    public Func<IReadOnlyDictionary<string, object?>, Task>? OnPreviewAsync { get; }
     public Action? OnRollback { get; }
 
     /// <summary>Discards every staged config edit on this plugin, returning its fields to persisted values.</summary>

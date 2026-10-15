@@ -263,7 +263,7 @@ public class PluginManagementViewModel : ViewModelBase
     // same pattern applied to the user manual link.
     public Uri? DevGuideUri => Uri.TryCreate(TranslationManager.Instance["Plugins_DevGuideUrl"], UriKind.Absolute, out var uri) ? uri : null;
 
-    public void Save()
+    public async Task SaveAsync()
     {
         SavePluginEnablement(_userSettings, Plugins);
 
@@ -297,7 +297,7 @@ public class PluginManagementViewModel : ViewModelBase
         // Every plugin the user edited is written here, not just the one on screen: staged edits survive
         // switching plugins (see SelectedPlugin), so the Settings window's Apply/OK is the one commit
         // point for all of them.
-        PluginConfigCommitSupport.CommitPending(Plugins);
+        await PluginConfigCommitSupport.CommitPendingAsync(Plugins);
 
         // Toggling a component deliberately does not reorder the list live (that read as jumping); the
         // position is reconciled here, on Apply/OK, against the currently selected sort rule.

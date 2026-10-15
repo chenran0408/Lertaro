@@ -90,8 +90,8 @@ public static class PluginLoaderHelper
             var description = GetPluginDescription(assembly, pluginInstance);
             var websiteUrl = pluginInstance?.WebsiteUrl;
             var websiteLabel = pluginInstance?.WebsiteLabel;
-            result.Add(new PluginInfoViewModel(pluginName, pluginVersion, dllName, sdkVersion, components, configFields, description, schema?.OnSave, schema?.OnRollback, websiteUrl, websiteLabel,
-                !userSettings.DisabledPluginAssemblies.Contains(dllName, StringComparer.OrdinalIgnoreCase)));
+            result.Add(new PluginInfoViewModel(pluginName, pluginVersion, dllName, sdkVersion, components, configFields, description, schema?.OnSave, schema?.OnRollback, websiteUrl, websiteLabel, onSaveAsync: schema?.OnSaveAsync,
+                isPluginEnabled: !userSettings.DisabledPluginAssemblies.Contains(dllName, StringComparer.OrdinalIgnoreCase), onPreviewAsync: schema?.OnPreviewAsync));
         }
 
         AddDisabledPlugins(result, pluginsDir, userSettings);

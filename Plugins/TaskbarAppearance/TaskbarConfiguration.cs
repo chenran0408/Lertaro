@@ -4,8 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace Lertaro.Plugins.TaskbarAppearance;
 
-// Configuration interoperability only. The native taskbar engine remains a separately installed
-// TranslucentTB instance; no upstream source or binary is embedded in this plugin.
+// Configuration interoperability with the independent bundled or user-selected native engine.
 internal static class TaskbarConfiguration
 {
     internal static readonly string[] Styles = ["normal", "clear", "opaque", "acrylic", "blur"];
@@ -35,6 +34,7 @@ internal static class TaskbarConfiguration
                 SetAppearance(root, rule.Situation, rule.Style, rule.Color, rule.Opacity, options.ShowLine, rule.Enabled, options.ShowPeek);
             }
             if (options.UseChinese) root["language"] = "zh-CN";
+            if (options.IsBundled) root["hide_tray"] = true;
         }
         return root.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
     }

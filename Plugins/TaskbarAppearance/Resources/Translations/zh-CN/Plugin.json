@@ -1,10 +1,10 @@
 {
   "Taskbar_Name": "任务栏美化",
-  "Taskbar_Description": "在 Lertaro 中设置已安装的 TranslucentTB。保存后应用，停用后恢复系统任务栏；无需运行第二套美化引擎。",
+  "Taskbar_Description": "内置任务栏美化，无需另装 TranslucentTB。启用后运行，关闭后恢复系统外观。",
   "Taskbar_Enabled": "启用任务栏美化",
   "Taskbar_EnabledHint": "默认关闭。接管后再关闭此开关，会恢复 Windows 默认外观。",
-  "Taskbar_ExecutablePath": "便携版 TranslucentTB 程序",
-  "Taskbar_ExecutablePathHint": "使用微软商店版时留空；便携版请选择 TranslucentTB.exe。",
+  "Taskbar_ExecutablePath": "外部程序（可选）",
+  "Taskbar_ExecutablePathHint": "留空使用内置组件，无需安装 TranslucentTB。仅在希望使用自己的便携版时选择程序。",
   "Taskbar_Style": "任务栏效果",
   "Taskbar_StyleHint": "效果取决于 Windows 和 TranslucentTB 版本，保存设置后可查看实际变化。",
   "Taskbar_Color": "颜色",
@@ -28,10 +28,14 @@
   "Taskbar_search_opened_appearance": "打开系统搜索",
   "Taskbar_task_view_opened_appearance": "打开任务视图",
   "Taskbar_battery_saver_appearance": "开启节电模式",
-  "Taskbar_NotInstalled": "请先安装微软商店版 TranslucentTB，或选择便携版程序。",
+  "Taskbar_NotInstalled": "内置组件不可用，请重新安装完整的 Lertaro 安装包。",
   "Taskbar_InvalidExecutable": "请选择实际存在的 TranslucentTB.exe 完整路径。",
   "Taskbar_EngineConflict": "另一个版本的 TranslucentTB 正在运行，请先退出它再切换。",
   "Taskbar_ApplyFailed": "未能应用任务栏外观。请检查 TranslucentTB 程序、颜色、不透明度、重复场景和配置文件写入权限；原有配置无法读取时不会覆盖。",
   "Taskbar_ShowPeek": "显示桌面预览按钮",
-  "Taskbar_ShowPeekHint": "适用于支持该功能的 Windows 10 任务栏。"
+  "Taskbar_ShowPeekHint": "适用于支持该功能的 Windows 10 任务栏。",
+  "Taskbar_BundleMissing": "任务栏组件缺失或与程序版本不匹配，请重新安装完整的 Lertaro 安装包。",
+  "Taskbar_Windows11Required": "内置任务栏美化目前需要 Windows 11。Windows 10 可选择兼容的外部程序。",
+  "Taskbar_DependenciesFailed": "无法准备任务栏运行组件。请稍后重试；若系统策略禁止安装组件，请联系管理员。",
+  "Taskbar_PreviewBuiltInOnly": "即时预览仅支持内置组件。外部程序请通过保存设置应用。"
 }

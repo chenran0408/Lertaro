@@ -5,6 +5,75 @@ namespace Lertaro.Plugins.TaskbarAppearance;
 
 internal static class TaskbarEngine
 {
+    private static readonly SemaphoreSlim Gate = new(1);
+    private static bool _resumeAllowed = true;
+
+    internal static void RestorePreview(TaskbarOptions saved)
+    {
+        if (!string.IsNullOrWhiteSpace(saved.ExecutablePath))
+        {
+            // A bundled preview never edits an external engine. Restore its prior absence without launching it.
+            BundledTaskbarEngine.Stop();
+            return;
+        }
+        if (!saved.Enabled) BundledTaskbarEngine.Stop();
+        else if (BundledTaskbarEngine.IsRunning)
+        {
+            saved.IsBundled = true;
+            TaskbarConfigStore.Apply(Path.Combine(BundledTaskbarEngine.RuntimeDirectory, "settings.json"), saved);
+        }
+    }
+
+    internal static async Task SuspendAsync()
+    {
+        await Gate.WaitAsync();
+        try { _resumeAllowed = false; await BundledTaskbarEngine.StopAsync(); }
+        finally { Gate.Release(); }
+    }
+
+    public static Task ApplyAsync(TaskbarOptions options) => ApplyCoreAsync(() => options, resume: false);
+    internal static Task ResumeAsync(Func<TaskbarOptions> readSaved) => ApplyCoreAsync(readSaved, resume: true);
+
+    private static async Task ApplyCoreAsync(Func<TaskbarOptions> readOptions, bool resume)
+    {
+        await Gate.WaitAsync();
+        try
+        {
+            if (resume && !_resumeAllowed) return;
+            var options = readOptions();
+            if (resume && (!options.Enabled || !string.IsNullOrWhiteSpace(options.ExecutablePath))) return;
+            if (!resume) _resumeAllowed = true;
+            // Reject invalid colors/rules before preparing frameworks, copying binaries or stopping a component.
+            TaskbarConfiguration.Build("", options);
+            if (BundledTaskbarEngine.IsStopping) await BundledTaskbarEngine.StopAsync();
+            if (!string.IsNullOrWhiteSpace(options.ExecutablePath))
+            {
+                ResolveConfigPath(options.ExecutablePath);
+                await BundledTaskbarEngine.StopAsync();
+                await Task.Run(() => Apply(options));
+                return;
+            }
+            options.IsBundled = true;
+            var config = Path.Combine(BundledTaskbarEngine.RuntimeDirectory, "settings.json");
+            if (!options.Enabled)
+            {
+                await Task.Run(() => TaskbarConfigStore.Apply(config, options));
+                await BundledTaskbarEngine.StopAsync();
+                return;
+            }
+            var running = Process.GetProcessesByName("TranslucentTB");
+            try
+            {
+                if (running.Length > 0 && (!BundledTaskbarEngine.IsRunning || running.Any(p => !MatchesEngine(p.MainModule?.FileName, BundledTaskbarEngine.RuntimeDirectory))))
+                    throw new InvalidOperationException(TranslationService.Get("Taskbar_EngineConflict"));
+            }
+            finally { foreach (var process in running) process.Dispose(); }
+            var executable = await BundledTaskbarEngine.PrepareAsync();
+            await Task.Run(() => TaskbarConfigStore.Apply(config, options));
+            await BundledTaskbarEngine.StartAsync(executable);
+        }
+        finally { Gate.Release(); }
+    }
     internal const string PackageFamily = "28017CharlesMilette.TranslucentTB_v826wp6bftszj";
     private static string PackageRoot => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", PackageFamily);
 

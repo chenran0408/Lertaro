@@ -1,10 +1,10 @@
 {
   "Taskbar_Name": "タスクバーの外観",
-  "Taskbar_Description": "Lertaro からインストール済みの TranslucentTB を設定します。保存して適用し、無効にするとシステムの外観に戻ります。",
+  "Taskbar_Description": "タスクバー効果を内蔵。TranslucentTB の別途インストールは不要です。有効時に動作し、無効にすると Windows の外観に戻ります。",
   "Taskbar_Enabled": "タスクバーの外観を有効化",
   "Taskbar_EnabledHint": "初期状態はオフです。有効にした後オフにすると Windows の既定の外観に戻ります。",
-  "Taskbar_ExecutablePath": "ポータブル版 TranslucentTB",
-  "Taskbar_ExecutablePathHint": "Microsoft Store 版は空欄にします。ポータブル版は TranslucentTB.exe を選択してください。",
+  "Taskbar_ExecutablePath": "外部プログラム（任意）",
+  "Taskbar_ExecutablePathHint": "空欄で内蔵コンポーネントを使用します。独自のポータブル版を使う場合のみ指定してください。",
   "Taskbar_Style": "表示効果",
   "Taskbar_StyleHint": "効果は Windows と TranslucentTB のバージョンによって異なります。保存後に実際の変化を確認できます。",
   "Taskbar_Color": "色",
@@ -28,10 +28,14 @@
   "Taskbar_search_opened_appearance": "Windows 検索表示中",
   "Taskbar_task_view_opened_appearance": "タスクビュー表示中",
   "Taskbar_battery_saver_appearance": "バッテリー節約中",
-  "Taskbar_NotInstalled": "Microsoft Store 版をインストールするか、ポータブル版を選択してください。",
+  "Taskbar_NotInstalled": "内蔵コンポーネントを利用できません。完全な Lertaro パッケージを再インストールしてください。",
   "Taskbar_InvalidExecutable": "実在する TranslucentTB.exe の絶対パスを指定してください。",
   "Taskbar_EngineConflict": "別の TranslucentTB が実行中です。終了してから切り替えてください。",
   "Taskbar_ApplyFailed": "外観を適用できません。プログラム、色、不透明度、重複する状況、設定の書き込み権限を確認してください。読み取れない既存設定は変更しません。",
   "Taskbar_ShowPeek": "デスクトップのプレビューボタンを表示",
-  "Taskbar_ShowPeekHint": "対応する Windows 10 のタスクバーで利用できます。"
+  "Taskbar_ShowPeekHint": "対応する Windows 10 のタスクバーで利用できます。",
+  "Taskbar_BundleMissing": "タスクバーコンポーネントがないか、バージョンが異なります。完全な Lertaro パッケージを再インストールしてください。",
+  "Taskbar_Windows11Required": "内蔵コンポーネントには現在 Windows 11 が必要です。Windows 10 では互換性のある外部プログラムを指定してください。",
+  "Taskbar_DependenciesFailed": "実行コンポーネントを準備できません。後で再試行するか、システムポリシーでインストールが禁止されている場合は管理者に連絡してください。",
+  "Taskbar_PreviewBuiltInOnly": "即時プレビューは内蔵コンポーネントのみ対応しています。外部プログラムには設定を保存して適用してください。"
 }

@@ -93,7 +93,8 @@ Name: "startmenuicon"; Description: "{cm:CreateStartMenuIcon}"; GroupDescription
 Name: "addtopath"; Description: "{cm:AddLffToPath}"; GroupDescription: "{cm:CommandLineTools}"
 
 [Files]
-Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.pdb"
+Source: "..\portable-updater.ps1"; DestDir: "{tmp}"; Flags: dontcopy
+Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.pdb"; BeforeInstall: WaitForTaskbarHost
 
 [Icons]
 Name: "{commonprograms}\{#AppName}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: startmenuicon
@@ -110,9 +111,12 @@ Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchApp}"; Flags: postinsta
 [Code]
 var
   DownloadPage: TDownloadWizardPage;
+  TaskbarHostWaited: Boolean;
 
 const
   EnvironmentKey = 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
+
+#include "TaskbarHost.iss"
 
 // Adds Dir to the MACHINE-wide PATH (HKLM, not HKCU) -- the installer already runs elevated
 // (PrivilegesRequired=admin above) and everything else it installs (Program Files location, the
@@ -270,6 +274,7 @@ begin
   begin
     // Force stop app, CLI companion, and service on uninstallation
     Exec('taskkill.exe', '/F /IM ' + '{#AppExeName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    WaitForInstalledTaskbarHost;
     Exec('taskkill.exe', '/F /IM ' + '{#CliExeName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     Exec('sc.exe', 'stop ' + '{#ServiceName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     Exec('taskkill.exe', '/F /IM ' + '{#ServiceExeName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);

@@ -33,7 +33,7 @@ public sealed class PluginConfigCommitSupportTests
     }
 
     [TestMethod]
-    public void CommitPending_OpenedCustomPanel_SavesEvenWithoutOrdinaryFieldEdits()
+    public async Task CommitPending_OpenedCustomPanel_SavesEvenWithoutOrdinaryFieldEdits()
     {
         var path = Path.Combine(Path.GetTempPath(), $"custom-panel-{Guid.NewGuid():N}.json");
         var dictionaryPath = "";
@@ -53,14 +53,14 @@ public sealed class PluginConfigCommitSupportTests
         });
         try
         {
-            PluginConfigCommitSupport.CommitPending([plugin]);
+            await PluginConfigCommitSupport.CommitPendingAsync([plugin]);
             Assert.AreEqual(0, saves, "A panel never opened should not invoke its save hook.");
             plugin.IsConfigTab = true;
             dictionaryPath = @"D:\Dictionaries\test.mdx"; // Custom UI edits its own model directly.
             plugin.IsConfigTab = false; // Switching plugins before Apply must preserve this save.
             Assert.IsFalse(plugin.HasPendingConfigEdits);
 
-            PluginConfigCommitSupport.CommitPending([plugin]);
+            await PluginConfigCommitSupport.CommitPendingAsync([plugin]);
 
             Assert.AreEqual(1, saves);
             using var saved = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
@@ -70,13 +70,29 @@ public sealed class PluginConfigCommitSupportTests
     }
 
     [TestMethod]
-    public void CommitPending_OpenedOrdinaryFieldsWithoutEdits_DoesNotInvokeSave()
+    public async Task CommitPending_OpenedOrdinaryFieldsWithoutEdits_DoesNotInvokeSave()
     {
         var saves = 0;
         var plugin = new PluginInfoViewModel("P", "1", "P.dll", "1", [],
             MakePlugin().ConfigFields.ToList(), onSave: () => saves++);
         plugin.IsConfigTab = true;
-        PluginConfigCommitSupport.CommitPending([plugin]);
+        await PluginConfigCommitSupport.CommitPendingAsync([plugin]);
         Assert.AreEqual(0, saves);
+    }
+
+    [TestMethod]
+    public async Task CustomAsyncSaveIsAwaitedAndItsFailureReachesTheCaller()
+    {
+        var field = new PluginConfigFieldViewModel("async", new PluginSdk.Abstractions.PluginConfigField
+        {
+            Key = "custom", FieldType = PluginSdk.Abstractions.ConfigFieldType.CustomControl
+        }, new UserSettings());
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var plugin = new PluginInfoViewModel("Async", "1", "Async.dll", "1", [], [field], onSaveAsync: () => completion.Task);
+        plugin.IsConfigTab = true;
+        var saving = PluginConfigCommitSupport.CommitPendingAsync([plugin]);
+        Assert.IsFalse(saving.IsCompleted);
+        completion.SetException(new IOException("Dependency unavailable"));
+        await Assert.ThrowsAsync<IOException>(async () => await saving);
     }
 }

@@ -8,3 +8,5 @@ ko_KR.DotNetDownloadFailed=.NET 10.0 Desktop Runtime 다운로드 실패. 수동
 ko_KR.DotNetInstallFailed=.NET 10.0 Desktop Runtime 설치 실패 (코드: %1).
 ko_KR.CommandLineTools=명령줄 도구
 ko_KR.AddLffToPath=lff 명령줄 검색 도구를 PATH에 추가
+
+ko_KR.TaskbarCloseFailed=작업 표시줄 구성 요소가 종료 중입니다. 잠시 기다린 후 설치를 다시 시도하세요.

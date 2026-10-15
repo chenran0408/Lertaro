@@ -1,10 +1,10 @@
 {
   "Taskbar_Name": "Aspecto de la barra de tareas",
-  "Taskbar_Description": "Configura TranslucentTB instalado desde Lertaro. Guarda para aplicar; desactiva para volver al aspecto de Windows.",
+  "Taskbar_Description": "Apariencia de la barra integrada, sin instalar TranslucentTB por separado. Se ejecuta al activarla y restaura Windows al desactivarla.",
   "Taskbar_Enabled": "Activar aspecto de la barra",
   "Taskbar_EnabledHint": "Desactivado al principio. Al desactivar tras su uso, restaura el aspecto predeterminado de Windows.",
-  "Taskbar_ExecutablePath": "Programa TranslucentTB portable",
-  "Taskbar_ExecutablePathHint": "Déjalo vacío para la versión de Microsoft Store. Para la versión portable, selecciona TranslucentTB.exe.",
+  "Taskbar_ExecutablePath": "Programa externo (opcional)",
+  "Taskbar_ExecutablePathHint": "Déjalo vacío para usar el componente integrado. Elige un programa solo para usar tu propia copia portátil.",
   "Taskbar_Style": "Efecto",
   "Taskbar_StyleHint": "Los efectos dependen de Windows y TranslucentTB. Guarda los ajustes para ver el cambio real.",
   "Taskbar_Color": "Color",
@@ -28,10 +28,14 @@
   "Taskbar_search_opened_appearance": "Búsqueda de Windows abierta",
   "Taskbar_task_view_opened_appearance": "Vista de tareas abierta",
   "Taskbar_battery_saver_appearance": "Ahorro de batería activo",
-  "Taskbar_NotInstalled": "Instala TranslucentTB desde Microsoft Store o selecciona un programa portable.",
+  "Taskbar_NotInstalled": "El componente integrado no está disponible. Reinstala el paquete completo de Lertaro.",
   "Taskbar_InvalidExecutable": "Selecciona la ruta completa de un TranslucentTB.exe existente.",
   "Taskbar_EngineConflict": "Hay otra versión de TranslucentTB en ejecución. Ciérrala antes de cambiar.",
   "Taskbar_ApplyFailed": "No se pudo aplicar. Revisa el programa, color, opacidad, situaciones duplicadas y permisos de escritura. Una configuración existente que no se pueda leer no se sobrescribe.",
   "Taskbar_ShowPeek": "Mostrar botón de vista del escritorio",
-  "Taskbar_ShowPeekHint": "Para barras de Windows 10 compatibles."
+  "Taskbar_ShowPeekHint": "Para barras de Windows 10 compatibles.",
+  "Taskbar_BundleMissing": "Falta el componente o su versión no coincide. Reinstala el paquete completo de Lertaro.",
+  "Taskbar_Windows11Required": "El componente integrado requiere actualmente Windows 11. En Windows 10, elige un programa externo compatible.",
+  "Taskbar_DependenciesFailed": "No se pudo preparar el entorno de la barra. Inténtalo más tarde o contacta con el administrador si una política impide instalar los componentes.",
+  "Taskbar_PreviewBuiltInOnly": "La vista previa solo admite el componente integrado. Guarda los ajustes para aplicarlos a un programa externo."
 }

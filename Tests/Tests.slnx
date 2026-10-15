@@ -30,4 +30,5 @@
   <Project Path="Plugins/AudioDeviceSelector/AudioDeviceSelector.csproj" />
   <Project Path="Plugins/Calendar/Calendar.csproj" />
   <Project Path="Plugins/TaskbarAppearance/TaskbarAppearance.csproj" />
+  <Project Path="TaskbarHost/TaskbarHost.csproj" />
 </Solution>

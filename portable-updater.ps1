@@ -1,4 +1,4 @@
-param([string]$Source, [string]$Destination)
+param([string]$Source, [string]$Destination, [switch]$WaitTaskbarHost)
 
 # Called from the verified service. Also dot-sourced by file/lock regression tests.
 function Invoke-LertaroUpdateCopy([string]$Source, [string]$Destination, [string]$Backup) {
@@ -44,6 +44,19 @@ function Invoke-LertaroUpdateCopy([string]$Source, [string]$Destination, [string
         }
         if ($rollbackErrors.Count) { throw "ROLLBACK FAILED: $($rollbackErrors -join '; '). Recovery files: $backupRoot" }
         throw "Update failed at '$target': $($copyError.Exception.Message)"
+    }
+}
+
+function Wait-LertaroTaskbarHostExit {
+    param([string]$TargetRoot, [int]$TimeoutMs = 15000)
+    $root = [IO.Path]::GetFullPath($TargetRoot).TrimEnd('\')
+    foreach ($process in Get-Process -Name 'Lertaro.TaskbarHost' -ErrorAction SilentlyContinue) {
+        try {
+            if ($process.Path -and [IO.Path]::GetDirectoryName($process.Path).TrimEnd('\') -eq $root) {
+                # The supervisor restores the taskbar after its parent exits. Wait rather than kill it.
+                if (!$process.WaitForExit($TimeoutMs)) { throw 'The taskbar component is still closing. Please retry the update.' }
+            }
+        } finally { $process.Dispose() }
     }
 }
 
@@ -95,6 +108,11 @@ if ($MyInvocation.InvocationName -eq '.') { return }
 $ErrorActionPreference = 'Stop'
 # An elevated PowerShell must not discover modules from a user's custom module search path.
 $env:PSModulePath = Join-Path $PSHOME 'Modules'
+if ($WaitTaskbarHost) {
+    Wait-LertaroTaskbarHostExit -TargetRoot $Destination
+    exit
+}
+
 $sourceRoot = [IO.Path]::GetFullPath($Source).TrimEnd('\')
 $targetRoot = [IO.Path]::GetFullPath($Destination).TrimEnd('\')
 $payloadRoot = Join-Path $targetRoot 'update-payload'
@@ -126,6 +144,7 @@ try {
             }
         } finally { $process.Dispose() }
     }
+    Wait-LertaroTaskbarHostExit -TargetRoot $targetRoot
     Invoke-LertaroUpdateCopy $sourceRoot $targetRoot $backup
     $result.Status = 'success'
     # Both targets are checked against this installation's staging root before recursive removal.

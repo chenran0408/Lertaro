@@ -125,7 +125,7 @@ mkdir "%OUT%"
 :: Publish each project separately to keep shared output deterministic and avoid NETSDK1194.
 echo.
 echo [1/4] Publishing App/Service/Cli in Release mode...
-for %%p in (App\App.csproj Service\Service.csproj Cli\Cli.csproj) do (
+for %%p in (App\App.csproj Service\Service.csproj Cli\Cli.csproj TaskbarHost\TaskbarHost.csproj) do (
     dotnet publish "%ROOT%%%p" -c Release -o "%OUT%" %RIDARGS% -v quiet
     if errorlevel 1 exit /b 1
 )
@@ -139,6 +139,8 @@ if errorlevel 1 exit /b 1
 :: Copy portable updater/cleanup files and clean PDB files
 echo.
 echo [3/4] Copying portable updater/cleanup files and cleaning PDB files...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\PrepareTaskbarBundle.ps1" -OutputDirectory "%OUT%" -CacheDirectory "%ROOT%obj\TaskbarDownloadCache" -Architecture "%ARCH%"
+if errorlevel 1 exit /b 1
 copy "%ROOT%portable-updater.bat" "%OUT%\" >nul
 if errorlevel 1 (
     echo [Warning] Failed to copy portable-updater.bat.

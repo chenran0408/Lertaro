@@ -3,6 +3,7 @@
 internal sealed class TaskbarOptions
 {
     public bool Enabled { get; set; }
+    public bool IsBundled { get; set; }
     public string ExecutablePath { get; set; } = "";
     public string Style { get; set; } = "clear";
     public string Color { get; set; } = "#000000";

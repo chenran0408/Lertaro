@@ -1,0 +1,38 @@
+{
+  "TranslucentTB-portable-x64.zip": {
+    "url": "https://github.com/TranslucentTB/TranslucentTB/releases/download/2026.2/TranslucentTB-portable-x64.zip",
+    "sha256": "0dbe8e0255c20e131cde536dcd0ae490d45989a7d360e26d0150dff1922ac420"
+  },
+  "TranslucentTB-portable-arm64.zip": {
+    "url": "https://github.com/TranslucentTB/TranslucentTB/releases/download/2026.2/TranslucentTB-portable-arm64.zip",
+    "sha256": "81b2f386bd4776a2d9f5c44d8a9b5b3aebccd2eeffaa53435eac24aa38797c82"
+  },
+  "vclibs-desktop-x64.appx": {
+    "url": "https://github.com/TranslucentTB/TranslucentTB/releases/download/2024.3/vclibs-desktop-x64.appx",
+    "sha256": "077a3d1a5d0622bd3004dca85f5e192d6e98ec79b83d4aa06766759ea6c09c3d"
+  },
+  "vclibs-desktop-arm64.appx": {
+    "url": "https://github.com/TranslucentTB/TranslucentTB/releases/download/2024.3/vclibs-desktop-arm64.appx",
+    "sha256": "831118f2f5cac8e29284e4ecc23bf4236436ccc2ea4a7c225c4946f8cfd29dd3"
+  },
+  "vclibs-uwp-x64.appx": {
+    "url": "https://github.com/TranslucentTB/TranslucentTB/releases/download/2024.3/vclibs-uwp-x64.appx",
+    "sha256": "9c17b521f9d690a1f504da5108ed6eec5669eb3a8fd1331eef43e40d84e74283"
+  },
+  "vclibs-uwp-arm64.appx": {
+    "url": "https://github.com/TranslucentTB/TranslucentTB/releases/download/2024.3/vclibs-uwp-arm64.appx",
+    "sha256": "c73d0f55dda331f9dcbefc99ff5a420b62120773d2917387639382aa478533ee"
+  },
+  "winui-x64.appx": {
+    "url": "https://github.com/TranslucentTB/TranslucentTB/releases/download/2026.1/winui-x64.appx",
+    "sha256": "2e7c2397d95f415ff97e26e3a63d52be4c2e4be3f885517e522b8e94e37b4fe2"
+  },
+  "winui-arm64.appx": {
+    "url": "https://github.com/TranslucentTB/TranslucentTB/releases/download/2026.1/winui-arm64.appx",
+    "sha256": "b364b22089d1ce9ff70691dcebe75d14f81817fdcd3c312aa4b7b6766942c358"
+  },
+  "source.zip": {
+    "url": "https://codeload.github.com/TranslucentTB/TranslucentTB/zip/refs/tags/2026.2",
+    "sha256": "73ac414e17710de5765f2305bbbc1aaa4d88628c49d9b47a3159795d05f2f257"
+  }
+}

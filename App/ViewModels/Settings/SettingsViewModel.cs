@@ -221,7 +221,7 @@ public class SettingsViewModel : ViewModelBase
             // _plugins, not the Plugins property: an untouched Plugins tab was never constructed, so it has
             // nothing dirty to save -- going through the property here would force that reflection scan
             // (see the Plugins property's own comment) just to immediately no-op.
-            _plugins?.Save();
+            if (_plugins != null) await _plugins.SaveAsync();
             Hotkeys.Apply();
             Blacklist.Save();
             // _history, not History: an untouched History tab was never constructed, so there is nothing
@@ -232,8 +232,13 @@ public class SettingsViewModel : ViewModelBase
             QuickLaunch.Save();
             QuickPanel.Save();
             LocalSend.Apply();
+            _deferred.ExistingAppearance?.StageBackground();
             if (!_userSettings.Save())
+            {
+                _deferred.ExistingAppearance?.RejectBackgroundSave();
                 throw new IOException($"Could not save settings to {UserSettings.SettingsPath}.");
+            }
+            _deferred.ExistingAppearance?.AcceptBackground();
             _isSaved = true;
             SettingsApplyHelpers.RebindFavoriteHotkeys(Favorites);
             Core.Services.LocalSend.LocalSendServiceManager.Instance.ApplySettings(_userSettings);

@@ -72,6 +72,10 @@ public class PluginConfigSchema
 {
     public List<PluginConfigField> Fields { get; set; } = new();
     public Action? OnSave { get; set; }
+    /// <summary>Optional non-blocking save hook, awaited by the host before Apply completes.</summary>
+    public Func<Task>? OnSaveAsync { get; set; }
+    /// <summary>Optional preview of staged values without persisting them. OnRollback restores saved state.</summary>
+    public Func<IReadOnlyDictionary<string, object?>, Task>? OnPreviewAsync { get; set; }
     public Action? OnRollback { get; set; }
 }
 

@@ -8,3 +8,5 @@ ja_JP.DotNetDownloadFailed=.NET 10.0 Desktop Runtime のダウンロードに失
 ja_JP.DotNetInstallFailed=.NET 10.0 Desktop Runtime のインストールに失敗しました (コード: %1)。
 ja_JP.CommandLineTools=コマンドライン ツール
 ja_JP.AddLffToPath=lff コマンドライン検索ツールを PATH に追加する
+
+ja_JP.TaskbarCloseFailed=タスクバーコンポーネントを終了しています。しばらく待ってから再試行してください。

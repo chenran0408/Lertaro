@@ -28,7 +28,7 @@ internal static class PluginConfigCommitSupport
     /// The save has to happen here, before the ReloadSettings message below: the hook process re-reads
     /// the settings file on that message, so it would otherwise read the pre-edit values still on disk.
     /// </remarks>
-    internal static void CommitPending(IEnumerable<PluginInfoViewModel> plugins)
+    internal static async Task CommitPendingAsync(IEnumerable<PluginInfoViewModel> plugins)
     {
         UserSettings? settings = null;
         var committed = new List<PluginInfoViewModel>();
@@ -39,7 +39,11 @@ internal static class PluginConfigCommitSupport
             {
                 // A hosted settings panel edits its own model, outside our value-field dirty flags.
                 // Persist that model without rewriting untouched host-managed fields.
-                if (plugin.RequiresCustomConfigSave) plugin.OnSave?.Invoke();
+                if (plugin.RequiresCustomConfigSave)
+                {
+                    plugin.OnSave?.Invoke();
+                    if (plugin.OnSaveAsync != null) await plugin.OnSaveAsync();
+                }
                 continue;
             }
 
@@ -56,7 +60,10 @@ internal static class PluginConfigCommitSupport
             throw new System.IO.IOException("Could not save plugin settings.");
 
         foreach (var plugin in committed)
+        {
             plugin.OnSave?.Invoke();
+            if (plugin.OnSaveAsync != null) await plugin.OnSaveAsync();
+        }
 
         InlineSearchManager.Instance.ExplorerTracker.RefreshActiveWindowAdapters();
         App.HookClient?.SendMessage(new IpcMessage { Id = IpcMessageId.ReloadSettings });

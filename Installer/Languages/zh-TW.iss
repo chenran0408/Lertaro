@@ -8,3 +8,5 @@ zh_TW.DotNetDownloadFailed=下載 .NET 10.0 Desktop Runtime 失敗。請手動�
 zh_TW.DotNetInstallFailed=安裝 .NET 10.0 Desktop Runtime 失敗（錯誤碼: %1）。
 zh_TW.CommandLineTools=命令列工具
 zh_TW.AddLffToPath=將 lff 命令列搜尋工具新增至 PATH
+
+zh_TW.TaskbarCloseFailed=工作列元件尚未結束，請稍候再重試安裝。

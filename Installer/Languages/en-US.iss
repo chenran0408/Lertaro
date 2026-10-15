@@ -9,3 +9,5 @@ en_US.DotNetInstallFailed=Failed to install .NET 10.0 Desktop Runtime (Code: %1)
 en_US.CommandLineTools=Command-line tools
 en_US.AddLffToPath=Add the lff command-line search tool to PATH
 
+
+en_US.TaskbarCloseFailed=The taskbar component is still closing. Please wait a moment and retry setup.

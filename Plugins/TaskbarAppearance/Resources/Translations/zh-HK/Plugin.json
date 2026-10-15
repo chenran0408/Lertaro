@@ -1,10 +1,10 @@
 {
   "Taskbar_Name": "工作列美化",
-  "Taskbar_Description": "在 Lertaro 中設定已安裝的 TranslucentTB。儲存後套用，停用後還原系統工作列。",
+  "Taskbar_Description": "內置工作列美化，無需另裝 TranslucentTB。啟用後執行，關閉後還原系統外觀。",
   "Taskbar_Enabled": "啟用工作列美化",
   "Taskbar_EnabledHint": "預設關閉。接管後再關閉此開關，會還原 Windows 預設外觀。",
-  "Taskbar_ExecutablePath": "便攜版 TranslucentTB 程式",
-  "Taskbar_ExecutablePathHint": "使用 Microsoft Store 版本時留空；可攜版請選擇 TranslucentTB.exe。",
+  "Taskbar_ExecutablePath": "外部程式（可選）",
+  "Taskbar_ExecutablePathHint": "留空使用內置元件，無需安裝 TranslucentTB。僅在使用自己的可攜版時選擇程式。",
   "Taskbar_Style": "工作列效果",
   "Taskbar_StyleHint": "效果取決於 Windows 和 TranslucentTB 版本，儲存設定後可查看實際變化。",
   "Taskbar_Color": "顏色",
@@ -28,10 +28,14 @@
   "Taskbar_search_opened_appearance": "開啟系統搜尋",
   "Taskbar_task_view_opened_appearance": "開啟工作檢視",
   "Taskbar_battery_saver_appearance": "啟用節電模式",
-  "Taskbar_NotInstalled": "請先安裝 Microsoft Store 版 TranslucentTB，或選擇可攜版程式。",
+  "Taskbar_NotInstalled": "內置元件無法使用，請重新安裝完整的 Lertaro 安裝套件。",
   "Taskbar_InvalidExecutable": "請選擇實際存在的 TranslucentTB.exe 完整路徑。",
   "Taskbar_EngineConflict": "另一個版本的 TranslucentTB 正在執行，請先結束它再切換。",
   "Taskbar_ApplyFailed": "無法套用工作列外觀。請檢查程式、顏色、不透明度、重複情境和設定檔寫入權限；無法讀取的原始設定不會被覆寫。",
   "Taskbar_ShowPeek": "顯示桌面預覽按鈕",
-  "Taskbar_ShowPeekHint": "適用於支援此功能的 Windows 10 工作列。"
+  "Taskbar_ShowPeekHint": "適用於支援此功能的 Windows 10 工作列。",
+  "Taskbar_BundleMissing": "工作列元件遺失或版本不符，請重新安裝完整的 Lertaro 安裝套件。",
+  "Taskbar_Windows11Required": "內置工作列美化目前需要 Windows 11。Windows 10 可選擇相容的外部程式。",
+  "Taskbar_DependenciesFailed": "無法準備工作列執行元件。請稍後重試；若系統政策禁止安裝元件，請聯絡管理員。",
+  "Taskbar_PreviewBuiltInOnly": "即時預覽僅支援內置元件。外部程式請透過儲存設定套用。"
 }

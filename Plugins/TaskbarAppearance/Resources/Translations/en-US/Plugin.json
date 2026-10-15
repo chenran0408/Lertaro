@@ -1,10 +1,10 @@
 {
   "Taskbar_Name": "Taskbar appearance",
-  "Taskbar_Description": "Control a separately installed TranslucentTB from Lertaro. Save settings to apply; disabling restores the Windows taskbar. No extra taskbar engine is bundled.",
+  "Taskbar_Description": "Built-in taskbar appearance; no separate TranslucentTB installation. Runs when enabled and restores Windows appearance when turned off.",
   "Taskbar_Enabled": "Enable taskbar appearance",
   "Taskbar_EnabledHint": "Off by default. Disabling restores Windows appearance after this plugin has taken control.",
-  "Taskbar_ExecutablePath": "Portable TranslucentTB program",
-  "Taskbar_ExecutablePathHint": "Leave empty for Microsoft Store TranslucentTB. For a portable copy, select TranslucentTB.exe.",
+  "Taskbar_ExecutablePath": "External program (optional)",
+  "Taskbar_ExecutablePathHint": "Leave empty to use the built-in component. Select a program only to use your own portable copy.",
   "Taskbar_Style": "Appearance",
   "Taskbar_StyleHint": "Effects depend on Windows and TranslucentTB versions. Save to see the actual taskbar change.",
   "Taskbar_Color": "Color",
@@ -28,10 +28,14 @@
   "Taskbar_search_opened_appearance": "Windows search is open",
   "Taskbar_task_view_opened_appearance": "Task View is open",
   "Taskbar_battery_saver_appearance": "Battery saver is on",
-  "Taskbar_NotInstalled": "Install TranslucentTB from the Microsoft Store or select a portable program first.",
+  "Taskbar_NotInstalled": "The built-in component is unavailable. Reinstall the complete Lertaro package.",
   "Taskbar_InvalidExecutable": "Select an existing TranslucentTB.exe using its full path.",
   "Taskbar_EngineConflict": "A different TranslucentTB copy is running. Close it before changing engines.",
   "Taskbar_ApplyFailed": "Could not apply taskbar appearance. Check the TranslucentTB program, color, opacity, rules and configuration file permissions. Invalid existing configuration is left unchanged.",
   "Taskbar_ShowPeek": "Show desktop peek button",
-  "Taskbar_ShowPeekHint": "Applies to compatible Windows 10 taskbars."
+  "Taskbar_ShowPeekHint": "Applies to compatible Windows 10 taskbars.",
+  "Taskbar_BundleMissing": "The taskbar component is missing or does not match this build. Reinstall the complete Lertaro package.",
+  "Taskbar_Windows11Required": "The built-in taskbar component currently requires Windows 11. On Windows 10, select a compatible external program.",
+  "Taskbar_DependenciesFailed": "Could not prepare the taskbar runtime. Try again later, or contact your administrator if system policy blocks framework installation.",
+  "Taskbar_PreviewBuiltInOnly": "Live preview supports the built-in component only. Save settings to apply to an external program."
 }
