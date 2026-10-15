@@ -257,12 +257,8 @@ public class KeyboardHookService : IDisposable
                 KeyboardNativeMethods.GetWindowThreadProcessId(fgHwnd, out var fgPid);
                 if (fgPid == AppProcessId || fgPid == (uint)Environment.ProcessId)
                 {
-                    var sbClass = new StringBuilder(256);
-                    ExplorerNativeHooks.GetClassName(fgHwnd, sbClass, sbClass.Capacity);
-                    if (!sbClass.ToString().Equals("#32770", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return KeyboardNativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
-                    }
+                    // Native pickers owned by Lertaro also keep their normal text/navigation keys.
+                    return KeyboardNativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
                 }
                 var rootFg = ExplorerNativeHooks.GetAncestor(fgHwnd, ExplorerNativeHooks.GA_ROOTOWNER);
                 if (rootFg == IntPtr.Zero) rootFg = fgHwnd;

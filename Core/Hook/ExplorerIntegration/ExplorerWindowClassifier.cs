@@ -53,6 +53,13 @@ internal sealed class ExplorerWindowClassifier
 
         try
         {
+            // Our own pickers must not acquire another search window inside their modal message loop.
+            if (ExplorerFocusChangeFilter.IsInternalDialog(hwnd, _tracker.AppProcessId))
+            {
+                _tracker.Deactivate();
+                return;
+            }
+
             if (_tracker.IsActiveWindowDialog && _tracker.ActiveHwnd != IntPtr.Zero && !ExplorerNativeHooks.IsWindow(_tracker.ActiveHwnd))
             {
                 _tracker.Deactivate();

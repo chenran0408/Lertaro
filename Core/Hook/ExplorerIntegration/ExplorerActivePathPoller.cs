@@ -195,6 +195,13 @@ internal sealed class ExplorerActivePathPoller : IDisposable
 
     private void PollCore(ExplorerTracker tracker)
     {
+        var currentFg = _getForeground();
+        if (ExplorerFocusChangeFilter.IsInternalDialog(currentFg, tracker.AppProcessId))
+        {
+            tracker.Deactivate();
+            return;
+        }
+
         // Reads answer to demand and to one interval per window: pointer movement inside a host is neither,
         // and the read itself is what cancels the host's transient UI. See ExplorerHostReadFloor.
         var nowTicks = Environment.TickCount64;
@@ -203,7 +210,6 @@ internal sealed class ExplorerActivePathPoller : IDisposable
         if (!hostReadAllowed && _readFloor.HasPendingRead && !_disposed)
             _scheduler.RunWhenQuiet();
 
-        var currentFg = _getForeground();
         if (currentFg != IntPtr.Zero && currentFg != tracker.ActiveHwnd)
         {
             var sbClass = new StringBuilder(256);

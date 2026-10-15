@@ -7,6 +7,19 @@ namespace Lertaro.Core.Hook;
 // contains the focus-event filter and reads only the state of the one tracker passed to it.
 internal static class ExplorerFocusChangeFilter
 {
+    internal static bool IsInternalDialog(IntPtr hwnd, uint appProcessId)
+    {
+        if (hwnd == IntPtr.Zero) return false;
+        // GA_ROOT keeps the dialog itself; GA_ROOTOWNER would skip it for the settings window.
+        var root = ExplorerNativeHooks.GetAncestor(hwnd, 2);
+        if (root == IntPtr.Zero) root = hwnd;
+        ExplorerNativeHooks.GetWindowThreadProcessId(root, out var pid);
+        if (pid == 0 || (pid != Environment.ProcessId && pid != appProcessId)) return false;
+        var className = new StringBuilder(256);
+        ExplorerNativeHooks.GetClassName(root, className, className.Capacity);
+        return className.ToString().Equals("#32770", StringComparison.OrdinalIgnoreCase);
+    }
+
     public static bool IsIgnored(ExplorerTracker tracker, IntPtr hwnd)
     {
         var sbClass = new StringBuilder(256);
@@ -16,7 +29,6 @@ internal static class ExplorerFocusChangeFilter
         ExplorerNativeHooks.GetWindowThreadProcessId(hwnd, out var activePid);
         if (activePid == Environment.ProcessId || (activePid != 0 && activePid == tracker.AppProcessId))
         {
-            if (className.Equals("#32770", StringComparison.OrdinalIgnoreCase)) return false;
             var rootHwnd = ExplorerNativeHooks.GetAncestor(hwnd, ExplorerNativeHooks.GA_ROOTOWNER);
             if (rootHwnd == IntPtr.Zero) rootHwnd = hwnd;
             var processName = tracker.GetProcessName(rootHwnd);
