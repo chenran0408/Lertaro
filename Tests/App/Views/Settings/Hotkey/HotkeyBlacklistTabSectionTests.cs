@@ -86,6 +86,11 @@ public sealed class HotkeyBlacklistTabSectionTests
                 Assert.AreEqual(expectedText.Color, ((SolidColorBrush)list.Foreground).Color);
                 var check = Find<CheckBox>(list)!;
                 Assert.IsNotNull(check.Template.FindName("CheckMark", check), "Per-row selection must retain the themed checkbox template.");
+                var expanders = new List<Expander>();
+                Collect(section, expanders);
+                foreach (var sectionExpander in expanders)
+                    Assert.AreEqual(expectedText.Color, ((SolidColorBrush)sectionExpander.Foreground).Color,
+                        "Both running-process and manual/bulk headers must follow the theme.");
                 var tabs = Find<TabControl>(section)!;
                 Assert.IsNotNull(tabs.Template.FindName("PART_SelectedContentHost", tabs));
                 Assert.AreEqual(Colors.Transparent, ((SolidColorBrush)tabs.Background).Color);
