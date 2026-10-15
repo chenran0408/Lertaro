@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -56,6 +56,40 @@ public sealed class HotkeyBlacklistTabSectionTests
             Assert.AreSame(vm.QuickPanel, panel.Content);
             Assert.IsFalse(vm.QuickPanel.IsManualEditorOpen);
             Assert.IsEmpty(vm.QuickPanel.Items);
+        }
+        finally { window.Close(); }
+    }
+
+    [StaTestMethod]
+    public void ProcessPickerAndTabsFollowThemeChangesWithoutNativeLightChrome()
+    {
+        var vm = new BlacklistSettingsViewModel(new UserSettings());
+        vm.Global.SetRunningProcesses([new Lertaro.App.Services.RunningProcessInfo("editor.exe", "Document", true)]);
+        var section = new HotkeyBlacklistTabSection { DataContext = new { Blacklist = vm } };
+        var window = new Window { Content = section, Width = 780, Height = 700 };
+        try
+        {
+            window.Show();
+            Drain(window);
+            var expander = Find<Expander>(section)!;
+            System.Windows.Data.BindingOperations.ClearBinding(expander, Expander.IsExpandedProperty);
+            expander.IsExpanded = true;
+            foreach (var dark in new[] { true, false, true })
+            {
+                window.Resources.MergedDictionaries.Clear();
+                window.Resources.MergedDictionaries.Add(new Lertaro.App.Services.Theme.BuiltInTheme(dark ? "Dark" : "Light", dark).GetResources());
+                Drain(window);
+                var list = Find<ListBox>(section)!;
+                var expectedBackground = (SolidColorBrush)window.FindResource("ControlBackground");
+                var expectedText = (SolidColorBrush)window.FindResource("TextPrimary");
+                Assert.AreEqual(expectedBackground.Color, ((SolidColorBrush)list.Background).Color);
+                Assert.AreEqual(expectedText.Color, ((SolidColorBrush)list.Foreground).Color);
+                var check = Find<CheckBox>(list)!;
+                Assert.IsNotNull(check.Template.FindName("CheckMark", check), "Per-row selection must retain the themed checkbox template.");
+                var tabs = Find<TabControl>(section)!;
+                Assert.IsNotNull(tabs.Template.FindName("PART_SelectedContentHost", tabs));
+                Assert.AreEqual(Colors.Transparent, ((SolidColorBrush)tabs.Background).Color);
+            }
         }
         finally { window.Close(); }
     }
