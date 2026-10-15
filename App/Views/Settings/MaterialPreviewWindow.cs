@@ -8,7 +8,7 @@ namespace Lertaro.App.Views.Settings;
 
 internal sealed class MaterialPreviewWindow : Window
 {
-    internal MaterialPreviewWindow()
+    internal MaterialPreviewWindow(ViewModels.Settings.General.BackgroundSettingsViewModel settings)
     {
         Title = TranslationManager.Instance["Background_MaterialPreview"];
         Width = 500;
@@ -22,8 +22,9 @@ internal sealed class MaterialPreviewWindow : Window
         var words = new StackPanel { Margin = new Thickness(28), VerticalAlignment = VerticalAlignment.Center };
         var title = new TextBlock { Text = "Lertaro", FontSize = 28, FontWeight = FontWeights.SemiBold };
         title.SetResourceReference(TextBlock.ForegroundProperty, "TextPrimary");
-        var hint = new TextBlock { Text = TranslationManager.Instance["Background_MaterialHint"], TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0,12,0,0) };
+        var hint = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 12, 0, 0) };
         hint.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
+        hint.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding(nameof(settings.MaterialHint)) { Source = settings });
         words.Children.Add(title);
         words.Children.Add(hint);
         content.Children.Add(words);

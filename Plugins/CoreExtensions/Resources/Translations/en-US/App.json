@@ -840,10 +840,11 @@
   "Appearance_TaskbarOpacity": "Taskbar opacity",
   "Appearance_TaskbarPreviewFailed": "Preview could not be completed. See the details below.",
   "Appearance_TaskbarOptions": "Customize taskbar",
-  "Background_SystemMaterial": "System acrylic / mica",
+  "Background_SystemMaterial": "Frosted glass / mica",
   "Background_Mica": "Mica",
-  "Background_Acrylic": "Acrylic",
-  "Background_MaterialHint": "When enabling system materials for the first time, save and restart Lertaro. Open the preview window to see adjustments immediately.",
+  "Background_Acrylic": "Frosted glass",
+  "Background_MaterialHint": "Frosted glass reveals and blurs the desktop or windows behind it while keeping text and icons sharp. Save and restart Lertaro on first activation, or open the preview window first.",
   "Background_MaterialPreview": "Open material preview",
-  "Background_MaterialUnsupported": "This Windows version does not support the material. A solid background is used. Windows 11 22H2 or later is required."
+  "Background_MaterialUnsupported": "This Windows version does not support the material. A solid background is used. Windows 11 22H2 or later is required.",
+  "Background_MicaHint": "Mica uses the desktop wallpaper for a softer background. Save and restart Lertaro on first activation, or open the preview window first."
 }

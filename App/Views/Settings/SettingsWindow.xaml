@@ -42,7 +42,7 @@
                 </Grid.RowDefinitions>
                 <surface:BackgroundSurface Grid.RowSpan="99" Grid.ColumnSpan="99"/>
 
-                <Border Grid.Row="0" Background="{DynamicResource HeaderBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1"
+                <Border Grid.Row="0" Background="{DynamicResource HeaderBg}" helpers:BackgroundReveal.Resource="HeaderBg" helpers:BackgroundReveal.Opacity=".35" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1"
                         CornerRadius="{StaticResource CornerRadiusWindowTop}"
                         MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <Grid>
@@ -154,7 +154,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="{DynamicResource SidebarBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
+                    <Border Grid.Column="0" Background="{DynamicResource SidebarBg}" helpers:BackgroundReveal.Resource="SidebarBg" helpers:BackgroundReveal.Opacity=".45" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
                         <DockPanel LastChildFill="True">
                             <!-- Docked Bottom so "About" always sits at the sidebar's bottom edge regardless
                                  of window height, instead of just trailing the last item in the main list. -->
@@ -268,7 +268,7 @@
                     </AdornerDecorator>
                 </Grid>
 
-                <Border Grid.Row="2" Background="{DynamicResource StatusBarBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,1,0,0"
+                <Border Grid.Row="2" Background="{DynamicResource StatusBarBg}" helpers:BackgroundReveal.Resource="StatusBarBg" helpers:BackgroundReveal.Opacity=".35" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,1,0,0"
                         CornerRadius="{StaticResource CornerRadiusWindowBottom}">
                     <Grid Margin="16,0">
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_SaveTip]}" 

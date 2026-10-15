@@ -840,10 +840,11 @@
   "Appearance_TaskbarOpacity": "タスクバーの不透明度",
   "Appearance_TaskbarPreviewFailed": "プレビューできませんでした。以下の詳細をご確認ください。",
   "Appearance_TaskbarOptions": "タスクバーを調整",
-  "Background_SystemMaterial": "システムのアクリル / マイカ",
+  "Background_SystemMaterial": "すりガラス / マイカ",
   "Background_Mica": "マイカ",
-  "Background_Acrylic": "アクリル",
-  "Background_MaterialHint": "システム素材を初めて有効にするときは保存後に Lertaro を再起動してください。プレビューウィンドウでは調整をすぐに確認できます。",
+  "Background_Acrylic": "すりガラス",
+  "Background_MaterialHint": "すりガラスは背後のデスクトップやウィンドウを透かしてぼかし、文字とアイコンを鮮明に保ちます。初回は保存後に Lertaro を再起動してください。先にプレビューで確認できます。",
   "Background_MaterialPreview": "素材をプレビュー",
-  "Background_MaterialUnsupported": "この Windows ではシステム素材を使用できないため、単色の背景を使用します。Windows 11 22H2 以降が必要です。"
+  "Background_MaterialUnsupported": "この Windows ではシステム素材を使用できないため、単色の背景を使用します。Windows 11 22H2 以降が必要です。",
+  "Background_MicaHint": "マイカはデスクトップの壁紙を基にした柔らかい背景です。初回は保存後に Lertaro を再起動してください。先にプレビューで確認できます。"
 }

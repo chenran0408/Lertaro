@@ -51,7 +51,7 @@
                 </Grid.RowDefinitions>
                 <surface:BackgroundSurface Grid.RowSpan="99" Grid.ColumnSpan="99"/>
 
-                <Border Grid.Row="0" Background="{DynamicResource HeaderBg}"
+                <Border Grid.Row="0" Background="{DynamicResource HeaderBg}" helpers:BackgroundReveal.Resource="HeaderBg" helpers:BackgroundReveal.Opacity=".35"
                         BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1"
                         VerticalAlignment="Top" Panel.ZIndex="1">
                     <Border.Style>

@@ -47,7 +47,7 @@ public sealed class BackgroundSettingsViewModel : ViewModelBase
     public bool IsMaterial => _draft.Kind == BackgroundKind.Material;
     public bool IsMaterialSupported => Helpers.Visuals.NativeMaterialHost.IsSupported;
     public int Material { get => (int)_draft.Material; set => Update(_draft with { Material = (WindowMaterial)value }); }
-    public string MaterialHint => TranslationManager.Instance[IsMaterialSupported ? "Background_MaterialHint" : "Background_MaterialUnsupported"];
+    public string MaterialHint => TranslationManager.Instance[!IsMaterialSupported ? "Background_MaterialUnsupported" : _draft.Material == WindowMaterial.Mica ? "Background_MicaHint" : "Background_MaterialHint"];
     public string Status { get => _status; private set => SetProperty(ref _status, value); }
 
     private void Update(BackgroundSettings value)
@@ -84,7 +84,7 @@ public sealed class BackgroundSettingsViewModel : ViewModelBase
     private void PreviewMaterial()
     {
         if (_materialPreview != null) { _materialPreview.Activate(); return; }
-        var window = new Views.Settings.MaterialPreviewWindow
+        var window = new Views.Settings.MaterialPreviewWindow(this)
         {
             Owner = System.Windows.Application.Current.Windows.OfType<SettingsWindow>().FirstOrDefault()
         };

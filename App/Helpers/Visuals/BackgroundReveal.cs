@@ -5,7 +5,7 @@ using Lertaro.App.Services.Theme;
 
 namespace Lertaro.App.Helpers.Visuals;
 
-// Only large content surfaces reveal the image; controls and popups retain their readable theme fill.
+// Blend large surfaces with the custom backdrop; controls and popups keep their theme fill.
 public static class BackgroundReveal
 {
     public static readonly DependencyProperty ResourceProperty = DependencyProperty.RegisterAttached(
@@ -13,16 +13,37 @@ public static class BackgroundReveal
     public static void SetResource(DependencyObject target, string value) => target.SetValue(ResourceProperty, value);
     public static string GetResource(DependencyObject target) => (string)target.GetValue(ResourceProperty);
 
+    public static readonly DependencyProperty OpacityProperty = DependencyProperty.RegisterAttached(
+        "Opacity", typeof(double), typeof(BackgroundReveal), new PropertyMetadata(0d, (target, _) =>
+        {
+            if (target is FrameworkElement element && GetResource(element) != null) Refresh(element);
+        }), value => value is double opacity && double.IsFinite(opacity) && opacity is >= 0 and <= 1);
+    public static void SetOpacity(DependencyObject target, double value) => target.SetValue(OpacityProperty, value);
+    public static double GetOpacity(DependencyObject target) => (double)target.GetValue(OpacityProperty);
+
+    private static void Refresh(FrameworkElement element)
+    {
+        var background = element is Border ? Border.BackgroundProperty : System.Windows.Controls.Panel.BackgroundProperty;
+        var resource = GetResource(element);
+        if (!BackgroundManager.IsCustom) element.SetResourceReference(background, resource);
+        else
+        {
+            var brush = (element.TryFindResource(resource) as System.Windows.Media.Brush)?.CloneCurrentValue() ?? new SolidColorBrush();
+            brush.Opacity *= GetOpacity(element);
+            brush.Freeze();
+            element.SetCurrentValue(background, brush);
+        }
+    }
+
     private static void Attach(DependencyObject target, DependencyPropertyChangedEventArgs args)
     {
         if (target is not FrameworkElement border || args.OldValue != null) return;
-        var background = target is Border ? Border.BackgroundProperty : System.Windows.Controls.Panel.BackgroundProperty;
         Window? owner = null;
         void Detach(object? sender, EventArgs args)
         {
             BackgroundManager.Changed -= Refresh;
             ThemeManager.Instance.ThemeChanged -= Refresh;
-            if (owner != null) owner.Closed -= Detach;
+            owner?.Closed -= Detach;
             owner = null;
         }
         void Refresh()
@@ -32,8 +53,7 @@ public static class BackgroundReveal
                 if (!border.Dispatcher.HasShutdownStarted) border.Dispatcher.BeginInvoke(Refresh);
                 return;
             }
-            if (BackgroundManager.IsCustom) border.SetCurrentValue(background, System.Windows.Media.Brushes.Transparent);
-            else border.SetResourceReference(background, GetResource(border));
+            BackgroundReveal.Refresh(border);
         }
         border.Loaded += (_, _) =>
         {
@@ -41,7 +61,7 @@ public static class BackgroundReveal
             BackgroundManager.Changed += Refresh;
             ThemeManager.Instance.ThemeChanged += Refresh;
             owner = Window.GetWindow(border);
-            if (owner != null) owner.Closed += Detach;
+            owner?.Closed += Detach;
             Refresh();
         };
         border.Unloaded += Detach;

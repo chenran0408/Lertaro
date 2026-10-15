@@ -840,10 +840,11 @@
   "Appearance_TaskbarOpacity": "작업 표시줄 불투명도",
   "Appearance_TaskbarPreviewFailed": "미리 보기를 완료할 수 없습니다. 아래 내용을 확인하세요.",
   "Appearance_TaskbarOptions": "작업 표시줄 조정",
-  "Background_SystemMaterial": "시스템 아크릴 / 운모",
+  "Background_SystemMaterial": "반투명 유리 / 운모",
   "Background_Mica": "운모",
-  "Background_Acrylic": "아크릴",
-  "Background_MaterialHint": "시스템 재질을 처음 활성화할 때는 저장 후 Lertaro를 다시 시작하세요. 미리 보기 창에서 조정 결과를 즉시 확인할 수 있습니다.",
+  "Background_Acrylic": "반투명 유리",
+  "Background_MaterialHint": "반투명 유리는 뒤의 바탕 화면이나 창을 비추며 흐리게 하고 텍스트와 아이콘은 선명하게 유지합니다. 처음 활성화할 때는 저장 후 Lertaro를 다시 시작하세요. 미리 보기로 먼저 확인할 수 있습니다.",
   "Background_MaterialPreview": "재질 미리 보기 열기",
-  "Background_MaterialUnsupported": "이 Windows 버전은 해당 재질을 지원하지 않아 단색 배경을 사용합니다. Windows 11 22H2 이상이 필요합니다."
+  "Background_MaterialUnsupported": "이 Windows 버전은 해당 재질을 지원하지 않아 단색 배경을 사용합니다. Windows 11 22H2 이상이 필요합니다.",
+  "Background_MicaHint": "운모는 바탕 화면 배경 무늬를 사용하여 부드러운 배경을 만듭니다. 처음 활성화할 때는 저장 후 Lertaro를 다시 시작하세요. 미리 보기로 먼저 확인할 수 있습니다."
 }

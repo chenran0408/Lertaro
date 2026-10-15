@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
 using Lertaro.App.Services.Theme;
 using Lertaro.App.ViewModels.Settings.General;
@@ -13,6 +14,37 @@ public sealed class BackgroundSettingsSectionTests
 {
     [TestInitialize] public void Initialize() => BackgroundManager.EndPreview();
     [TestCleanup] public void Cleanup() => BackgroundManager.EndPreview();
+
+    [StaTestMethod]
+    [DataRow("Light", false)]
+    [DataRow("Dark", true)]
+    public void ThemedSliderRetainsRangeBindingAndKeyboardCommands(string theme, bool dark)
+    {
+        var vm = new BackgroundSettingsViewModel(new UserSettings());
+        var slider = new Slider { Minimum = 0, Maximum = 360, SmallChange = 1 };
+        slider.SetBinding(RangeBase.ValueProperty, new System.Windows.Data.Binding(nameof(vm.Angle))
+        {
+            Source = vm,
+            Mode = System.Windows.Data.BindingMode.TwoWay
+        });
+        slider.Resources.MergedDictionaries.Add(new() { Source = new Uri("pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml") });
+        slider.Resources.MergedDictionaries.Add(new BuiltInTheme(theme, dark).GetResources());
+        var window = new Window { Content = slider, Width = 400, Height = 100 };
+        try
+        {
+            window.Show();
+            window.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            var track = Assert.IsInstanceOfType<Track>(slider.Template.FindName("PART_Track", slider));
+            vm.Angle = 150;
+            Assert.AreEqual(150d, track.Value);
+            Slider.IncreaseSmall.Execute(null, slider);
+            Assert.AreEqual(151d, vm.Angle);
+            track.Value = 200;
+            Assert.AreEqual(200d, vm.Angle);
+            Assert.AreSame(slider.FindResource("AccentBlue"), slider.Foreground);
+        }
+        finally { window.Close(); vm.Cleanup(); }
+    }
 
     [StaTestMethod]
     public void BackgroundControlsLoadAndSwitchWithoutMissingResources()

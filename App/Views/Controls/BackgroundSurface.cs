@@ -30,7 +30,7 @@ public sealed class BackgroundSurface : Grid
             BackgroundManager.Changed += Refresh;
             ThemeManager.Instance.ThemeChanged += Refresh;
             _owner = Window.GetWindow(this);
-            if (_owner != null) _owner.Closed += OwnerClosed;
+            _owner?.Closed += OwnerClosed;
             Refresh();
         };
         Unloaded += (_, _) => Detach();
@@ -42,7 +42,7 @@ public sealed class BackgroundSurface : Grid
     {
         BackgroundManager.Changed -= Refresh;
         ThemeManager.Instance.ThemeChanged -= Refresh;
-        if (_owner != null) _owner.Closed -= OwnerClosed;
+        _owner?.Closed -= OwnerClosed;
         _owner = null;
         ++_generation;
     }
@@ -63,7 +63,9 @@ public sealed class BackgroundSurface : Grid
         var material = Window.GetWindow(this) is { } owner && Helpers.Visuals.NativeMaterialHost.Refresh(owner);
         if (settings.Kind == BackgroundKind.Theme) return;
         var dark = ThemeManager.Instance.ActiveTheme?.IsDark == true;
-        var baseColor = dark ? Color.FromRgb(30, 32, 38) : Color.FromRgb(249, 250, 252);
+        // Use the selected palette, including plugin themes, for tint and fallback surfaces.
+        var baseColor = (TryFindResource("ContentBg") as SolidColorBrush)?.Color
+            ?? (dark ? Color.FromRgb(30, 32, 38) : Color.FromRgb(249, 250, 252));
         Background = material ? System.Windows.Media.Brushes.Transparent : new SolidColorBrush(baseColor);
         Brush? brush = settings.Kind switch
         {

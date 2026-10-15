@@ -840,10 +840,11 @@
   "Appearance_TaskbarOpacity": "任务栏不透明度",
   "Appearance_TaskbarPreviewFailed": "预览未能完成，请检查下方提示。",
   "Appearance_TaskbarOptions": "调整任务栏",
-  "Background_SystemMaterial": "系统磨砂 / 云母",
+  "Background_SystemMaterial": "磨砂玻璃 / 云母",
   "Background_Mica": "云母",
-  "Background_Acrylic": "亚克力磨砂",
-  "Background_MaterialHint": "首次启用系统材质，请保存设置后重启 Lertaro。可先打开预览窗口查看，继续调节会立即更新预览。",
+  "Background_Acrylic": "磨砂玻璃",
+  "Background_MaterialHint": "磨砂玻璃会透出并模糊背后的桌面或窗口，文字和图标保持清晰。首次启用请保存并重启 Lertaro；可先打开预览窗口查看。",
   "Background_MaterialPreview": "查看材质预览",
-  "Background_MaterialUnsupported": "当前 Windows 不支持此系统材质，将使用清晰底色。此功能需要 Windows 11 22H2 或更新版本。"
+  "Background_MaterialUnsupported": "当前 Windows 不支持此系统材质，将使用清晰底色。此功能需要 Windows 11 22H2 或更新版本。",
+  "Background_MicaHint": "云母以桌面壁纸为底色，效果更柔和。首次启用请保存并重启 Lertaro；可先打开预览窗口查看。"
 }
