@@ -42,7 +42,7 @@
                 </Grid.RowDefinitions>
                 <surface:BackgroundSurface Grid.RowSpan="99" Grid.ColumnSpan="99"/>
                 <!-- ═══════════ 1. Title Bar + Search ═══════════ -->
-                <Border Grid.Row="0" Background="{DynamicResource HeaderBg}"
+                <Border Grid.Row="0" Background="{DynamicResource HeaderBg}" helpers:BackgroundReveal.Resource="HeaderBg"
                         BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1"
                         CornerRadius="{StaticResource CornerRadiusWindowTop}">
                     <!-- The drag handler sits HERE, on the header's full-width layout grid, rather than on
@@ -207,7 +207,7 @@
                     </Grid>
                 </Grid>
                 <!-- ═══════════ 3. Status Bar ═══════════ -->
-                <Border Grid.Row="2" Background="{DynamicResource StatusBarBg}"
+                <Border Grid.Row="2" Background="{DynamicResource StatusBarBg}" helpers:BackgroundReveal.Resource="StatusBarBg"
                         BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,1,0,0"
                         CornerRadius="{StaticResource CornerRadiusWindowBottom}"
                         Padding="16,8,16,8">

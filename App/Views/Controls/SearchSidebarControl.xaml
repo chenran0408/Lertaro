@@ -10,7 +10,7 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
-    <Border Background="{DynamicResource SidebarBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
+    <Border Background="{DynamicResource SidebarBg}" helpers:BackgroundReveal.Resource="SidebarBg" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="0,12,0,12">
                 <!-- Dynamic Plugins Sections (Fully Plugin-ized Sidebar) -->

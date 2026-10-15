@@ -3,7 +3,8 @@
                     xmlns:conv="clr-namespace:Lertaro.App.Converters"
                     xmlns:services="clr-namespace:Lertaro.App.Services"
                     xmlns:settings="clr-namespace:Lertaro.App.Views.Settings"
-                    xmlns:pconv="clr-namespace:Lertaro.App.Views.Settings.Plugins">
+                    xmlns:pconv="clr-namespace:Lertaro.App.Views.Settings.Plugins"
+                    xmlns:helpers="clr-namespace:Lertaro.App.Helpers.Visuals">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="../Tokens/Colors.xaml"/>
         <!-- Controls.xaml supplies the shared TextBox base needed by the settings styles below. -->
@@ -29,6 +30,7 @@
     </Style>
 
     <Style x:Key="SettingsCard" TargetType="Border">
+        <Setter Property="helpers:BackgroundReveal.Resource" Value="SettingsCardBackground"/>
         <Setter Property="Background" Value="{DynamicResource SettingsCardBackground}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource SettingsCardBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
