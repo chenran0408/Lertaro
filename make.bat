@@ -5,6 +5,12 @@ chcp 65001 >nul
 set "ROOT=%~dp0"
 set "DIST=%ROOT%dist"
 
+:: Prefer the same PowerShell edition as modern build runners. Starting Windows PowerShell
+:: from PowerShell 7 can inherit module paths that hide Get-FileHash and Expand-Archive.
+set "BUILD_POWERSHELL=powershell"
+where pwsh >nul 2>&1
+if not errorlevel 1 set "BUILD_POWERSHELL=pwsh"
+
 echo ==========================================
 echo Lertaro Build and Package Script (make)
 echo ==========================================
@@ -62,8 +68,8 @@ if errorlevel 1 (
 :: 4. Extract application version from App.csproj (likewise shared by both passes)
 echo.
 echo Extracting application version...
-for /f "usebackq tokens=*" %%v in (`powershell -NoProfile -Command "([xml](Get-Content '%ROOT%App\App.csproj')).Project.PropertyGroup.Version"`) do set "APP_VER=%%v"
-for /f "usebackq tokens=*" %%v in (`powershell -NoProfile -Command "$numeric = ('%APP_VER%' -split '[-+]')[0]; $a = ($numeric + '.0.0.0') -split '\.'; $a[0..3] -join '.'"`) do set "APP_VER_4=%%v"
+for /f "usebackq tokens=*" %%v in (`%BUILD_POWERSHELL% -NoProfile -Command "([xml](Get-Content '%ROOT%App\App.csproj')).Project.PropertyGroup.Version"`) do set "APP_VER=%%v"
+for /f "usebackq tokens=*" %%v in (`%BUILD_POWERSHELL% -NoProfile -Command "$numeric = ('%APP_VER%' -split '[-+]')[0]; $a = ($numeric + '.0.0.0') -split '\.'; $a[0..3] -join '.'"`) do set "APP_VER_4=%%v"
 echo App Version: %APP_VER% (PE Version: %APP_VER_4%)
 
 
@@ -132,14 +138,14 @@ for %%p in (App\App.csproj Service\Service.csproj Cli\Cli.csproj TaskbarHost\Tas
 
 echo.
 echo [2/4] Publishing Plugins in Release mode...
-powershell -NoProfile -Command "$projects = ([xml](Get-Content -LiteralPath '%ROOT%Lertaro.Plugins.slnx')).Solution.Project; foreach ($project in $projects) { dotnet publish (Join-Path '%ROOT%' $project.Path) -c Release -o '%OUT%\Plugins' %RIDARGS% -v quiet; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }"
+%BUILD_POWERSHELL% -NoProfile -Command "$projects = ([xml](Get-Content -LiteralPath '%ROOT%Lertaro.Plugins.slnx')).Solution.Project; foreach ($project in $projects) { dotnet publish (Join-Path '%ROOT%' $project.Path) -c Release -o '%OUT%\Plugins' %RIDARGS% -v quiet; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }"
 if errorlevel 1 exit /b 1
 
 
 :: Copy portable updater/cleanup files and clean PDB files
 echo.
 echo [3/4] Copying portable updater/cleanup files and cleaning PDB files...
-powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\PrepareTaskbarBundle.ps1" -OutputDirectory "%OUT%" -CacheDirectory "%ROOT%obj\TaskbarDownloadCache" -Architecture "%ARCH%"
+%BUILD_POWERSHELL% -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\PrepareTaskbarBundle.ps1" -OutputDirectory "%OUT%" -CacheDirectory "%ROOT%obj\TaskbarDownloadCache" -Architecture "%ARCH%"
 if errorlevel 1 exit /b 1
 copy "%ROOT%portable-updater.bat" "%OUT%\" >nul
 if errorlevel 1 (
@@ -170,7 +176,7 @@ if errorlevel 1 (
 :: Create Portable ZIP Archive
 echo.
 echo Creating Portable ZIP Archive (%ARCH%)...
-powershell -Command "if (Test-Path '%DIST%\Lertaro-Portable%ARCHSUFFIX%.zip') { Remove-Item -Force '%DIST%\Lertaro-Portable%ARCHSUFFIX%.zip' }; Compress-Archive -Path '%OUT%' -DestinationPath '%DIST%\Lertaro-Portable%ARCHSUFFIX%.zip' -Force"
+%BUILD_POWERSHELL% -NoProfile -Command "if (Test-Path '%DIST%\Lertaro-Portable%ARCHSUFFIX%.zip') { Remove-Item -Force '%DIST%\Lertaro-Portable%ARCHSUFFIX%.zip' }; Compress-Archive -Path '%OUT%' -DestinationPath '%DIST%\Lertaro-Portable%ARCHSUFFIX%.zip' -Force"
 if errorlevel 1 (
     echo [Error] Portable ZIP creation failed.
     exit /b 1
