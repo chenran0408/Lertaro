@@ -4,6 +4,7 @@ using Lertaro.Core.Services.Search;
 using Lertaro.Core.Wire;
 using Lertaro.Core.Hook.Commands;
 namespace Lertaro.Core.Hook.Ipc;
+
 public sealed class HookIpcClient : IDisposable
 {
     private Process? _hookProcess;
@@ -52,6 +53,7 @@ public sealed class HookIpcClient : IDisposable
 
     public event Action? OnActivated;
     public event Action? OnQuickPanelHotkey;
+    public event Action<nint>? OnQuickPanelMouseGesture;
     public event Action? OnQuickNavigationHotkey;
     public event Action<char>? OnCharacterTyped;
     public event Action? OnBackspacePressed;
@@ -334,6 +336,7 @@ public sealed class HookIpcClient : IDisposable
             {
                 case IpcMessageId.Activate: OnActivated?.Invoke(); break;
                 case IpcMessageId.QuickPanelHotkey: OnQuickPanelHotkey?.Invoke(); break;
+                case IpcMessageId.QuickPanelMouseGesture: OnQuickPanelMouseGesture?.Invoke((nint)msg.Hwnd); break;
                 case IpcMessageId.QuickNavigationHotkey: OnQuickNavigationHotkey?.Invoke(); break;
                 case IpcMessageId.KeyBackspace: OnBackspacePressed?.Invoke(); break;
                 case IpcMessageId.KeyEscape: OnEscapePressed?.Invoke(); break;

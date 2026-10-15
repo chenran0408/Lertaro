@@ -1,0 +1,52 @@
+<UserControl x:Class="Lertaro.App.Views.Settings.Hotkey.HotkeyQuickPanelWakeSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:services="clr-namespace:Lertaro.App.Services"
+             xmlns:ctrl="clr-namespace:Lertaro.App.Views.Controls"
+             Foreground="{DynamicResource TextPrimary}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../../../Resources/Styles/Windows/SettingsWindow.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <StackPanel>
+        <TextBlock Style="{StaticResource SettingsSubHeading}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Title]}"/>
+        <Grid x:Name="RowQuickPanel" Margin="0,4">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Keyboard1]}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Value="{Binding QuickPanelHotkey, Mode=TwoWay}" RequireModifier="True" DefaultValue="Ctrl+F2"/>
+        </Grid>
+        <Grid x:Name="RowQuickPanelAlternate" Margin="0,4">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Keyboard2]}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Value="{Binding QuickPanelAlternateHotkey, Mode=TwoWay}" RequireModifier="True" DefaultValue=""/>
+        </Grid>
+        <CheckBox x:Name="RowMouseRightHold" Margin="0,8,0,4" IsChecked="{Binding QuickPanelMouseRightHold}"
+                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_RightHold]}"/>
+        <StackPanel Visibility="{Binding QuickPanelMouseRightHold, Converter={StaticResource BoolToVis}}">
+            <DockPanel Margin="0,4">
+                <TextBlock DockPanel.Dock="Right" Foreground="{DynamicResource TextSecondary}" Text="{Binding QuickPanelRightHoldMilliseconds, StringFormat={}{0} ms}"/>
+                <TextBlock Foreground="{DynamicResource TextPrimary}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Delay]}"/>
+            </DockPanel>
+            <Slider Minimum="300" Maximum="2000" TickFrequency="100" IsSnapToTickEnabled="True" AutoToolTipPlacement="TopLeft"
+                    Value="{Binding QuickPanelRightHoldMilliseconds}"/>
+        </StackPanel>
+        <CheckBox x:Name="RowMouseCircle" Margin="0,4" IsChecked="{Binding QuickPanelMouseCircle}"
+                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Circle]}"/>
+        <TextBlock Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,4,0,10"
+                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_GestureHint]}"/>
+        <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"
+                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Whitelist]}"/>
+        <CheckBox x:Name="RowMouseAllowDesktop" Margin="0,8" IsChecked="{Binding QuickPanelMouseAllowDesktop}"
+                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Desktop]}"/>
+        <TextBlock Style="{StaticResource SettingsHintText}" TextWrapping="Wrap"
+                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_WhitelistHint]}"/>
+        <Expander Margin="0,8" Foreground="{DynamicResource TextPrimary}" IsExpanded="{Binding MouseWakeExtraProgramsExpanded}"
+                  Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_OtherApps]}">
+            <ContentControl x:Name="RowMouseAllowedProcesses" Margin="0,10,0,0" Content="{Binding MouseWakeWhitelist}"
+                            ContentTemplate="{StaticResource ProcessListEditorTemplate}"/>
+        </Expander>
+    </StackPanel>
+</UserControl>

@@ -36,7 +36,7 @@ internal static class FavoriteHotkeyConflicts
     internal static IEnumerable<string> HostHotkeys(HotkeyPageSettings settings, bool includeSelectJump = true)
     {
         string[] hotkeys = [settings.ToggleWindowHotkey, settings.QuickSwitchHotkey,
-            settings.QuickPanelHotkey, settings.QuickNavigationHotkey, settings.NextItemHotkey,
+            settings.QuickPanelHotkey, settings.QuickPanelAlternateHotkey, settings.QuickNavigationHotkey, settings.NextItemHotkey,
             settings.PreviousItemHotkey, settings.ActionsMenuHotkey, settings.CompleteFromSelectionHotkey,
             settings.QuickLookHotkey, settings.KeywordHistoryPreviousHotkey, settings.KeywordHistoryNextHotkey,
             settings.KeywordHistoryDeleteHotkey, settings.OpenFullWindowHotkey, settings.LocalSendSendWindowHotkey,

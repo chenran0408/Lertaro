@@ -57,7 +57,7 @@ public sealed class HookProcess : IDisposable
     private volatile bool _stopRequested;
     private uint _appProcessId;
     private int _watchedAppPid;
-    private bool _isHotkeysDisabledTemporarily;
+    private volatile bool _isHotkeysDisabledTemporarily;
     // Written by the keyboard hook thread, read by the tracker thread; the window message between them is the
     // synchronization, and a plain field read here would be the one place the value could still be torn.
     private IntPtr _quickSwitchDialog;
@@ -393,7 +393,12 @@ public sealed class HookProcess : IDisposable
             _keyboardHook.OnCtrlNumberPressed += num => _ipcServer.SendMessage(new IpcMessage { Id = IpcMessageId.KeyCtrlNumber, IntVal = num });
             _keyboardHook.Start();
 
-            _mouseHook = new MouseHookService();
+            _mouseHook = new MouseHookService(() => _keyboardHook._settings, () => _isHotkeysDisabledTemporarily);
+            _mouseHook.OnQuickPanelMouseGesture += root =>
+            {
+                if (_appProcessId != 0) AllowSetForegroundWindow((int)_appProcessId);
+                _ipcServer.SendMessage(new IpcMessage { Id = IpcMessageId.QuickPanelMouseGesture, Hwnd = root.ToInt64() });
+            };
             _mouseHook.OnRightButtonDown += time => _keyboardHook.NotifyRightButtonDown(time);
             _mouseHook.OnMouseClick += (x, y) => _ipcServer.SendMessage(new IpcMessage { Id = IpcMessageId.MouseClick, MouseX = x, MouseY = y });
             _mouseHook.OnMouseDoubleClick += (x, y) =>

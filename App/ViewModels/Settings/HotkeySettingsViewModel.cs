@@ -4,7 +4,6 @@ using Lertaro.App.Services;
 using Lertaro.App.Services.Favorites;
 using Lertaro.App.Services.Notifications;
 using Lertaro.Core;
-using Lertaro.Core.Wire;
 using Lertaro.PluginSdk.Abstractions;
 namespace Lertaro.App.ViewModels.Settings;
 
@@ -44,6 +43,13 @@ public class HotkeySettingsViewModel : ViewModelBase
         _localSendSendWindowHotkey = hotkeys.LocalSendSendWindowHotkey;
         _stayOpenHotkey = hotkeys.StayOpenHotkey;
         _quickPanelHotkey = hotkeys.QuickPanelHotkey;
+        _quickPanelAlternateHotkey = hotkeys.QuickPanelAlternateHotkey;
+        _quickPanelMouseRightHold = hotkeys.QuickPanelMouseRightHold;
+        _quickPanelMouseCircle = hotkeys.QuickPanelMouseCircle;
+        _quickPanelRightHoldMilliseconds = Math.Clamp(hotkeys.QuickPanelRightHoldMilliseconds, 300, 2000);
+        _quickPanelMouseAllowDesktop = hotkeys.QuickPanelMouseAllowDesktop;
+        MouseWakeWhitelist = new ProcessBlacklistEditorViewModel(hotkeys.QuickPanelMouseAllowedProcesses ?? []);
+
         _quickNavigationHotkey = hotkeys.QuickNavigationHotkey;
 
         PluginActionGroups = HotkeyPluginActionGroupBuilder.Build(hotkeys.PluginActionHotkeys);
@@ -216,6 +222,20 @@ public class HotkeySettingsViewModel : ViewModelBase
         set => SetProperty(ref _quickPanelHotkey, value);
     }
 
+    public ProcessBlacklistEditorViewModel MouseWakeWhitelist { get; }
+    private bool _mouseWakeExtraProgramsExpanded;
+    public bool MouseWakeExtraProgramsExpanded { get => _mouseWakeExtraProgramsExpanded; set => SetProperty(ref _mouseWakeExtraProgramsExpanded, value); }
+    private string _quickPanelAlternateHotkey;
+    public string QuickPanelAlternateHotkey { get => _quickPanelAlternateHotkey; set => SetProperty(ref _quickPanelAlternateHotkey, value); }
+    private bool _quickPanelMouseRightHold;
+    public bool QuickPanelMouseRightHold { get => _quickPanelMouseRightHold; set => SetProperty(ref _quickPanelMouseRightHold, value); }
+    private bool _quickPanelMouseCircle;
+    public bool QuickPanelMouseCircle { get => _quickPanelMouseCircle; set => SetProperty(ref _quickPanelMouseCircle, value); }
+    private int _quickPanelRightHoldMilliseconds;
+    public int QuickPanelRightHoldMilliseconds { get => _quickPanelRightHoldMilliseconds; set => SetProperty(ref _quickPanelRightHoldMilliseconds, Math.Clamp(value, 300, 2000)); }
+    private bool _quickPanelMouseAllowDesktop;
+    public bool QuickPanelMouseAllowDesktop { get => _quickPanelMouseAllowDesktop; set => SetProperty(ref _quickPanelMouseAllowDesktop, value); }
+
     private string _quickNavigationHotkey;
     public string QuickNavigationHotkey
     {
@@ -270,6 +290,13 @@ public class HotkeySettingsViewModel : ViewModelBase
         hotkeys.LocalSendSendWindowHotkey = LocalSendSendWindowHotkey;
         hotkeys.StayOpenHotkey = StayOpenHotkey;
         hotkeys.QuickPanelHotkey = QuickPanelHotkey;
+        hotkeys.QuickPanelAlternateHotkey = QuickPanelAlternateHotkey;
+        hotkeys.QuickPanelMouseRightHold = QuickPanelMouseRightHold;
+        hotkeys.QuickPanelMouseCircle = QuickPanelMouseCircle;
+        hotkeys.QuickPanelRightHoldMilliseconds = QuickPanelRightHoldMilliseconds;
+        hotkeys.QuickPanelMouseAllowDesktop = QuickPanelMouseAllowDesktop;
+        hotkeys.QuickPanelMouseAllowedProcesses = MouseWakeWhitelist.ToSettingsList();
+
         hotkeys.QuickNavigationHotkey = QuickNavigationHotkey;
 
         var pluginActionHotkeys = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
@@ -322,6 +349,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         ToggleHotkeyValue = ProbeGlobalCombination(ToggleHotkeyValue, defaults.ToggleWindowHotkey, taken);
         QuickSwitchComboHotkey = ProbeGlobalCombination(QuickSwitchComboHotkey, defaults.QuickSwitchHotkey, taken);
         QuickPanelHotkey = ProbeGlobalCombination(QuickPanelHotkey, defaults.QuickPanelHotkey, taken);
+        QuickPanelAlternateHotkey = ProbeGlobalCombination(QuickPanelAlternateHotkey, defaults.QuickPanelAlternateHotkey, taken);
         QuickNavigationHotkey = ProbeGlobalCombination(QuickNavigationHotkey, defaults.QuickNavigationHotkey, taken);
         return taken;
     }

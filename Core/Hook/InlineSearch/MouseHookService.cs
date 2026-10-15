@@ -65,6 +65,17 @@ public class MouseHookService : IDisposable
     // measure real elapsed time against a keystroke's own timestamp, not our processing latency.
     public event Action<uint>? OnRightButtonDown;
 
+    private readonly QuickPanelMouseGestureHook? _panelGestures;
+    internal event Action<nint>? OnQuickPanelMouseGesture;
+
+    public MouseHookService() { }
+
+    internal MouseHookService(Func<UserSettings> settings, Func<bool> suspended)
+    {
+        _panelGestures = new QuickPanelMouseGestureHook(settings, suspended);
+        _panelGestures.Triggered += root => OnQuickPanelMouseGesture?.Invoke(root);
+    }
+
     public void Start()
     {
         if (_hookId != IntPtr.Zero) return;
@@ -79,6 +90,7 @@ public class MouseHookService : IDisposable
 
     public void Stop()
     {
+        _panelGestures?.Dispose();
         if (_hookId != IntPtr.Zero)
         {
             UnhookWindowsHookEx(_hookId);
@@ -95,6 +107,11 @@ public class MouseHookService : IDisposable
         {
             if (nCode >= 0)
             {
+                if (_panelGestures != null)
+                {
+                    var data = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
+                    if (_panelGestures.Process((int)wParam, data.pt.x, data.pt.y, data.time)) return (nint)1;
+                }
                 if (wParam == (IntPtr)WM_LBUTTONDOWN)
                 {
                     var hookStruct = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);

@@ -81,6 +81,18 @@ public sealed partial class QuickPanelManager : IDisposable
         Show(host, process);
     }
 
+    public void ShowFromMouse(IntPtr host)
+    {
+        if (_window is { IsVisible: true } || _showing || !Core.Hook.ExplorerNativeHooks.IsWindow(host)) return;
+        var settings = Core.UserSettings.Load();
+        if (!settings.Hotkeys.QuickPanelMouseRightHold && !settings.Hotkeys.QuickPanelMouseCircle) return;
+        var process = ProcessNameOf(host);
+        if (!Core.Hook.InlineSearch.QuickPanelMouseWakePolicy.Allows(settings, false,
+            Core.Hook.ExplorerNativeHooks.IsDesktopWindow(host, out _), process, ProcessNameOf(GetForegroundWindow()),
+            Core.Hook.FullscreenHelper.IsForegroundWindowFullScreen())) return;
+        Show(host, process);
+    }
+
     internal static bool IsCurrentProcess(uint foregroundProcessId, uint currentProcessId) =>
         foregroundProcessId != 0 && foregroundProcessId == currentProcessId;
 

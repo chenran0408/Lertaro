@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:services="clr-namespace:Lertaro.App.Services"
+             xmlns:local="clr-namespace:Lertaro.App.Views.Settings.Hotkey"
              xmlns:ctrl="clr-namespace:Lertaro.App.Views.Controls"
              mc:Ignorable="d"
              d:DesignHeight="550" d:DesignWidth="700">
@@ -212,16 +213,7 @@
                 RequireModifier="True" DefaultValue="Ctrl+T"/>
         </Grid>
 
-        <Grid x:Name="RowQuickPanel" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickPanel]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding QuickPanelHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                RequireModifier="True" DefaultValue="Ctrl+F2"/>
-        </Grid>
+        <local:HotkeyQuickPanelWakeSection x:Name="QuickPanelWakeSection" Margin="0,8,0,0"/>
 
         <Border Style="{StaticResource SettingsGroupDivider}"/>
 

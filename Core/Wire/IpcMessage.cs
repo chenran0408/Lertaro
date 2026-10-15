@@ -66,7 +66,8 @@ public enum IpcMessageId : byte
     // file -- it has to ask. Carries nothing, and like every other command here is only reachable by the
     // App the hook actually launched (see HookPipePeer).
     ClearHookLog = 46,
-    LocateInlineItem = 47
+    LocateInlineItem = 47,
+    QuickPanelMouseGesture = 48
 }
 
 public struct IpcMessage

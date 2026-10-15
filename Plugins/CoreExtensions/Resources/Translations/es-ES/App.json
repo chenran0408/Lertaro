@@ -830,5 +830,16 @@
   "Appearance_TaskbarOptions": "Personalizar la barra",
   "Background_EnableImage": "Usar una imagen de fondo",
   "Background_Opacity": "Opacidad de la imagen",
-  "Background_OpacityHint": "El 0% oculta la imagen y el 100% la muestra por completo. El texto y los botones mantienen su opacidad."
+  "Background_OpacityHint": "El 0% oculta la imagen y el 100% la muestra por completo. El texto y los botones mantienen su opacidad.",
+  "MouseWake_Title": "Formas de abrir el panel rápido",
+  "MouseWake_Keyboard1": "Atajo de teclado 1",
+  "MouseWake_Keyboard2": "Atajo de teclado alternativo",
+  "MouseWake_RightHold": "Abrir manteniendo el botón derecho",
+  "MouseWake_Delay": "Tiempo de pulsación",
+  "MouseWake_Circle": "Abrir dibujando dos círculos",
+  "MouseWake_GestureHint": "Un clic derecho breve conserva el menú habitual. No arrastres mientras mantienes pulsado. Dibuja dos círculos seguidos, en cualquier sentido, sin pulsar botones.",
+  "MouseWake_Whitelist": "Dónde se permite la activación con el ratón",
+  "MouseWake_Desktop": "Escritorio (no ventanas de carpetas)",
+  "MouseWake_WhitelistHint": "Solo se permite el escritorio por defecto. Añade otras aplicaciones abajo. Las listas de bloqueo global y del panel tienen prioridad. Esta lista no limita los atajos de teclado.",
+  "MouseWake_OtherApps": "Otras aplicaciones permitidas (opcional)"
 }

@@ -830,5 +830,16 @@
   "Appearance_TaskbarOptions": "タスクバーを調整",
   "Background_EnableImage": "背景画像を使う",
   "Background_Opacity": "画像の不透明度",
-  "Background_OpacityHint": "0% で非表示、100% ではっきり表示します。文字やボタンの不透明度は変わりません。"
+  "Background_OpacityHint": "0% で非表示、100% ではっきり表示します。文字やボタンの不透明度は変わりません。",
+  "MouseWake_Title": "クイックパネルの呼び出し方法",
+  "MouseWake_Keyboard1": "キーボードショートカット 1",
+  "MouseWake_Keyboard2": "予備のキーボードショートカット",
+  "MouseWake_RightHold": "右ボタン長押しで開く",
+  "MouseWake_Delay": "長押し時間",
+  "MouseWake_Circle": "マウスで続けて2周描いて開く",
+  "MouseWake_GestureHint": "短い右クリックは通常のメニューを開きます。長押し中はドラッグしないでください。ボタンを押さずに時計回りか反時計回りに2周描きます。",
+  "MouseWake_Whitelist": "マウス呼び出しを許可する場所",
+  "MouseWake_Desktop": "デスクトップ（フォルダーウィンドウを除く）",
+  "MouseWake_WhitelistHint": "初期設定ではデスクトップのみ許可します。他のアプリは下に追加してください。全体とクイックパネルのブロックリストが優先されます。キーボードショートカットには影響しません。",
+  "MouseWake_OtherApps": "追加で許可するアプリ（任意）"
 }

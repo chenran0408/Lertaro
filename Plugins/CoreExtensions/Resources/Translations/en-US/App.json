@@ -830,5 +830,16 @@
   "Appearance_TaskbarOptions": "Customize taskbar",
   "Background_EnableImage": "Use a custom background image",
   "Background_Opacity": "Image opacity",
-  "Background_OpacityHint": "0% hides the image; 100% shows it fully. Text and buttons keep their normal opacity."
+  "Background_OpacityHint": "0% hides the image; 100% shows it fully. Text and buttons keep their normal opacity.",
+  "MouseWake_Title": "Quick Panel wake-up methods",
+  "MouseWake_Keyboard1": "Keyboard shortcut 1",
+  "MouseWake_Keyboard2": "Alternate keyboard shortcut",
+  "MouseWake_RightHold": "Open with a right-button hold",
+  "MouseWake_Delay": "Hold duration",
+  "MouseWake_Circle": "Open by drawing two circles",
+  "MouseWake_GestureHint": "A short right-click keeps the usual menu. Do not drag during a hold. Draw two clockwise or counterclockwise circles without holding a button.",
+  "MouseWake_Whitelist": "Where mouse wake-up is allowed",
+  "MouseWake_Desktop": "Desktop (not folder windows)",
+  "MouseWake_WhitelistHint": "Only the desktop is allowed by default. Add other apps below. Global and Quick Panel blocklists take priority. This allowlist does not restrict keyboard shortcuts.",
+  "MouseWake_OtherApps": "Additional allowed apps (optional)"
 }

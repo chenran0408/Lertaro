@@ -136,6 +136,13 @@ public class HotkeyPageSettings
     // Global, not window-level like StayOpen above: the panel docks onto whatever window is in front,
     // so it has to be reachable while that window has focus, which means the hook service detects it.
     public string QuickPanelHotkey { get; set; } = "Ctrl+F2";
+    public string QuickPanelAlternateHotkey { get; set; } = string.Empty;
+    public bool QuickPanelMouseRightHold { get; set; }
+    public bool QuickPanelMouseCircle { get; set; }
+    public int QuickPanelRightHoldMilliseconds { get; set; } = 600;
+    public bool QuickPanelMouseAllowDesktop { get; set; } = true;
+    public List<string> QuickPanelMouseAllowedProcesses { get; set; } = new();
+
 
     /// <summary>Global shortcut for opening Quick Navigation in desktop mode.</summary>
     public string QuickNavigationHotkey { get; set; } = string.Empty;

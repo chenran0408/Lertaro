@@ -81,6 +81,7 @@ public static class PipeRequestBinarySerializer
                 writer.Write(msg.StringVal1 ?? string.Empty);
                 break;
 
+            case IpcMessageId.QuickPanelMouseGesture:
             case IpcMessageId.RestoreDialogFocus:
                 writer.Write(msg.Hwnd);
                 break;
@@ -205,6 +206,7 @@ public static class PipeRequestBinarySerializer
                 msg.StringVal1 = reader.ReadString();
                 break;
 
+            case IpcMessageId.QuickPanelMouseGesture:
             case IpcMessageId.RestoreDialogFocus:
                 msg.Hwnd = reader.ReadInt64();
                 break;

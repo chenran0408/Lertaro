@@ -196,6 +196,7 @@ public sealed class FavoriteHotkeyRegistrationsTests
     [DataRow(nameof(HotkeyPageSettings.ToggleWindowHotkey))]
     [DataRow(nameof(HotkeyPageSettings.QuickSwitchHotkey))]
     [DataRow(nameof(HotkeyPageSettings.QuickPanelHotkey))]
+    [DataRow(nameof(HotkeyPageSettings.QuickPanelAlternateHotkey))]
     [DataRow(nameof(HotkeyPageSettings.QuickNavigationHotkey))]
     [DataRow(nameof(HotkeyPageSettings.NextItemHotkey))]
     [DataRow(nameof(HotkeyPageSettings.PreviousItemHotkey))]

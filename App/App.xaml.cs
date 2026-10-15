@@ -18,6 +18,7 @@ using Lertaro.Core.Services.Installation;
 using Lertaro.Core.Services;
 using Application = System.Windows.Application;
 namespace Lertaro.App;
+
 public partial class App : Application
 {
     // Set before InitializeComponent creates controls, including plugin content and popup controls.
@@ -175,6 +176,8 @@ public partial class App : Application
         }));
         HookClient.OnQuickPanelHotkey += () => Dispatcher.BeginInvoke(
             new Action(() => _quickPanelManager?.Toggle()));
+        HookClient.OnQuickPanelMouseGesture += host => Dispatcher.BeginInvoke(
+            new Action(() => _quickPanelManager?.ShowFromMouse(host)));
         HookClient.OnQuickNavigationHotkey += () => Dispatcher.BeginInvoke(
             new Action(QuickNavigationMenu.ShowFromKeyboard));
         HookClient.Start();

@@ -107,30 +107,20 @@ public sealed class GlobalHotkeyDetector
     }
 
     /// <summary>Whether this keystroke is the quick panel's own combination, answered without consuming it.</summary>
-    internal bool IsQuickPanelComboDown(int vkCode)
+    internal bool IsQuickPanelComboDown(int vkCode) => MatchesCombo(_settings.Hotkeys.QuickPanelHotkey, vkCode)
+            || MatchesCombo(_settings.Hotkeys.QuickPanelAlternateHotkey, vkCode);
+
+    private bool MatchesCombo(string combo, int vkCode)
     {
-        HotkeyStringFormat.ParseCombo(_settings.Hotkeys.QuickPanelHotkey, out var modifier, out var key);
+        HotkeyStringFormat.ParseCombo(combo, out var modifier, out var key);
         var targetVk = KeyboardUtils.GetKeyVirtualCode(key);
         return targetVk != 0 && vkCode == targetVk && CheckModifiersMatch(modifier);
     }
 
-    /// <summary>The quick panel's own global combo. A plain combination, with no bare-modifier form.</summary>
-    /// <remarks>
-    /// The tap detectors the other two hotkeys carry exist because those can be configured as a bare
-    /// modifier, which needs double-tap timing to tell apart from the same modifier being held down for
-    /// something else. This one is always a real key, so there is nothing to disambiguate.
-    /// </remarks>
     public bool CheckQuickPanelHotkey(int vkCode, out bool consumeKey)
     {
-        consumeKey = false;
-
-        HotkeyStringFormat.ParseCombo(_settings.Hotkeys.QuickPanelHotkey, out var modifier, out var key);
-        var targetVk = KeyboardUtils.GetKeyVirtualCode(key);
-        if (targetVk == 0 || vkCode != targetVk) return false;
-        if (!CheckModifiersMatch(modifier)) return false;
-
-        consumeKey = true;
-        return true;
+        consumeKey = IsQuickPanelComboDown(vkCode);
+        return consumeKey;
     }
 
     /// <summary>The global shortcut for opening Quick Navigation in desktop mode.</summary>

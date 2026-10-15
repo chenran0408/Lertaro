@@ -830,5 +830,16 @@
   "Appearance_TaskbarOptions": "調整工作列",
   "Background_EnableImage": "使用自訂背景圖片",
   "Background_Opacity": "圖片不透明度",
-  "Background_OpacityHint": "0% 隱藏圖片，100% 完全顯示。只調整背景圖片，不會讓文字和按鈕變淡。"
+  "Background_OpacityHint": "0% 隱藏圖片，100% 完全顯示。只調整背景圖片，不會讓文字和按鈕變淡。",
+  "MouseWake_Title": "快速面板的喚醒方式",
+  "MouseWake_Keyboard1": "鍵盤快捷鍵 1",
+  "MouseWake_Keyboard2": "備用鍵盤快捷鍵",
+  "MouseWake_RightHold": "長按滑鼠右鍵叫出",
+  "MouseWake_Delay": "長按多久後叫出",
+  "MouseWake_Circle": "滑鼠連續畫兩圈叫出",
+  "MouseWake_GestureHint": "短按右鍵仍開啟原選單；長按時請勿拖曳。畫圈時無需按鍵，順時針或逆時針連續兩圈。",
+  "MouseWake_Whitelist": "允許滑鼠喚醒的位置",
+  "MouseWake_Desktop": "桌面（不包含資料夾視窗）",
+  "MouseWake_WhitelistHint": "預設只允許桌面。其他程式需加入下方白名單；全域和快速面板黑名單仍優先生效。此白名單不限制鍵盤快捷鍵。",
+  "MouseWake_OtherApps": "額外允許的程式（選用）"
 }

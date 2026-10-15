@@ -830,5 +830,16 @@
   "Appearance_TaskbarOptions": "작업 표시줄 조정",
   "Background_EnableImage": "사용자 지정 배경 이미지 사용",
   "Background_Opacity": "이미지 불투명도",
-  "Background_OpacityHint": "0%는 이미지를 숨기고 100%는 완전히 표시합니다. 글자와 버튼의 불투명도는 바뀌지 않습니다."
+  "Background_OpacityHint": "0%는 이미지를 숨기고 100%는 완전히 표시합니다. 글자와 버튼의 불투명도는 바뀌지 않습니다.",
+  "MouseWake_Title": "빠른 패널 호출 방법",
+  "MouseWake_Keyboard1": "키보드 단축키 1",
+  "MouseWake_Keyboard2": "보조 키보드 단축키",
+  "MouseWake_RightHold": "마우스 오른쪽 버튼을 길게 눌러 열기",
+  "MouseWake_Delay": "길게 누르는 시간",
+  "MouseWake_Circle": "마우스로 원을 연속 두 번 그려 열기",
+  "MouseWake_GestureHint": "짧게 우클릭하면 기존 메뉴가 열립니다. 길게 누를 때는 드래그하지 마세요. 버튼을 누르지 않고 시계 방향이나 반시계 방향으로 두 바퀴 그립니다.",
+  "MouseWake_Whitelist": "마우스 호출을 허용할 위치",
+  "MouseWake_Desktop": "바탕 화면 (폴더 창 제외)",
+  "MouseWake_WhitelistHint": "기본적으로 바탕 화면만 허용합니다. 다른 앱은 아래에 추가하세요. 전체 및 빠른 패널 차단 목록이 우선하며, 키보드 단축키에는 영향을 주지 않습니다.",
+  "MouseWake_OtherApps": "추가로 허용할 앱 (선택)"
 }

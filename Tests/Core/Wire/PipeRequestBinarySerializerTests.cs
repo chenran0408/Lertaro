@@ -6,6 +6,18 @@ namespace Lertaro.Core.Tests.Wire;
 public sealed class PipeRequestBinarySerializerTests
 {
     [TestMethod]
+    public async Task MouseWakeCarriesItsTargetWindowAndDoesNotDesynchronizeTheNextMessage()
+    {
+        using var stream = new MemoryStream();
+        await PipeRequestBinarySerializer.WriteMessageAsync(stream, new IpcMessage { Id = IpcMessageId.QuickPanelMouseGesture, Hwnd = 0x123456789 });
+        await PipeRequestBinarySerializer.WriteMessageAsync(stream, new IpcMessage { Id = IpcMessageId.KeyChar, CharVal = 'x' });
+        stream.Position = 0;
+        var gesture = await PipeRequestBinarySerializer.ReadMessageAsync(stream);
+        Assert.AreEqual(IpcMessageId.QuickPanelMouseGesture, gesture.Id); Assert.AreEqual(0x123456789L, gesture.Hwnd);
+        Assert.AreEqual('x', (await PipeRequestBinarySerializer.ReadMessageAsync(stream)).CharVal);
+    }
+
+    [TestMethod]
     public async Task WriteStringAsync_ThenReadStringAsync_RoundTrips()
     {
         using var stream = new MemoryStream();

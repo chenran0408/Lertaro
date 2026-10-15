@@ -193,7 +193,7 @@
   "Settings_LocalSend_FileReceivedDesc": "已接收：{0}\n\n点击「确定」打开所在文件夹，点击「取消」关闭。",
   "Settings_Browse": "浏览...",
   "QuickPanel_Enabled": "启用快速面板",
-  "QuickPanel_HotkeyHint": "呼出面板的按键在「快捷键」页设置。面板打开后,按住「跳转到第 N 项结果」的修饰键再按 1~9 即可切换工作区。",
+  "QuickPanel_HotkeyHint": "唤醒方式在「快捷键」页设置，可同时使用键盘和鼠标。面板打开后，按住「跳转到第 N 项结果」的修饰键再按 1~9 即可切换工作区。",
   "QuickPanel_Workspaces": "工作区",
   "QuickPanel_WorkspaceName": "名称",
   "QuickPanel_WorkspaceEnabledTooltip": "在面板中显示该工作区",
@@ -830,5 +830,16 @@
   "Appearance_TaskbarOptions": "调整任务栏",
   "Background_EnableImage": "使用自定义背景图片",
   "Background_Opacity": "图片不透明度",
-  "Background_OpacityHint": "0% 隐藏图片，100% 完全显示。只调整背景图片，不会让文字和按钮变淡。"
+  "Background_OpacityHint": "0% 隐藏图片，100% 完全显示。只调整背景图片，不会让文字和按钮变淡。",
+  "MouseWake_Title": "快速面板的唤醒方式",
+  "MouseWake_Keyboard1": "键盘快捷键 1",
+  "MouseWake_Keyboard2": "备用键盘快捷键",
+  "MouseWake_RightHold": "长按鼠标右键呼出",
+  "MouseWake_Delay": "长按多久后呼出",
+  "MouseWake_Circle": "鼠标连续画两圈呼出",
+  "MouseWake_GestureHint": "短按右键仍打开原菜单；长按时不要拖动。画圈时无需按键，顺时针或逆时针连续两圈。",
+  "MouseWake_Whitelist": "允许鼠标唤醒的位置",
+  "MouseWake_Desktop": "桌面（不包含文件夹窗口）",
+  "MouseWake_WhitelistHint": "默认只允许桌面。其他程序需加入下方白名单；全局和快速面板黑名单仍优先生效。此白名单不限制键盘快捷键。",
+  "MouseWake_OtherApps": "额外允许的程序（可选）"
 }
