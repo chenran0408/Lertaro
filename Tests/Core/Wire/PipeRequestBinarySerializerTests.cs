@@ -6,6 +6,26 @@ namespace Lertaro.Core.Tests.Wire;
 public sealed class PipeRequestBinarySerializerTests
 {
     [TestMethod]
+    public async Task WakeRuleAndTestMessagesPreserveTheirPayloadAndFollowingFrame()
+    {
+        using var stream = new MemoryStream();
+        IpcMessage[] messages = [new() { Id = IpcMessageId.QuickPanelWakeRule, Hwnd = 12345, StringVal1 = "rule", BoolVal = true },
+            new() { Id = IpcMessageId.StartQuickPanelWakeTest, StringVal1 = "{\"Binding\":{}}" },
+            new() { Id = IpcMessageId.QuickPanelWakeTestResult, StringVal1 = "test-id", StringVal2 = "Wake_TestSuccess" },
+            new() { Id = IpcMessageId.StopQuickPanelWakeTest },
+            new() { Id = IpcMessageId.SetHotkeyRecorderFocused, BoolVal = true },
+            new() { Id = IpcMessageId.SetHotkeyRecorderFocused, BoolVal = false }, new() { Id = IpcMessageId.KeyChar, CharVal = 'x' }];
+        foreach (var message in messages) await PipeRequestBinarySerializer.WriteMessageAsync(stream, message);
+        stream.Position = 0;
+        foreach (var expected in messages)
+        {
+            var actual = await PipeRequestBinarySerializer.ReadMessageAsync(stream);
+            Assert.AreEqual(expected.Id, actual.Id); Assert.AreEqual(expected.Hwnd, actual.Hwnd);
+            Assert.AreEqual(expected.BoolVal, actual.BoolVal); Assert.AreEqual(expected.StringVal1 ?? "", actual.StringVal1 ?? "");
+            Assert.AreEqual(expected.StringVal2 ?? "", actual.StringVal2 ?? ""); Assert.AreEqual(expected.CharVal, actual.CharVal);
+        }
+    }
+    [TestMethod]
     public async Task MouseWakeCarriesItsTargetWindowAndDoesNotDesynchronizeTheNextMessage()
     {
         using var stream = new MemoryStream();

@@ -37,6 +37,8 @@ public class SettingsViewModel : ViewModelBase
         Exclusions = new ExclusionSettingsViewModel(_userSettings);
         Blacklist = new BlacklistSettingsViewModel(_userSettings);
         Hotkeys = new HotkeySettingsViewModel(_userSettings, Blacklist);
+        Hotkeys.QuickPanelWake.PropertyChanged += (_, e) =>
+        { if (e.PropertyName == nameof(QuickPanelWakeSettingsViewModel.IsValid)) OnPropertyChanged(nameof(CanApply)); };
         Favorites = new FavoritesSettingsViewModel(_userSettings);
         QuickLaunch = new QuickLaunchSettingsViewModel(_userSettings);
         QuickPanel = new QuickPanel.QuickPanelSettingsViewModel(_userSettings);
@@ -119,7 +121,7 @@ public class SettingsViewModel : ViewModelBase
 
     public bool CanApply
     {
-        get => _canApply && !_isApplying;
+        get => _canApply && !_isApplying && Hotkeys.QuickPanelWake.IsValid;
         set { if (SetProperty(ref _canApply, value)) CommandManager.InvalidateRequerySuggested(); }
     }
 
@@ -240,6 +242,7 @@ public class SettingsViewModel : ViewModelBase
             }
             _deferred.ExistingAppearance?.AcceptBackground();
             _isSaved = true;
+            Hotkeys.QuickPanelWake.MarkSaved();
             SettingsApplyHelpers.RebindFavoriteHotkeys(Favorites);
             Core.Services.LocalSend.LocalSendServiceManager.Instance.ApplySettings(_userSettings);
             App.HookClient?.SendMessage(new IpcMessage { Id = IpcMessageId.ReloadSettings });

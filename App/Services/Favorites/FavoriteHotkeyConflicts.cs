@@ -36,12 +36,15 @@ internal static class FavoriteHotkeyConflicts
     internal static IEnumerable<string> HostHotkeys(HotkeyPageSettings settings, bool includeSelectJump = true)
     {
         string[] hotkeys = [settings.ToggleWindowHotkey, settings.QuickSwitchHotkey,
-            settings.QuickPanelHotkey, settings.QuickPanelAlternateHotkey, settings.QuickNavigationHotkey, settings.NextItemHotkey,
+            settings.QuickPanelWakeBindings == null ? settings.QuickPanelHotkey : "",
+            settings.QuickPanelWakeBindings == null ? settings.QuickPanelAlternateHotkey : "", settings.QuickNavigationHotkey, settings.NextItemHotkey,
             settings.PreviousItemHotkey, settings.ActionsMenuHotkey, settings.CompleteFromSelectionHotkey,
             settings.QuickLookHotkey, settings.KeywordHistoryPreviousHotkey, settings.KeywordHistoryNextHotkey,
             settings.KeywordHistoryDeleteHotkey, settings.OpenFullWindowHotkey, settings.LocalSendSendWindowHotkey,
             settings.StayOpenHotkey];
         foreach (var hotkey in hotkeys) yield return hotkey;
+        foreach (var rule in QuickPanelWakeBindings.Get(settings).Where(r => r.Enabled && r.Kind == QuickPanelWakeKind.Keyboard))
+            yield return rule.Key;
         if (!includeSelectJump || string.IsNullOrWhiteSpace(settings.SelectJumpModifier)) yield break;
         for (var number = 1; number <= 9; number++)
         {

@@ -48,6 +48,7 @@ public static class PipeRequestBinarySerializer
         switch (msg.Id)
         {
             case IpcMessageId.Stop:
+            case IpcMessageId.StopQuickPanelWakeTest:
             case IpcMessageId.ReloadSettings:
             case IpcMessageId.RequestOpenedFolders:
             case IpcMessageId.Activate:
@@ -73,6 +74,7 @@ public static class PipeRequestBinarySerializer
             case IpcMessageId.SetInlineSearchVisible:
             case IpcMessageId.SetInlineWindowOnScreen:
             case IpcMessageId.SetHotkeysDisabled:
+            case IpcMessageId.SetHotkeyRecorderFocused:
                 writer.Write(msg.BoolVal);
                 break;
 
@@ -84,6 +86,14 @@ public static class PipeRequestBinarySerializer
             case IpcMessageId.QuickPanelMouseGesture:
             case IpcMessageId.RestoreDialogFocus:
                 writer.Write(msg.Hwnd);
+                break;
+
+            case IpcMessageId.QuickPanelWakeRule:
+                writer.Write(msg.Hwnd); writer.Write(msg.StringVal1 ?? ""); writer.Write(msg.BoolVal);
+                break;
+            case IpcMessageId.StartQuickPanelWakeTest:
+            case IpcMessageId.QuickPanelWakeTestResult:
+                writer.Write(msg.StringVal1 ?? ""); writer.Write(msg.StringVal2 ?? "");
                 break;
 
             case IpcMessageId.ForceForeground:
@@ -172,6 +182,7 @@ public static class PipeRequestBinarySerializer
         switch (msg.Id)
         {
             case IpcMessageId.Stop:
+            case IpcMessageId.StopQuickPanelWakeTest:
             case IpcMessageId.ReloadSettings:
             case IpcMessageId.RequestOpenedFolders:
             case IpcMessageId.Activate:
@@ -198,6 +209,7 @@ public static class PipeRequestBinarySerializer
             case IpcMessageId.SetInlineSearchVisible:
             case IpcMessageId.SetInlineWindowOnScreen:
             case IpcMessageId.SetHotkeysDisabled:
+            case IpcMessageId.SetHotkeyRecorderFocused:
                 msg.BoolVal = reader.ReadBoolean();
                 break;
 
@@ -209,6 +221,14 @@ public static class PipeRequestBinarySerializer
             case IpcMessageId.QuickPanelMouseGesture:
             case IpcMessageId.RestoreDialogFocus:
                 msg.Hwnd = reader.ReadInt64();
+                break;
+
+            case IpcMessageId.QuickPanelWakeRule:
+                msg.Hwnd = reader.ReadInt64(); msg.StringVal1 = reader.ReadString(); msg.BoolVal = reader.ReadBoolean();
+                break;
+            case IpcMessageId.StartQuickPanelWakeTest:
+            case IpcMessageId.QuickPanelWakeTestResult:
+                msg.StringVal1 = reader.ReadString(); msg.StringVal2 = reader.ReadString();
                 break;
 
             case IpcMessageId.ForceForeground:

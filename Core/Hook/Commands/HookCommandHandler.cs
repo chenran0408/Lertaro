@@ -187,6 +187,7 @@ public sealed class HookCommandHandler
 
                 case IpcMessageId.ReloadSettings:
                     {
+                        InlineSearch.QuickPanelWakeTestSession.Stop();
                         var newSettings = UserSettings.ForceReload();
                         if (Enum.TryParse<LogLevel>(newSettings.LogLevel, ignoreCase: true, out var newLogLevel))
                             Logger.MinimumLevel = newLogLevel;
@@ -194,9 +195,22 @@ public sealed class HookCommandHandler
                         _process.RefreshActiveWindowAdapters();
                     }
                     break;
+                case IpcMessageId.StartQuickPanelWakeTest:
+                    InlineSearch.QuickPanelWakeTestSession.Stop();
+                    var started = InlineSearch.QuickPanelWakeTestSession.Start(msg.StringVal1);
+                    _process.IpcServer.SendMessage(new IpcMessage { Id = IpcMessageId.QuickPanelWakeTestResult,
+                        StringVal1 = msg.StringVal2 ?? InlineSearch.QuickPanelWakeTestSession.Current?.Request.Binding.Id ?? "",
+                        StringVal2 = started ? "Wake_TestStarted" : "Wake_InvalidRule" });
+                    break;
+                case IpcMessageId.StopQuickPanelWakeTest:
+                    InlineSearch.QuickPanelWakeTestSession.Stop();
+                    break;
                 case IpcMessageId.SetHotkeysDisabled:
                     _process.IsHotkeysDisabledTemporarily = msg.BoolVal;
                     _process.KeyboardHook?.IsHotkeysDisabledTemporarily = msg.BoolVal;
+                    break;
+                case IpcMessageId.SetHotkeyRecorderFocused:
+                    _process.IsHotkeyRecorderFocused = msg.BoolVal;
                     break;
                 case IpcMessageId.ExecuteInlineItem:
                 case IpcMessageId.LocateInlineItem:

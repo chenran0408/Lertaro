@@ -142,6 +142,7 @@ public class HotkeyPageSettings
     public int QuickPanelRightHoldMilliseconds { get; set; } = 600;
     public bool QuickPanelMouseAllowDesktop { get; set; } = true;
     public List<string> QuickPanelMouseAllowedProcesses { get; set; } = new();
+    public List<QuickPanelWakeBinding>? QuickPanelWakeBindings { get; set; }
 
 
     /// <summary>Global shortcut for opening Quick Navigation in desktop mode.</summary>

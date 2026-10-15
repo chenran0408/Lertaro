@@ -14,27 +14,29 @@ public sealed class QuickPanelWakeSettingsTests
     [StaTestMethod]
     [DataRow("Light", false)]
     [DataRow("Dark", true)]
-    public void TwoKeysAndMouseAllowlistAreStagedAndSaveTogether(string theme, bool dark)
+    public void MigratedRulesAndSharedMouseScopeAreStagedAndSaveTogether(string theme, bool dark)
     {
         var settings = new UserSettings();
         var blacklist = new BlacklistSettingsViewModel(settings);
         var vm = new HotkeySettingsViewModel(settings, blacklist, (_, _) => false);
         var page = new HotkeyQuickPanelWakeSection { DataContext = vm };
         page.Resources.MergedDictionaries.Add(new BuiltInTheme(theme, dark).GetResources());
-        var window = new Window { Content = page, Width = 750, Height = 650, ShowActivated = false };
+        var window = new Window { Content = new ScrollViewer { Content = page }, Width = 850, Height = 700, ShowActivated = false };
         try
         {
             window.Show(); window.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
             Assert.AreSame(page.FindResource("TextPrimary"), page.Foreground);
-            var hold = (CheckBox)page.FindName("RowMouseRightHold");
             var desktop = (CheckBox)page.FindName("RowMouseAllowDesktop");
-            Assert.AreEqual(false, hold.IsChecked); Assert.AreEqual(true, desktop.IsChecked);
-            hold.IsChecked = true; desktop.IsChecked = false;
-            vm.QuickPanelAlternateHotkey = "Ctrl+Alt+F8";
-            vm.QuickPanelMouseCircle = true; vm.QuickPanelRightHoldMilliseconds = 800;
+            var hold = vm.QuickPanelWake.Rows.Single(r => r.Kind == QuickPanelWakeKind.Hold);
+            Assert.IsFalse(hold.Enabled); Assert.AreEqual(true, desktop.IsChecked);
+            hold.Enabled = true; hold.HoldMilliseconds = 800; desktop.IsChecked = false;
+            vm.QuickPanelWake.SelectedPreset = 0; vm.QuickPanelWake.AddCommand.Execute(null);
+            var key = vm.QuickPanelWake.Rows[^1]; key.Key = "Ctrl+Alt+F8"; key.Enabled = true;
+            vm.QuickPanelWake.Rows.Single(r => r.Kind == QuickPanelWakeKind.Circle).Enabled = true;
             vm.MouseWakeWhitelist.NewProcessName = "editor.exe"; vm.MouseWakeWhitelist.AddProcessCommand.Execute(null);
             Assert.IsFalse(settings.Hotkeys.QuickPanelMouseRightHold);
             Assert.IsEmpty(settings.Hotkeys.QuickPanelMouseAllowedProcesses);
+            Assert.IsNull(settings.Hotkeys.QuickPanelWakeBindings);
             vm.Apply();
             Assert.AreEqual("Ctrl+F2", settings.Hotkeys.QuickPanelHotkey);
             Assert.AreEqual("Ctrl+Alt+F8", settings.Hotkeys.QuickPanelAlternateHotkey);
@@ -43,6 +45,7 @@ public sealed class QuickPanelWakeSettingsTests
             Assert.IsFalse(settings.Hotkeys.QuickPanelMouseAllowDesktop);
             Assert.AreEqual(800, settings.Hotkeys.QuickPanelRightHoldMilliseconds);
             Assert.HasCount(1, settings.Hotkeys.QuickPanelMouseAllowedProcesses);
+            Assert.HasCount(4, settings.Hotkeys.QuickPanelWakeBindings!);
             Assert.IsEmpty(settings.BlacklistedProcesses); Assert.IsEmpty(settings.QuickPanel.BlacklistedProcesses);
         }
         finally { window.Close(); vm.Cleanup(); }

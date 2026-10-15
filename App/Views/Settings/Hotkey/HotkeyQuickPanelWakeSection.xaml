@@ -9,44 +9,122 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../../../Resources/Styles/Windows/SettingsWindow.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="Button" BasedOn="{StaticResource SettingsButton}">
+                <Setter Property="MinWidth" Value="0"/>
+            </Style>
+            <Style TargetType="ComboBox" BasedOn="{StaticResource SettingsComboBox}"/>
+            <Style TargetType="Expander">
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            </Style>
+            <Style TargetType="CheckBox">
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
-    <StackPanel>
-        <TextBlock Style="{StaticResource SettingsSubHeading}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Title]}"/>
-        <Grid x:Name="RowQuickPanel" Margin="0,4">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Keyboard1]}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Value="{Binding QuickPanelHotkey, Mode=TwoWay}" RequireModifier="True" DefaultValue="Ctrl+F2"/>
-        </Grid>
-        <Grid x:Name="RowQuickPanelAlternate" Margin="0,4">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Keyboard2]}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Value="{Binding QuickPanelAlternateHotkey, Mode=TwoWay}" RequireModifier="True" DefaultValue=""/>
-        </Grid>
-        <CheckBox x:Name="RowMouseRightHold" Margin="0,8,0,4" IsChecked="{Binding QuickPanelMouseRightHold}"
-                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_RightHold]}"/>
-        <StackPanel Visibility="{Binding QuickPanelMouseRightHold, Converter={StaticResource BoolToVis}}">
-            <DockPanel Margin="0,4">
-                <TextBlock DockPanel.Dock="Right" Foreground="{DynamicResource TextSecondary}" Text="{Binding QuickPanelRightHoldMilliseconds, StringFormat={}{0} ms}"/>
-                <TextBlock Foreground="{DynamicResource TextPrimary}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Delay]}"/>
-            </DockPanel>
-            <Slider Minimum="300" Maximum="2000" TickFrequency="100" IsSnapToTickEnabled="True" AutoToolTipPlacement="TopLeft"
-                    Value="{Binding QuickPanelRightHoldMilliseconds}"/>
-        </StackPanel>
-        <CheckBox x:Name="RowMouseCircle" Margin="0,4" IsChecked="{Binding QuickPanelMouseCircle}"
-                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Circle]}"/>
-        <TextBlock Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,4,0,10"
-                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_GestureHint]}"/>
-        <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"
-                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Whitelist]}"/>
-        <CheckBox x:Name="RowMouseAllowDesktop" Margin="0,8" IsChecked="{Binding QuickPanelMouseAllowDesktop}"
-                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Desktop]}"/>
-        <TextBlock Style="{StaticResource SettingsHintText}" TextWrapping="Wrap"
-                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_WhitelistHint]}"/>
-        <Expander Margin="0,8" Foreground="{DynamicResource TextPrimary}" IsExpanded="{Binding MouseWakeExtraProgramsExpanded}"
-                  Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_OtherApps]}">
-            <ContentControl x:Name="RowMouseAllowedProcesses" Margin="0,10,0,0" Content="{Binding MouseWakeWhitelist}"
-                            ContentTemplate="{StaticResource ProcessListEditorTemplate}"/>
+    <StackPanel DataContext="{Binding QuickPanelWake}">
+        <TextBlock Style="{StaticResource SettingsSubHeading}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Title]}"/>
+        <TextBlock Style="{StaticResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Intro]}"/>
+        <WrapPanel x:Name="RowAddWake" Margin="0,10,0,0">
+            <ComboBox Width="200" ItemsSource="{Binding Presets}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                      SelectedValue="{Binding SelectedPreset}" AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Preset]}"/>
+            <Button Margin="8,0,0,0" Padding="12,6" Command="{Binding AddCommand}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Add]}"/>
+            <Button Margin="8,0,0,0" Padding="12,6" Command="{Binding UndoCommand}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Undo]}"/>
+        </WrapPanel>
+        <TextBlock Text="{Binding Error}" TextWrapping="Wrap" Margin="0,6" FontWeight="SemiBold" Visibility="{Binding Error, Converter={StaticResource StringToVis}}"/>
+        <ItemsControl x:Name="RowQuickPanel" ItemsSource="{Binding Rows}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Style="{StaticResource SettingsCard}" Margin="0,0,0,8" Padding="12">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <CheckBox IsChecked="{Binding Enabled}" VerticalAlignment="Center" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Summary}" Style="{StaticResource SettingsHintText}" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                </CheckBox>
+                                <WrapPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <Button Padding="10,5" Command="{Binding ToggleEditCommand}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Edit]}"/>
+                                    <Button Margin="6,0,0,0" Padding="10,5" Command="{Binding DataContext.QuickPanelWake.TestCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                            ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_TestHint]}"
+                                            Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Test]}"/>
+                                    <Button Margin="6,0,0,0" Padding="10,5" Command="{Binding DataContext.QuickPanelWake.RemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                            Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Remove]}"/>
+                                </WrapPanel>
+                            </Grid>
+                            <StackPanel Margin="24,12,0,0" Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}">
+                                <StackPanel Visibility="{Binding IsKeyboard, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Style="{StaticResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_RecordHint]}"/>
+                                    <ctrl:HotkeyRecorderControl Width="220" HorizontalAlignment="Left" Margin="0,6,0,0" RequireModifier="True" Value="{Binding Key, Mode=TwoWay}" DefaultValue=""/>
+                                </StackPanel>
+                                <ComboBox Width="200" HorizontalAlignment="Left" Visibility="{Binding IsButton, Converter={StaticResource BoolToVis}}"
+                                          ItemsSource="{Binding Buttons}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Button}"
+                                          AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_MouseButton]}"/>
+                                <StackPanel Visibility="{Binding IsHold, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding DelayLabel}" Margin="0,8,0,0"/>
+                                    <Slider Width="300" HorizontalAlignment="Left" Minimum="300" Maximum="2000" TickFrequency="100" IsSnapToTickEnabled="True" Value="{Binding HoldMilliseconds}"
+                                            AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_HoldTime]}"/>
+                                    <TextBlock Style="{StaticResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_HoldHint]}"/>
+                                    <Expander Margin="0,8,0,0" Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Advanced]}">
+                                        <StackPanel Margin="0,8,0,0">
+                                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_MoveTolerance]}"/>
+                                            <Slider Width="300" HorizontalAlignment="Left" Minimum="3" Maximum="30" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding MovementTolerance}" AutoToolTipPlacement="TopLeft"/>
+                                            <TextBlock Text="{Binding MovementTolerance, StringFormat={}{0} px}" Style="{StaticResource SettingsHintText}"/>
+                                        </StackPanel>
+                                    </Expander>
+                                </StackPanel>
+                                <StackPanel Visibility="{Binding IsCircle, Converter={StaticResource BoolToVis}}">
+                                    <ComboBox Width="200" HorizontalAlignment="Left" ItemsSource="{Binding Directions}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding CircleDirection}"
+                                              AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Direction]}"/>
+                                    <DockPanel Width="300" HorizontalAlignment="Left" Margin="0,8,0,0">
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding CircleTurns}"/>
+                                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Turns]}"/>
+                                    </DockPanel>
+                                    <Slider Width="300" HorizontalAlignment="Left" Minimum="1" Maximum="3" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding CircleTurns}"
+                                            AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Turns]}"/>
+                                    <TextBlock Style="{StaticResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_CircleHint]}"/>
+                                    <Expander Margin="0,8,0,0" Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Advanced]}">
+                                        <StackPanel Margin="0,8,0,0">
+                                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_MinRadius]}"/>
+                                            <Slider Width="300" HorizontalAlignment="Left" Minimum="12" Maximum="150" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding MinimumRadius}" AutoToolTipPlacement="TopLeft"/>
+                                            <TextBlock Text="{Binding MinimumRadius, StringFormat={}{0} px}" Style="{StaticResource SettingsHintText}"/>
+                                            <TextBlock Margin="0,8,0,0" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_MaxRadius]}"/>
+                                            <Slider Width="300" HorizontalAlignment="Left" Minimum="30" Maximum="500" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding MaximumRadius}" AutoToolTipPlacement="TopLeft"/>
+                                            <TextBlock Text="{Binding MaximumRadius, StringFormat={}{0} px}" Style="{StaticResource SettingsHintText}"/>
+                                        </StackPanel>
+                                    </Expander>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Empty]}">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource SettingsHintText}">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers><DataTrigger Binding="{Binding HasRows}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+        <Border Style="{StaticResource SettingsCard}" Margin="0,4,0,0" Padding="12" Visibility="{Binding TestMessage, Converter={StaticResource StringToVis}}">
+            <StackPanel>
+                <TextBlock Text="{Binding TestMessage}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                <Button HorizontalAlignment="Left" Margin="0,8,0,0" Padding="12,6" Visibility="{Binding IsTesting, Converter={StaticResource BoolToVis}}" Command="{Binding StopTestCommand}" Content="{Binding StopTestLabel}"/>
+            </StackPanel>
+        </Border>
+        <TextBlock Text="{Binding ScopeSummary}" Style="{StaticResource SettingsHintText}" Margin="0,12,0,0"/>
+        <Expander x:Name="RowMouseScope" Margin="0,8,0,0" IsExpanded="{Binding ScopeExpanded}" Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_ScopeTitle]}">
+            <StackPanel>
+                <CheckBox x:Name="RowMouseAllowDesktop" Margin="0,8" IsChecked="{Binding AllowDesktop}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Desktop]}"/>
+                <TextBlock Style="{StaticResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_WhitelistHint]}"/>
+                <Expander Margin="0,8" IsExpanded="{Binding ExtraProgramsExpanded}" Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_OtherApps]}">
+                    <ContentControl x:Name="RowMouseAllowedProcesses" Margin="0,8,0,0" Content="{Binding MouseWhitelist}" ContentTemplate="{StaticResource ProcessListEditorTemplate}"/>
+                </Expander>
+                <TextBlock Margin="0,8,0,0" Style="{StaticResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_KeyboardScopeHint]}"/>
+            </StackPanel>
         </Expander>
     </StackPanel>
 </UserControl>

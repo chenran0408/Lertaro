@@ -51,6 +51,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         MouseWakeWhitelist = new ProcessBlacklistEditorViewModel(hotkeys.QuickPanelMouseAllowedProcesses ?? []);
 
         _quickNavigationHotkey = hotkeys.QuickNavigationHotkey;
+        QuickPanelWake = new QuickPanelWakeSettingsViewModel(this, userSettings, _combinationTaken);
 
         PluginActionGroups = HotkeyPluginActionGroupBuilder.Build(hotkeys.PluginActionHotkeys);
 
@@ -223,6 +224,7 @@ public class HotkeySettingsViewModel : ViewModelBase
     }
 
     public ProcessBlacklistEditorViewModel MouseWakeWhitelist { get; }
+    public QuickPanelWakeSettingsViewModel QuickPanelWake { get; }
     private bool _mouseWakeExtraProgramsExpanded;
     public bool MouseWakeExtraProgramsExpanded { get => _mouseWakeExtraProgramsExpanded; set => SetProperty(ref _mouseWakeExtraProgramsExpanded, value); }
     private string _quickPanelAlternateHotkey;
@@ -260,6 +262,10 @@ public class HotkeySettingsViewModel : ViewModelBase
     public void Apply()
     {
         var hotkeys = _userSettings.Hotkeys;
+        QuickPanelWake.StopTest();
+        var useBindings = QuickPanelWake.IsDirty || hotkeys.QuickPanelWakeBindings != null;
+        if (useBindings && !QuickPanelWake.Validate(probeSystem: true))
+            throw new InvalidOperationException(QuickPanelWake.Error);
 
         // The four global combinations are probed before anything is written. One the OS refuses is
         // owned by the system or another program, and saving it would ship a hotkey that only sometimes
@@ -296,6 +302,18 @@ public class HotkeySettingsViewModel : ViewModelBase
         hotkeys.QuickPanelRightHoldMilliseconds = QuickPanelRightHoldMilliseconds;
         hotkeys.QuickPanelMouseAllowDesktop = QuickPanelMouseAllowDesktop;
         hotkeys.QuickPanelMouseAllowedProcesses = MouseWakeWhitelist.ToSettingsList();
+        hotkeys.QuickPanelWakeBindings = useBindings ? QuickPanelWake.Export()
+            : QuickPanelWakeBindings.Get(hotkeys).Select(b => b.Copy()).ToList();
+        if (useBindings)
+        {
+            var keys = hotkeys.QuickPanelWakeBindings.Where(b => b.Enabled && b.Kind == QuickPanelWakeKind.Keyboard).ToList();
+            hotkeys.QuickPanelHotkey = keys.FirstOrDefault()?.Key ?? "";
+            hotkeys.QuickPanelAlternateHotkey = keys.Skip(1).FirstOrDefault()?.Key ?? "";
+            var hold = hotkeys.QuickPanelWakeBindings.FirstOrDefault(b => b.Enabled && b.Kind == QuickPanelWakeKind.Hold && b.Button == QuickPanelWakeButton.Right);
+            hotkeys.QuickPanelMouseRightHold = hold != null;
+            hotkeys.QuickPanelRightHoldMilliseconds = hold?.HoldMilliseconds ?? 600;
+            hotkeys.QuickPanelMouseCircle = hotkeys.QuickPanelWakeBindings.Any(b => b.Enabled && b.Kind == QuickPanelWakeKind.Circle);
+        }
 
         hotkeys.QuickNavigationHotkey = QuickNavigationHotkey;
 
@@ -348,8 +366,11 @@ public class HotkeySettingsViewModel : ViewModelBase
 
         ToggleHotkeyValue = ProbeGlobalCombination(ToggleHotkeyValue, defaults.ToggleWindowHotkey, taken);
         QuickSwitchComboHotkey = ProbeGlobalCombination(QuickSwitchComboHotkey, defaults.QuickSwitchHotkey, taken);
-        QuickPanelHotkey = ProbeGlobalCombination(QuickPanelHotkey, defaults.QuickPanelHotkey, taken);
-        QuickPanelAlternateHotkey = ProbeGlobalCombination(QuickPanelAlternateHotkey, defaults.QuickPanelAlternateHotkey, taken);
+        if (!QuickPanelWake.IsDirty && _userSettings.Hotkeys.QuickPanelWakeBindings == null)
+        {
+            QuickPanelHotkey = ProbeGlobalCombination(QuickPanelHotkey, defaults.QuickPanelHotkey, taken);
+            QuickPanelAlternateHotkey = ProbeGlobalCombination(QuickPanelAlternateHotkey, defaults.QuickPanelAlternateHotkey, taken);
+        }
         QuickNavigationHotkey = ProbeGlobalCombination(QuickNavigationHotkey, defaults.QuickNavigationHotkey, taken);
         return taken;
     }
@@ -372,5 +393,9 @@ public class HotkeySettingsViewModel : ViewModelBase
         return defaultValue;
     }
 
-    public void Cleanup() => TranslationManager.Instance.PropertyChanged -= _translationHandler;
+    public void Cleanup()
+    {
+        QuickPanelWake.Dispose();
+        TranslationManager.Instance.PropertyChanged -= _translationHandler;
+    }
 }

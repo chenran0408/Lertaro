@@ -93,6 +93,22 @@ public sealed partial class QuickPanelManager : IDisposable
         Show(host, process);
     }
 
+    public void ShowFromWakeRule(IntPtr host, string id, bool keyboard)
+    {
+        var settings = Core.UserSettings.Load();
+        var rule = Core.QuickPanelWakeBindings.Get(settings.Hotkeys).FirstOrDefault(r => r.Id == id && r.Enabled);
+        if (rule == null || Core.QuickPanelWakeBindings.Validate(rule) != null
+            || keyboard != (rule.Kind == Core.QuickPanelWakeKind.Keyboard)
+            || !Core.Hook.ExplorerNativeHooks.IsWindow(host)) return;
+        var process = ProcessNameOf(host);
+        if (Core.Hook.InlineSearch.QuickPanelMouseWakePolicy.Reason(settings, false,
+            Core.Hook.ExplorerNativeHooks.IsDesktopWindow(host, out _), process, ProcessNameOf(GetForegroundWindow()),
+            Core.Hook.FullscreenHelper.IsForegroundWindowFullScreen(), keyboard: keyboard) != null) return;
+        if (_window is { IsVisible: true }) { if (keyboard) Hide(); return; }
+        if (_showing || IsCurrentProcessWindow(host)) return;
+        Show(host, process);
+    }
+
     internal static bool IsCurrentProcess(uint foregroundProcessId, uint currentProcessId) =>
         foregroundProcessId != 0 && foregroundProcessId == currentProcessId;
 

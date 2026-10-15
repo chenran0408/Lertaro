@@ -15,6 +15,7 @@ public class KeyboardHookService : IDisposable
 
     internal UserSettings _settings = UserSettings.Load();
     internal GlobalHotkeyDetector _hotkeyDetector;
+    internal volatile bool IsHotkeyRecorderFocused;
 
     internal bool _hasPendingContextMenuTrigger;
     internal uint _lastContextMenuTriggerTime;
@@ -22,6 +23,7 @@ public class KeyboardHookService : IDisposable
 
     public event Action? OnDoubleCtrl;
     public event Action? OnQuickPanelHotkey;
+    internal event Action<string>? OnQuickPanelWakeRule;
     public event Action? OnQuickNavigationHotkey;
     /// <summary>A recognized Quick Switch, carrying the dialog it was aimed at. The subscriber must not do the
     /// navigation on this thread: see <see cref="QuickSwitchNavigator"/>.</summary>
@@ -136,6 +138,28 @@ public class KeyboardHookService : IDisposable
             var time = hookStruct.time;
             _hotkeyDetector.OnKeyDown(vkCode);
             _hotkeyDetector.SynchronizeModifierState();
+            if (IsHotkeyRecorderFocused)
+            {
+                KeyboardNativeMethods.GetWindowThreadProcessId(KeyboardNativeMethods.GetForegroundWindow(), out var recorderPid);
+                if (AppProcessId != 0 && recorderPid == AppProcessId)
+                    return KeyboardNativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
+            }
+
+            var wakeTest = QuickPanelWakeTestSession.Current;
+            if (wakeTest?.Request.Binding is { Kind: QuickPanelWakeKind.Keyboard } testRule
+                && _hotkeyDetector.MatchesWakeTest(testRule.Key, vkCode))
+            {
+                if (!_hotkeyDetector.QuickPanelKeyRepeated)
+                {
+                    var foreground = KeyboardNativeMethods.GetForegroundWindow();
+                    KeyboardNativeMethods.GetWindowThreadProcessId(foreground, out var pid);
+                    var process = ForegroundProcessGate.GetProcessNameWithoutExtension(pid);
+                    var reason = QuickPanelMouseWakePolicy.Reason(_settings, IsHotkeysDisabledTemporarily, false,
+                        process, process, FullscreenHelper.IsForegroundWindowFullScreen(), keyboard: true);
+                    QuickPanelWakeTestSession.Report(wakeTest, reason ?? "Wake_TestSuccess");
+                }
+                return (nint)1;
+            }
 
             // The physical Menu/context-menu key, and Shift+F10, both open a context menu just like a
             // right-click does, with the same real, non-zero construction delay -- covered
@@ -203,9 +227,16 @@ public class KeyboardHookService : IDisposable
             // the panel is bound to the same combination -- the card is what is on screen, and that key
             // is what moves focus into it there. A chord only the panel claims still reaches it.
             var inlineCardOwnsThisChord = IsInlineWindowOnScreen && _hotkeyDetector.IsToggleWindowComboDown(vkCode);
-            if (!shouldDisableAllHooks && !inlineCardOwnsThisChord && _hotkeyDetector.CheckQuickPanelHotkey(vkCode, out var consumeQuickPanel))
+            if (wakeTest == null && !shouldDisableAllHooks && !inlineCardOwnsThisChord
+                && !ForegroundProcessGate.IsForegroundProcessBlacklisted(_settings.BlacklistedProcesses)
+                && !ForegroundProcessGate.IsForegroundProcessBlacklisted(_settings.QuickPanel.BlacklistedProcesses)
+                && _hotkeyDetector.CheckQuickPanelHotkey(vkCode, out var consumeQuickPanel))
             {
-                OnQuickPanelHotkey?.Invoke();
+                if (!_hotkeyDetector.QuickPanelKeyRepeated)
+                {
+                    OnQuickPanelHotkey?.Invoke();
+                    OnQuickPanelWakeRule?.Invoke(_hotkeyDetector.MatchedQuickPanelRuleId!);
+                }
                 if (consumeQuickPanel) return (IntPtr)1;
             }
             if (!shouldDisableAllHooks && _hotkeyDetector.CheckToggleWindowHotkey(vkCode, time, out var consumeToggleKey, OnDoubleCtrl))

@@ -67,7 +67,12 @@ public enum IpcMessageId : byte
     // App the hook actually launched (see HookPipePeer).
     ClearHookLog = 46,
     LocateInlineItem = 47,
-    QuickPanelMouseGesture = 48
+    QuickPanelMouseGesture = 48,
+    QuickPanelWakeRule = 49,
+    StartQuickPanelWakeTest = 50,
+    StopQuickPanelWakeTest = 51,
+    QuickPanelWakeTestResult = 52,
+    SetHotkeyRecorderFocused = 53
 }
 
 public struct IpcMessage

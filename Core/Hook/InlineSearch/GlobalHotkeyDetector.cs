@@ -23,7 +23,19 @@ public sealed class GlobalHotkeyDetector
         _requestQuickSwitch = requestQuickSwitch ?? (hwnd => QuickSwitchNavigator.Execute(_explorerTracker, hwnd));
     }
 
-    public void OnKeyDown(int vkCode) => _modifierKeyState.OnKeyDown(vkCode);
+    private readonly HashSet<int> _pressedKeys = new();
+    private bool _repeated;
+    internal bool QuickPanelKeyRepeated => _repeated;
+    internal string? MatchedQuickPanelRuleId { get; private set; }
+    private string? _cachedKey, _cachedAlternate;
+    private List<QuickPanelWakeBinding>? _cachedBindings;
+    private QuickPanelWakeBinding[] _keyRules = [];
+
+    public void OnKeyDown(int vkCode)
+    {
+        _repeated = !_pressedKeys.Add(vkCode);
+        _modifierKeyState.OnKeyDown(vkCode);
+    }
 
     // Secure-desktop transitions can hide a modifier key-up from the low-level hook; refresh the
     // hook-owned snapshot before processing the next key event.
@@ -41,6 +53,7 @@ public sealed class GlobalHotkeyDetector
     /// <summary>Call on WM_KEYUP / WM_SYSKEYUP to reset the "was released" flags.</summary>
     public void OnKeyUp(int vkCode)
     {
+        _pressedKeys.Remove(vkCode);
         _modifierKeyState.OnKeyUp(vkCode);
         if (HotkeyStringFormat.IsBareModifier(_settings.Hotkeys.ToggleWindowHotkey, out var toggleModifier) &&
             KeyboardUtils.IsModifierKey(vkCode, toggleModifier))
@@ -107,8 +120,23 @@ public sealed class GlobalHotkeyDetector
     }
 
     /// <summary>Whether this keystroke is the quick panel's own combination, answered without consuming it.</summary>
-    internal bool IsQuickPanelComboDown(int vkCode) => MatchesCombo(_settings.Hotkeys.QuickPanelHotkey, vkCode)
-            || MatchesCombo(_settings.Hotkeys.QuickPanelAlternateHotkey, vkCode);
+    internal bool IsQuickPanelComboDown(int vkCode) => FindQuickPanelRule(vkCode) != null;
+
+    internal bool MatchesWakeTest(string combo, int vkCode) => MatchesCombo(combo, vkCode);
+
+    private QuickPanelWakeBinding? FindQuickPanelRule(int vkCode)
+    {
+        var settings = _settings.Hotkeys;
+        if (!ReferenceEquals(_cachedBindings, settings.QuickPanelWakeBindings)
+            || _cachedKey != settings.QuickPanelHotkey || _cachedAlternate != settings.QuickPanelAlternateHotkey)
+        {
+            _cachedBindings = settings.QuickPanelWakeBindings;
+            _cachedKey = settings.QuickPanelHotkey; _cachedAlternate = settings.QuickPanelAlternateHotkey;
+            _keyRules = QuickPanelWakeBindings.Get(settings).Where(r => r != null && r.Enabled
+                && r.Kind == QuickPanelWakeKind.Keyboard && QuickPanelWakeBindings.Validate(r) == null).ToArray();
+        }
+        return _keyRules.FirstOrDefault(r => MatchesCombo(r.Key, vkCode));
+    }
 
     private bool MatchesCombo(string combo, int vkCode)
     {
@@ -119,7 +147,8 @@ public sealed class GlobalHotkeyDetector
 
     public bool CheckQuickPanelHotkey(int vkCode, out bool consumeKey)
     {
-        consumeKey = IsQuickPanelComboDown(vkCode);
+        MatchedQuickPanelRuleId = FindQuickPanelRule(vkCode)?.Id;
+        consumeKey = MatchedQuickPanelRuleId != null;
         return consumeKey;
     }
 

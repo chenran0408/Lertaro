@@ -66,14 +66,14 @@ public class MouseHookService : IDisposable
     public event Action<uint>? OnRightButtonDown;
 
     private readonly QuickPanelMouseGestureHook? _panelGestures;
-    internal event Action<nint>? OnQuickPanelMouseGesture;
+    internal event Action<nint, string>? OnQuickPanelMouseGesture;
 
     public MouseHookService() { }
 
     internal MouseHookService(Func<UserSettings> settings, Func<bool> suspended)
     {
         _panelGestures = new QuickPanelMouseGestureHook(settings, suspended);
-        _panelGestures.Triggered += root => OnQuickPanelMouseGesture?.Invoke(root);
+        _panelGestures.Triggered += (root, rule) => OnQuickPanelMouseGesture?.Invoke(root, rule);
     }
 
     public void Start()
@@ -111,7 +111,7 @@ public class MouseHookService : IDisposable
                 {
                     var data = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
                     if (data.dwExtraInfo != (nint)QuickPanelMouseGestureHook.ReplayMarker
-                        && _panelGestures.Process((int)wParam, data.pt.x, data.pt.y, data.time)) return (nint)1;
+                        && _panelGestures.Process((int)wParam, data.pt.x, data.pt.y, data.time, data.mouseData)) return (nint)1;
                 }
                 if (wParam == (IntPtr)WM_LBUTTONDOWN)
                 {

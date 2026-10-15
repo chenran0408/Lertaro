@@ -54,6 +54,8 @@ public sealed class HookIpcClient : IDisposable
     public event Action? OnActivated;
     public event Action? OnQuickPanelHotkey;
     public event Action<nint>? OnQuickPanelMouseGesture;
+    public event Action<nint, string, bool>? OnQuickPanelWakeRule;
+    public event Action<string, string>? OnQuickPanelWakeTestResult;
     public event Action? OnQuickNavigationHotkey;
     public event Action<char>? OnCharacterTyped;
     public event Action? OnBackspacePressed;
@@ -126,6 +128,7 @@ public sealed class HookIpcClient : IDisposable
     [
         IpcMessageId.SetAppProcessId,
         IpcMessageId.SetHotkeysDisabled,
+        IpcMessageId.SetHotkeyRecorderFocused,
         IpcMessageId.SetQuickSearchVisible,
         IpcMessageId.SetInlineSearchVisible,
         IpcMessageId.SetInlineWindowOnScreen,
@@ -337,6 +340,8 @@ public sealed class HookIpcClient : IDisposable
                 case IpcMessageId.Activate: OnActivated?.Invoke(); break;
                 case IpcMessageId.QuickPanelHotkey: OnQuickPanelHotkey?.Invoke(); break;
                 case IpcMessageId.QuickPanelMouseGesture: OnQuickPanelMouseGesture?.Invoke((nint)msg.Hwnd); break;
+                case IpcMessageId.QuickPanelWakeRule: OnQuickPanelWakeRule?.Invoke((nint)msg.Hwnd, msg.StringVal1 ?? "", msg.BoolVal); break;
+                case IpcMessageId.QuickPanelWakeTestResult: OnQuickPanelWakeTestResult?.Invoke(msg.StringVal1 ?? "", msg.StringVal2 ?? ""); break;
                 case IpcMessageId.QuickNavigationHotkey: OnQuickNavigationHotkey?.Invoke(); break;
                 case IpcMessageId.KeyBackspace: OnBackspacePressed?.Invoke(); break;
                 case IpcMessageId.KeyEscape: OnEscapePressed?.Invoke(); break;

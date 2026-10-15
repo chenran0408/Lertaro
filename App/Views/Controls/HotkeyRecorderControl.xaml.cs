@@ -80,7 +80,24 @@ public partial class HotkeyRecorderControl : System.Windows.Controls.UserControl
     private bool _realKeyPressedDuringModifierHold;
     private ModifierKeys _trackedModifiers;
 
-    public HotkeyRecorderControl() => InitializeComponent();
+    private static HotkeyRecorderControl? _focusedRecorder;
+    public HotkeyRecorderControl()
+    {
+        InitializeComponent();
+        IsKeyboardFocusWithinChanged += (_, _) => UpdateRecordingFocus(IsKeyboardFocusWithin);
+        Unloaded += (_, _) => UpdateRecordingFocus(false);
+        IsVisibleChanged += (_, e) => { if (e.NewValue is false) UpdateRecordingFocus(false); };
+    }
+    private void UpdateRecordingFocus(bool focused)
+    {
+        if (focused) _focusedRecorder = this;
+        else if (ReferenceEquals(_focusedRecorder, this)) _focusedRecorder = null;
+        else return;
+        // Recording an existing global binding must reach the recorder rather than summon a panel.
+        // This state is separate from the user's Pause setting and cleared when the control unloads.
+        App.HookClient?.SendMessage(new Core.Wire.IpcMessage
+        { Id = Core.Wire.IpcMessageId.SetHotkeyRecorderFocused, BoolVal = _focusedRecorder != null });
+    }
 
     private void ClearButton_Click(object sender, RoutedEventArgs e) => Value = string.Empty;
 

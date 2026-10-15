@@ -70,8 +70,8 @@
             <CheckBox x:Name="RowQuickPanelEnabled" Margin="0,12,0,8"
                       IsChecked="{Binding Enabled, Mode=TwoWay}"
                       Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_Enabled]}"/>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_HotkeyHint]}"
-                       Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,14"/>
+            <Button x:Name="RowWakeShortcut" HorizontalAlignment="Left" Margin="0,0,0,14" Style="{StaticResource LinkButton}"
+                    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Manage]}" Click="OpenWakeSettings"/>
 
             <!-- Panel-wide, above the per-workspace cards: every thumbnail view in the panel draws at
                  one size, which is a comfort choice about the screen it is docked onto rather than a

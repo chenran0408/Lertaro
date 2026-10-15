@@ -40,6 +40,7 @@ public sealed class HookProcess : IDisposable
 
     private readonly HookIpcServer _ipcServer;
     private readonly HookCommandHandler _commandHandler;
+    private readonly Action<string, string> _wakeTestReporter;
     private readonly OpenedFolderSnapshotPublisher _openedFolderSnapshots;
     private ExplorerTracker? _explorerTracker;
     private KeyboardHookService? _keyboardHook;
@@ -58,6 +59,12 @@ public sealed class HookProcess : IDisposable
     private uint _appProcessId;
     private int _watchedAppPid;
     private volatile bool _isHotkeysDisabledTemporarily;
+    private volatile bool _isHotkeyRecorderFocused;
+    internal bool IsHotkeyRecorderFocused
+    {
+        get => _isHotkeyRecorderFocused;
+        set { _isHotkeyRecorderFocused = value; if (_keyboardHook != null) _keyboardHook.IsHotkeyRecorderFocused = value; }
+    }
     // Written by the keyboard hook thread, read by the tracker thread; the window message between them is the
     // synchronization, and a plain field read here would be the one place the value could still be torn.
     private IntPtr _quickSwitchDialog;
@@ -203,6 +210,9 @@ public sealed class HookProcess : IDisposable
     public HookProcess(HookIpcServer ipcServer)
     {
         _ipcServer = ipcServer;
+        _wakeTestReporter = (id, reason) => _ipcServer.SendMessage(new IpcMessage
+        { Id = IpcMessageId.QuickPanelWakeTestResult, StringVal1 = id, StringVal2 = reason });
+        QuickPanelWakeTestSession.Reported += _wakeTestReporter;
         _commandHandler = new HookCommandHandler(this);
         _openedFolderSnapshots = new OpenedFolderSnapshotPublisher(_ipcServer);
 
@@ -228,6 +238,8 @@ public sealed class HookProcess : IDisposable
         };
         _ipcServer.OnDisconnected += () =>
         {
+            QuickPanelWakeTestSession.Stop();
+            IsHotkeyRecorderFocused = false;
             // Whatever the window state was, the window it described is no longer answering: these flags
             // are what the hook uses to decide which keystrokes to swallow, and only the App clears them.
             // A crash with the inline window open used to leave the hook suppressing Escape and the arrows
@@ -357,10 +369,13 @@ public sealed class HookProcess : IDisposable
             _keyboardHook = new KeyboardHookService(_explorerTracker);
             _keyboardHook.AppProcessId = _appProcessId;
             _keyboardHook.IsHotkeysDisabledTemporarily = _isHotkeysDisabledTemporarily;
-            _keyboardHook.OnQuickPanelHotkey += () =>
+            _keyboardHook.IsHotkeyRecorderFocused = _isHotkeyRecorderFocused;
+            _keyboardHook.OnQuickPanelWakeRule += id =>
             {
                 Logger.Log("[HookProcess] Quick panel hotkey detected.", LogLevel.Debug);
-                _ipcServer.SendQuickPanelHotkey();
+                if (_appProcessId != 0) AllowSetForegroundWindow((int)_appProcessId);
+                _ipcServer.SendMessage(new IpcMessage { Id = IpcMessageId.QuickPanelWakeRule,
+                    Hwnd = ExplorerNativeHooks.GetForegroundWindow().ToInt64(), StringVal1 = id, BoolVal = true });
             };
             _keyboardHook.OnQuickNavigationHotkey += () => _ipcServer.SendQuickNavigationHotkey();
             _keyboardHook.OnQuickSwitchRequested += dialogHwnd =>
@@ -394,10 +409,10 @@ public sealed class HookProcess : IDisposable
             _keyboardHook.Start();
 
             _mouseHook = new MouseHookService(() => _keyboardHook._settings, () => _isHotkeysDisabledTemporarily);
-            _mouseHook.OnQuickPanelMouseGesture += root =>
+            _mouseHook.OnQuickPanelMouseGesture += (root, id) =>
             {
                 if (_appProcessId != 0) AllowSetForegroundWindow((int)_appProcessId);
-                _ipcServer.SendMessage(new IpcMessage { Id = IpcMessageId.QuickPanelMouseGesture, Hwnd = root.ToInt64() });
+                _ipcServer.SendMessage(new IpcMessage { Id = IpcMessageId.QuickPanelWakeRule, Hwnd = root.ToInt64(), StringVal1 = id });
             };
             _mouseHook.OnRightButtonDown += time => _keyboardHook.NotifyRightButtonDown(time);
             _mouseHook.OnMouseClick += (x, y) => _ipcServer.SendMessage(new IpcMessage { Id = IpcMessageId.MouseClick, MouseX = x, MouseY = y });
@@ -474,5 +489,10 @@ public sealed class HookProcess : IDisposable
         if (_trackerThreadId != 0) PostThreadMessage(_trackerThreadId, WM_QUIT, IntPtr.Zero, IntPtr.Zero);
     }
 
-    public void Dispose() => Stop();
+    public void Dispose()
+    {
+        QuickPanelWakeTestSession.Reported -= _wakeTestReporter;
+        QuickPanelWakeTestSession.Stop();
+        Stop();
+    }
 }

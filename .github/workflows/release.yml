@@ -35,18 +35,18 @@ jobs:
         run: |
           .\make.bat
 
-      # 5. Extract commit history since the previous tag as Release Notes
+      # 5. Publish short, user-facing notes instead of a raw commit log.
       - name: Generate Changelog
         id: changelog
         shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 "${{ github.ref_name }}^" 2>/dev/null || echo "")
-          echo "## Changelog (Commits)" > changelog.md
-          echo "" >> changelog.md
-          if [ -z "$PREV_TAG" ]; then
-            git log --pretty=format:"* %s (%h)" --no-merges >> changelog.md
+          NOTES_FILE="release-notes/${RELEASE_TAG}.md"
+          if [ -f "$NOTES_FILE" ]; then
+            cp -- "$NOTES_FILE" changelog.md
           else
-            git log --pretty=format:"* %s (%h)" --no-merges "$PREV_TAG..${{ github.ref_name }}" >> changelog.md
+            printf '%s\n' '改进日常使用体验。' '' '普通电脑下载 Lertaro-Setup.exe；免安装版选择 Lertaro-Portable.zip。ARM 电脑请选择带 arm64 的文件。' > changelog.md
           fi
           echo "" >> changelog.md
 
@@ -87,7 +87,7 @@ jobs:
 
           # Append verification info to changelog.md
           echo '' >> changelog.md
-          echo '## Security Verification' >> changelog.md
+          echo '<details><summary>文件校验信息（可选）</summary>' >> changelog.md
           echo '' >> changelog.md
           echo '### SHA-256 Checksums' >> changelog.md
           echo "* **Lertaro-Setup.exe** (x64): ``$exeHash``" >> changelog.md
@@ -125,6 +125,8 @@ jobs:
               echo '' >> changelog.md
               echo '*Note: This release is unsigned (SIGNING_KEY missing).*' >> changelog.md
           }
+          echo '' >> changelog.md
+          echo '</details>' >> changelog.md
 
       # 6. Publish release and upload artifacts (installer, portable ZIP, and signature)
       # The new repository is not visible to legacy installs, so ARM64 assets use the conventional
