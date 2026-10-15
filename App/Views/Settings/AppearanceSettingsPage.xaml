@@ -196,7 +196,6 @@
                 </StackPanel>
             </Border>
 
-            <local:BackgroundSettingsSection x:Name="BackgroundSection" DataContext="{Binding Appearance.Background}"/>
             <local:TaskbarSettingsSection x:Name="RowTaskbarSettings"/>
 
             <!-- Manual mode: one grid, filtered to whichever flavor (light/dark) is currently active. -->

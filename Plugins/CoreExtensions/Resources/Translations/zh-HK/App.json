@@ -840,13 +840,10 @@
   "Appearance_TaskbarOpacity": "工作列不透明度",
   "Appearance_TaskbarPreviewFailed": "無法完成預覽，請查看下方提示。",
   "Appearance_TaskbarOptions": "調整工作列",
-  "Background_SystemMaterial": "磨砂玻璃 / 雲母",
+  "Background_SystemMaterial": "系統磨砂 / 雲母",
   "Background_Mica": "雲母",
-  "Background_Acrylic": "磨砂玻璃",
-  "Background_MaterialHint": "磨砂玻璃會透出並模糊背後的桌面或視窗，文字和圖示保持清晰。首次啟用請儲存並重新啟動 Lertaro；可先開啟預覽視窗查看。",
+  "Background_Acrylic": "壓克力磨砂",
+  "Background_MaterialHint": "首次啟用系統材質，請儲存設定後重新啟動 Lertaro。可先開啟預覽視窗，調整會即時更新預覽。",
   "Background_MaterialPreview": "查看材質預覽",
-  "Background_MaterialUnsupported": "目前的 Windows 不支援此系統材質，將使用清晰底色。需要 Windows 11 22H2 或更新版本。",
-  "Background_MicaHint": "雲母以桌面桌布為底色，效果較柔和。首次啟用請儲存並重新啟動 Lertaro；可先開啟預覽視窗查看。",
-  "Background_LiquidGlass": "液態玻璃 · 輕折射",
-  "Background_LiquidGlassHint": "輕折射會讀取視窗後方的畫面，隱藏後停止。首次啟用請儲存並重新啟動；可先查看預覽。此模式可能令視窗不會出現在截圖或錄影中，裝置不支援時自動使用磨砂玻璃。"
+  "Background_MaterialUnsupported": "目前的 Windows 不支援此系統材質，將使用清晰底色。需要 Windows 11 22H2 或更新版本。"
 }

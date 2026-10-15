@@ -17,7 +17,7 @@ public partial class QuickPanelWindow : Window,
     // Without this the preview would dock against the transparent bounds and sit a shadow's width too
     // far out -- which for a window parked in a corner is the difference between the right side fitting
     // the preview and not.
-    public Thickness VisibleContentInset => AllowsTransparency ? new(8) : new(0);
+    public Thickness VisibleContentInset => new(8);
 
     internal bool IsSizeMenuOpen => SizeButton.ContextMenu?.IsOpen == true || _itemMenu.IsOpen;
     private readonly QuickPanelItemMenu _itemMenu;
@@ -36,7 +36,6 @@ public partial class QuickPanelWindow : Window,
     {
         _itemMenu = new QuickPanelItemMenu(this);
         InitializeComponent();
-        Lertaro.App.Helpers.Visuals.NativeMaterialHost.Prepare(this);
         _ = new QuickPanelArrangePinSupport(this, viewModel);
         var scrollSupport = new QuickPanelScrollSupport(GroupsScrollViewer, StickyGroupHeader);
         Loaded += (_, _) => Dispatcher.BeginInvoke(scrollSupport.Update, System.Windows.Threading.DispatcherPriority.Loaded);

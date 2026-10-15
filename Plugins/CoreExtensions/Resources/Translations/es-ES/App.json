@@ -840,13 +840,10 @@
   "Appearance_TaskbarOpacity": "Opacidad de la barra",
   "Appearance_TaskbarPreviewFailed": "No se pudo completar la vista previa. Consulta los detalles.",
   "Appearance_TaskbarOptions": "Personalizar la barra",
-  "Background_SystemMaterial": "Vidrio esmerilado / mica",
+  "Background_SystemMaterial": "Acrílico / mica del sistema",
   "Background_Mica": "Mica",
-  "Background_Acrylic": "Vidrio esmerilado",
-  "Background_MaterialHint": "El vidrio esmerilado deja ver y difumina el escritorio o las ventanas del fondo, manteniendo nítidos el texto y los iconos. Guarda y reinicia Lertaro al activarlo por primera vez, o abre antes la vista previa.",
+  "Background_Acrylic": "Acrílico",
+  "Background_MaterialHint": "Al activar materiales del sistema por primera vez, guarda y reinicia Lertaro. Abre la ventana de vista previa para ver los ajustes al instante.",
   "Background_MaterialPreview": "Ver material",
-  "Background_MaterialUnsupported": "Esta versión de Windows no admite el material; se usa un fondo liso. Se requiere Windows 11 22H2 o posterior.",
-  "Background_MicaHint": "Mica usa el fondo de escritorio para un efecto más suave. Guarda y reinicia Lertaro al activarlo por primera vez, o abre antes la vista previa.",
-  "Background_LiquidGlass": "Cristal líquido · refracción suave",
-  "Background_LiquidGlassHint": "Lee el fondo detrás de la ventana y se detiene al ocultarla. Guarda y reinicia para activarlo, o abre la vista previa. La ventana puede no aparecer en capturas o grabaciones. Los dispositivos no compatibles usan cristal esmerilado."
+  "Background_MaterialUnsupported": "Esta versión de Windows no admite el material; se usa un fondo liso. Se requiere Windows 11 22H2 o posterior."
 }

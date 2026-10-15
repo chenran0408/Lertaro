@@ -117,10 +117,6 @@ public static class SettingsSearchIndex
 
         // Appearance
         new("Settings_Appearance", "Appearance"),
-        new("Background_Title", "Appearance", TargetElementName: "BackgroundSection/RowBackgroundKind"),
-        new("Background_Image", "Appearance", TargetElementName: "BackgroundSection/RowBackgroundKind", TabLabelKey: "Background_Title"),
-        new("Background_Gradient", "Appearance", TargetElementName: "BackgroundSection/RowBackgroundKind", TabLabelKey: "Background_Title"),
-        new("Background_Blur", "Appearance", TargetElementName: "BackgroundSection/RowBackgroundKind", TabLabelKey: "Background_Title"),
         new("Appearance_TaskbarTitle", "Appearance", TargetElementName: "RowTaskbarSettings"),
         new("Appearance_ModeGroupTitle", "Appearance", TargetElementName: "RowThemeModeCards"),
         new("Appearance_ModeLight", "Appearance", TargetElementName: "RowThemeModeCards", TabLabelKey: "Appearance_ModeGroupTitle"),

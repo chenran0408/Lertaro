@@ -9,7 +9,7 @@ internal static class ColorPickerDialog
         using var picker = new System.Windows.Forms.ColorDialog
         {
             FullOpen = true,
-            Color = Core.BackgroundSettings.ValidColor(color) ? System.Drawing.ColorTranslator.FromHtml(color) : System.Drawing.Color.Black
+            Color = (color is { Length: 7 } && color[0] == '#' && color.AsSpan(1).IndexOfAnyExcept("0123456789abcdefABCDEF") < 0) ? System.Drawing.ColorTranslator.FromHtml(color) : System.Drawing.Color.Black
         };
         var nativeOwner = new System.Windows.Forms.NativeWindow();
         try

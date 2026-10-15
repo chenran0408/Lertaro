@@ -1,6 +1,5 @@
 <Window x:Class="Lertaro.App.Views.QuickPanel.QuickPanelWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ctrl="clr-namespace:Lertaro.App.Views.Controls"
         xmlns:services="clr-namespace:Lertaro.App.Services"
@@ -41,7 +40,7 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <Border CornerRadius="10" Background="{DynamicResource CardBackground}" helpers:BackgroundReveal.Resource="CardBackground"
+    <Border CornerRadius="10" Background="{DynamicResource CardBackground}"
             BorderBrush="{DynamicResource WindowBorderBrush}" BorderThickness="1" Margin="8">
         <Border CornerRadius="10" helpers:RoundedClip.IsEnabled="True">
             <Grid>
@@ -49,9 +48,8 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <surface:BackgroundSurface Grid.RowSpan="99" Grid.ColumnSpan="99"/>
 
-                <Border Grid.Row="0" Background="{DynamicResource HeaderBg}" helpers:BackgroundReveal.Resource="HeaderBg" helpers:BackgroundReveal.Opacity=".35"
+                <Border Grid.Row="0" Background="{DynamicResource HeaderBg}"
                         BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1"
                         VerticalAlignment="Top" Panel.ZIndex="1">
                     <Border.Style>
@@ -109,7 +107,7 @@
                 <!-- The whole content area listens for the click, not each group's list: the blank space
                      that should drop the selection is as much the gap between two groups and the run
                      below the last one as it is the end of a row of tiles. -->
-                <Border Grid.Row="1" Background="{DynamicResource ContentBg}" helpers:BackgroundReveal.Resource="ContentBg"
+                <Border Grid.Row="1" Background="{DynamicResource ContentBg}"
                         PreviewMouseLeftButtonDown="Content_PreviewMouseLeftButtonDown">
                     <Grid>
                         <!-- One block per source, each with its own header and its own list.

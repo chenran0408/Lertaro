@@ -133,7 +133,7 @@ public class ThemeManager
                             WindowEffectHelper.ApplyThemeEffects(window, theme);
                             if (window.Content is UIElement content)
                             {
-                                var targetOpacity = WindowEffectHelper.GetContentOpacity(theme.WindowOpacity);
+                                var targetOpacity = theme.WindowOpacity;
                                 var fadeIn = new System.Windows.Media.Animation.DoubleAnimation(targetOpacity, TimeSpan.FromMilliseconds(180));
                                 content.BeginAnimation(UIElement.OpacityProperty, fadeIn);
                             }

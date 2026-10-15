@@ -5,7 +5,6 @@
         <ResourceDictionary Source="../Tokens/Spacing.xaml"/>
         <ResourceDictionary Source="../Tokens/Motion.xaml"/>
         <ResourceDictionary Source="TextBox.xaml"/>
-        <ResourceDictionary Source="Slider.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
     <!-- ═══════════ Modern Arc Spinner ═══════════ -->

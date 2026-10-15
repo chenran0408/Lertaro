@@ -76,7 +76,7 @@ internal sealed class QuickSearchWindowShowSupport
 
         if (fadeContent != null)
         {
-            var targetOpacity = Lertaro.App.Helpers.Visuals.WindowEffectHelper.GetContentOpacity(ThemeManager.Instance.ActiveTheme?.WindowOpacity ?? 1.0);
+            var targetOpacity = ThemeManager.Instance.ActiveTheme?.WindowOpacity ?? 1.0;
             var fadeIn = new DoubleAnimation(targetOpacity, (Duration)System.Windows.Application.Current.FindResource("DurationWindowFadeIn"))
             {
                 EasingFunction = System.Windows.Application.Current.TryFindResource("EaseOutCubic") as IEasingFunction

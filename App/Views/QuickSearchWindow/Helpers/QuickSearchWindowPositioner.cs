@@ -56,7 +56,7 @@ public class QuickSearchWindowPositioner
         var (targetDpiScaleX, targetDpiScaleY) = GetMonitorDpiScale(targetMonitor);
         var wa = screen.WorkingArea;
         var settings = UserSettings.Load();
-        var windowWidth = settings.SearchWindow.SearchBarWidth + _window.VisibleContentInset.Left + _window.VisibleContentInset.Right;
+        var windowWidth = settings.SearchWindow.SearchBarWidth + 48;
 
         var (targetPhysX, targetPhysY) = CalculatePhysicalPosition(
             wa.Left, wa.Top, wa.Width, wa.Height,

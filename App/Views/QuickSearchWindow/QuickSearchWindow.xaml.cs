@@ -33,11 +33,10 @@ public partial class QuickSearchWindow : Window, ISearchWindow, IHasVisibleConte
     private Action? _scaleChangedHandler;
     internal QuickSearchKeywordHistoryController KeywordHistoryController { get; }
     // Must match QuickSearchWindow.xaml's root Border Margin ("24,40,24,24").
-    public Thickness VisibleContentInset => AllowsTransparency ? new(24, 40, 24, 24) : new(0);
+    public Thickness VisibleContentInset => new(24, 40, 24, 24);
     public QuickSearchWindow()
     {
         InitializeComponent();
-        Lertaro.App.Helpers.Visuals.NativeMaterialHost.Prepare(this);
         System.Windows.Media.TextOptions.SetTextFormattingMode(SearchBox.SearchTextBox, System.Windows.Media.TextFormattingMode.Ideal);
         ThemedWindowIconHelper.Apply(this);
         SystemMenuBlocker.Attach(this);
