@@ -6,13 +6,16 @@ namespace Lertaro.Core.Tests.Hook.InlineSearch;
 public sealed class QuickPanelMouseGestureTests
 {
     [TestMethod]
-    public void ShortClickAndDraggingKeepNormalRightButtonRelease()
+    public void ShortClickIsReplayedAsACompletePairAndDragHandsPressBackToSystem()
     {
         var detector = new QuickPanelMouseGestureDetector();
         detector.BeginHold(100, 100, 1000, 600, 6);
-        Assert.IsFalse(detector.TryFireHold(1599)); Assert.IsFalse(detector.Release());
+        Assert.IsTrue(detector.OwnsPress);
+        Assert.IsFalse(detector.TryFireHold(1599)); Assert.AreEqual(QuickPanelMouseGestureDetector.ReleaseAction.ReplayClick, detector.Release());
         detector.BeginHold(100, 100, 2000, 600, 6); detector.Move(107, 100);
-        Assert.IsFalse(detector.TryFireHold(2700)); Assert.IsFalse(detector.Release());
+        Assert.IsFalse(detector.TryFireHold(2700));
+        Assert.IsTrue(detector.ReturnPressToSystem()); Assert.IsFalse(detector.ReturnPressToSystem());
+        Assert.AreEqual(QuickPanelMouseGestureDetector.ReleaseAction.PassThrough, detector.Release());
     }
     [TestMethod]
     public void LongHoldFiresOnceAndSuppressesOnlyItsOwnReleaseIncludingTickRollover()
@@ -20,13 +23,35 @@ public sealed class QuickPanelMouseGestureTests
         var detector = new QuickPanelMouseGestureDetector();
         detector.BeginHold(-1000, 100, uint.MaxValue - 299, 600, 6);
         Assert.IsTrue(detector.TryFireHold(300)); Assert.IsFalse(detector.TryFireHold(900));
-        detector.CancelPendingHold(); Assert.IsTrue(detector.Release()); Assert.IsFalse(detector.Release());
+        detector.CancelPendingHold();
+        Assert.IsFalse(detector.ReturnPressToSystem(), "A successful hold must never deliver DOWN to Explorer.");
+        Assert.AreEqual(QuickPanelMouseGestureDetector.ReleaseAction.Consume, detector.Release());
+        Assert.AreEqual(QuickPanelMouseGestureDetector.ReleaseAction.PassThrough, detector.Release());
+        Assert.IsFalse(detector.OwnsPress);
     }
     [TestMethod]
     public void CancelBeforeThresholdDoesNotConsumeClick()
     {
         var detector = new QuickPanelMouseGestureDetector(); detector.BeginHold(0, 0, 1, 600, 6);
-        detector.CancelPendingHold(); Assert.IsFalse(detector.TryFireHold(1000)); Assert.IsFalse(detector.Release());
+        detector.CancelPendingHold(); Assert.IsFalse(detector.TryFireHold(1000));
+        Assert.AreEqual(QuickPanelMouseGestureDetector.ReleaseAction.ReplayClick, detector.Release());
+    }
+    [TestMethod]
+    public void RepeatedHoldsAndInterveningShortClicksDoNotLeakButtonOwnership()
+    {
+        var detector = new QuickPanelMouseGestureDetector();
+        for (uint i = 0; i < 20; i++)
+        {
+            detector.BeginHold(0, 0, i * 2000, 600, 6);
+            Assert.IsTrue(detector.TryFireHold(i * 2000 + 600));
+            detector.Move(100, 100);
+            Assert.IsFalse(detector.ReturnPressToSystem());
+            Assert.AreEqual(QuickPanelMouseGestureDetector.ReleaseAction.Consume, detector.Release());
+            detector.BeginHold(0, 0, i * 2000 + 1000, 600, 6);
+            Assert.AreEqual(QuickPanelMouseGestureDetector.ReleaseAction.ReplayClick, detector.Release());
+            Assert.IsFalse(detector.OwnsPress);
+            Assert.IsFalse(detector.TryFireHold(i * 2000 + 1900));
+        }
     }
     [TestMethod]
     [DataRow(1d, 1d, 0)]

@@ -3,16 +3,18 @@ namespace Lertaro.Core.Hook.InlineSearch;
 // Gesture state only; native input, timer ownership and process policy stay in the mouse hook.
 internal sealed class QuickPanelMouseGestureDetector
 {
-    private bool _pendingHold, _suppressRelease;
+    internal enum ReleaseAction { PassThrough, ReplayClick, Consume }
+    private bool _pendingHold, _suppressRelease, _ownsPress;
     private int _holdX, _holdY, _holdDelay;
     private uint _holdTime;
     private double _holdTolerance;
     internal bool HasPendingHold => _pendingHold;
+    internal bool OwnsPress => _ownsPress;
 
     internal void BeginHold(int x, int y, uint time, int delay, double tolerance)
     {
         _holdX = x; _holdY = y; _holdTime = time; _holdDelay = Math.Clamp(delay, 300, 2000);
-        _holdTolerance = tolerance; _pendingHold = true; _suppressRelease = false; ResetCircle();
+        _holdTolerance = tolerance; _pendingHold = _ownsPress = true; _suppressRelease = false; ResetCircle();
     }
     internal void Move(int x, int y)
     {
@@ -25,9 +27,17 @@ internal sealed class QuickPanelMouseGestureDetector
         if (!_pendingHold || elapsed < _holdDelay || elapsed > int.MaxValue) return false;
         _pendingHold = false; _suppressRelease = true; return true;
     }
-    internal bool Release()
+    internal ReleaseAction Release()
     {
-        var suppress = _suppressRelease; _pendingHold = _suppressRelease = false; return suppress;
+        var action = !_ownsPress ? ReleaseAction.PassThrough : _suppressRelease ? ReleaseAction.Consume : ReleaseAction.ReplayClick;
+        _pendingHold = _suppressRelease = _ownsPress = false;
+        return action;
+    }
+    internal bool ReturnPressToSystem()
+    {
+        if (!_ownsPress || _suppressRelease) return false;
+        _ownsPress = _pendingHold = false;
+        return true;
     }
     internal void CancelPendingHold() => _pendingHold = false;
 

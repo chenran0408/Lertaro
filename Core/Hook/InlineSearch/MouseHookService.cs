@@ -110,7 +110,8 @@ public class MouseHookService : IDisposable
                 if (_panelGestures != null)
                 {
                     var data = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
-                    if (_panelGestures.Process((int)wParam, data.pt.x, data.pt.y, data.time)) return (nint)1;
+                    if (data.dwExtraInfo != (nint)QuickPanelMouseGestureHook.ReplayMarker
+                        && _panelGestures.Process((int)wParam, data.pt.x, data.pt.y, data.time)) return (nint)1;
                 }
                 if (wParam == (IntPtr)WM_LBUTTONDOWN)
                 {
