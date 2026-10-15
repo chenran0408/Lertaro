@@ -46,4 +46,24 @@ public sealed class BackgroundSettingsViewModelTests
         vm.Cleanup();
         Assert.AreEqual(BackgroundKind.Theme, settings.Background.Kind);
     }
+    [TestMethod]
+    public void SelectingLiquidGlassPreservesTintAndReservedLevelThroughSave()
+    {
+        var settings = new UserSettings { Background = new() { Material = WindowMaterial.Acrylic, GlassLevel = GlassLevel.StrongRefraction, Tint = .65 } };
+        var vm = new BackgroundSettingsViewModel(settings);
+        try
+        {
+            vm.Material = (int)WindowMaterial.LiquidGlass;
+            vm.GlassLevel = (int)GlassLevel.Frosted;
+            Assert.AreEqual(GlassLevel.Frosted, BackgroundManager.Current.GlassLevel);
+            vm.GlassLevel = (int)GlassLevel.StrongRefraction;
+            Assert.AreEqual(65d, vm.Tint);
+            vm.Stage(); vm.Accept();
+            Assert.AreEqual(WindowMaterial.LiquidGlass, settings.Background.Material);
+            Assert.AreEqual(GlassLevel.StrongRefraction, settings.Background.GlassLevel);
+            Assert.AreEqual(GlassLevel.LightRefraction, LiquidGlassProfile.EffectiveLevel(settings.Background.GlassLevel));
+        }
+        finally { vm.Cleanup(); }
+    }
+
 }

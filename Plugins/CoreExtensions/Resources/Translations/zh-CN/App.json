@@ -846,5 +846,7 @@
   "Background_MaterialHint": "磨砂玻璃会透出并模糊背后的桌面或窗口，文字和图标保持清晰。首次启用请保存并重启 Lertaro；可先打开预览窗口查看。",
   "Background_MaterialPreview": "查看材质预览",
   "Background_MaterialUnsupported": "当前 Windows 不支持此系统材质，将使用清晰底色。此功能需要 Windows 11 22H2 或更新版本。",
-  "Background_MicaHint": "云母以桌面壁纸为底色，效果更柔和。首次启用请保存并重启 Lertaro；可先打开预览窗口查看。"
+  "Background_MicaHint": "云母以桌面壁纸为底色，效果更柔和。首次启用请保存并重启 Lertaro；可先打开预览窗口查看。",
+  "Background_LiquidGlass": "液态玻璃 · 轻折射",
+  "Background_LiquidGlassHint": "轻折射会读取窗口背后的画面，隐藏后停止。首次启用请保存并重启；可先查看预览。此模式可能让窗口不出现在截图或录屏中，设备不支持时自动使用磨砂玻璃。"
 }

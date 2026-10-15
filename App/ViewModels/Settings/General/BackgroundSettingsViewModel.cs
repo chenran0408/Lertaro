@@ -47,7 +47,8 @@ public sealed class BackgroundSettingsViewModel : ViewModelBase
     public bool IsMaterial => _draft.Kind == BackgroundKind.Material;
     public bool IsMaterialSupported => Helpers.Visuals.NativeMaterialHost.IsSupported;
     public int Material { get => (int)_draft.Material; set => Update(_draft with { Material = (WindowMaterial)value }); }
-    public string MaterialHint => TranslationManager.Instance[!IsMaterialSupported ? "Background_MaterialUnsupported" : _draft.Material == WindowMaterial.Mica ? "Background_MicaHint" : "Background_MaterialHint"];
+    public int GlassLevel { get => (int)_draft.GlassLevel; set => Update(_draft with { GlassLevel = (Lertaro.Core.GlassLevel)value }); }
+    public string MaterialHint => TranslationManager.Instance[!IsMaterialSupported ? "Background_MaterialUnsupported" : _draft.Material == WindowMaterial.Mica ? "Background_MicaHint" : _draft.Material == WindowMaterial.LiquidGlass ? "Background_LiquidGlassHint" : "Background_MaterialHint"];
     public string Status { get => _status; private set => SetProperty(ref _status, value); }
 
     private void Update(BackgroundSettings value)

@@ -17,6 +17,7 @@ public sealed class BackgroundSurface : Grid
     private readonly Border _tint = new() { IsHitTestVisible = false };
     private int _generation;
     private Window? _owner;
+    private LiquidGlassSession? _liquid;
 
     public BackgroundSurface()
     {
@@ -40,6 +41,7 @@ public sealed class BackgroundSurface : Grid
 
     private void Detach()
     {
+        _liquid?.Dispose(); _liquid = null;
         BackgroundManager.Changed -= Refresh;
         ThemeManager.Instance.ThemeChanged -= Refresh;
         _owner?.Closed -= OwnerClosed;
@@ -56,11 +58,14 @@ public sealed class BackgroundSurface : Grid
         }
         var generation = ++_generation;
         var settings = BackgroundManager.Current;
+        var liquid = settings.Kind == BackgroundKind.Material && settings.Material == WindowMaterial.LiquidGlass;
+        if (!liquid) { _liquid?.Dispose(); _liquid = null; }
         Background = null;
         _paint.Effect = null;
         _paint.Background = null;
         _tint.Background = null;
-        var material = Window.GetWindow(this) is { } owner && Helpers.Visuals.NativeMaterialHost.Refresh(owner);
+        var window = Window.GetWindow(this);
+        var material = window != null && Helpers.Visuals.NativeMaterialHost.Refresh(window);
         if (settings.Kind == BackgroundKind.Theme) return;
         var dark = ThemeManager.Instance.ActiveTheme?.IsDark == true;
         // Use the selected palette, including plugin themes, for tint and fallback surfaces.
@@ -86,6 +91,13 @@ public sealed class BackgroundSurface : Grid
         }
         _paint.Background = brush;
         _tint.Background = new SolidColorBrush(baseColor) { Opacity = settings.Tint };
+        // Inline previews use the normal fallback; only the full-window background owns a capture session.
+        if (liquid && material && (RenderCapability.Tier >> 16) >= 2 && window != null
+            && ActualWidth >= window.ActualWidth * .7 && ActualHeight >= window.ActualHeight * .5)
+        {
+            try { (_liquid ??= new LiquidGlassSession(this, _paint, window)).Refresh(); }
+            catch (Exception ex) { Logger.Log($"[LiquidGlass] Cannot start background: {ex.Message}", LogLevel.Warn); }
+        }
     }
 
     internal static LinearGradientBrush CreateGradient(BackgroundSettings settings)

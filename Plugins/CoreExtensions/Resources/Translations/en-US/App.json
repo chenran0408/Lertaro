@@ -846,5 +846,7 @@
   "Background_MaterialHint": "Frosted glass reveals and blurs the desktop or windows behind it while keeping text and icons sharp. Save and restart Lertaro on first activation, or open the preview window first.",
   "Background_MaterialPreview": "Open material preview",
   "Background_MaterialUnsupported": "This Windows version does not support the material. A solid background is used. Windows 11 22H2 or later is required.",
-  "Background_MicaHint": "Mica uses the desktop wallpaper for a softer background. Save and restart Lertaro on first activation, or open the preview window first."
+  "Background_MicaHint": "Mica uses the desktop wallpaper for a softer background. Save and restart Lertaro on first activation, or open the preview window first.",
+  "Background_LiquidGlass": "Liquid glass · subtle refraction",
+  "Background_LiquidGlassHint": "Subtle refraction samples the background behind this window and stops when hidden. Save and restart for first use, or open the preview. The window may be absent from screenshots or recordings. Unsupported devices use frosted glass."
 }

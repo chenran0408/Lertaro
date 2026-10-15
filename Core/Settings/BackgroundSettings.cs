@@ -1,7 +1,8 @@
 namespace Lertaro.Core;
 
 public enum BackgroundKind { Theme, Solid, Gradient, Image, Material }
-public enum WindowMaterial { Mica, Acrylic }
+public enum WindowMaterial { Mica, Acrylic, LiquidGlass }
+public enum GlassLevel { Frosted, LightRefraction, StrongRefraction }
 
 public sealed record BackgroundSettings
 {
@@ -13,12 +14,14 @@ public sealed record BackgroundSettings
     public double Blur { get; init; }
     public double Tint { get; init; } = 0.65;
     public bool FitImage { get; init; }
-    public WindowMaterial Material { get; init; } = WindowMaterial.Acrylic;
+    public WindowMaterial Material { get; init; } = WindowMaterial.LiquidGlass;
+    public GlassLevel GlassLevel { get; init; } = GlassLevel.LightRefraction;
 
     public BackgroundSettings Normalize() => this with
     {
         Kind = Enum.IsDefined(Kind) ? Kind : BackgroundKind.Theme,
-        Material = Enum.IsDefined(Material) ? Material : WindowMaterial.Acrylic,
+        Material = Enum.IsDefined(Material) ? Material : WindowMaterial.LiquidGlass,
+        GlassLevel = Enum.IsDefined(GlassLevel) ? GlassLevel : GlassLevel.LightRefraction,
         ImagePath = ImagePath ?? "",
         FirstColor = ValidColor(FirstColor) ? FirstColor : "#DDEBFA",
         SecondColor = ValidColor(SecondColor) ? SecondColor : "#EADFF7",

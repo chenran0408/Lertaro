@@ -40,8 +40,8 @@ internal static class NativeMaterialHost
         var settings = BackgroundManager.Current;
         var material = settings.Kind == BackgroundKind.Material;
         if (material) window.Background = System.Windows.Media.Brushes.Transparent;
-        else window.SetResourceReference(Window.BackgroundProperty, "ContentBg");
-        var type = material ? settings.Material == WindowMaterial.Acrylic ? 3 : 2 : 1;
+        else window.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, "ContentBg");
+        var type = material ? settings.Material != WindowMaterial.Mica ? 3 : 2 : 1;
         var dark = ThemeManager.Instance.ActiveTheme?.IsDark == true ? 1 : 0;
         DwmSetWindowAttribute(handle, 20, ref dark, sizeof(int));
         if (material)

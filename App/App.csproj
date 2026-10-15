@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <Resource Include="logo.ico" />
+    <Resource Include="Resources\Shaders\LiquidGlass.ps" />
   </ItemGroup>
 
   <!-- The host must remain usable with every plugin disabled. Share the existing resource sources,

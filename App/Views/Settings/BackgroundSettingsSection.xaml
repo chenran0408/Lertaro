@@ -30,6 +30,7 @@
                     <ComboBox SelectedIndex="{Binding Material}" HorizontalAlignment="Left" MinWidth="180">
                         <ComboBoxItem Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Mica]}"/>
                         <ComboBoxItem Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Acrylic]}"/>
+                        <ComboBoxItem Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_LiquidGlass]}"/>
                     </ComboBox>
                     <TextBlock Style="{DynamicResource SettingsHintText}" Text="{Binding MaterialHint}" Margin="0,8"/>
                     <Button Command="{Binding PreviewMaterialCommand}" HorizontalAlignment="Left" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_MaterialPreview]}"/>

@@ -846,5 +846,7 @@
   "Background_MaterialHint": "すりガラスは背後のデスクトップやウィンドウを透かしてぼかし、文字とアイコンを鮮明に保ちます。初回は保存後に Lertaro を再起動してください。先にプレビューで確認できます。",
   "Background_MaterialPreview": "素材をプレビュー",
   "Background_MaterialUnsupported": "この Windows ではシステム素材を使用できないため、単色の背景を使用します。Windows 11 22H2 以降が必要です。",
-  "Background_MicaHint": "マイカはデスクトップの壁紙を基にした柔らかい背景です。初回は保存後に Lertaro を再起動してください。先にプレビューで確認できます。"
+  "Background_MicaHint": "マイカはデスクトップの壁紙を基にした柔らかい背景です。初回は保存後に Lertaro を再起動してください。先にプレビューで確認できます。",
+  "Background_LiquidGlass": "リキッドガラス · 弱い屈折",
+  "Background_LiquidGlassHint": "ウィンドウ背後の画面を読み取り、非表示時は停止します。初回は保存して再起動するか、プレビューをご覧ください。このウィンドウがスクリーンショットや録画に映らない場合があります。非対応環境ではすりガラスに切り替わります。"
 }
