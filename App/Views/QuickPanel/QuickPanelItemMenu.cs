@@ -24,17 +24,21 @@ internal sealed class QuickPanelItemMenu
     }
     private ContextMenu? _menu;
     private bool _building;
+    private int _generation;
     internal bool IsOpen => _building || _menu?.IsOpen == true;
     internal void Close()
     {
+        _generation++;
         _building = false;
         _menu?.IsOpen = false;
-        _menu = null;
+        _menu?.Items.Clear();
     }
     internal async Task ShowAsync(ListBox list, QuickPanelGroupViewModel group, AppSearchResult? item, int slot)
     {
         Close();
-        var menu = new ContextMenu { PlacementTarget = list, Placement = PlacementMode.MousePoint };
+        var generation = _generation;
+        var menu = _menu ??= new ContextMenu { Placement = PlacementMode.MousePoint };
+        menu.PlacementTarget = list;
         if (item == null)
         {
             if (slot < 0 || !QuickPanelWindow.CanDrop(group, true, false) || !group.CanArrange) return;
@@ -50,7 +54,6 @@ internal sealed class QuickPanelItemMenu
             Add("QuickPanel_ResetIconName", () => group.ItemLabels.Set(item.FullPath, "", false));
 
         }
-        _menu = menu;
         list.ContextMenu = menu;
         if (item != null)
         {
@@ -61,13 +64,13 @@ internal sealed class QuickPanelItemMenu
             {
                 using var existence = PathExistenceCache.BeginScope();
                 await Task.Run(() => PathExistenceCache.PrimeResults(selection));
-                if (_menu != menu || !window.IsVisible) return;
+                if (_generation != generation || !window.IsVisible) return;
                 PrependActions(menu, ActionMenuBuilder.FinalizeItems(ActionMenuBuilder.BuildStatic(selection, SearchWindowType.Main)), selection, window);
             }
             catch (Exception ex) { Core.Logger.Log($"[QuickPanel] Building item actions failed: {ex.Message}", Core.LogLevel.Error); }
-            finally { if (_menu == menu) _building = false; }
+            finally { if (_generation == generation) _building = false; }
         }
-        if (_menu == menu && window.IsVisible) menu.IsOpen = true;
+        if (_generation == generation && window.IsVisible) menu.IsOpen = true;
         MenuItem Add(string key, Action action)
         {
             var entry = new MenuItem { Header = TranslationManager.Instance[key] };

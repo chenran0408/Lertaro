@@ -14,6 +14,31 @@ namespace Lertaro.App.Tests.Views.QuickPanel;
 public sealed class QuickPanelItemMenuTests
 {
     [StaTestMethod]
+    public void ReopeningReusesTheMenuAndReplacesItsActions()
+    {
+        var vm = new QuickPanelViewModel(() => new QuickPanelSettings(), (_, _) => Task.FromResult(new List<SearchResult>()), () => { });
+        var item = new AppSearchResult { Name = "file.txt", FullPath = @"C:\Data\file.txt" };
+        var group = new QuickPanelGroupViewModel("source", "Source", "", new() { (item, null) });
+        var list = new ListBox { DataContext = group, ItemsSource = group.Items };
+        var window = new QuickPanelWindow(vm) { Content = list, Width = 700, Height = 500 };
+        var presenter = new QuickPanelItemMenu(window);
+        var previousContext = SynchronizationContext.Current;
+        SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(window.Dispatcher));
+        try
+        {
+            window.Show();
+            Complete(presenter.ShowAsync(list, group, item, -1), window.Dispatcher);
+            var first = list.ContextMenu;
+            var count = first.Items.Count;
+            presenter.Close();
+            Complete(presenter.ShowAsync(list, group, item, -1), window.Dispatcher);
+            Assert.AreSame(first, list.ContextMenu);
+            Assert.AreEqual(count, first.Items.Count);
+        }
+        finally { presenter.Close(); window.Close(); SynchronizationContext.SetSynchronizationContext(previousContext); }
+    }
+
+    [StaTestMethod]
     public void ANewClickCancelsTheMenuStillBeingPrepared()
     {
         var vm = new QuickPanelViewModel(() => new QuickPanelSettings(), (_, _) => Task.FromResult(new List<SearchResult>()), () => { });

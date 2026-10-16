@@ -37,6 +37,11 @@ jobs:
         run: winget install JRSoftware.InnoSetup.7 --force --silent --no-upgrade --accept-source-agreements
       - name: Build both installers
         run: .\make.bat
+      - name: Sign candidate updates
+        shell: pwsh
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        run: ./Tools/SignRelease.ps1 -PackageDirectory dist
       - uses: actions/upload-artifact@v4
         with:
           name: beta-candidate
@@ -69,3 +74,28 @@ jobs:
       - name: Install, start and uninstall
         shell: pwsh
         run: ./Tools/TestInstallerSmoke.ps1 -InstallerPath "candidate/Lertaro-Setup${{ matrix.suffix }}.exe" -Architecture '${{ matrix.architecture }}'
+
+  upgrade-smoke:
+    needs: package
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            architecture: X64
+          - runner: windows-11-arm
+            architecture: Arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/download-artifact@v4
+        with:
+          name: beta-candidate
+          path: candidate
+      - name: Upgrade installed beta7 and uninstall
+        shell: pwsh
+        run: ./Tools/TestUpgradeSmoke.ps1 -PackageDirectory candidate -Architecture '${{ matrix.architecture }}'
