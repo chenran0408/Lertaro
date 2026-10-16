@@ -118,12 +118,10 @@ public static class MarqueeBehavior
             containingWindow.Deactivated += windowActivationHandler;
         }
 
-        element.SizeChanged += (s, e) => UpdateMarqueeAnimation(element, isActive);
-
-        if (VisualTreeHelper.GetParent(element) is FrameworkElement parent)
-        {
-            parent.SizeChanged += (s, e) => UpdateMarqueeAnimation(element, isActive);
-        }
+        SizeChangedEventHandler sizeChangedHandler = (s, e) => UpdateMarqueeAnimation(element, isActive);
+        var sizeParent = VisualTreeHelper.GetParent(element) as FrameworkElement;
+        element.SizeChanged += sizeChangedHandler;
+        if (sizeParent != null) sizeParent.SizeChanged += sizeChangedHandler;
 
         var state = new MarqueeState
         {
@@ -133,7 +131,9 @@ public static class MarqueeBehavior
             IsHighlightedDescriptor = isHighlightedDescriptor,
             Handler = handler,
             ContainingWindow = containingWindow,
-            WindowActivationHandler = windowActivationHandler
+            WindowActivationHandler = windowActivationHandler,
+            SizeParent = sizeParent,
+            SizeChangedHandler = sizeChangedHandler
         };
         SetMarqueeState(element, state);
 
@@ -145,6 +145,11 @@ public static class MarqueeBehavior
         var state = GetMarqueeState(element);
         if (state != null)
         {
+            if (state.SizeChangedHandler != null)
+            {
+                element.SizeChanged -= state.SizeChangedHandler;
+                if (state.SizeParent != null) state.SizeParent.SizeChanged -= state.SizeChangedHandler;
+            }
             if (state.WatchedContainer != null && state.Handler != null)
             {
                 state.IsMouseOverDescriptor?.RemoveValueChanged(state.WatchedContainer, state.Handler);
@@ -235,5 +240,7 @@ public static class MarqueeBehavior
         public EventHandler? Handler { get; set; }
         public Window? ContainingWindow { get; set; }
         public EventHandler? WindowActivationHandler { get; set; }
+        public FrameworkElement? SizeParent { get; set; }
+        public SizeChangedEventHandler? SizeChangedHandler { get; set; }
     }
 }

@@ -12,6 +12,7 @@ public sealed class BackgroundSettingsViewModel : ViewModelBase
     private BackgroundSettings _committed;
     private string _status = "";
     private int _imageCheck;
+    private readonly BackgroundVideoPlayback _video = BackgroundVideoPlayback.Current;
 
     public BackgroundSettingsViewModel(UserSettings settings)
     {
@@ -20,6 +21,7 @@ public sealed class BackgroundSettingsViewModel : ViewModelBase
         BrowseCommand = new RelayCommand(Browse);
         ResetCommand = new RelayCommand(() => Update(new BackgroundSettings()));
         CancelCommand = new RelayCommand(() => Update(_committed));
+        _video.Failed += OnVideoFailed;
         CheckImageAsync();
     }
 
@@ -47,9 +49,16 @@ public sealed class BackgroundSettingsViewModel : ViewModelBase
         var generation = ++_imageCheck;
         Status = "";
         if (!UseImage) return;
-        var image = await BackgroundImageCache.LoadAsync(ImagePath);
-        if (generation == _imageCheck && image == null)
-            Status = Services.TranslationManager.Instance["Background_ImageUnavailable"];
+        var video = BackgroundVideoPlayback.IsVideoPath(ImagePath);
+        var readable = video ? await BackgroundVideoPlayback.IsReadableAsync(ImagePath) : await BackgroundImageCache.LoadAsync(ImagePath) != null;
+        if (generation == _imageCheck && (!readable || (video && _video.FailedPath == ImagePath)))
+            Status = Services.TranslationManager.Instance[video ? "Background_VideoUnavailable" : "Background_ImageUnavailable"];
+    }
+
+    private void OnVideoFailed(string path)
+    {
+        if (UseImage && string.Equals(path, ImagePath, StringComparison.OrdinalIgnoreCase))
+            Status = Services.TranslationManager.Instance["Background_VideoUnavailable"];
     }
 
     private void Browse()
@@ -75,6 +84,7 @@ public sealed class BackgroundSettingsViewModel : ViewModelBase
     public void Cleanup()
     {
         ++_imageCheck;
+        _video.Failed -= OnVideoFailed;
         _settings.Background = _committed;
         BackgroundManager.EndPreview();
     }

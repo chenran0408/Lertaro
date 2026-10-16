@@ -10,6 +10,27 @@ namespace Lertaro.App.Tests.Converters;
 public class TextHighlighterTests
 {
     [STATestMethod]
+    public void PlainLabelsCanChangeClearAndReturnToHighlightingWithoutStaleRuns()
+    {
+        var text = new System.Windows.Controls.TextBlock { Foreground = System.Windows.Media.Brushes.White };
+        TextHighlighter.SetText(text, "old.txt");
+        TextHighlighter.SetText(text, "new.txt");
+        Assert.AreEqual("new.txt", text.Text);
+        TextHighlighter.SetHighlightBrush(text, System.Windows.Media.Brushes.Gold);
+        Assert.AreEqual("new.txt", text.Text);
+        TextHighlighter.SetHighlightText(text, "new");
+        Assert.AreSame(System.Windows.Media.Brushes.Gold, text.Inlines.FirstInline.Foreground);
+        TextHighlighter.SetHighlightText(text, string.Empty);
+        Assert.AreEqual("new.txt", text.Text);
+        Assert.AreSame(text.Foreground, text.Inlines.FirstInline.Foreground);
+        TextHighlighter.SetText(text, string.Empty);
+        Assert.AreEqual(string.Empty, text.Text);
+        TextHighlighter.SetText(text, "report.txt");
+        TextHighlighter.SetHighlightText(text, "report");
+        Assert.AreEqual("report", ((System.Windows.Documents.Run)text.Inlines.FirstInline).Text);
+    }
+
+    [STATestMethod]
     public void MatchingRunsHaveAWeightCueThatClearsWithTheQuery()
     {
         var text = new System.Windows.Controls.TextBlock { FontWeight = System.Windows.FontWeights.Light };

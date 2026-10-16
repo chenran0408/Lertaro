@@ -50,16 +50,18 @@ public static class TextHighlighter
         var highlight = GetHighlightText(textBlock);
         var highlightBrush = GetHighlightBrush(textBlock);
 
+        // Most panel labels have no query. Accessing Inlines creates WPF's rich-text container;
+        // keep these labels on TextBlock's plain-text path until highlighting is actually needed.
+        if (string.IsNullOrEmpty(highlight))
+        {
+            textBlock.Text = fullText ?? string.Empty;
+            return;
+        }
+
         textBlock.Inlines.Clear();
 
         if (string.IsNullOrEmpty(fullText))
             return;
-
-        if (string.IsNullOrEmpty(highlight))
-        {
-            textBlock.Inlines.Add(new Run(fullText));
-            return;
-        }
 
         bool[]? highlights = null;
         if (textBlock.DataContext is PluginSdk.Abstractions.ISearchResult searchResult)

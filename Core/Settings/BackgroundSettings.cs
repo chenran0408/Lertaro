@@ -1,6 +1,7 @@
 namespace Lertaro.Core;
 
-// Keep the old image value so existing image preferences remain readable. Retired effects use Theme.
+// Image also holds an MP4 path; retain the existing value/field names so saved pictures still load.
+// Retired effects use Theme.
 public enum BackgroundKind { Theme = 0, Image = 3 }
 
 public sealed record BackgroundSettings

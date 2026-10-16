@@ -15,6 +15,7 @@ public class QuickPanelGroupViewModel : ViewModelBase
     private readonly int _maxItems;
     private int _matchingCount;
     private int _materializedItemCount = InitialMaterializedItemCount;
+    private List<AppSearchResult> _orderedItems = new();
 
     public QuickPanelGroupViewModel(
         string sourceId,
@@ -119,8 +120,12 @@ public class QuickPanelGroupViewModel : ViewModelBase
         if (_materializedItemCount >= DisplayCount)
             return false;
 
-        _materializedItemCount += InitialMaterializedItemCount;
-        Rebuild();
+        _materializedItemCount = Math.Min(_materializedItemCount + InitialMaterializedItemCount, DisplayCount);
+        // A page extends the same order. Resetting the collection discards every existing WPF
+        // container and also announces a layout preference change, saving settings on each scroll.
+        // Only a source/filter/order change needs Rebuild; keep the existing rows and icons here.
+        for (var index = Items.Count; index < _materializedItemCount; index++)
+            Items.Add(_orderedItems[index]);
         return true;
     }
 
@@ -306,7 +311,8 @@ public class QuickPanelGroupViewModel : ViewModelBase
         var ordered = _isLoading ? matching : QuickPanelItemOrdering.Order(matching, SortMode, _itemOrder);
 
         _matchingCount = matching.Count;
-        var visible = ordered.Take(Math.Min(_materializedItemCount, DisplayCount)).Select(pair => pair.Item).ToList();
+        _orderedItems = ordered.Take(DisplayCount).Select(pair => pair.Item).ToList();
+        var visible = _orderedItems.Take(_materializedItemCount).ToList();
         if (!Items.SequenceEqual(visible))
             Items.ReplaceRange(visible);
 

@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+    <None Include="../Fixtures/background-loop.mp4" Link="Fixtures/background-loop.mp4" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

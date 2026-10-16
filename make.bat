@@ -176,7 +176,7 @@ if errorlevel 1 (
 :: Create Portable ZIP Archive
 echo.
 echo Creating Portable ZIP Archive (%ARCH%)...
-%BUILD_POWERSHELL% -NoProfile -Command "if (Test-Path '%DIST%\Lertaro-Portable%ARCHSUFFIX%.zip') { Remove-Item -Force '%DIST%\Lertaro-Portable%ARCHSUFFIX%.zip' }; Compress-Archive -Path '%OUT%' -DestinationPath '%DIST%\Lertaro-Portable%ARCHSUFFIX%.zip' -Force"
+%BUILD_POWERSHELL% -NoProfile -File "%ROOT%Tools\NewPortableArchive.ps1" -SourceDirectory "%OUT%" -DestinationPath "%DIST%\Lertaro-Portable%ARCHSUFFIX%.zip"
 if errorlevel 1 (
     echo [Error] Portable ZIP creation failed.
     exit /b 1

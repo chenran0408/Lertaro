@@ -25,6 +25,7 @@
                     <TextBox Style="{StaticResource ThemedTextBox}" Text="{Binding ImagePath, Mode=OneWay}" IsReadOnly="True" Padding="8,4"
                              ToolTip="{Binding ImagePath}"/>
                 </DockPanel>
+                <TextBlock Style="{DynamicResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_VideoHint]}"/>
                 <StackPanel IsEnabled="{Binding UseImage}">
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Right" Foreground="{DynamicResource TextPrimary}" Text="{Binding Opacity, StringFormat={}{0:0}%}"/>

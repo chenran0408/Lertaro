@@ -87,6 +87,9 @@ internal sealed class QuickPanelScrollSupport
         {
             var child = VisualTreeHelper.GetChild(root, index);
             if (child is T typed) yield return typed;
+            // Group bounds are enough for paging and sticky headers. Walking through every icon's
+            // template on each ScrollChanged made this scan grow with the entire materialized list.
+            if (child is Expander { DataContext: QuickPanelGroupViewModel }) continue;
             foreach (var descendant in FindVisualChildren<T>(child)) yield return descendant;
         }
     }

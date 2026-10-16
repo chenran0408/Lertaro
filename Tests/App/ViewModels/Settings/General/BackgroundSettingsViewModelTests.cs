@@ -36,6 +36,26 @@ public sealed class BackgroundSettingsViewModelTests
     }
 
     [TestMethod]
+    public void VideoPathAndBackgroundOptionsPersistThroughApplyAndCancelLaterDrafts()
+    {
+        var settings = new UserSettings();
+        var vm = new BackgroundSettingsViewModel(settings) { ImagePath = @"D:\壁纸\风景.MP4", UseImage = true, Opacity = 55, FitImage = true };
+        try
+        {
+            vm.Stage(); vm.Accept();
+            var saved = System.Text.Json.JsonSerializer.Deserialize<BackgroundSettings>(System.Text.Json.JsonSerializer.Serialize(settings.Background))!;
+            Assert.AreEqual(@"D:\壁纸\风景.MP4", saved.ImagePath);
+            Assert.AreEqual(.55, saved.Opacity);
+            Assert.IsTrue(saved.FitImage);
+            Assert.AreEqual(BackgroundKind.Image, saved.Kind);
+            vm.ImagePath = @"D:\壁纸\other.mp4";
+            vm.CancelCommand.Execute(null);
+            Assert.AreEqual(saved.ImagePath, vm.ImagePath);
+        }
+        finally { vm.Cleanup(); }
+    }
+
+    [TestMethod]
     public void FailedSaveAndResetRestoreCommittedChoice()
     {
         var settings = new UserSettings { Background = new() { Kind = BackgroundKind.Image, Opacity = .45 } };

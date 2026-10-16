@@ -91,6 +91,52 @@ public sealed class QuickPanelGroupViewModelTests
     }
 
     [TestMethod]
+    public void PagingPreservesExistingRowsAndDoesNotAnnounceNewPreferences()
+    {
+        var group = Group(2048);
+        var prefix = group.Items.ToArray();
+        var changes = new List<System.Collections.Specialized.NotifyCollectionChangedAction>();
+        var preferences = new List<string?>();
+        group.Items.CollectionChanged += (_, e) => changes.Add(e.Action);
+        group.PropertyChanged += (_, e) => preferences.Add(e.PropertyName);
+
+        while (group.LoadNextPage()) { }
+
+        Assert.HasCount(2048, group.Items);
+        CollectionAssert.AreEqual(prefix, group.Items.Take(prefix.Length).ToArray());
+        Assert.HasCount(2016, changes);
+        Assert.IsTrue(changes.All(action => action == System.Collections.Specialized.NotifyCollectionChangedAction.Add));
+        Assert.IsFalse(preferences.Contains(nameof(group.GridSlots)), "Scrolling must not save layout preferences.");
+    }
+
+    [TestMethod]
+    public void PagingAfterFilterSortReplaceAndResetUsesTheCurrentCompleteOrder()
+    {
+        var pairs = Pairs(Enumerable.Range(0, 180).Select(i => i.ToString("D4")).ToArray())
+            .Select((pair, index) => (pair.Item, Modified: (DateTime?)DateTime.UnixEpoch.AddMinutes(index))).ToList();
+        var group = new QuickPanelGroupViewModel("source", "Source", @"C:\source", pairs,
+            QuickPanelSortMode.NameAscending);
+        group.SortMode = QuickPanelSortMode.ModifiedDescending;
+        group.LoadNextPage();
+        Assert.AreEqual("0179", group.Items[0].Name);
+        Assert.AreEqual("0116", group.Items[^1].Name);
+        group.ApplyFilter("00");
+        while (group.LoadNextPage()) { }
+        Assert.IsTrue(group.Items.All(item => item.Name.Count(c => c == '0') >= 2));
+        var expected = group.Items.ToArray();
+        group.ResetMaterialization();
+        while (group.LoadNextPage()) { }
+        CollectionAssert.AreEqual(expected, group.Items.ToArray());
+        group.ApplyFilter("");
+        group.SortMode = QuickPanelSortMode.NameAscending;
+        group.Replace(Pairs(Enumerable.Range(0, 71).Select(i => i.ToString("D4")).ToArray()));
+        while (group.LoadNextPage()) { }
+        Assert.HasCount(71, group.Items);
+        Assert.AreEqual("0000", group.Items[0].Name);
+        Assert.AreEqual("0070", group.Items[^1].Name);
+    }
+
+    [TestMethod]
     public void ResetMaterialization_PreviouslyScrolledGroup_ReturnsToFirstPage()
     {
         var group = Group(300);

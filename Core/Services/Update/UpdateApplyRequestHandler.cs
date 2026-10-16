@@ -46,6 +46,9 @@ internal static class UpdateApplyRequestHandler
 
     private static PipeResponse HandleCore(NamedPipeServerStream pipe, string? sourceDir)
     {
+        string? unpackDir = null;
+        var applierLaunched = false;
+        var installDir = Path.TrimEndingDirectorySeparator(AppDomain.CurrentDomain.BaseDirectory);
         try
         {
             if (!PipeClientIdentity.TryGetClientProcessId(pipe, out var callerPid) ||
@@ -58,7 +61,6 @@ internal static class UpdateApplyRequestHandler
             _applier?.Dispose();
             _applier = null;
 
-            var installDir = Path.TrimEndingDirectorySeparator(AppDomain.CurrentDomain.BaseDirectory);
             using var lease = AcquireUpdateLock(installDir);
             var updaterScript = Path.Combine(installDir, "portable-updater.ps1");
             if (!File.Exists(updaterScript))
@@ -66,7 +68,7 @@ internal static class UpdateApplyRequestHandler
 
             // A leftover from a run that died between unpacking and copying would otherwise be copied over
             // as part of this one.
-            var unpackDir = Path.Combine(installDir, PayloadStagingFolderName, Guid.NewGuid().ToString("N"));
+            unpackDir = Path.Combine(installDir, PayloadStagingFolderName, Guid.NewGuid().ToString("N"));
 
             // Read as the caller, not as LocalSystem: the staging directory is the caller's to name, and
             // this process must not reach into it (or through a link in it, or out to a share) with its own
@@ -101,6 +103,7 @@ internal static class UpdateApplyRequestHandler
                 UpdateRelaunchMarker.Clear();
                 return Reject(error ?? "Could not start the updater.");
             }
+            applierLaunched = true;
 
             // Covers the handoff until the updater opens the same lock file. It acquires that lock
             // before stopping the service and holds it through copy/rollback and service restart.
@@ -113,6 +116,33 @@ internal static class UpdateApplyRequestHandler
         {
             Logger.Log($"[UsnService] ApplyUpdate error: {ex.Message}", LogLevel.Error);
             return new PipeResponse { Kind = PipeResponseKind.Error, Message = ex.Message };
+        }
+        finally
+        {
+            // Failed verification/unpacking or a failed launch must not leave another whole install
+            // behind. Once launched, the copier owns cleanup and any rollback files it needs.
+            if (!applierLaunched && unpackDir != null) DiscardUnlaunchedPayload(installDir, unpackDir);
+        }
+    }
+
+    internal static bool DiscardUnlaunchedPayload(string installDirectory, string unpackDirectory)
+    {
+        var root = Path.Combine(Path.GetFullPath(installDirectory), PayloadStagingFolderName);
+        var path = Path.GetFullPath(unpackDirectory);
+        if (!string.Equals(Path.GetDirectoryName(path), root, StringComparison.OrdinalIgnoreCase) ||
+            !Guid.TryParseExact(Path.GetFileName(path), "N", out _)) return false;
+        try
+        {
+            if (!Directory.Exists(path)) return true;
+            if ((File.GetAttributes(root) & FileAttributes.ReparsePoint) != 0 ||
+                (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0) return false;
+            Directory.Delete(path, recursive: true);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"[UpdatePackage] Could not discard unlaunched payload: {ex.Message}", LogLevel.Warn);
+            return false;
         }
     }
 
