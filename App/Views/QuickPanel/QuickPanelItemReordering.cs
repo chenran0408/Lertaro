@@ -23,17 +23,21 @@ internal static class QuickPanelItemReordering
             Cancel(VisualTreeHelper.GetChild(root, index));
     }
 
-    internal static void RegisterDoubleClick(ListBox list, Action open)
+    internal static void RegisterSingleClick(ListBox list, Action open)
     {
-        // WPF reports ClickCount only on press. Remember it until release, when a drag has been ruled out.
-        var openOnRelease = false;
+        // Open on release, after the drag handler has had a chance to claim the gesture.
+        ListBoxItem? pressed = null;
         list.AddHandler(UIElement.PreviewMouseLeftButtonDownEvent, new MouseButtonEventHandler((_, args) =>
-            openOnRelease = args.ClickCount == 2), true);
+            pressed = args.ClickCount == 1 && Keyboard.Modifiers == ModifierKeys.None
+                ? System.Windows.Controls.ItemsControl.ContainerFromElement(list, args.OriginalSource as DependencyObject) as ListBoxItem
+                : null), true);
         list.AddHandler(UIElement.PreviewMouseLeftButtonUpEvent, new MouseButtonEventHandler((_, args) =>
         {
-            var shouldOpen = openOnRelease;
-            openOnRelease = false;
-            if (args.Handled || !shouldOpen) return;
+            var item = pressed;
+            pressed = null;
+            if (args.Handled || item == null || Keyboard.Modifiers != ModifierKeys.None) return;
+            if (System.Windows.Controls.ItemsControl.ContainerFromElement(list, args.OriginalSource as DependencyObject) != item) return;
+            list.SelectedItem = item.DataContext;
             open();
         }), true);
     }

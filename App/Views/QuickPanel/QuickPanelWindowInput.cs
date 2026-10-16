@@ -68,8 +68,7 @@ public partial class QuickPanelWindow
     {
         // Whatever else this press turns out to be -- a row click, the start of a rubber band, a click on
         // nothing -- the list it landed in is the one the user is now working in. Only right-click and
-        // double-click used to say so, so a plain left-click (or a band) left the hotkeys acting on
-        // whichever list had been double-clicked last.
+        // A drag selection (or a band) also makes its list active for hotkeys.
         if (e.OriginalSource is DependencyObject clicked
             && FindAncestor<System.Windows.Controls.ListBox>(clicked) is { } list)
             _activeList = list;

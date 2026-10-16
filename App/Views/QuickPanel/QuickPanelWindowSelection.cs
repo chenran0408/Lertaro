@@ -9,7 +9,7 @@ namespace Lertaro.App.Views.QuickPanel;
 // input handlers there keep pointed at whichever list was last touched.
 public partial class QuickPanelWindow
 {
-    /// <summary>Opens whatever the active list has selected. What a double-click does, and Enter with it.</summary>
+    /// <summary>Opens whatever the active list has selected. What a click does, and Enter with it.</summary>
     /// <remarks>
     /// One method rather than two identical ones, so the two ways of asking for the same thing cannot
     /// drift apart. Neither closes the panel: it is docked over the window you are working in, and the

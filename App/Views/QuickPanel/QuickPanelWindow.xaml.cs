@@ -136,7 +136,7 @@ public partial class QuickPanelWindow : Window,
         }
         if (ActionFlyout.IsOpen) return;
 
-        // Enter opens the selection, which is what a double-click does -- the filter box has the keyboard
+        // Enter opens the selection, which is what a click does -- the filter box has the keyboard
         // after a summon and does not want Enter for anything, so the whole gesture is "type, then
         // press Enter" without ever leaving it.
         if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None)
@@ -269,7 +269,7 @@ public partial class QuickPanelWindow : Window,
         list.ContextMenuOpening += (_, e) => e.Handled = true;
         QuickPanelItemReordering.Register(list);
         Controls.Results.ResultsDragDropHelper.Register(list);
-        QuickPanelItemReordering.RegisterDoubleClick(list, () => { _activeList = list; OpenSelected(); });
+        QuickPanelItemReordering.RegisterSingleClick(list, () => { _activeList = list; OpenSelected(); });
         list.SelectionChanged += GroupList_SelectionChanged;
         _activeList ??= list;
     }
