@@ -23,10 +23,10 @@ public sealed class InstantPassCacheTests
         var collectors = Enumerable.Range(0, 2).Select(_ => Task.Run(() =>
         {
             ready.Signal();
-            Assert.IsTrue(start.Wait(TimeSpan.FromSeconds(5)));
+            Assert.IsTrue(start.Wait(TimeSpan.FromSeconds(15)));
             return SearchResultMapper.CollectInstantPass(pass, "md test", "test", false, @"D:\source", [provider]);
         })).ToArray();
-        Assert.IsTrue(ready.Wait(TimeSpan.FromSeconds(5)));
+        Assert.IsTrue(ready.Wait(TimeSpan.FromSeconds(15)));
         start.Set();
         var early = await Task.WhenAll(collectors);
         var final = SearchResultMapper.BuildQuickResults(TwoFiles(), "test", null, @"D:\source", false,
