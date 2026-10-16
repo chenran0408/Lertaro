@@ -24,11 +24,15 @@ public static class UpdatePackage
     /// </summary>
     public const string StagingDirPrefix = "LertaroUpdate-";
 
-    private const string PUBLIC_KEY_PEM =
-        "-----BEGIN PUBLIC KEY-----\n" +
-        "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE117370jTbSPgIwHLntC+Bi3SD6gJ\n" +
-        "QfxAySjSpUWa6zy4n0YHVv/ZWXM9zQlF2LTqpQC0iHNdJNH+MKU9UvDMTQ==\n" +
-        "-----END PUBLIC KEY-----";
+    private static readonly string PUBLIC_KEY_PEM = ReadPublicKey();
+
+    private static string ReadPublicKey()
+    {
+        using var stream = typeof(UpdatePackage).Assembly.GetManifestResourceStream("Lertaro.UpdateSigningPublicKey")
+            ?? throw new InvalidOperationException("The update verification key is missing.");
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
 
     /// <summary>
     /// Creates an unused per-run staging directory and hands back its path.

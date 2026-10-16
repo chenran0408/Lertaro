@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Services\LocalSend\MimeTypes.json" />
+    <EmbeddedResource Include="..\release-signing-public-key.pem" LogicalName="Lertaro.UpdateSigningPublicKey" />
   </ItemGroup>
 
 </Project>
