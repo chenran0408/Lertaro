@@ -143,7 +143,14 @@ public sealed class UpdaterRollbackTests
             StringAssert.Contains(message, "copy succeeded");
             StringAssert.Contains(message, "Could not restart service: 1058");
         }
-        finally { Directory.Delete(root, true); }
+        finally
+        {
+            for (var attempt = 0; ; attempt++)
+            {
+                try { Directory.Delete(root, true); break; }
+                catch (IOException) when (attempt < 19) { await Task.Delay(100); }
+            }
+        }
     }
 
     // The fake returns scripted sc.exe exit codes while recording how many times the helper called it.
