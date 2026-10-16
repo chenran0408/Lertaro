@@ -10,6 +10,17 @@ public partial class QuickPanelViewModel
 {
     private static readonly TimeSpan PreferredTabExclusiveLoadWindow = TimeSpan.FromMilliseconds(200);
     private int _refreshGeneration;
+    private CancellationTokenSource? _loadCancellation;
+
+    /// <summary>Stops loading and releases the closed window's rows, while keeping its selected tab.</summary>
+    public void ReleaseClosedPanelContent()
+    {
+        _loadCancellation?.Cancel();
+        _refreshGeneration++;
+        _content.Clear();
+        Groups.Clear();
+        _shownTabId = string.Empty;
+    }
 
     /// <summary>
     /// Loads the preferred tab first and returns as soon as there is something worth opening for, then
@@ -31,6 +42,10 @@ public partial class QuickPanelViewModel
     /// </remarks>
     public async Task RefreshAsync(string? processName = null, CancellationToken token = default)
     {
+        _loadCancellation?.Cancel();
+        var loadCancellation = CancellationTokenSource.CreateLinkedTokenSource(token);
+        _loadCancellation = loadCancellation;
+        token = loadCancellation.Token;
         var refreshGeneration = ++_refreshGeneration;
         // Each open starts unfiltered. The box is part of the window and every open builds a new one, so
         // it is empty on screen -- a query left on this view model would narrow the list by something
@@ -67,11 +82,13 @@ public partial class QuickPanelViewModel
         if (preferred == null)
         {
             _firstArrival = null;
+            if (ReferenceEquals(_loadCancellation, loadCancellation)) _loadCancellation = null;
+            loadCancellation.Dispose();
             return;
         }
 
         Task Load(IQuickPanelTabSource tab)
-            => tab.LoadAsync((group, rank) =>
+            => token.IsCancellationRequested ? Task.CompletedTask : tab.LoadAsync((group, rank) =>
             {
                 if (refreshGeneration == _refreshGeneration)
                     Place(tab, group, rank);
@@ -96,7 +113,7 @@ public partial class QuickPanelViewModel
 
         // Whichever comes first: something to show, or nothing left to wait for.
         await Task.WhenAny(firstArrival.Task, everything).ConfigureAwait(true);
-        _ = ObserveBackgroundCompletionAsync(everything);
+        _ = ObserveAndDisposeAsync(everything);
         _firstArrival = null;
 
         async Task FinishInBackgroundAsync(Task alreadyStarted, IEnumerable<IQuickPanelTabSource> later)
@@ -107,7 +124,17 @@ public partial class QuickPanelViewModel
             // useful synchronous-completion behavior for headless callers.
             if (SynchronizationContext.Current != null)
                 await Task.Yield();
-            await ObserveBackgroundCompletionAsync(Task.WhenAll(later.Select(Load).Prepend(alreadyStarted)));
+            await ObserveAndDisposeAsync(Task.WhenAll(later.Select(Load).Prepend(alreadyStarted)));
+        }
+
+        async Task ObserveAndDisposeAsync(Task completion)
+        {
+            try { await ObserveBackgroundCompletionAsync(completion); }
+            finally
+            {
+                if (ReferenceEquals(_loadCancellation, loadCancellation)) _loadCancellation = null;
+                loadCancellation.Dispose();
+            }
         }
     }
 

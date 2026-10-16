@@ -40,6 +40,8 @@ try {
     $oldSize = (Get-ChildItem -LiteralPath $install -Recurse -File | Measure-Object Length -Sum).Sum
     Expand-Archive -LiteralPath $newZip -DestinationPath $stage
     $payload = Join-Path $stage 'Lertaro'
+    $expectedVersion = (Get-Item -LiteralPath (Join-Path $payload 'Lertaro.App.exe')).VersionInfo.ProductVersion
+    if ([string]::IsNullOrWhiteSpace($expectedVersion)) { throw 'Candidate app version is missing.' }
     $stdout = Join-Path $env:RUNNER_TEMP "Lertaro-upgrade-$Architecture.out.log"
     $stderr = Join-Path $env:RUNNER_TEMP "Lertaro-upgrade-$Architecture.err.log"
     $copy = Start-Process -FilePath (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe') -ArgumentList @(
@@ -53,13 +55,13 @@ try {
     }
     $result = Get-Content -LiteralPath (Join-Path $install 'update-result.json') -Raw | ConvertFrom-Json
     if ($result.Status -ne 'success') { throw "Updater reported $($result.Status): $($result.Message)" }
-    if ((Get-Item $app).VersionInfo.ProductVersion -notlike '5.10.0-beta8*') { throw 'App version did not advance.' }
+    if ((Get-Item $app).VersionInfo.ProductVersion -ne $expectedVersion) { throw 'App version did not advance to the candidate.' }
     if (Test-Path -LiteralPath $payload) { throw 'Completed update left the payload files.' }
     $service = Get-Service -Name LertaroService -ErrorAction Stop
     $service.WaitForStatus('Running', [TimeSpan]::FromSeconds(20))
     if ($service.Status -ne 'Running') { throw "Service did not restart: $($service.Status)" }
     $newSize = (Get-ChildItem -LiteralPath $install -Recurse -File | Measure-Object Length -Sum).Sum
-    Write-Output "Upgraded $Architecture from beta7 to beta8, result=success, service=Running, installedBytes=$oldSize->$newSize."
+    Write-Output "Upgraded $Architecture from beta7 to $expectedVersion, result=success, service=Running, installedBytes=$oldSize->$newSize."
 }
 finally {
     if ($installed) {

@@ -30,7 +30,7 @@ internal sealed class QuickPanelGroupLoader
         var acceptingProgress = true;
         var progress = new Progress<IReadOnlyList<SearchResult>>(batch =>
         {
-            if (!acceptingProgress)
+            if (!acceptingProgress || token.IsCancellationRequested)
                 return;
 
             var items = Map(batch);
@@ -64,6 +64,7 @@ internal sealed class QuickPanelGroupLoader
         }
 
         acceptingProgress = false;
+        token.ThrowIfCancellationRequested();
         var completeItems = _mapOnBackground
             ? await Task.Run(() => Map(results), token).ConfigureAwait(true)
             : Map(results);

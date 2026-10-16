@@ -187,6 +187,7 @@ public sealed partial class QuickPanelManager : IDisposable
         // and flashing an empty shell over it would only be in the way.
         if (!_viewModel.HasContent)
         {
+            _viewModel.ReleaseClosedPanelContent();
             PowerThrottlingHelper.WindowHidden("quickpanel");
             Core.Logger.Log("[QuickPanel] Nothing to show, so not opening.", Core.LogLevel.Debug);
             return;
@@ -234,6 +235,7 @@ public sealed partial class QuickPanelManager : IDisposable
             // The folder watchers only ever run while the panel is up: they exist to keep what is on
             // screen true, and there is no screen now.
             _viewModel?.StopWatching();
+            _viewModel?.ReleaseClosedPanelContent();
 
             // Armed, not done. The settings and full search windows trim their working set on Closed,
             // but those are closed rarely; this one closes as often as the quick window hides, which is

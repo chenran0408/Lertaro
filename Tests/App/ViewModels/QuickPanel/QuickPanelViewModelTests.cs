@@ -46,6 +46,34 @@ public sealed class QuickPanelViewModelTests
     }
 
     [TestMethod]
+    public async Task ClosingPanel_ReleasesRowsAndCancelsBackgroundLoad_WithoutLosingSelectedTab()
+    {
+        var settings = OneWorkspace(Folder(@"C:\first", "s1"), Folder(@"C:\slow", "s2"));
+        settings.Tabs.Add(SecondWorkspace(sourceId: "s3"));
+        var slowCanceled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        async Task<List<SearchResult>> Load(QuickPanelFolderSource source, CancellationToken token)
+        {
+            if (source.Id != "s2") return [Entry(source.Path, "file.txt", new DateTime(2026, 1, 1))];
+            using var registration = token.Register(() => slowCanceled.TrySetResult());
+            await Task.Delay(Timeout.InfiniteTimeSpan, token);
+            return [];
+        }
+        var vm = Build(settings, Load);
+        await vm.RefreshAsync();
+        await vm.SelectTabAsync("w2");
+        Assert.IsNotEmpty(vm.Groups);
+
+        vm.ReleaseClosedPanelContent();
+        await slowCanceled.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        Assert.IsEmpty(vm.Groups);
+
+        await vm.RefreshAsync();
+        Assert.IsNotEmpty(vm.Groups);
+        Assert.IsTrue(vm.Tabs.Single(tab => tab.Id == "w2").IsSelected);
+        vm.ReleaseClosedPanelContent();
+    }
+
+    [TestMethod]
     public async Task GridCellsSurviveSettingsSerializationAndAutomaticSorting()
     {
         var settings = OneWorkspace(Folder(@"C:\data", "s1"));

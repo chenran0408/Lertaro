@@ -72,6 +72,45 @@ public sealed class UpdaterRollbackTests
     }
 
     [TestMethod]
+    public async Task SuccessfulUpdateCleanup_RemovesOnlyGuidPayloads()
+    {
+        var root = Directory.CreateTempSubdirectory("LertaroPayloadCleanup_").FullName;
+        try
+        {
+            var payload = Directory.CreateDirectory(Path.Combine(root, "update-payload")).FullName;
+            var old = Directory.CreateDirectory(Path.Combine(payload, Guid.NewGuid().ToString("N"))).FullName;
+            var current = Directory.CreateDirectory(Path.Combine(payload, Guid.NewGuid().ToString("N"))).FullName;
+            var rollback = Directory.CreateDirectory(Path.Combine(payload, "rollback-" + Guid.NewGuid().ToString("N"))).FullName;
+            var unrelated = Directory.CreateDirectory(Path.Combine(payload, "my-files")).FullName;
+            foreach (var directory in new[] { old, current, rollback, unrelated })
+                File.WriteAllText(Path.Combine(directory, "keep.txt"), "content");
+            var runner = Path.Combine(root, "clean.ps1");
+            File.WriteAllText(runner, """
+                param($Updater, $Payload)
+                $ErrorActionPreference = 'Stop'
+                . $Updater
+                Remove-OldLertaroPayloads $Payload
+                """);
+            var start = new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System),
+                "WindowsPowerShell", "v1.0", "powershell.exe"))
+            { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true };
+            foreach (var argument in new[] { "-NoProfile", "-NonInteractive", "-File", runner,
+                Path.Combine(AppContext.BaseDirectory, "portable-updater.ps1"), payload })
+                start.ArgumentList.Add(argument);
+            using var process = Process.Start(start)!;
+            var error = process.StandardError.ReadToEndAsync();
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+            await process.WaitForExitAsync(timeout.Token);
+            Assert.AreEqual(0, process.ExitCode, await error);
+            Assert.IsFalse(Directory.Exists(old));
+            Assert.IsFalse(Directory.Exists(current));
+            foreach (var directory in new[] { rollback, unrelated })
+                Assert.IsTrue(File.Exists(Path.Combine(directory, "keep.txt")), directory);
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [TestMethod]
     public async Task StopService_Transient1061_RetriesUntilTheServiceIsStopped()
     {
         var root = Directory.CreateTempSubdirectory("LertaroUpdaterStop_").FullName;
