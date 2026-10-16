@@ -45,6 +45,7 @@ jobs:
 
   install-smoke:
     needs: package
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:

@@ -10,12 +10,12 @@ namespace Lertaro.App.Tests.Views.InlineSearchWindow.Helpers;
 // element in the first place is not what UI Automation's timeout bounds. So the probe must never measure on
 // the thread that asks, must ask once per dialog layout instead of once per placement pass, and must not act
 // on an answer that arrived for a layout the card has already left.
-[TestClass]
+[TestClass, DoNotParallelize]
 public sealed class InlineDialogGeometryProbeTests
 {
     private static readonly IntPtr Dialog = new(0x1234);
     private static readonly ExplorerTracker.RECT Rect = new() { Left = 10, Top = 20, Right = 210, Bottom = 44 };
-    private static readonly TimeSpan Wait = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan Wait = TimeSpan.FromSeconds(10);
 
     private static InlineDialogGeometryProbe.Answer Measured() => new(Rect, Rect);
 

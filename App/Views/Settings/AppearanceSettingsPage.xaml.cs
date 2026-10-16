@@ -52,7 +52,8 @@ public partial class AppearanceSettingsPage : System.Windows.Controls.UserContro
         e.Handled = true;
         PageScroll_StopAnimation(null, EventArgs.Empty);
         _scrollTarget = target;
-        if (!SystemParameters.ClientAreaAnimation)
+        // Without a rendering tier the animation clock can stall, leaving the wheel one step behind.
+        if (!SystemParameters.ClientAreaAnimation || RenderCapability.Tier == 0)
         {
             PageScroll.ScrollToVerticalOffset(target);
             return;

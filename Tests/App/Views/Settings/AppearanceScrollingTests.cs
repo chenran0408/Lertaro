@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using Lertaro.App.Services.Theme;
 using Lertaro.App.Views.Settings;
@@ -21,9 +22,10 @@ public sealed class AppearanceScrollingTests
             var step = Step(scroll);
             Wheel(scroll, -120); Wheel(scroll, -120);
             if (SystemParameters.WheelScrollLines == 0) { Assert.AreEqual(0d, scroll.VerticalOffset); return; }
-            if (SystemParameters.ClientAreaAnimation) Assert.IsLessThan(step * 2, scroll.VerticalOffset);
+            if (SystemParameters.ClientAreaAnimation && RenderCapability.Tier > 0) Assert.IsLessThan(step * 2, scroll.VerticalOffset);
             Pump(260);
-            Assert.AreEqual(step * 2, scroll.VerticalOffset, .5);
+            Assert.AreEqual(step * 2, scroll.VerticalOffset, .5,
+                $"render tier={RenderCapability.Tier}, animation={SystemParameters.ClientAreaAnimation}");
             scroll.ScrollToVerticalOffset(0); window.UpdateLayout();
             Wheel(scroll, -120); Wheel(scroll, 120);
             Pump(260);
