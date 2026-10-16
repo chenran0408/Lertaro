@@ -38,7 +38,7 @@ public sealed class QuickPanelItemReorderingTests
         void Press(UIElement target, int clicks)
         {
             var args = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
-                { RoutedEvent = UIElement.PreviewMouseLeftButtonDownEvent };
+                { RoutedEvent = Mouse.PreviewMouseDownEvent };
             // WPF fills this internal setter during real input; replay the observed press count.
             typeof(MouseButtonEventArgs).GetProperty(nameof(MouseButtonEventArgs.ClickCount))!.SetValue(args, clicks);
             target.RaiseEvent(args);
@@ -46,7 +46,7 @@ public sealed class QuickPanelItemReorderingTests
         void Release(UIElement target, bool handled)
         {
             var args = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
-                { RoutedEvent = UIElement.PreviewMouseLeftButtonUpEvent, Handled = handled };
+                { RoutedEvent = Mouse.PreviewMouseUpEvent, Handled = handled };
             Assert.AreEqual(1, args.ClickCount);
             target.RaiseEvent(args);
         }
