@@ -67,9 +67,40 @@ function Stop-LertaroService {
         & $Sc stop LertaroService | Out-Null
         $exit = $LASTEXITCODE
         # 1061 means the SCM is already processing a stop; retry until it accepts a stop or reports stopped.
-        if ($exit -in 0, 1060, 1062) { return }
+        if ($exit -in 1060, 1062) { return }
+        if ($exit -eq 0) {
+            # sc stop acknowledges the request before OnStop has finished closing the hook/indexer.
+            $service = Get-Service -Name LertaroService -ErrorAction SilentlyContinue
+            if ($service) {
+                try { $service.WaitForStatus('Stopped', [TimeSpan]::FromMilliseconds([Math]::Max(1, $TimeoutMs - $deadline.Elapsed.TotalMilliseconds))) }
+                finally { $service.Dispose() }
+            }
+            return
+        }
         if ($exit -ne 1061 -or $deadline.Elapsed.TotalMilliseconds -ge $TimeoutMs) { throw "Could not stop service: $exit" }
         Start-Sleep -Milliseconds $PollMs
+    }
+}
+
+function Stop-LertaroProcesses {
+    param([string]$TargetRoot, [int]$TimeoutMs = 15000, [int]$GraceMs = 1000)
+    $root = [IO.Path]::GetFullPath($TargetRoot).TrimEnd('\')
+    foreach ($process in Get-Process -Name 'Lertaro.App', 'Lertaro.Service', 'lff' -ErrorAction SilentlyContinue) {
+        try {
+            if ($process.HasExited) { continue }
+            if (!$process.Path -or [IO.Path]::GetDirectoryName($process.Path).TrimEnd('\') -ne $root) { continue }
+            # The session-0 SYSTEM service is stopped through SCM, never by an administrator's Kill.
+            $serviceProcess = $process.ProcessName -eq 'Lertaro.Service' -and $process.SessionId -eq 0
+            if ($process.WaitForExit($(if ($serviceProcess) { $TimeoutMs } else { $GraceMs }))) { continue }
+            if ($serviceProcess) { throw "The background service is still closing (PID $($process.Id)). Please retry the update." }
+            try { $process.Kill() }
+            catch {
+                # The App/hook may finish exiting between enumeration and Kill; access denied is also
+                # returned for a terminating process. A live process with denied access remains an error.
+                if (!$process.HasExited) { throw "Could not stop $($process.ProcessName) (PID $($process.Id)): $($_.Exception.Message)" }
+            }
+            if (!$process.WaitForExit($TimeoutMs)) { throw "Process $($process.ProcessName) (PID $($process.Id)) did not stop." }
+        } finally { $process.Dispose() }
     }
 }
 
@@ -136,14 +167,7 @@ $restartSafe = $true
 $result = @{ Status = 'failed'; Time = [DateTime]::UtcNow.ToString('O'); Message = ''; RecoveryDirectory = $backup }
 try {
     Stop-LertaroService $sc
-    foreach ($process in Get-Process -Name 'Lertaro.App', 'Lertaro.Service', 'lff' -ErrorAction SilentlyContinue) {
-        try {
-            if ($process.Path -and [IO.Path]::GetDirectoryName($process.Path).TrimEnd('\') -eq $targetRoot) {
-                $process.Kill()
-                if (!$process.WaitForExit(15000)) { throw 'Process did not stop.' }
-            }
-        } finally { $process.Dispose() }
-    }
+    Stop-LertaroProcesses -TargetRoot $targetRoot
     Wait-LertaroTaskbarHostExit -TargetRoot $targetRoot
     Invoke-LertaroUpdateCopy $sourceRoot $targetRoot $backup
     $result.Status = 'success'
