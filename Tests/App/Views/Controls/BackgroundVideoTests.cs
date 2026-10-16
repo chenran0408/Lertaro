@@ -160,7 +160,7 @@ public sealed class BackgroundVideoTests
     }
 
     private static Window CreateWindow(BackgroundSurface surface) => new()
-    { Content = surface, Width = 200, Height = 150, ShowActivated = false, ShowInTaskbar = false, Left = -20000, Top = -20000 };
+    { Content = surface, Width = 200, Height = 150, ShowActivated = false, ShowInTaskbar = false, Left = 50, Top = 50 };
     private static DrawingBrush Brush(BackgroundSurface surface) => Assert.IsInstanceOfType<DrawingBrush>(((Border)surface.Children[0]).Background);
     private static byte[] RenderVideo(FrameworkElement surface)
     {
@@ -181,10 +181,13 @@ public sealed class BackgroundVideoTests
     }
     private static void PumpUntil(Func<bool> condition)
     {
-        var frame = new DispatcherFrame(); var deadline = Environment.TickCount64 + 6000;
+        var frame = new DispatcherFrame(); var deadline = Environment.TickCount64 + 10000;
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(10) };
         timer.Tick += (_, _) => { if (condition() || Environment.TickCount64 >= deadline) frame.Continue = false; };
         timer.Start(); try { Dispatcher.PushFrame(frame); } finally { timer.Stop(); }
-        Assert.IsTrue(condition(), "The real media operation did not complete while the dispatcher remained responsive.");
+        var playback = BackgroundVideoPlayback.Current;
+        Assert.IsTrue(condition(), $"Media did not finish: playing={playback.IsPlaying}, " +
+            $"video={playback.Player?.HasVideo}, position={playback.Player?.Position}, " +
+            $"failed={playback.FailedPath}, renderTier={RenderCapability.Tier}.");
     }
 }

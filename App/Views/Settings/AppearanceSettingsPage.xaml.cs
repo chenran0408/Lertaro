@@ -4,6 +4,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 
 namespace Lertaro.App.Views.Settings;
 
@@ -13,6 +14,7 @@ public partial class AppearanceSettingsPage : System.Windows.Controls.UserContro
         "ScrollOffset", typeof(double), typeof(AppearanceSettingsPage), new PropertyMetadata(0d, (target, args) =>
             ((AppearanceSettingsPage)target).PageScroll.ScrollToVerticalOffset((double)args.NewValue)));
     private bool _scrolling;
+    private bool _directScrollPending;
     private double _scrollTarget;
     private int _scrollGeneration;
 
@@ -38,13 +40,16 @@ public partial class AppearanceSettingsPage : System.Windows.Controls.UserContro
         var current = PageScroll.VerticalOffset;
         var distance = -e.Delta / 120d * (SystemParameters.WheelScrollLines < 0
             ? PageScroll.ViewportHeight : SystemParameters.WheelScrollLines * 16d);
-        var start = _scrolling && Math.Sign(_scrollTarget - current) == Math.Sign(distance) ? _scrollTarget : current;
+        var start = (_scrolling || _directScrollPending) && Math.Sign(_scrollTarget - current) == Math.Sign(distance)
+            ? _scrollTarget : current;
         var target = Math.Clamp(start + distance, 0, PageScroll.ScrollableHeight);
         if (target == current)
         {
-            if (_scrolling)
+            if (_scrolling || _directScrollPending)
             {
+                var direct = _directScrollPending;
                 PageScroll_StopAnimation(null, EventArgs.Empty);
+                if (direct) PageScroll.ScrollToVerticalOffset(current);
                 e.Handled = true;
             }
             return;
@@ -55,7 +60,13 @@ public partial class AppearanceSettingsPage : System.Windows.Controls.UserContro
         // Without a rendering tier the animation clock can stall, leaving the wheel one step behind.
         if (!SystemParameters.ClientAreaAnimation || RenderCapability.Tier == 0)
         {
+            _directScrollPending = true;
+            var directGeneration = ++_scrollGeneration;
             PageScroll.ScrollToVerticalOffset(target);
+            Dispatcher.BeginInvoke(() =>
+            {
+                if (directGeneration == _scrollGeneration) _directScrollPending = false;
+            }, DispatcherPriority.Loaded);
             return;
         }
         _scrolling = true;
@@ -76,6 +87,11 @@ public partial class AppearanceSettingsPage : System.Windows.Controls.UserContro
 
     private void PageScroll_StopAnimation(object? sender, EventArgs e)
     {
+        if (_directScrollPending)
+        {
+            _directScrollPending = false;
+            ++_scrollGeneration;
+        }
         if (!_scrolling) return;
         ++_scrollGeneration;
         _scrolling = false;

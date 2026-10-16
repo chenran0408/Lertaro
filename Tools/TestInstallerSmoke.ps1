@@ -29,10 +29,9 @@ try {
         throw "Incomplete install: $($plugins.Count) plugins."
     }
     $size = (Get-ChildItem -LiteralPath $installDirectory -Recurse -File | Measure-Object Length -Sum).Sum
-    $process = Start-Process -FilePath $app -PassThru
     Start-Sleep -Seconds 5
-    $process.Refresh()
-    if ($process.HasExited) { throw "First start exited with code $($process.ExitCode)." }
+    $running = @(Get-Process -Name 'Lertaro.App' -ErrorAction SilentlyContinue | Where-Object Path -eq $app)
+    if ($running.Count -eq 0) { throw 'The app launched by the installer did not remain running.' }
     Write-Output "Installed ${Architecture}: size=$size bytes, install=$([math]::Round($installTime,2)) s, first start survived 5 s, plugins=$($plugins.Count)."
 }
 catch {
