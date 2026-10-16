@@ -47,38 +47,6 @@ function Invoke-LertaroUpdateCopy([string]$Source, [string]$Destination, [string
     }
 }
 
-# Called only while holding update.lock, after a successful copy. Failed updates keep their
-# rollback-* directories; GUID staging directories (including this run's empty wrapper) have no recovery role.
-function Remove-OldLertaroPayloads([string]$PayloadRoot) {
-    try {
-        if (!(Test-Path -LiteralPath $PayloadRoot -PathType Container)) { return }
-        $root = [IO.Path]::GetFullPath($PayloadRoot).TrimEnd('\')
-        if ((Get-Item -LiteralPath $root -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { return }
-        foreach ($directory in Get-ChildItem -LiteralPath $root -Directory -Force) {
-            $parsed = [Guid]::Empty
-            if (![Guid]::TryParseExact($directory.Name, 'N', [ref]$parsed)) { continue }
-            if ($directory.Attributes -band [IO.FileAttributes]::ReparsePoint) { continue }
-            try {
-                $pending = [Collections.Generic.Stack[IO.DirectoryInfo]]::new()
-                $pending.Push($directory)
-                $hasLink = $false
-                while ($pending.Count -gt 0 -and !$hasLink) {
-                    foreach ($entry in Get-ChildItem -LiteralPath $pending.Pop().FullName -Force) {
-                        if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { $hasLink = $true; break }
-                        if ($entry.PSIsContainer) { $pending.Push($entry) }
-                    }
-                }
-                if ($hasLink) { continue }
-                Remove-Item -LiteralPath $directory.FullName -Recurse -Force
-            } catch {
-                Write-Warning "Could not remove old update files in $($directory.Name): $($_.Exception.Message)"
-            }
-        }
-    } catch {
-        Write-Warning "Could not inspect old update files: $($_.Exception.Message)"
-    }
-}
-
 function Wait-LertaroTaskbarHostExit {
     param([string]$TargetRoot, [int]$TimeoutMs = 15000)
     $root = [IO.Path]::GetFullPath($TargetRoot).TrimEnd('\')
@@ -210,7 +178,6 @@ try {
             Remove-Item -LiteralPath $resolved -Recurse -Force
         }
     }
-    Remove-OldLertaroPayloads $payloadRoot
 } catch {
     $result.Message = $_.Exception.Message
     $restartSafe = !$result.Message.StartsWith('ROLLBACK FAILED:')

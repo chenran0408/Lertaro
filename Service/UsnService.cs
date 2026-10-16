@@ -47,6 +47,7 @@ public class UsnService : ServiceBase
             _pipeServer = new UsnServicePipeServer();
             _pipeServer.Start(_engine, Stop);
             RelaunchAppAfterUpdate();
+            CompletedUpdatePayloadCleanup.Schedule(AppContext.BaseDirectory);
             Logger.Log("[UsnService] Service Started successfully.");
         }
         catch (Exception ex)
