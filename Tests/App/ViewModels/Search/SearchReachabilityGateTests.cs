@@ -6,7 +6,7 @@ namespace Lertaro.App.Tests.ViewModels.Search;
 // Only the pure classification helpers -- BeginSession/ProbeAsync touch a live pipe connection, the WSL
 // registry key, and Directory.Exists on real system state, the same non-injectable-real-path hazard
 // noted elsewhere in this suite (see NetworkIndexerHelperTests in Core.Tests).
-[TestClass]
+[TestClass, DoNotParallelize] // Folder reachability has a real 1.5s deadline; concurrent tests can starve its worker.
 public sealed class SearchReachabilityGateTests
 {
     [TestMethod]

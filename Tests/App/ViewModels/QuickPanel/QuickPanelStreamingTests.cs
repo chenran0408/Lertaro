@@ -7,7 +7,7 @@ namespace Lertaro.App.Tests.ViewModels.QuickPanel;
 // Nothing waits on anything else. A source on a disconnected share used to hold the whole summon open
 // behind it; these pin the properties that replaced that -- the panel opens on the first arrival, and
 // what arrives late still lands where the settings put it rather than where it finished.
-[TestClass]
+[TestClass, DoNotParallelize] // The 200ms grace and 5s waits assert scheduling order on busy runners.
 public sealed class QuickPanelStreamingTests
 {
     private static SearchResult Entry(string folder, string name) => new()
