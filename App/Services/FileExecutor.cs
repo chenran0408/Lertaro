@@ -65,11 +65,19 @@ public static class FileExecutor
         // On a ShellThread rather than the pool: Process.Start with UseShellExecute is ShellExecuteEx,
         // which delegates to whatever shell extension handles the target, and some of those require an
         // STA. The pool is MTA.
-        ShellThread.Run("FileLaunch", () => LaunchExistingPath(path, asAdmin));
+        var queuedAt = Stopwatch.GetTimestamp();
+        ShellThread.Run("FileLaunch", () =>
+        {
+            var wait = Stopwatch.GetElapsedTime(queuedAt).TotalMilliseconds;
+            if (wait > 200)
+                Logger.Log($"[FileExecutor] Launch waited {wait:F0}ms for a shell worker ({Path.GetExtension(path)}).", LogLevel.Info);
+            LaunchExistingPath(path, asAdmin);
+        });
     }
 
     private static void LaunchExistingPath(string path, bool asAdmin)
     {
+        var preparingAt = Stopwatch.GetTimestamp();
         try
         {
             // Favorite targets are stored raw (e.g. %USERPROFILE%\Desktop); expand variables before
@@ -115,7 +123,14 @@ public static class FileExecutor
 
                 try
                 {
+                    var preparation = Stopwatch.GetElapsedTime(preparingAt).TotalMilliseconds;
+                    if (preparation > 200)
+                        Logger.Log($"[FileExecutor] Launch preparation took {preparation:F0}ms ({Path.GetExtension(path)}).", LogLevel.Info);
+                    var startingAt = Stopwatch.GetTimestamp();
                     Process.Start(startInfo);
+                    var shell = Stopwatch.GetElapsedTime(startingAt).TotalMilliseconds;
+                    if (shell > 200)
+                        Logger.Log($"[FileExecutor] Windows launch took {shell:F0}ms ({Path.GetExtension(path)}).", LogLevel.Info);
                 }
 
                 catch (Exception startEx)
