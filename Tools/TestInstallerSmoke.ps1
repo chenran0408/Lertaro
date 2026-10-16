@@ -27,7 +27,7 @@ try {
     Start-Sleep -Seconds 5
     $process.Refresh()
     if ($process.HasExited) { throw "First start exited with code $($process.ExitCode)." }
-    Write-Output "Installed $Architecture: size=$size bytes, install=$([math]::Round($installTime,2)) s, first start survived 5 s, plugins=$($plugins.Count)."
+    Write-Output "Installed ${Architecture}: size=$size bytes, install=$([math]::Round($installTime,2)) s, first start survived 5 s, plugins=$($plugins.Count)."
 }
 finally {
     if ($installed) {
