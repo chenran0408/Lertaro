@@ -35,10 +35,17 @@ try {
     }
     Expand-Archive -LiteralPath $newZip -DestinationPath $stage
     $payload = Join-Path $stage 'Lertaro'
+    $stdout = Join-Path $env:RUNNER_TEMP "Lertaro-upgrade-$Architecture.out.log"
+    $stderr = Join-Path $env:RUNNER_TEMP "Lertaro-upgrade-$Architecture.err.log"
     $copy = Start-Process -FilePath (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe') -ArgumentList @(
         '-NoProfile','-NonInteractive','-File',"`"$(Join-Path $install 'portable-updater.ps1')`"",
-        '-Source',"`"$payload`"",'-Destination',"`"$install`"") -Wait -PassThru
-    if ($copy.ExitCode -ne 0) { throw "Updater failed: $($copy.ExitCode)" }
+        '-Source',"`"$payload`"",'-Destination',"`"$install`"") -Wait -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+    if ($copy.ExitCode -ne 0) {
+        Get-Content -LiteralPath $stdout,$stderr -ErrorAction SilentlyContinue | Write-Output
+        $resultPath = Join-Path $install 'update-result.json'
+        if (Test-Path -LiteralPath $resultPath) { Get-Content -LiteralPath $resultPath | Write-Output }
+        throw "Updater failed: $($copy.ExitCode)"
+    }
     $result = Get-Content -LiteralPath (Join-Path $install 'update-result.json') -Raw | ConvertFrom-Json
     if ($result.Status -ne 'success') { throw "Updater reported $($result.Status): $($result.Message)" }
     if ((Get-Item $app).VersionInfo.ProductVersion -notlike '5.10.0-beta8*') { throw 'App version did not advance.' }
