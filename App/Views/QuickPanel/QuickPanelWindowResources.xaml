@@ -226,9 +226,7 @@
         </Grid>
     </DataTemplate>
 
-    <!-- The tile's container. Not the row style: that one stretches to the full width and draws a
-         left accent bar, both of which are for a list. A tile sizes to itself and takes the
-         highlight as a rounded box around the whole thing. -->
+    <!-- A thin outline marks the active tile without covering its icon or the panel background. -->
     <Style x:Key="QuickPanelTileStyle" TargetType="ListBoxItem">
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Margin" Value="0"/>
@@ -245,16 +243,16 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
-                    <Border x:Name="TileBorder" Background="Transparent" CornerRadius="6"
-                            Margin="2" Padding="1" Cursor="Hand">
+                    <Border x:Name="TileBorder" Background="Transparent" BorderBrush="Transparent"
+                            BorderThickness="1" CornerRadius="6" Margin="2" Padding="1" Cursor="Hand">
                         <ContentPresenter/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="TileBorder" Property="Background" Value="{DynamicResource ItemHover}"/>
+                            <Setter TargetName="TileBorder" Property="BorderBrush" Value="{DynamicResource ItemHover}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="TileBorder" Property="Background" Value="{DynamicResource ItemHover}"/>
+                            <Setter TargetName="TileBorder" Property="BorderBrush" Value="{DynamicResource AccentBarColor}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
