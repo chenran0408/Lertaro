@@ -12,10 +12,8 @@ namespace Lertaro.App.ViewModels.Search;
 // Keyed by folder, not a single slot: navigating B and back to A is ordinary use, and a one-slot cache
 // would re-walk A exactly when the user returns to it.
 //
-// Per-window (held by SearchExecutionEngine, which lives exactly as long as the window), so a listing can
-// never outlive the folder context it was taken from: no cross-session staleness. A folder edited during
-// one session is not re-read, which matches how the rest of the inline path already treats a session's
-// folder as fixed.
+// Owned by InlineSearchManager for inline windows: a quick reopen may reuse a listing. A new session
+// validates directory changes off the UI thread, and only reuses unchanged snapshots for five seconds.
 internal sealed class DirectChildrenListingCache
 {
     // Deliberately small. Each listing holds up to DirectChildrenLocator.MaxExaminedEntries names with
@@ -26,6 +24,10 @@ internal sealed class DirectChildrenListingCache
     private readonly object _gate = new();
     private readonly Dictionary<string, Task<List<DirectChildrenLocator.Entry>>> _listings = new(StringComparer.OrdinalIgnoreCase);
     private readonly Queue<string> _insertionOrder = new();
+    private readonly Dictionary<string, DateTime> _lastWrites = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, long> _readAt = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Func<long> _clock;
+    internal DirectChildrenListingCache(Func<long>? clock = null) => _clock = clock ?? (() => Environment.TickCount64);
 
     /// <summary>
     /// The listing for <paramref name="directory"/>, walked at most once and shared by every caller.
@@ -44,12 +46,26 @@ internal sealed class DirectChildrenListingCache
             if (_listings.TryGetValue(directory, out var existing))
                 return existing;
 
-            var started = Task.Run(() => DirectChildrenLocator.Enumerate(directory, CancellationToken.None));
+            Task<List<DirectChildrenLocator.Entry>> started = null!;
+            started = Task.Run(() =>
+            {
+                var stamp = ReadStamp(directory);
+                var entries = DirectChildrenLocator.Enumerate(directory, CancellationToken.None);
+                lock (_gate)
+                {
+                    if (_listings.TryGetValue(directory, out var current) && ReferenceEquals(current, started))
+                    { _lastWrites[directory] = stamp; _readAt[directory] = _clock(); }
+                }
+                return entries;
+            });
             _listings[directory] = started;
             _insertionOrder.Enqueue(directory);
 
             while (_insertionOrder.Count > MaxFolders)
-                _listings.Remove(_insertionOrder.Dequeue());
+            {
+                var evicted = _insertionOrder.Dequeue();
+                _listings.Remove(evicted); _lastWrites.Remove(evicted); _readAt.Remove(evicted);
+            }
 
             return started;
         }
@@ -60,5 +76,30 @@ internal sealed class DirectChildrenListingCache
     {
         if (!string.IsNullOrWhiteSpace(directory))
             _ = GetAsync(directory);
+    }
+
+    internal async Task<bool> RefreshForSessionAsync(string directory)
+    {
+        var original = GetAsync(directory);
+        await original.ConfigureAwait(false);
+        var stamp = await Task.Run(() => ReadStamp(directory)).ConfigureAwait(false);
+        lock (_gate)
+        {
+            if (!_listings.TryGetValue(directory, out var current) || !ReferenceEquals(current, original)) return false;
+            if (_lastWrites.TryGetValue(directory, out var previous) && previous == stamp &&
+                _readAt.TryGetValue(directory, out var readAt) && _clock() - readAt < 5000) return false;
+            _listings.Remove(directory); _lastWrites.Remove(directory); _readAt.Remove(directory);
+            var retained = _insertionOrder.Where(path => !string.Equals(path, directory, StringComparison.OrdinalIgnoreCase)).ToArray();
+            _insertionOrder.Clear();
+            foreach (var path in retained) _insertionOrder.Enqueue(path);
+            _ = GetAsync(directory);
+            return true;
+        }
+    }
+
+    private static DateTime ReadStamp(string directory)
+    {
+        try { return System.IO.Directory.GetLastWriteTimeUtc(directory); }
+        catch { return DateTime.MinValue; }
     }
 }

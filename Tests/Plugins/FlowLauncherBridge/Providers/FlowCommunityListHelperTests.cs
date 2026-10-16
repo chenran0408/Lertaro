@@ -49,7 +49,7 @@ public sealed class FlowCommunityListHelperTests
 
         var sampleList = new List<FlowCommunityPlugin>
         {
-            new() { ID = "calc-id", Name = "Calculator", Author = "FlowTeam", Version = "1.0.0", Description = "A smart calc", Language = "C#", Website = "https://example.com/calc" },
+            new() { ID = "calc-id", Name = "Calculator", Author = "FlowTeam", Version = "1.0.0", Description = "A smart calc", Language = "csharp", Website = "https://example.com/calc" },
             new() { ID = "weather-id", Name = "Weather", Author = "John", Version = "2.1.0", Description = "Check weather", Language = "Python", Website = "https://example.com/weather" }
         };
 

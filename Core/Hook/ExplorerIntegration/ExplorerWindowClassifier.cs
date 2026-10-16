@@ -53,19 +53,14 @@ internal sealed class ExplorerWindowClassifier
 
         try
         {
-            // Our own pickers must not acquire another search window inside their modal message loop.
-            if (ExplorerFocusChangeFilter.IsInternalDialog(hwnd, _tracker.AppProcessId))
-            {
-                _tracker.Deactivate();
-                return;
-            }
+            var isInternalDialog = ExplorerFocusChangeFilter.IsInternalDialog(hwnd, _tracker.AppProcessId);
 
             if (_tracker.IsActiveWindowDialog && _tracker.ActiveHwnd != IntPtr.Zero && !ExplorerNativeHooks.IsWindow(_tracker.ActiveHwnd))
             {
                 _tracker.Deactivate();
             }
 
-            if (ExplorerFocusChangeFilter.IsIgnored(_tracker, hwnd))
+            if (!isInternalDialog && ExplorerFocusChangeFilter.IsIgnored(_tracker, hwnd))
                 return;
 
             var dialogHwnd = FindMatchingDialogWindow(hwnd, pluginTimeoutMs, out var adapter);
@@ -73,6 +68,14 @@ internal sealed class ExplorerWindowClassifier
             {
                 var previousWasPathProvider = _tracker.IsExplorerOrDesktopActive && !_tracker.IsActiveWindowDialog;
                 TrackFileDialogWindow(dialogHwnd, previousWasPathProvider, TimeSpan.FromMilliseconds(pluginTimeoutMs));
+                return;
+            }
+
+            // Our Open/Save pickers use the same adapters as other applications. Only an identified
+            // file dialog may bypass the own-process filter; prompts and ordinary settings must not.
+            if (isInternalDialog)
+            {
+                _tracker.Deactivate();
                 return;
             }
 

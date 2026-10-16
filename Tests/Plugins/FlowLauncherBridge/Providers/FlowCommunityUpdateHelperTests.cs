@@ -86,7 +86,7 @@ public sealed class FlowCommunityUpdateHelperTests
 
         var sampleList = new List<FlowCommunityPlugin>
         {
-            new() { ID = "calc-id", Name = "Calculator", Author = "FlowTeam", Version = "2.0.0", Description = "Calc V2", UrlDownload = "https://example.com/calc.zip" }
+            new() { ID = "calc-id", Name = "Calculator", Author = "FlowTeam", Language = "csharp", Version = "2.0.0", Description = "Calc V2", UrlDownload = "https://example.com/calc.zip" }
         };
 
         var cachedField = typeof(FlowCommunityManifestService).GetField("_cachedPlugins", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;

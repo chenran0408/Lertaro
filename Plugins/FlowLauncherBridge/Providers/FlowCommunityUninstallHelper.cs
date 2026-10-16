@@ -15,7 +15,8 @@ public static class FlowCommunityUninstallHelper
         FlowPluginHost host,
         string filter)
     {
-        var installedPlugins = host.GetAllPlugins();
+        var installedPlugins = host.GetAllPlugins().Concat(host.FailedPlugins.Values.Select(failed => new PluginPair { Metadata = failed.Metadata }))
+            .DistinctBy(pair => pair.Metadata.ID, StringComparer.OrdinalIgnoreCase).ToList();
 
         var filtered = string.IsNullOrEmpty(filter)
             ? installedPlugins

@@ -1,4 +1,4 @@
-﻿{
+{
   "FlowLauncherBridge_PluginName": "Flow.Launcher 플러그인 브리지",
   "FlowLauncherBridge_PluginDesc": "Lertaro 내에서 Flow.Launcher 커뮤니티 플러그인 및 확장 기능을 로드하고 실행합니다.",
   "FlowLauncherBridge_WebsiteLabel": "Flow.Launcher 커뮤니티 플러그인 찾아보기",
@@ -33,5 +33,17 @@
   "FlowLauncherBridge_PreviewUnavailable": "이 미리보기를 더 이상 사용할 수 없습니다. 다시 검색하세요.",
   "Plugin_Comp_Desc_FlowPreviewProvider": "QuickLook 창 내에서 Flow.Launcher 플러그인의 사용자 지정 미리보기 패널을 렌더링합니다.",
   "Plugin_Comp_Desc_FlowInstantResultProvider": "로드된 Flow.Launcher 플러그인에 키워드 쿼리를 전달하고 즉각적인 검색 결과 및 설정 관리를 제공합니다.",
-  "Plugin_Comp_Desc_FlowLauncherBridgeTranslationProvider": "Flow.Launcher 브리지 플러그인에 대한 다국어 번역 및 현지화 매핑을 제공합니다."
+  "Plugin_Comp_Desc_FlowLauncherBridgeTranslationProvider": "Flow.Launcher 브리지 플러그인에 대한 다국어 번역 및 현지화 매핑을 제공합니다.",
+  "FlowLauncherBridge_UnsupportedLanguage": "지원하지 않는 플러그인 형식",
+  "FlowLauncherBridge_RequiresNewerFlow": "더 최신 Flow가 필요하여 현재 설치할 수 없습니다",
+  "FlowLauncherBridge_CompatibilityUnverified": "호환성 미확인",
+  "FlowLauncherBridge_BasicSearchTested": "기본 검색 테스트 완료, 기타 기능 미확인",
+  "FlowLauncherBridge_RecommendTimestamp": "현재 날짜, 시간 및 Unix 타임스탬프",
+  "FlowLauncherBridge_RecommendUuid": "임의 UUID 생성",
+  "FlowLauncherBridge_RecommendSmartTimestamp": "tomorrow 같은 영어 날짜를 여러 시간 형식으로 변환",
+  "FlowLauncherBridge_BrowsePlugins": "커뮤니티 플러그인 둘러보기",
+  "FlowLauncherBridge_BrowsePluginsDesc": "기본 검색 테스트를 마친 플러그인 우선 표시",
+  "FlowLauncherBridge_CheckPluginUpdates": "플러그인 업데이트 확인",
+  "FlowLauncherBridge_CheckPluginUpdatesDesc": "설치한 플러그인의 업데이트 찾기",
+  "FlowLauncherBridge_RetryFailedPlugin": "선택하여 다시 시도"
 }

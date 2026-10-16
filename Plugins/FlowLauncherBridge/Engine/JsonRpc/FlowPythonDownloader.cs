@@ -15,6 +15,8 @@ public static class FlowPythonDownloader
 
     public static async Task<string?> DownloadAndSetupEmbeddedPythonAsync(string targetDir)
     {
+        try { FlowPluginPathHelper.ValidateChildDirectory(Path.GetDirectoryName(Path.GetFullPath(targetDir))!, targetDir); }
+        catch { return null; }
         if (Directory.Exists(targetDir))
         {
             var existingExe = FindPythonInDir(targetDir);
@@ -27,10 +29,10 @@ public static class FlowPythonDownloader
 
         var url = GetDownloadUrl();
         var tempZip = Path.Combine(Path.GetTempPath(), $"python_embed_{Guid.NewGuid():N}.zip");
+        var stagingDir = targetDir + $"-pending-{Guid.NewGuid():N}";
 
         try
         {
-            Directory.CreateDirectory(targetDir);
 
             using (var response = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false))
             {
@@ -39,19 +41,16 @@ public static class FlowPythonDownloader
                 await response.Content.CopyToAsync(fs).ConfigureAwait(false);
             }
 
-            ZipFile.ExtractToDirectory(tempZip, targetDir, overwriteFiles: true);
+            FlowRuntimeIntegrity.VerifyArchive(tempZip, FlowRuntimeIntegrity.PythonHash(RuntimeInformation.ProcessArchitecture == Architecture.Arm64));
+            ZipFile.ExtractToDirectory(tempZip, stagingDir, overwriteFiles: true);
 
             // Flow requirement: enable 'import site' in ._pth file to allow package loading
-            EnableImportSiteInPthFiles(targetDir);
-            EnsureSiteCustomizeInstalled(targetDir);
-
-            var pyExe = FindPythonInDir(targetDir);
-            if (pyExe != null)
-            {
-                _ = Task.Run(() => FlowPipManager.EnsurePipInstalledAsync(pyExe));
-            }
-
-            return pyExe;
+            EnableImportSiteInPthFiles(stagingDir);
+            EnsureSiteCustomizeInstalled(stagingDir);
+            if (FindPythonInDir(stagingDir) == null) return null;
+            if (Directory.Exists(targetDir)) Community.FlowPluginInstaller.SafeDeleteDirectory(targetDir);
+            Directory.Move(stagingDir, targetDir);
+            return FindPythonInDir(targetDir);
         }
         catch
         {
@@ -60,6 +59,7 @@ public static class FlowPythonDownloader
         finally
         {
             try { if (File.Exists(tempZip)) File.Delete(tempZip); } catch { }
+            Community.FlowPluginInstaller.SafeDeleteDirectory(stagingDir);
         }
     }
 
@@ -143,7 +143,7 @@ except Exception:
             ? "embed-arm64"
             : "embed-amd64";
 
-        return $"https://www.python.org/ftp/python/3.12.7/python-3.12.7-{archSuffix}.zip";
+        return $"https://www.python.org/ftp/python/{FlowRuntimeIntegrity.PythonVersion}/python-{FlowRuntimeIntegrity.PythonVersion}-{archSuffix}.zip";
     }
 
     private static void EnableImportSiteInPthFiles(string targetDir)

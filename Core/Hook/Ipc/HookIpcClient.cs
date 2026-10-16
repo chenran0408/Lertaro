@@ -58,6 +58,7 @@ public sealed class HookIpcClient : IDisposable
     public event Action<string, string>? OnQuickPanelWakeTestResult;
     public event Action? OnQuickNavigationHotkey;
     public event Action<char>? OnCharacterTyped;
+    public event Action<int, nint>? OnInlineInputStarted;
     public event Action? OnBackspacePressed;
     public event Action? OnEscapePressed;
     public event Action? OnEnterPressed;
@@ -354,6 +355,9 @@ public sealed class HookIpcClient : IDisposable
                 case IpcMessageId.ActiveWindowMoved: OnActiveWindowMoved?.Invoke(); break;
                 case IpcMessageId.KeyChar:
                     OnCharacterTyped?.Invoke(msg.CharVal);
+                    break;
+                case IpcMessageId.InlineInputStarted:
+                    OnInlineInputStarted?.Invoke(msg.IntVal, (nint)msg.Hwnd);
                     break;
                 case IpcMessageId.KeyCtrlNumber:
                     OnCtrlNumberPressed?.Invoke(msg.IntVal);

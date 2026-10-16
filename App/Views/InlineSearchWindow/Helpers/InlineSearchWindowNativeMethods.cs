@@ -40,6 +40,8 @@ public static class InlineSearchWindowNativeMethods
 
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")]
+    public static extern IntPtr SendMessageTimeout(IntPtr hwnd, uint message, IntPtr wParam, IntPtr lParam, uint flags, uint timeout, out IntPtr result);
 
     [DllImport("kernel32.dll")]
     public static extern uint GetCurrentThreadId();

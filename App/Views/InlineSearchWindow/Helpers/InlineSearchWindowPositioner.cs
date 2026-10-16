@@ -110,7 +110,7 @@ public class InlineSearchWindowPositioner
         if (!tracker.IsDesktop && tracker.ActiveHwnd == IntPtr.Zero)
             return;
 
-        var isResultsVisible = _window.ResultsPanelControl.Visibility == Visibility.Visible;
+        var isResultsVisible = _window.AreResultsExpanded && _window.ResultsPanelControl.Visibility == Visibility.Visible;
 
         var hasValidRect = false;
         var rect = new Core.Hook.ExplorerTracker.RECT();
@@ -146,7 +146,9 @@ public class InlineSearchWindowPositioner
             ? (_window.IsVisible && hwnd != IntPtr.Zero ? Screen.FromHandle(hwnd) : Screen.FromPoint(mousePosition)).WorkingArea.Width / targetDpiScaleX
             : 0;
         var desiredWidth = hasValidRect && !tracker.IsDesktop
-            ? CalculateDockedWidth((rect.Right - rect.Left) / targetDpiScaleX)
+            ? tracker.IsActiveWindowDialog
+                ? CalculateDialogWidth((rect.Right - rect.Left) / targetDpiScaleX)
+                : CalculateDockedWidth((rect.Right - rect.Left) / targetDpiScaleX)
             : desktopWidth > 0
                 ? CalculateDesktopWidth(desktopWidth)
                 : DefaultWindowWidth;
@@ -238,6 +240,13 @@ public class InlineSearchWindowPositioner
                 // covers, so starting at the top is what leaves its bottom edge free -- and for a plain
                 // window it is the same edge a row count cannot move.
                 targetPhysTop = CalculatePhysTop(hangsBelow, rect, fileList, physXamlMarginY);
+                if (isDialog && !hangsBelow && TryPositionOutsideDialog(rect, workingArea,
+                    physWindowWidth, _window.CardSizing.FullCardHeight() * targetDpiScaleY,
+                    physXamlMarginY, out var outside))
+                {
+                    targetPhysLeft = outside.X;
+                    targetPhysTop = outside.Y;
+                }
 
                 var minLeft = workingArea.Left - physXamlMargin;
                 var minTop = workingArea.Top - physXamlMarginY;
@@ -368,6 +377,26 @@ public class InlineSearchWindowPositioner
     public void RememberUserDrag() => _dragOffset.RememberDrag();
 
     internal static double CalculateDockedWidth(double targetWindowWidth) => targetWindowWidth * DockedWidthRatio;
+    internal static double CalculateDialogWidth(double targetWindowWidth) => Math.Min(DefaultWindowWidth, CalculateDockedWidth(targetWindowWidth));
+
+    internal static bool TryPositionOutsideDialog(Core.Hook.ExplorerTracker.RECT host,
+        System.Drawing.Rectangle work, double width, double height, double margin, out System.Windows.Point point)
+    {
+        point = default;
+        if (height > work.Height || width > work.Width || width <= 0 || height <= 0) return false;
+        var centered = Math.Clamp(host.Left + (host.Right - host.Left - width) / 2, work.Left, work.Right - width);
+        var top = Math.Clamp(host.Top - margin, work.Top, work.Bottom - height);
+        foreach (var candidate in new[] {
+            new System.Windows.Point(centered, host.Top - height + margin),
+            new System.Windows.Point(host.Right - margin, top),
+            new System.Windows.Point(host.Left - width + margin, top) })
+        {
+            if (candidate.X < work.Left || candidate.Y < work.Top || candidate.X + width > work.Right || candidate.Y + height > work.Bottom) continue;
+            point = candidate;
+            return true;
+        }
+        return false;
+    }
 
     /// <summary>
     /// Where the card's window starts horizontally, in physical pixels.

@@ -72,7 +72,9 @@ public enum IpcMessageId : byte
     StartQuickPanelWakeTest = 50,
     StopQuickPanelWakeTest = 51,
     QuickPanelWakeTestResult = 52,
-    SetHotkeyRecorderFocused = 53
+    SetHotkeyRecorderFocused = 53,
+    CompleteInlineInput = 54,
+    InlineInputStarted = 55
 }
 
 public struct IpcMessage

@@ -96,7 +96,11 @@ public sealed class HookCommandHandler
                 case IpcMessageId.SetInlineSearchVisible:
                     _process.KeyboardHook?.IsInlineSearchVisible = msg.BoolVal;
                     break;
+                case IpcMessageId.CompleteInlineInput:
+                    _process.KeyboardHook?.CompleteInputHandoff(msg.IntVal, (nint)msg.Hwnd, msg.BoolVal);
+                    break;
                 case IpcMessageId.SetInlineWindowOnScreen:
+                    if (!msg.BoolVal) _process.KeyboardHook?.InputHandoff.Cancel();
                     _process.KeyboardHook?.IsInlineWindowOnScreen = msg.BoolVal;
                     // Steady demand for the host's path: while the window is up its scope and dock have to
                     // keep following, and a host read is otherwise suppressed as pointer noise.

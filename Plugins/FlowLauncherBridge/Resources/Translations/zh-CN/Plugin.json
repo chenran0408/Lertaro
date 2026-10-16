@@ -1,4 +1,4 @@
-﻿{
+{
   "FlowLauncherBridge_PluginName": "Flow.Launcher 插件桥接",
   "FlowLauncherBridge_PluginDesc": "在 Lertaro 中加载并运行 Flow.Launcher 社区插件与扩展。",
   "FlowLauncherBridge_WebsiteLabel": "浏览 Flow.Launcher 社区插件",
@@ -33,5 +33,17 @@
   "FlowLauncherBridge_PreviewUnavailable": "预览已失效，请重新搜索。",
   "Plugin_Comp_Desc_FlowPreviewProvider": "在快捷预览窗口中渲染 Flow.Launcher 插件的自定义预览面板。",
   "Plugin_Comp_Desc_FlowInstantResultProvider": "负责分发关键词查询至已加载的 Flow.Launcher 插件并提供即时搜索结果与配置管理。",
-  "Plugin_Comp_Desc_FlowLauncherBridgeTranslationProvider": "为 Flow.Launcher 桥接插件提供多语言翻译和本地化映射。"
+  "Plugin_Comp_Desc_FlowLauncherBridgeTranslationProvider": "为 Flow.Launcher 桥接插件提供多语言翻译和本地化映射。",
+  "FlowLauncherBridge_UnsupportedLanguage": "暂不支持此类插件",
+  "FlowLauncherBridge_RequiresNewerFlow": "需要更高版本的 Flow，暂不可安装",
+  "FlowLauncherBridge_CompatibilityUnverified": "兼容性待验证",
+  "FlowLauncherBridge_BasicSearchTested": "基础搜索已测试，其他功能待确认",
+  "FlowLauncherBridge_RecommendTimestamp": "时间戳：查看当前日期、时间和时间戳",
+  "FlowLauncherBridge_RecommendUuid": "UUID 生成器：快速生成随机编号",
+  "FlowLauncherBridge_RecommendSmartTimestamp": "日期换算：输入 tomorrow 等英文日期，生成多种时间格式",
+  "FlowLauncherBridge_BrowsePlugins": "浏览社区插件",
+  "FlowLauncherBridge_BrowsePluginsDesc": "基础搜索已测试的插件优先显示",
+  "FlowLauncherBridge_CheckPluginUpdates": "检查插件更新",
+  "FlowLauncherBridge_CheckPluginUpdatesDesc": "查看已安装插件的可用更新",
+  "FlowLauncherBridge_RetryFailedPlugin": "点击重试"
 }

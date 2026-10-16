@@ -96,6 +96,7 @@ internal sealed class InlineCardSizingSupport
     /// </remarks>
     internal InlineCardMetrics.CardLayout CurrentLayout()
     {
+        if (!_window.AreResultsExpanded) return new InlineCardMetrics.CardLayout(0, 0);
         // Actions mode shows the ACTIONS panel in the results area, not the results list. That area is a
         // fixed row budget there (see InlineSearchWindowLayoutManager.UpdateActionsLayout), so the card must
         // be sized from the same budget -- deriving it from the results collection would size the card to a
@@ -152,7 +153,7 @@ internal sealed class InlineCardSizingSupport
     {
         // Searching produces intermediate result snapshots. Their full-budget layout is not a stable size,
         // so wait for IsSearching=false and resize once from the settled result set.
-        if (_window.ViewModel.IsSearching) return;
+        if (_window.AreResultsExpanded && _window.ViewModel.IsSearching) return;
 
         // Re-derived on every size pass, before anything is measured from it: the screen, its DPI and the
         // window this card is docked to can all change while it is open (the dialog is dragged to a smaller
@@ -200,7 +201,7 @@ internal sealed class InlineCardSizingSupport
     /// </remarks>
     internal double CardHeight(int rows)
     {
-        if (HasVisibleContent)
+        if (_window.AreResultsExpanded && HasVisibleContent)
             rows = Math.Max(rows, _rowBudget);
 
         return InlineCardMetrics.ResultsAreaHeight(rows) + ChromeHeight();
@@ -270,7 +271,7 @@ internal sealed class InlineCardSizingSupport
     /// </remarks>
     private double PathBannerHeight()
     {
-        if (_window.PathPreviewBorder.Visibility != Visibility.Visible) return 0;
+        if (!_window.AreResultsExpanded || _window.PathPreviewBorder.Visibility != Visibility.Visible) return 0;
 
         var width = _window.PathPreviewBorder.ActualWidth;
         if (width <= 0)

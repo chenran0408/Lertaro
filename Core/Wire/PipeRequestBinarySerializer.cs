@@ -104,6 +104,10 @@ public static class PipeRequestBinarySerializer
             case IpcMessageId.KeyChar:
                 writer.Write(msg.CharVal);
                 break;
+            case IpcMessageId.CompleteInlineInput:
+            case IpcMessageId.InlineInputStarted:
+                writer.Write(msg.IntVal); writer.Write(msg.Hwnd); writer.Write(msg.BoolVal);
+                break;
 
             case IpcMessageId.KeyCtrlNumber:
                 writer.Write(msg.IntVal);
@@ -238,6 +242,10 @@ public static class PipeRequestBinarySerializer
 
             case IpcMessageId.KeyChar:
                 msg.CharVal = reader.ReadChar();
+                break;
+            case IpcMessageId.CompleteInlineInput:
+            case IpcMessageId.InlineInputStarted:
+                msg.IntVal = reader.ReadInt32(); msg.Hwnd = reader.ReadInt64(); msg.BoolVal = reader.ReadBoolean();
                 break;
 
             case IpcMessageId.KeyCtrlNumber:

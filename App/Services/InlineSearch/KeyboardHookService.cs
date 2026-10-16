@@ -8,6 +8,7 @@ public class KeyboardHookService : IDisposable
     private bool _isActive;
 
     public event Action<char>? OnCharacterTyped;
+    public event Action<int, nint>? OnInlineInputStarted;
     public event Action? OnBackspacePressed;
     public event Action? OnEscapePressed;
     public event Action? OnEnterPressed;
@@ -60,6 +61,7 @@ public class KeyboardHookService : IDisposable
         if (App.HookClient != null)
         {
             App.HookClient.OnCharacterTyped += ch => OnCharacterTyped?.Invoke(ch);
+            App.HookClient.OnInlineInputStarted += (generation, owner) => OnInlineInputStarted?.Invoke(generation, owner);
             App.HookClient.OnBackspacePressed += () => OnBackspacePressed?.Invoke();
             App.HookClient.OnEscapePressed += () => OnEscapePressed?.Invoke();
             App.HookClient.OnEnterPressed += () => OnEnterPressed?.Invoke();

@@ -11,12 +11,13 @@ namespace Lertaro.Plugins.FlowLauncherBridge.Engine.JsonRpc;
 public static class FlowPipManager
 {
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromMinutes(3) };
-    private static bool _pipChecked;
+    private static readonly HashSet<string> PipChecked = new(StringComparer.OrdinalIgnoreCase);
     private static readonly object Lock = new();
     // Serializes requirements installs: a concurrent Ensure while one is running must not run a
     // second pip over the same lib directory (check-then-act on the marker without this raced two
     // pip processes into one target tree).
     private static readonly SemaphoreSlim InstallGate = new(1, 1);
+    internal static Func<string, string, string?, Task<bool>>? ProcessRunnerOverride { get; set; }
 
     public static string GetFlowDataDirectory()
     {
@@ -29,65 +30,59 @@ public static class FlowPipManager
 
     public static void EnsurePipAndRequirementsBackground(string pythonExe, string pluginDir)
     {
-        var reqFile = Path.Combine(pluginDir, "requirements.txt");
-        var markerFile = Path.Combine(pluginDir, ".requirements_installed");
-
-        if (!File.Exists(reqFile) || File.Exists(markerFile))
-            return;
-
         _ = Task.Run(async () =>
         {
-            if (!await InstallGate.WaitAsync(0).ConfigureAwait(false))
-                return;
-            try
-            {
-                await EnsurePipInstalledAsync(pythonExe).ConfigureAwait(false);
-                await InstallRequirementsAsync(pythonExe, pluginDir, reqFile, markerFile).ConfigureAwait(false);
-            }
-            finally
-            {
-                InstallGate.Release();
-            }
+            try { await EnsurePipAndRequirementsAsync(pythonExe, pluginDir).ConfigureAwait(false); }
+            catch (Exception ex) { PluginSdk.Logger.Log($"Python dependency preparation failed: {ex.Message}", PluginSdk.LogLevel.Error); }
         });
     }
 
-    public static async Task EnsurePipAndRequirementsAsync(string pythonExe, string pluginDir)
+    public static async Task<bool> EnsurePipAndRequirementsAsync(string pythonExe, string pluginDir)
     {
         var reqFile = Path.Combine(pluginDir, "requirements.txt");
         var markerFile = Path.Combine(pluginDir, ".requirements_installed");
 
-        if (!File.Exists(reqFile) || File.Exists(markerFile))
-            return;
-
-        await EnsurePipInstalledAsync(pythonExe).ConfigureAwait(false);
-        await InstallRequirementsAsync(pythonExe, pluginDir, reqFile, markerFile).ConfigureAwait(false);
+        if (!File.Exists(reqFile)) return true;
+        // ponytail: one queue for the shared embedded Python environment; replace with
+        // environment-specific gates if multiple independent Python environments are added.
+        await InstallGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var fingerprint = FlowDependencyMarker.Fingerprint(pythonExe, reqFile);
+            if (FlowDependencyMarker.Matches(markerFile, fingerprint)) return true;
+            File.Delete(markerFile);
+            await EnsurePipInstalledAsync(pythonExe).ConfigureAwait(false);
+            return await InstallRequirementsAsync(pythonExe, pluginDir, reqFile, markerFile, fingerprint).ConfigureAwait(false);
+        }
+        finally { InstallGate.Release(); }
     }
 
     public static async Task EnsurePipInstalledAsync(string pythonExe)
     {
         lock (Lock)
         {
-            if (_pipChecked) return;
+            if (PipChecked.Contains(pythonExe)) return;
         }
 
         if (await RunProcessAsync(pythonExe, "-m pip --version").ConfigureAwait(false))
         {
-            lock (Lock) { _pipChecked = true; }
+            lock (Lock) { PipChecked.Add(pythonExe); }
             return;
         }
 
         var tempGetPip = Path.Combine(Path.GetTempPath(), $"get_pip_{Guid.NewGuid():N}.py");
         try
         {
-            using (var response = await Http.GetAsync("https://bootstrap.pypa.io/get-pip.py").ConfigureAwait(false))
+            using (var response = await Http.GetAsync("https://raw.githubusercontent.com/pypa/get-pip/f6f644156f23dfe9acc06e7b9ca75eee311f2e37/public/get-pip.py").ConfigureAwait(false))
             {
                 response.EnsureSuccessStatusCode();
                 await using var fs = new FileStream(tempGetPip, FileMode.Create, FileAccess.Write, FileShare.None);
                 await response.Content.CopyToAsync(fs).ConfigureAwait(false);
             }
 
-            await RunProcessAsync(pythonExe, $"\"{tempGetPip}\" --no-warn-script-location").ConfigureAwait(false);
-            lock (Lock) { _pipChecked = true; }
+            FlowRuntimeIntegrity.VerifyArchive(tempGetPip, "FB24E693BAB954209A063D90953621412CCAD4A500905A726286E038F508DDF6");
+            if (await RunProcessAsync(pythonExe, $"\"{tempGetPip}\" --no-warn-script-location").ConfigureAwait(false))
+                lock (Lock) { PipChecked.Add(pythonExe); }
         }
         catch { }
         finally
@@ -96,25 +91,27 @@ public static class FlowPipManager
         }
     }
 
-    private static async Task InstallRequirementsAsync(string pythonExe, string pluginDir, string reqFile, string markerFile)
+    private static async Task<bool> InstallRequirementsAsync(string pythonExe, string pluginDir, string reqFile, string markerFile, string fingerprint)
     {
         try
         {
             var libDir = Path.Combine(pluginDir, "lib");
             Directory.CreateDirectory(libDir);
 
-            var args = $"-m pip install -r \"{reqFile}\" --target \"{libDir}\" --no-warn-script-location";
+            var args = $"-m pip install --upgrade -r \"{reqFile}\" --target \"{libDir}\" --no-warn-script-location";
             var success = await RunProcessAsync(pythonExe, args, pluginDir).ConfigureAwait(false);
             if (success)
             {
-                await File.WriteAllTextAsync(markerFile, DateTime.UtcNow.ToString("O")).ConfigureAwait(false);
+                await File.WriteAllTextAsync(markerFile, fingerprint).ConfigureAwait(false);
             }
+            return success;
         }
-        catch { }
+        catch { return false; }
     }
 
     private static async Task<bool> RunProcessAsync(string exe, string arguments, string? workingDir = null)
     {
+        if (ProcessRunnerOverride != null) return await ProcessRunnerOverride(exe, arguments, workingDir).ConfigureAwait(false);
         var psi = new ProcessStartInfo
         {
             FileName = exe,
@@ -141,7 +138,8 @@ public static class FlowPipManager
             var outputTask = process.StandardOutput.ReadToEndAsync();
             var errorTask = process.StandardError.ReadToEndAsync();
             var exitTask = process.WaitForExitAsync(cts.Token);
-            await Task.WhenAll(exitTask, outputTask, errorTask).ConfigureAwait(false);
+            await exitTask.ConfigureAwait(false);
+            await Task.WhenAll(outputTask, errorTask).ConfigureAwait(false);
             return process.ExitCode == 0;
         }
         catch

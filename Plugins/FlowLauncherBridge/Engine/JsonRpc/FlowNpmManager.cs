@@ -12,8 +12,18 @@ public static class FlowNpmManager
     // Serializes npm installs: a concurrent Ensure while one is running must not delete the
     // node_modules being written or run a second npm over the same tree.
     private static readonly SemaphoreSlim InstallGate = new(1, 1);
+    internal static Func<string, string, string, Task<bool>>? ProcessRunnerOverride { get; set; }
 
     public static void EnsureNpmAndPackagesBackground(string nodeExe, string pluginDir)
+    {
+        _ = Task.Run(async () =>
+        {
+            try { await EnsureNpmAndPackagesAsync(nodeExe, pluginDir).ConfigureAwait(false); }
+            catch (Exception ex) { PluginSdk.Logger.Log($"Node dependency preparation failed: {ex.Message}", PluginSdk.LogLevel.Error); }
+        });
+    }
+
+    public static async Task<bool> EnsureNpmAndPackagesAsync(string nodeExe, string pluginDir)
     {
         var packageJson = Path.Combine(pluginDir, "package.json");
         var markerFile = Path.Combine(pluginDir, ".npm_installed");
@@ -22,64 +32,47 @@ public static class FlowNpmManager
         // The marker is the only "installed" signal. node_modules alone used to count as done too,
         // which permanently masked a half-install left behind when npm was killed mid-run: the
         // marker never got written, the directory existed, and every later load skipped the install.
-        if (!File.Exists(packageJson) || File.Exists(markerFile))
-            return;
-
-        _ = Task.Run(async () =>
+        if (!File.Exists(packageJson)) return true;
+        await InstallGate.WaitAsync().ConfigureAwait(false);
+        try
         {
-            if (!await InstallGate.WaitAsync(0).ConfigureAwait(false))
-                return;
-            try
+            var fingerprint = FlowDependencyMarker.Fingerprint(nodeExe, packageJson, Path.Combine(pluginDir, "package-lock.json"));
+            if (FlowDependencyMarker.Matches(markerFile, fingerprint)) return true;
+            File.Delete(markerFile);
+            FlowPluginPathHelper.ValidateTree(pluginDir);
+            // Many published plugins already bundle their production dependencies. Validate
+            // them before reinstalling; their development-only prepare scripts may not run in a release ZIP.
+            if (Directory.Exists(nodeModulesDir) &&
+                await RunNpmAsync(nodeExe, pluginDir, "ls --omit=dev --depth=0").ConfigureAwait(false))
             {
-                // Leftover tree from a previous killed install: clear it so the reinstall starts
-                // clean instead of npm merging into a possibly corrupt dependency tree.
-                if (Directory.Exists(nodeModulesDir))
-                {
-                    try { Directory.Delete(nodeModulesDir, recursive: true); }
-                    catch { /* best-effort; npm reinstalls over what it can */ }
-                }
-                await InstallPackagesAsync(nodeExe, pluginDir, markerFile).ConfigureAwait(false);
+                await File.WriteAllTextAsync(markerFile, fingerprint).ConfigureAwait(false);
+                return true;
             }
-            finally
+            // Leftover tree from a previous killed install: clear it so the reinstall starts
+            // clean instead of npm merging into a possibly corrupt dependency tree.
+            if (Directory.Exists(nodeModulesDir))
             {
-                InstallGate.Release();
+                try { Directory.Delete(nodeModulesDir, recursive: true); }
+                catch { /* best-effort; npm reinstalls over what it can */ }
             }
-        });
+            return await InstallPackagesAsync(nodeExe, pluginDir, markerFile).ConfigureAwait(false);
+        }
+        finally
+        {
+            InstallGate.Release();
+        }
     }
 
     public static async Task<bool> InstallPackagesAsync(string nodeExe, string pluginDir, string markerFile)
     {
         try
         {
-            var nodeDir = Path.GetDirectoryName(nodeExe) ?? string.Empty;
-            var npmCliJs = Path.Combine(nodeDir, "node_modules", "npm", "bin", "npm-cli.js");
-
-            string fileName;
-            string args;
-
-            if (File.Exists(npmCliJs))
-            {
-                fileName = nodeExe;
-                args = $"\"{npmCliJs}\" install --omit=dev --no-audit --no-fund";
-            }
-            else
-            {
-                var npmCmd = Path.Combine(nodeDir, "npm.cmd");
-                if (File.Exists(npmCmd))
-                {
-                    fileName = npmCmd;
-                    args = "install --omit=dev --no-audit --no-fund";
-                }
-                else
-                {
-                    return false;
-                }
-            }
-
-            var success = await RunProcessAsync(fileName, args, pluginDir).ConfigureAwait(false);
+            var success = await RunNpmAsync(nodeExe, pluginDir, "install --omit=dev --no-audit --no-fund").ConfigureAwait(false);
             if (success)
             {
-                await File.WriteAllTextAsync(markerFile, DateTime.UtcNow.ToString("O")).ConfigureAwait(false);
+                // npm may create/update the lock file while resolving dependencies.
+                var fingerprint = FlowDependencyMarker.Fingerprint(nodeExe, Path.Combine(pluginDir, "package.json"), Path.Combine(pluginDir, "package-lock.json"));
+                await File.WriteAllTextAsync(markerFile, fingerprint).ConfigureAwait(false);
             }
             return success;
         }
@@ -89,8 +82,19 @@ public static class FlowNpmManager
         }
     }
 
+    private static Task<bool> RunNpmAsync(string nodeExe, string pluginDir, string arguments)
+    {
+        var nodeDir = Path.GetDirectoryName(nodeExe) ?? string.Empty;
+        var npmCliJs = Path.Combine(nodeDir, "node_modules", "npm", "bin", "npm-cli.js");
+        // Official embedded Node includes npm-cli.js; invoke it directly without a command shell.
+        return File.Exists(npmCliJs)
+            ? RunProcessAsync(nodeExe, $"\"{npmCliJs}\" {arguments}", pluginDir)
+            : Task.FromResult(false);
+    }
+
     private static async Task<bool> RunProcessAsync(string exe, string arguments, string workingDir)
     {
+        if (ProcessRunnerOverride != null) return await ProcessRunnerOverride(exe, arguments, workingDir).ConfigureAwait(false);
         var psi = new ProcessStartInfo
         {
             FileName = exe,
@@ -117,7 +121,8 @@ public static class FlowNpmManager
             var outputTask = process.StandardOutput.ReadToEndAsync();
             var errorTask = process.StandardError.ReadToEndAsync();
             var exitTask = process.WaitForExitAsync(cts.Token);
-            await Task.WhenAll(exitTask, outputTask, errorTask).ConfigureAwait(false);
+            await exitTask.ConfigureAwait(false);
+            await Task.WhenAll(outputTask, errorTask).ConfigureAwait(false);
             return process.ExitCode == 0;
         }
         catch

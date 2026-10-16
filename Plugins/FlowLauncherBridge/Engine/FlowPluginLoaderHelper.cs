@@ -42,7 +42,8 @@ public static class FlowPluginLoaderHelper
                 failedPlugins[metadata.ID] = (metadata, "Python runtime not found in PythonEmbeded, or download failed.");
                 return null;
             }
-            FlowPipManager.EnsurePipAndRequirementsBackground(pythonPath, pluginDir);
+            if (!await FlowPipManager.EnsurePipAndRequirementsAsync(pythonPath, pluginDir).ConfigureAwait(false))
+                throw new InvalidOperationException("Python 依赖准备失败，请检查网络后重试安装。");
             var runner = new FlowProcessRunner(metadata, pythonPath, metadata.ExecuteFilePath);
             return new FlowJsonRpcPlugin(runner, metadata);
         }
@@ -55,7 +56,8 @@ public static class FlowPluginLoaderHelper
                 failedPlugins[metadata.ID] = (metadata, "Node.js runtime not found in NodeEmbeded, and download failed.");
                 return null;
             }
-            FlowNpmManager.EnsureNpmAndPackagesBackground(nodePath, pluginDir);
+            if (!await FlowNpmManager.EnsureNpmAndPackagesAsync(nodePath, pluginDir).ConfigureAwait(false))
+                throw new InvalidOperationException("Node.js 依赖准备失败，请检查网络后重试安装。");
             var runner = new FlowProcessRunner(metadata, nodePath, metadata.ExecuteFilePath);
             return new FlowJsonRpcPlugin(runner, metadata);
         }

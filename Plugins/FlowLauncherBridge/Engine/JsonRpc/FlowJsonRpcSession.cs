@@ -46,7 +46,7 @@ public static class FlowJsonRpcSession
 
         psi.Environment["PYTHONIOENCODING"] = "utf-8";
         psi.Environment["PYTHONDONTWRITEBYTECODE"] = "1";
-        psi.Environment["FLOW_VERSION"] = "1.19.0";
+        psi.Environment["FLOW_VERSION"] = FlowPluginCompatibility.FlowVersion;
         psi.Environment["FLOW_PROGRAM_DIRECTORY"] = metadata.PluginDirectory;
         psi.Environment["FLOW_APPLICATION_DIRECTORY"] = metadata.PluginDirectory;
         psi.Environment["FLOW_LAUNCHER_SETTINGS_PATH"] = metadata.PluginSettingsDirectoryPath;

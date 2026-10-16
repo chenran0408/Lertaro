@@ -1,4 +1,4 @@
-﻿{
+{
   "FlowLauncherBridge_PluginName": "Flow.Launcher Bridge",
   "FlowLauncherBridge_PluginDesc": "Host and run Flow.Launcher community plugins and extensions inside Lertaro.",
   "FlowLauncherBridge_WebsiteLabel": "Browse Flow.Launcher community plugins",
@@ -33,5 +33,17 @@
   "FlowLauncherBridge_PreviewUnavailable": "This preview is no longer available. Search again.",
   "Plugin_Comp_Desc_FlowPreviewProvider": "Renders custom preview panels for Flow.Launcher plugins inside the QuickLook window.",
   "Plugin_Comp_Desc_FlowInstantResultProvider": "Dispatches keyword queries to loaded Flow.Launcher plugins and manages instant results and settings.",
-  "Plugin_Comp_Desc_FlowLauncherBridgeTranslationProvider": "Provides multilingual translations and localization mappings for Flow.Launcher bridge plugins."
+  "Plugin_Comp_Desc_FlowLauncherBridgeTranslationProvider": "Provides multilingual translations and localization mappings for Flow.Launcher bridge plugins.",
+  "FlowLauncherBridge_UnsupportedLanguage": "Unsupported plugin language",
+  "FlowLauncherBridge_RequiresNewerFlow": "Requires a newer Flow version; currently unavailable",
+  "FlowLauncherBridge_CompatibilityUnverified": "Compatibility not verified",
+  "FlowLauncherBridge_BasicSearchTested": "Basic search tested; other features unverified",
+  "FlowLauncherBridge_RecommendTimestamp": "Current date, time and Unix timestamp",
+  "FlowLauncherBridge_RecommendUuid": "Generate a random UUID",
+  "FlowLauncherBridge_RecommendSmartTimestamp": "Convert English dates such as tomorrow into several time formats",
+  "FlowLauncherBridge_BrowsePlugins": "Browse community plugins",
+  "FlowLauncherBridge_BrowsePluginsDesc": "Plugins with tested basic search appear first",
+  "FlowLauncherBridge_CheckPluginUpdates": "Check plugin updates",
+  "FlowLauncherBridge_CheckPluginUpdatesDesc": "Find updates for installed plugins",
+  "FlowLauncherBridge_RetryFailedPlugin": "Select to retry"
 }

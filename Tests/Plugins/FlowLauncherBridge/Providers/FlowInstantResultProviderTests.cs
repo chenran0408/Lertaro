@@ -180,6 +180,24 @@ public sealed class FlowInstantResultProviderTests
     }
 
     [TestMethod]
+    public void PluginManagementEntries_ChangeQueryAndKeepSearchOpen()
+    {
+        var host = new FlowPluginHost(new FlowSettingsStorage(Path.GetTempPath()), []);
+        var provider = new FlowInstantResultProvider(new FlowQueryDispatcher(host), host);
+        string? requested = null;
+        PluginSdk.Services.SearchQueryService.ChangeQueryFunc = (query, _) => requested = query;
+        try
+        {
+            var items = provider.GetInstantResults("flow").ToList();
+            Assert.IsFalse(items[0].OnExecuteFunc!());
+            Assert.AreEqual("flow install ", requested);
+            Assert.IsFalse(items[1].OnExecuteFunc!());
+            Assert.AreEqual("flow update ", requested);
+        }
+        finally { PluginSdk.Services.SearchQueryService.ChangeQueryFunc = null; }
+    }
+
+    [TestMethod]
     public void GetInstantResults_WhenTriggerKeywordTyped_ReturnsPluginList()
     {
         var storage = new FlowSettingsStorage(Path.GetTempPath());
@@ -196,9 +214,9 @@ public sealed class FlowInstantResultProviderTests
 
         var results = provider.GetInstantResults("flow").ToList();
 
-        Assert.HasCount(1, results);
-        Assert.Contains("YouTube", results[0].Title);
-        Assert.IsNotNull(results[0].OnExecuteFunc);
+        Assert.HasCount(3, results);
+        var installed = results.Single(item => item.Title.Contains("YouTube"));
+        Assert.IsNotNull(installed.OnExecuteFunc);
     }
 
     [TestMethod]

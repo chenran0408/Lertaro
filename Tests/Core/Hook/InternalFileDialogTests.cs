@@ -1,5 +1,8 @@
 using System.Runtime.InteropServices;
 using Lertaro.Core.Hook;
+using Lertaro.Core.Hook.InlineSearch;
+using Lertaro.PluginSdk.Abstractions.Plugins.WindowAdapters;
+using Lertaro.PluginSdk.Registries;
 
 namespace Lertaro.Core.Tests.Hook;
 
@@ -23,7 +26,7 @@ public sealed class InternalFileDialogTests
     }
 
     [TestMethod]
-    public void ClassifierClearsPreviousHostWhenInternalPickerTakesFocus()
+    public void ClassifierClearsPreviousHostWhenUnrecognizedInternalDialogTakesFocus()
     {
         var dialog = Create("#32770");
         try
@@ -48,7 +51,7 @@ public sealed class InternalFileDialogTests
     }
 
     [TestMethod]
-    public void ForegroundPollDoesNotReattachToInternalPicker()
+    public void ForegroundPollDoesNotReattachToUnrecognizedInternalDialog()
     {
         var dialog = Create("#32770");
         try
@@ -64,6 +67,91 @@ public sealed class InternalFileDialogTests
             Assert.IsFalse(tracker.IsActiveWindowDialog);
         }
         finally { DestroyWindow(dialog); }
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void RecognizedOwnFilePicker_IsTrackedThroughClassifierAndForegroundPoll(bool usePoller)
+    {
+        var owner = Create("STATIC");
+        var dialog = Create("#32770", owner);
+        var adapter = new PickerAdapter { Target = dialog };
+        FileDialogAdapterRegistry.Register(adapter);
+        try
+        {
+            using var tracker = new ExplorerTracker(() => dialog) { AppProcessId = (uint)Environment.ProcessId };
+            var activated = 0;
+            tracker.OnExplorerActivated += (_, _, _, _) => activated++;
+            var classifier = new ExplorerWindowClassifier(tracker, new FileDialogNavigationTracker());
+            using var poller = new ExplorerActivePathPoller(tracker, classifier, () => dialog);
+            if (usePoller) poller.Poll(tracker, ExplorerNativeHooks.EVENT_SYSTEM_FOREGROUND, dialog);
+            else tracker.ReclassifyActiveWindow(dialog);
+            Assert.AreEqual(dialog, tracker.ActiveHwnd, "Track the picker itself, not its settings owner.");
+            Assert.IsTrue(tracker.IsActiveWindowDialog);
+            Assert.AreSame(adapter, tracker.ActiveAdapter);
+            Assert.AreEqual(adapter.Path, tracker.LastPath);
+            Assert.AreEqual(1, activated);
+
+            adapter.Path = @"C:\Pictures\Changed";
+            tracker.RequestHostPathRead();
+            poller.Poll(tracker, ExplorerNativeHooks.EVENT_SYSTEM_FOREGROUND, dialog);
+            Assert.AreEqual(adapter.Path, tracker.LastPath, "An own picker must retain folder updates.");
+            Assert.AreEqual(1, activated, "Polling must not recreate the search window.");
+
+            DestroyWindow(dialog);
+            tracker.ReclassifyActiveWindow(owner);
+            Assert.IsFalse(tracker.IsActiveWindowDialog);
+            Assert.AreEqual(IntPtr.Zero, tracker.ActiveHwnd);
+        }
+        finally { adapter.Target = 0; DestroyWindow(owner); }
+    }
+
+    [TestMethod]
+    public void OwnPickerWhoseControlsAppearLate_IsRetriedWithoutAnotherForegroundChange()
+    {
+        var dialog = Create("#32770");
+        var adapter = new PickerAdapter();
+        FileDialogAdapterRegistry.Register(adapter);
+        try
+        {
+            using var tracker = new ExplorerTracker(() => dialog);
+            var classifier = new ExplorerWindowClassifier(tracker, new FileDialogNavigationTracker());
+            using var poller = new ExplorerActivePathPoller(tracker, classifier, () => dialog);
+            poller.Poll(tracker, ExplorerNativeHooks.EVENT_SYSTEM_FOREGROUND, dialog);
+            Assert.IsFalse(tracker.IsActiveWindowDialog);
+            adapter.Target = dialog;
+            Assert.IsTrue(SpinWait.SpinUntil(() => tracker.IsActiveWindowDialog && tracker.LastPath == adapter.Path, 2000),
+                "The ordinary dialog retry must also cover our own picker.");
+            Assert.AreEqual(dialog, tracker.ActiveHwnd);
+        }
+        finally { adapter.Target = 0; DestroyWindow(dialog); }
+    }
+
+    [TestMethod]
+    public void OwnPickerAllowsNavigationHotkeys_WhileOwnSearchAndSettingsKeepNormalInput()
+    {
+        using var tracker = new ExplorerTracker();
+        var pid = (uint)Environment.ProcessId;
+        tracker.ActiveHwnd = 10;
+        tracker.IsActiveWindowDialog = true;
+        Assert.IsFalse(KeyboardHookService.ShouldBypassOwnWindow(pid, 10, pid, tracker));
+        Assert.IsTrue(KeyboardHookService.ShouldBypassOwnWindow(pid, 20, pid, tracker));
+        tracker.IsActiveWindowDialog = false;
+        Assert.IsTrue(KeyboardHookService.ShouldBypassOwnWindow(pid, 10, pid, tracker));
+        Assert.IsFalse(KeyboardHookService.ShouldBypassOwnWindow(pid + 1, 10, pid, tracker));
+    }
+
+    private sealed class PickerAdapter : IFileDialogAdapter
+    {
+        internal nint Target;
+        internal string Path = @"C:\Pictures";
+        public string Name => "Internal picker regression adapter";
+        public bool CanHandle(nint hwnd, string className, string processName) => Target != 0 && hwnd == Target && className == "#32770";
+        public string? GetCurrentPath(nint hwnd) => Path;
+        public bool NavigateTo(nint hwnd, string targetPath) => false;
+        public bool RestoreFocus(nint hwnd) => false;
+        public bool GetDockBounds(nint hwnd, out AdapterRect rect) { rect = default; return false; }
     }
 
     private static IntPtr Create(string className, IntPtr parent = default, bool child = false)

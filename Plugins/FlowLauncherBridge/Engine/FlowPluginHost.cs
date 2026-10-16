@@ -17,6 +17,7 @@ public class FlowPluginHost : IAsyncDisposable
     private readonly ConcurrentDictionary<string, PluginPair> _loadedPlugins = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, FlowPublicApi> _pluginApis = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, FlowAssemblyLoader> _loaders = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, byte> _loadingPlugins = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, (PluginMetadata Metadata, string Reason)> _failedPlugins = new(StringComparer.OrdinalIgnoreCase);
     private readonly Action<string, bool>? _changeQueryAction;
 
@@ -41,7 +42,9 @@ public class FlowPluginHost : IAsyncDisposable
     public IReadOnlyList<PluginPair> GlobalPlugins => _keywordManager.GlobalPlugins;
     public IReadOnlyDictionary<string, List<PluginPair>> KeywordPlugins => _keywordManager.KeywordPlugins;
     public IReadOnlyDictionary<string, (PluginMetadata Metadata, string Reason)> FailedPlugins => _failedPlugins;
-    public List<PluginPair> GetAllPlugins() => _loadedPlugins.Values.ToList();
+    internal bool IsLoading(string pluginId) => _loadingPlugins.ContainsKey(pluginId);
+    internal void ClearPluginFailure(string pluginId) => _failedPlugins.TryRemove(pluginId, out _);
+    public List<PluginPair> GetAllPlugins() => _loadedPlugins.Values.Where(pair => !_loadingPlugins.ContainsKey(pair.Metadata.ID)).ToList();
 
     public void RegisterPlugin(PluginPair pair)
     {
@@ -112,6 +115,8 @@ public class FlowPluginHost : IAsyncDisposable
     {
         foreach (var baseDir in _pluginDirectories)
         {
+            try { FlowPluginPathHelper.ValidateChildDirectory(Path.GetDirectoryName(Path.GetFullPath(baseDir))!, baseDir); }
+            catch { continue; }
             if (!Directory.Exists(baseDir))
             {
                 try { Directory.CreateDirectory(baseDir); } catch { continue; }
@@ -119,14 +124,16 @@ public class FlowPluginHost : IAsyncDisposable
 
             foreach (var pluginDir in Directory.GetDirectories(baseDir))
             {
+                if ((File.GetAttributes(pluginDir) & FileAttributes.ReparsePoint) != 0) continue;
                 if (File.Exists(Path.Combine(pluginDir, ".deleted")))
                 {
-                    try { Directory.Delete(pluginDir, true); } catch { }
+                    try { FlowPluginPathHelper.ValidateChildDirectory(baseDir, pluginDir); FlowPluginPathHelper.ValidateTree(pluginDir); Directory.Delete(pluginDir, true); } catch { }
                 }
             }
 
             foreach (var pluginDir in Directory.GetDirectories(baseDir))
             {
+                if ((File.GetAttributes(pluginDir) & FileAttributes.ReparsePoint) != 0) continue;
                 var dirName = Path.GetFileName(pluginDir);
                 var dashIndex = dirName.LastIndexOf('-');
                 if (dashIndex > 0 && dashIndex == dirName.Length - 9)
@@ -141,8 +148,9 @@ public class FlowPluginHost : IAsyncDisposable
 
             foreach (var pluginDir in Directory.GetDirectories(baseDir))
             {
+                if ((File.GetAttributes(pluginDir) & FileAttributes.ReparsePoint) != 0) continue;
                 var manifestPath = Path.Combine(pluginDir, "plugin.json");
-                if (!File.Exists(manifestPath) || File.Exists(Path.Combine(pluginDir, ".deleted")))
+                if (!File.Exists(manifestPath) || File.Exists(Path.Combine(pluginDir, ".deleted")) || File.Exists(Path.Combine(pluginDir, ".pending")))
                     continue;
 
                 try { await LoadPluginFromDirectoryAsync(pluginDir, manifestPath); }
@@ -153,30 +161,51 @@ public class FlowPluginHost : IAsyncDisposable
 
     public async Task<bool> LoadPluginFromDirectoryAsync(string pluginDir, string manifestPath)
     {
-        var json = await File.ReadAllTextAsync(manifestPath);
-        var metadata = JsonSerializer.Deserialize<PluginMetadata>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        if (metadata == null || string.IsNullOrEmpty(metadata.ID))
+        PluginMetadata? metadata;
+        try
+        {
+            if (!string.Equals(Path.GetFullPath(manifestPath), Path.GetFullPath(Path.Combine(pluginDir, "plugin.json")), StringComparison.OrdinalIgnoreCase)) return false;
+            FlowPluginPathHelper.ValidateTree(pluginDir);
+            var json = await File.ReadAllTextAsync(manifestPath);
+            metadata = JsonSerializer.Deserialize<PluginMetadata>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch (Exception ex)
+        {
+            PluginSdk.Logger.Log($"Could not read Flow plugin manifest: {ex.Message}", PluginSdk.LogLevel.Error);
+            return false;
+        }
+        if (metadata == null || string.IsNullOrWhiteSpace(metadata.ID))
             return false;
 
         metadata.PluginDirectory = pluginDir;
-        FlowPluginPathHelper.ApplyTo(metadata);
-        var customKeyword = FlowPluginStateStore.GetCustomKeyword(metadata.Name);
-        var isDisabled = metadata.Disabled || FlowPluginStateStore.IsPluginDisabled(metadata.Name);
-        metadata.Disabled = isDisabled;
-
-        if (!string.IsNullOrWhiteSpace(customKeyword))
-        {
-            metadata.ActionKeyword = customKeyword;
-            metadata.ActionKeywords.Clear();
-            metadata.ActionKeywords.Add(customKeyword);
-        }
-        else if (!string.IsNullOrWhiteSpace(metadata.ActionKeyword) && !metadata.ActionKeywords.Contains(metadata.ActionKeyword, StringComparer.OrdinalIgnoreCase))
-        {
-            metadata.ActionKeywords.Insert(0, metadata.ActionKeyword);
-        }
-
+        if (!_loadingPlugins.TryAdd(metadata.ID, 0)) return false;
+        if (_loadedPlugins.ContainsKey(metadata.ID)) { _loadingPlugins.TryRemove(metadata.ID, out _); return false; }
+        var initialized = false;
         try
         {
+            var customKeyword = FlowPluginStateStore.GetCustomKeyword(metadata.Name);
+            var isDisabled = metadata.Disabled || FlowPluginStateStore.IsPluginDisabled(metadata.Name);
+            metadata.Disabled = isDisabled;
+            metadata.ActionKeywords ??= [];
+
+            if (!string.IsNullOrWhiteSpace(customKeyword))
+            {
+                metadata.ActionKeyword = customKeyword;
+                metadata.ActionKeywords.Clear();
+                metadata.ActionKeywords.Add(customKeyword);
+            }
+            else if (!string.IsNullOrWhiteSpace(metadata.ActionKeyword) && !metadata.ActionKeywords.Contains(metadata.ActionKeyword, StringComparer.OrdinalIgnoreCase))
+            {
+                metadata.ActionKeywords.Insert(0, metadata.ActionKeyword);
+            }
+
+            var incompatibility = FlowPluginCompatibility.GetBlockReason(metadata.Language, metadata.MinimumAppVersion);
+            if (incompatibility != null) throw new InvalidDataException(incompatibility);
+            FlowPluginPathHelper.ApplyTo(metadata);
+            FlowPluginPathHelper.ValidateTree(pluginDir);
+            if (!string.IsNullOrEmpty(metadata.ExecuteFilePath) &&
+                !Path.GetFullPath(metadata.ExecuteFilePath).StartsWith(Path.GetFullPath(pluginDir).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("Plugin entry point is outside its directory.");
             var pluginInstance = await FlowPluginLoaderHelper.CreatePluginInstanceAsync(
                 metadata, pluginDir, _loaders, _failedPlugins).ConfigureAwait(false);
 
@@ -184,17 +213,16 @@ public class FlowPluginHost : IAsyncDisposable
             {
                 FlowPluginLanguageHelper.LoadPluginLanguage(pluginDir);
                 var pair = new PluginPair { Metadata = metadata, Plugin = pluginInstance };
+                // Init may register extra keywords via the API; the dispatcher excludes loading IDs.
                 _loadedPlugins[metadata.ID] = pair;
-                if (!isDisabled)
-                {
-                    _keywordManager.RegisterPluginKeywords(pair);
-                }
 
                 var api = new FlowPublicApi(metadata, _storage, GetAllPlugins, _changeQueryAction, AddActionKeyword, RemoveActionKeyword, ActionKeywordAssigned);
                 _pluginApis[metadata.ID] = api;
                 var initContext = new PluginInitContext(metadata, api);
 
                 await pluginInstance.InitAsync(initContext);
+                if (!metadata.Disabled) _keywordManager.RegisterPluginKeywords(pair);
+                else _keywordManager.UnregisterPluginKeywords(pair);
 
                 if (pluginInstance is IPluginI18n pluginI18n)
                 {
@@ -202,6 +230,8 @@ public class FlowPluginHost : IAsyncDisposable
                 }
 
                 PluginSdk.Services.SettingsSearchService.Invalidate();
+                _failedPlugins.TryRemove(metadata.ID, out _);
+                initialized = true;
                 return true;
             }
             return false;
@@ -221,6 +251,11 @@ public class FlowPluginHost : IAsyncDisposable
         {
             _failedPlugins[metadata.ID] = (metadata, ex.Message);
             return false;
+        }
+        finally
+        {
+            try { if (!initialized) await UnloadPluginAsync(metadata.ID).ConfigureAwait(false); }
+            finally { _loadingPlugins.TryRemove(metadata.ID, out _); }
         }
     }
 

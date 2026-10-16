@@ -34,6 +34,11 @@ internal sealed class InlineSearchFocusSupport
             ? InlineSearchWindowNativeMethods.GetWindowThreadProcessId(foreground, out _)
             : 0;
         var attached = false;
+        var sourceIme = _window.Manager.HasPendingInput && foreground != IntPtr.Zero
+            ? InlineSearchWindowNativeMethods.ImmGetDefaultIMEWnd(foreground) : IntPtr.Zero;
+        var conversion = IntPtr.Zero;
+        if (sourceIme != IntPtr.Zero)
+            InlineSearchWindowNativeMethods.SendMessageTimeout(sourceIme, 0x0283, (IntPtr)1, IntPtr.Zero, 2, 50, out conversion);
 
         try
         {
@@ -48,10 +53,28 @@ internal sealed class InlineSearchFocusSupport
 
             if (foreground != IntPtr.Zero && foregroundThread != 0)
             {
-                _originalLayout = InlineSearchWindowNativeMethods.GetKeyboardLayout(currentThread);
+                if (_originalLayout == IntPtr.Zero) _originalLayout = InlineSearchWindowNativeMethods.GetKeyboardLayout(currentThread);
                 var layout = InlineSearchWindowNativeMethods.GetKeyboardLayout(foregroundThread);
                 if (layout != IntPtr.Zero)
                     InlineSearchWindowNativeMethods.ActivateKeyboardLayout(layout, 0);
+            }
+            if (_window.Manager.HasPendingInput)
+            {
+                try
+                {
+                    InputMethod.SetPreferredImeState(textBox, InputMethodState.On);
+                    InputMethod.Current.ImeState = InputMethodState.On;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Lertaro.Core.Logger.Log($"[InlineSearch] IME state unavailable: {ex.Message}", Lertaro.Core.LogLevel.Debug);
+                }
+                var targetIme = InlineSearchWindowNativeMethods.ImmGetDefaultIMEWnd(new System.Windows.Interop.WindowInteropHelper(_window).Handle);
+                if (targetIme != IntPtr.Zero)
+                {
+                    if (conversion != IntPtr.Zero) InlineSearchWindowNativeMethods.SendMessageTimeout(targetIme, 0x0283, (IntPtr)2, conversion, 2, 50, out _);
+                    InlineSearchWindowNativeMethods.SendMessageTimeout(targetIme, 0x0283, (IntPtr)6, (IntPtr)1, 2, 50, out _);
+                }
             }
 
             return _window.IsActive && textBox.IsKeyboardFocusWithin;

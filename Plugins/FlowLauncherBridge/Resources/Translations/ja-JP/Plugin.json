@@ -1,4 +1,4 @@
-﻿{
+{
   "FlowLauncherBridge_PluginName": "Flow.Launcher プラグインブリッジ",
   "FlowLauncherBridge_PluginDesc": "Lertaro 内で Flow.Launcher コミュニティプラグインと拡張機能を読み込んで実行します。",
   "FlowLauncherBridge_WebsiteLabel": "Flow.Launcher コミュニティプラグインを参照",
@@ -33,5 +33,17 @@
   "FlowLauncherBridge_PreviewUnavailable": "このプレビューは利用できなくなりました。もう一度検索してください。",
   "Plugin_Comp_Desc_FlowPreviewProvider": "クイックルックウィンドウ内で Flow.Launcher プラグインのカスタムプレビューパネルを描画します。",
   "Plugin_Comp_Desc_FlowInstantResultProvider": "読み込まれた Flow.Launcher プラグインにキーワード クエリをディスパッチし、即時検索結果と設定管理を提供します。",
-  "Plugin_Comp_Desc_FlowLauncherBridgeTranslationProvider": "Flow.Launcher ブリッジ プラグインの多言語翻訳とローカリゼーション マッピングを提供します。"
+  "Plugin_Comp_Desc_FlowLauncherBridgeTranslationProvider": "Flow.Launcher ブリッジ プラグインの多言語翻訳とローカリゼーション マッピングを提供します。",
+  "FlowLauncherBridge_UnsupportedLanguage": "未対応のプラグイン形式です",
+  "FlowLauncherBridge_RequiresNewerFlow": "新しい Flow が必要なため、現在利用できません",
+  "FlowLauncherBridge_CompatibilityUnverified": "互換性は未確認です",
+  "FlowLauncherBridge_BasicSearchTested": "基本検索をテスト済み、他の機能は未確認",
+  "FlowLauncherBridge_RecommendTimestamp": "現在の日付、時刻と Unix タイムスタンプ",
+  "FlowLauncherBridge_RecommendUuid": "ランダムな UUID を生成",
+  "FlowLauncherBridge_RecommendSmartTimestamp": "tomorrow などの英語の日付を複数の形式に変換",
+  "FlowLauncherBridge_BrowsePlugins": "コミュニティプラグインを探す",
+  "FlowLauncherBridge_BrowsePluginsDesc": "基本検索をテストしたプラグインを先に表示",
+  "FlowLauncherBridge_CheckPluginUpdates": "プラグインの更新を確認",
+  "FlowLauncherBridge_CheckPluginUpdatesDesc": "インストール済みプラグインの更新を探す",
+  "FlowLauncherBridge_RetryFailedPlugin": "選択して再試行"
 }

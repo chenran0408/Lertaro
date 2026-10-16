@@ -41,12 +41,16 @@ public static class FlowCommunityListHelper
         }
 
         var uninstalled = cached.Where(p =>
+            !string.IsNullOrWhiteSpace(p.ID) && !string.IsNullOrWhiteSpace(p.Name) &&
             (string.IsNullOrEmpty(p.ID) || !installedMap.Contains(p.ID)) &&
             (string.IsNullOrEmpty(p.Name) || !installedMap.Contains(p.Name)));
 
         var filtered = (string.IsNullOrEmpty(listFilter)
             ? uninstalled
-            : uninstalled.Where(p => MatchesCommunityPlugin(p, listFilter))).ToList();
+            : uninstalled.Where(p => MatchesCommunityPlugin(p, listFilter)))
+            .OrderBy(p => FlowPluginCompatibility.GetBlockReason(p.Language, p.MinimumAppVersion) != null)
+            .ThenByDescending(p => FlowCommunityRecommendations.IsSearchTested(p))
+            .ThenBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
 
         if (filtered.Count == 0)
         {
@@ -66,20 +70,21 @@ public static class FlowCommunityListHelper
         foreach (var plugin in filtered)
         {
             var isInstalling = FlowPluginInstaller.IsInstalling(plugin.ID);
-            var statusPrefix = isInstalling ? $"[{TranslationService.Get("FlowLauncherBridge_Installing")}] " : string.Empty;
+            var blocked = FlowPluginCompatibility.GetBlockReason(plugin.Language, plugin.MinimumAppVersion);
+            var statusPrefix = isInstalling ? $"[{TranslationService.Get("FlowLauncherBridge_Installing")}] " : FlowPluginInstaller.GetInstallationError(plugin.ID) is { } error ? $"[{error}] " : string.Empty;
             var lang = !string.IsNullOrEmpty(plugin.Language) ? $"[{plugin.Language}] " : string.Empty;
             var author = !string.IsNullOrEmpty(plugin.Author) ? $"by {plugin.Author}" : string.Empty;
 
             var title = $"{plugin.Name} v{plugin.Version} {author}".Trim();
-            var desc = $"{statusPrefix}{lang}{plugin.Description}".Trim();
+            var desc = $"{statusPrefix}{blocked ?? FlowCommunityRecommendations.Status(plugin)} · {lang}{FlowCommunityRecommendations.Description(plugin)}".Trim();
 
             items.Add(new InstantResultItem
             {
                 Title = title,
                 Description = desc,
-                ActionType = "Execute",
+                ActionType = blocked != null ? "None" : "Execute",
                 ActionArgument = plugin.UrlDownload,
-                OnExecute = isInstalling
+                OnExecute = isInstalling || blocked != null
                     ? null
                     : () =>
                     {
@@ -104,6 +109,7 @@ public static class FlowCommunityListHelper
 
         if (IsMatch(filter, plugin.Description))
             return true;
+        if (IsMatch(filter, FlowCommunityRecommendations.Description(plugin))) return true;
 
         if (IsMatch(filter, plugin.Author))
             return true;

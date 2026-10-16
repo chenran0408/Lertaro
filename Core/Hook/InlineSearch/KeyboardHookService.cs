@@ -29,6 +29,30 @@ public class KeyboardHookService : IDisposable
     /// navigation on this thread: see <see cref="QuickSwitchNavigator"/>.</summary>
     public event Action<IntPtr>? OnQuickSwitchRequested;
     public event Action<char>? OnCharacterTyped;
+    public event Action<int, nint>? OnInlineInputStarted;
+    internal readonly InlineInputHandoff InputHandoff = new();
+    internal void BeginInputHandoff(nint owner, KeyboardNativeMethods.KBDLLHOOKSTRUCT key)
+    {
+        var generation = InputHandoff.Begin(owner, ToBufferedKey(key), Environment.TickCount64);
+        OnInlineInputStarted?.Invoke(generation, owner);
+    }
+    internal static InlineInputHandoff.Key ToBufferedKey(KeyboardNativeMethods.KBDLLHOOKSTRUCT key) => new(
+        (ushort)key.vkCode, (ushort)key.scanCode, (key.flags & 1) != 0,
+        (KeyboardNativeMethods.GetAsyncKeyState(0x10) & 0x8000) != 0);
+
+    public void CompleteInputHandoff(int generation, nint target, bool ready)
+    {
+        if (!ready && target != 0)
+        {
+            KeyboardNativeMethods.GetWindowThreadProcessId(target, out var targetPid);
+            if (AppProcessId != 0 && targetPid == AppProcessId) InputHandoff.SetTarget(generation, target);
+            return;
+        }
+        var foreground = KeyboardNativeMethods.GetForegroundWindow();
+        KeyboardNativeMethods.GetWindowThreadProcessId(foreground, out var pid);
+        var keys = InputHandoff.Take(generation, target, ready && target != 0 && foreground == target && AppProcessId != 0 && pid == AppProcessId, Environment.TickCount64);
+        InlineInputHandoff.Replay(keys);
+    }
     public event Action? OnBackspacePressed;
     public event Action? OnEscapePressed;
     public event Action? OnEnterPressed;
@@ -252,12 +276,23 @@ public class KeyboardHookService : IDisposable
                 return KeyboardNativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
             }
             var fgHwnd = KeyboardNativeMethods.GetForegroundWindow();
+            if (InputHandoff.IsPending && (hookStruct.flags & KeyboardNativeMethods.LLKHF_INJECTED) == 0)
+            {
+                if (_hotkeyDetector.HasControlAltOrWindowsDown || vkCode is 0x1B or 0x09)
+                    InputHandoff.Cancel();
+                else if (InlineInputHandoff.IsPrintableKey(vkCode) || vkCode is 0x08 or 0x0D or 0x20 or >= 0x23 and <= 0x28 or 0x2E)
+                {
+                    if (InputHandoff.TryAppend(fgHwnd, ToBufferedKey(hookStruct), Environment.TickCount64))
+                        return (IntPtr)1;
+                }
+            }
             if (fgHwnd != IntPtr.Zero)
             {
                 KeyboardNativeMethods.GetWindowThreadProcessId(fgHwnd, out var fgPid);
-                if (fgPid == AppProcessId || fgPid == (uint)Environment.ProcessId)
+                if (ShouldBypassOwnWindow(fgPid, fgHwnd, AppProcessId, _explorerTracker))
                 {
-                    // Native pickers owned by Lertaro also keep their normal text/navigation keys.
+                    // Search/settings keep normal input. A recognized own picker also keeps native
+                    // typing below, but must first be allowed to use Quick Switch/Quick Navigation.
                     return KeyboardNativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
                 }
                 var rootFg = ExplorerNativeHooks.GetAncestor(fgHwnd, ExplorerNativeHooks.GA_ROOTOWNER);
@@ -316,6 +351,10 @@ public class KeyboardHookService : IDisposable
         return KeyboardNativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
     }
     public void Dispose() => Stop();
+
+    internal static bool ShouldBypassOwnWindow(uint foregroundPid, nint foreground, uint appPid, ExplorerTracker tracker) =>
+        (foregroundPid == (uint)Environment.ProcessId || (appPid != 0 && foregroundPid == appPid))
+        && !(tracker.IsActiveWindowDialog && foreground != 0 && tracker.ActiveHwnd == foreground);
 
     private bool IsDescendantOrOwned(IntPtr parent, IntPtr child)
     {

@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../Fixtures/FlowPluginFixture/FlowPluginFixture.csproj" />
     <ProjectReference Include="..\..\..\Plugins\FlowLauncherBridge\FlowLauncherBridge.csproj" />
     <ProjectReference Include="..\..\..\Plugins\FlowLauncherBridge\Flow.Launcher.Plugin\Flow.Launcher.Plugin.csproj" />
   </ItemGroup>

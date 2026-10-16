@@ -74,20 +74,21 @@ public static class FlowCommunityUpdateHelper
         foreach (var (local, online) in updatableList)
         {
             var isUpdating = FlowPluginInstaller.IsInstalling(online.ID);
-            var statusPrefix = isUpdating ? $"[{TranslationService.Get("FlowLauncherBridge_Updating")}] " : string.Empty;
+            var blocked = FlowPluginCompatibility.GetBlockReason(online.Language, online.MinimumAppVersion);
+            var statusPrefix = isUpdating ? $"[{TranslationService.Get("FlowLauncherBridge_Updating")}] " : FlowPluginInstaller.GetInstallationError(online.ID) is { } error ? $"[{error}] " : string.Empty;
             var lang = !string.IsNullOrEmpty(online.Language) ? $"[{online.Language}] " : string.Empty;
             var author = !string.IsNullOrEmpty(online.Author) ? $"by {online.Author}" : string.Empty;
 
             var title = $"{online.Name} v{local.Metadata.Version} → v{online.Version} {author}".Trim();
-            var desc = $"{statusPrefix}{lang}{online.Description}".Trim();
+            var desc = $"{statusPrefix}{blocked ?? FlowCommunityRecommendations.Status(online)} · {lang}{FlowCommunityRecommendations.Description(online)}".Trim();
 
             var item = new InstantResultItem
             {
                 Title = title,
                 Description = desc,
-                ActionType = "Execute",
+                ActionType = blocked != null ? "None" : "Execute",
                 ActionArgument = online.UrlDownload,
-                OnExecute = isUpdating
+                OnExecute = isUpdating || blocked != null
                     ? null
                     : () =>
                     {

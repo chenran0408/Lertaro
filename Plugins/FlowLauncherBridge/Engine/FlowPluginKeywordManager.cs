@@ -1,65 +1,49 @@
-using System.Collections.Concurrent;
 using Flow.Launcher.Plugin;
 
 namespace Lertaro.Plugins.FlowLauncherBridge.Engine;
 
-/// <summary>
-/// Manages action keywords mapping and global plugin registrations for Flow.Launcher plugins.
-/// Split out from FlowPluginHost to keep files modular and strictly under the line limit.
-/// </summary>
+/// <summary>Maintains keyword registrations and publishes snapshots safe for concurrent queries.</summary>
 public sealed class FlowPluginKeywordManager
 {
-    private readonly ConcurrentDictionary<string, List<PluginPair>> _keywordPlugins = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _gate = new();
+    private readonly Dictionary<string, List<PluginPair>> _keywordPlugins = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<PluginPair> _globalPlugins = [];
 
-    public IReadOnlyList<PluginPair> GlobalPlugins => _globalPlugins;
-    public IReadOnlyDictionary<string, List<PluginPair>> KeywordPlugins => _keywordPlugins;
+    public IReadOnlyList<PluginPair> GlobalPlugins { get { lock (_gate) return _globalPlugins.ToArray(); } }
+    public IReadOnlyDictionary<string, List<PluginPair>> KeywordPlugins
+    {
+        get { lock (_gate) return _keywordPlugins.ToDictionary(entry => entry.Key, entry => entry.Value.ToList(), StringComparer.OrdinalIgnoreCase); }
+    }
 
     public void RegisterPluginKeywords(PluginPair pair)
     {
-        var keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        if (!string.IsNullOrWhiteSpace(pair.Metadata.ActionKeyword))
-            keywords.Add(pair.Metadata.ActionKeyword);
-        if (pair.Metadata.ActionKeywords != null)
+        lock (_gate)
         {
-            foreach (var kw in pair.Metadata.ActionKeywords)
-                if (!string.IsNullOrWhiteSpace(kw))
-                    keywords.Add(kw);
-        }
-
-        if (keywords.Contains("*") || keywords.Count == 0)
-        {
-            lock (_globalPlugins)
+            if (pair.Metadata.Disabled) return;
+            var keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (!string.IsNullOrWhiteSpace(pair.Metadata.ActionKeyword)) keywords.Add(pair.Metadata.ActionKeyword);
+            foreach (var keyword in pair.Metadata.ActionKeywords ?? [])
+                if (!string.IsNullOrWhiteSpace(keyword)) keywords.Add(keyword);
+            if ((keywords.Contains("*") || keywords.Count == 0) && !_globalPlugins.Contains(pair))
+                _globalPlugins.Add(pair);
+            foreach (var keyword in keywords)
             {
-                if (!_globalPlugins.Contains(pair))
-                    _globalPlugins.Add(pair);
+                if (keyword == "*") continue;
+                if (!_keywordPlugins.TryGetValue(keyword, out var list)) _keywordPlugins[keyword] = list = [];
+                if (!list.Contains(pair)) list.Add(pair);
             }
-        }
-
-        foreach (var kw in keywords)
-        {
-            if (kw == "*")
-                continue;
-
-            _keywordPlugins.AddOrUpdate(
-                kw,
-                _ => [pair],
-                (_, list) => { lock (list) { if (!list.Contains(pair)) list.Add(pair); } return list; });
         }
     }
 
     public void UnregisterPluginKeywords(PluginPair pair)
     {
-        lock (_globalPlugins) { _globalPlugins.Remove(pair); }
-        foreach (var (key, list) in _keywordPlugins)
+        lock (_gate)
         {
-            lock (list)
+            _globalPlugins.Remove(pair);
+            foreach (var (key, list) in _keywordPlugins.ToArray())
             {
                 list.RemoveAll(p => string.Equals(p.Metadata.ID, pair.Metadata.ID, StringComparison.OrdinalIgnoreCase));
-                if (list.Count == 0)
-                {
-                    _keywordPlugins.TryRemove(key, out _);
-                }
+                if (list.Count == 0) _keywordPlugins.Remove(key);
             }
         }
     }
@@ -67,50 +51,47 @@ public sealed class FlowPluginKeywordManager
     public void AddActionKeyword(PluginPair pair, string newActionKeyword)
     {
         if (string.IsNullOrWhiteSpace(newActionKeyword)) return;
-        if (!pair.Metadata.ActionKeywords.Contains(newActionKeyword, StringComparer.OrdinalIgnoreCase))
-            pair.Metadata.ActionKeywords.Add(newActionKeyword);
-
-        _keywordPlugins.AddOrUpdate(
-            newActionKeyword,
-            _ => [pair],
-            (_, list) => { lock (list) { if (!list.Contains(pair)) list.Add(pair); } return list; });
+        lock (_gate)
+        {
+            UnregisterPluginKeywords(pair);
+            if (!pair.Metadata.ActionKeywords.Contains(newActionKeyword, StringComparer.OrdinalIgnoreCase))
+                pair.Metadata.ActionKeywords.Add(newActionKeyword);
+            RegisterPluginKeywords(pair);
+        }
     }
 
     public void RemoveActionKeyword(PluginPair pair, string oldActionKeyword)
     {
         if (string.IsNullOrWhiteSpace(oldActionKeyword)) return;
-        pair.Metadata.ActionKeywords.RemoveAll(k => string.Equals(k, oldActionKeyword, StringComparison.OrdinalIgnoreCase));
-        if (_keywordPlugins.TryGetValue(oldActionKeyword, out var list))
+        lock (_gate)
         {
-            lock (list)
-            {
-                list.RemoveAll(p => string.Equals(p.Metadata.ID, pair.Metadata.ID, StringComparison.OrdinalIgnoreCase));
-                if (list.Count == 0)
-                {
-                    _keywordPlugins.TryRemove(oldActionKeyword, out _);
-                }
-            }
+            UnregisterPluginKeywords(pair);
+            pair.Metadata.ActionKeywords.RemoveAll(k => string.Equals(k, oldActionKeyword, StringComparison.OrdinalIgnoreCase));
+            if (string.Equals(pair.Metadata.ActionKeyword, oldActionKeyword, StringComparison.OrdinalIgnoreCase)) pair.Metadata.ActionKeyword = string.Empty;
+            RegisterPluginKeywords(pair);
         }
     }
 
-    public bool ActionKeywordAssigned(string actionKeyword) =>
-        !string.IsNullOrWhiteSpace(actionKeyword) &&
-        _keywordPlugins.TryGetValue(actionKeyword, out var list) &&
-        list.Count > 0;
+    public bool ActionKeywordAssigned(string actionKeyword)
+    {
+        lock (_gate) return !string.IsNullOrWhiteSpace(actionKeyword) && _keywordPlugins.TryGetValue(actionKeyword, out var list) && list.Count > 0;
+    }
 
     public void UpdateActionKeyword(PluginPair pair, string newActionKeyword)
     {
         if (string.IsNullOrWhiteSpace(newActionKeyword)) return;
-        UnregisterPluginKeywords(pair);
-        pair.Metadata.ActionKeyword = newActionKeyword;
-        pair.Metadata.ActionKeywords.Clear();
-        pair.Metadata.ActionKeywords.Add(newActionKeyword);
-        RegisterPluginKeywords(pair);
+        lock (_gate)
+        {
+            UnregisterPluginKeywords(pair);
+            pair.Metadata.ActionKeyword = newActionKeyword;
+            pair.Metadata.ActionKeywords.Clear();
+            pair.Metadata.ActionKeywords.Add(newActionKeyword);
+            RegisterPluginKeywords(pair);
+        }
     }
 
     public void Clear()
     {
-        lock (_globalPlugins) { _globalPlugins.Clear(); }
-        _keywordPlugins.Clear();
+        lock (_gate) { _globalPlugins.Clear(); _keywordPlugins.Clear(); }
     }
 }

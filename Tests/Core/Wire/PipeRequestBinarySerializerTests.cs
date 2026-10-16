@@ -6,6 +6,24 @@ namespace Lertaro.Core.Tests.Wire;
 public sealed class PipeRequestBinarySerializerTests
 {
     [TestMethod]
+    public async Task InlineInputHandshake_PreservesSessionTargetAndNextFrame()
+    {
+        using var stream = new MemoryStream();
+        IpcMessage[] messages = [new() { Id = IpcMessageId.InlineInputStarted, IntVal = 17, Hwnd = 0x123456789 },
+            new() { Id = IpcMessageId.CompleteInlineInput, IntVal = 17, Hwnd = 456 },
+            new() { Id = IpcMessageId.CompleteInlineInput, IntVal = 17, Hwnd = 456, BoolVal = true },
+            new() { Id = IpcMessageId.KeyChar, CharVal = 'x' }];
+        foreach (var message in messages) await PipeRequestBinarySerializer.WriteMessageAsync(stream, message);
+        stream.Position = 0;
+        foreach (var expected in messages)
+        {
+            var actual = await PipeRequestBinarySerializer.ReadMessageAsync(stream);
+            Assert.AreEqual(expected.Id, actual.Id); Assert.AreEqual(expected.IntVal, actual.IntVal);
+            Assert.AreEqual(expected.Hwnd, actual.Hwnd); Assert.AreEqual(expected.BoolVal, actual.BoolVal);
+            Assert.AreEqual(expected.CharVal, actual.CharVal);
+        }
+    }
+    [TestMethod]
     public async Task WakeRuleAndTestMessagesPreserveTheirPayloadAndFollowingFrame()
     {
         using var stream = new MemoryStream();

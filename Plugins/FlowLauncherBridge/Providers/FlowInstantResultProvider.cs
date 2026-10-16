@@ -3,6 +3,7 @@ using Flow.Launcher.Plugin;
 using Lertaro.PluginSdk.Abstractions.Plugins;
 using Lertaro.PluginSdk.Services;
 using Lertaro.Plugins.FlowLauncherBridge.Engine;
+using Lertaro.Plugins.FlowLauncherBridge.Engine.Community;
 
 namespace Lertaro.Plugins.FlowLauncherBridge.Providers;
 
@@ -52,7 +53,7 @@ public class FlowInstantResultProvider : IInstantResultProvider
                     // A keyword only disabled plugins answer to is not offered at dispatch time
                     // (FlowQueryDispatcher.GetTargetPlugins filters them out), so it must not be stripped
                     // either -- the two sides have to agree on what the word means.
-                    if (string.IsNullOrWhiteSpace(keyword) || !plugins.Any(pair => !pair.Metadata.Disabled))
+                    if (string.IsNullOrWhiteSpace(keyword) || !plugins.Any(pair => !pair.Metadata.Disabled && !_host.IsLoading(pair.Metadata.ID)))
                         continue;
 
                     if (seen.Add(keyword))
@@ -98,17 +99,45 @@ public class FlowInstantResultProvider : IInstantResultProvider
                 return FlowCommunityUninstallHelper.QueryInstalledPluginsForUninstall(_host, uninstallFilter);
 
             var allPlugins = _host.GetAllPlugins();
+            var managementItems = new List<InstantResultItem>();
+            if (string.IsNullOrEmpty(filter))
+            {
+                managementItems.Add(new InstantResultItem
+                {
+                    Title = TranslationService.Get("FlowLauncherBridge_BrowsePlugins"),
+                    Description = TranslationService.Get("FlowLauncherBridge_BrowsePluginsDesc"),
+                    ActionType = "None",
+                    OnExecuteFunc = () => { SearchQueryService.ChangeQuery($"{keyword} install ", true); return false; }
+                });
+                managementItems.Add(new InstantResultItem
+                {
+                    Title = TranslationService.Get("FlowLauncherBridge_CheckPluginUpdates"),
+                    Description = TranslationService.Get("FlowLauncherBridge_CheckPluginUpdatesDesc"),
+                    ActionType = "None",
+                    OnExecuteFunc = () => { SearchQueryService.ChangeQuery($"{keyword} update ", true); return false; }
+                });
+            }
+            foreach (var failed in _host.FailedPlugins.Values)
+            {
+                if (!MatchesPlugin(new PluginPair { Metadata = failed.Metadata }, filter)) continue;
+                var metadata = failed.Metadata;
+                managementItems.Add(new InstantResultItem
+                {
+                    Title = $"{metadata.Name} · {TranslationService.Get("FlowLauncherBridge_InstallFailed")}",
+                    Description = $"{TranslationService.Get("FlowLauncherBridge_RetryFailedPlugin")} · {failed.Reason}",
+                    ActionType = "None",
+                    OnExecuteFunc = () => { _ = Task.Run(() => FlowPluginInstaller.RetryPluginAsync(metadata, _host)); return false; }
+                });
+            }
             if (allPlugins.Count == 0 && string.IsNullOrEmpty(filter))
             {
-                return
-                [
-                    new InstantResultItem
+                if (_host.FailedPlugins.Count == 0) managementItems.Add(new InstantResultItem
                     {
                         Title = TranslationService.Get("FlowLauncherBridge_NoPluginsTitle"),
                         Description = TranslationService.Get("FlowLauncherBridge_NoPluginsDesc"),
                         ActionType = "None"
-                    }
-                ];
+                    });
+                return managementItems;
             }
 
             var plugins = string.IsNullOrEmpty(filter)
@@ -116,9 +145,9 @@ public class FlowInstantResultProvider : IInstantResultProvider
                 : allPlugins.Where(p => MatchesPlugin(p, filter)).ToList();
 
             if (plugins.Count == 0)
-                return [];
+                return managementItems;
 
-            var items = new List<InstantResultItem>();
+            var items = managementItems;
             var kwPrefix = TranslationService.Get("FlowLauncherBridge_KeywordPrefix");
             foreach (var pair in plugins)
             {
@@ -178,7 +207,7 @@ public class FlowInstantResultProvider : IInstantResultProvider
     }
 
     private readonly ConcurrentDictionary<string, (List<Result> Results, DateTimeOffset Timestamp)> _queryCache = new(StringComparer.Ordinal);
-    private readonly ConcurrentDictionary<string, Task<List<Result>>> _inFlightQueries = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, Lazy<Task<List<Result>>>> _inFlightQueries = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, byte> _refreshScheduledQueries = new(StringComparer.Ordinal);
     private const int DispatchTimeoutMs = 300;
 
@@ -192,7 +221,7 @@ public class FlowInstantResultProvider : IInstantResultProvider
             return FlowResultMapper.MapToInstantResults(cached.Results, _host);
         }
 
-        var task = _inFlightQueries.GetOrAdd(q, queryKey => Task.Run(async () =>
+        var task = _inFlightQueries.GetOrAdd(q, queryKey => new Lazy<Task<List<Result>>>(() => Task.Run(async () =>
         {
             try
             {
@@ -216,7 +245,7 @@ public class FlowInstantResultProvider : IInstantResultProvider
             {
                 _inFlightQueries.TryRemove(queryKey, out _);
             }
-        }));
+        }))).Value;
 
         try
         {

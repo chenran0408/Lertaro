@@ -166,6 +166,7 @@ public class SearchExecutionViewModel : ViewModelBase, IDisposable
     // has typed -- see DirectChildrenListingCache for why that is the difference between a first character
     // that matches instantly and one that waits for a whole folder walk.
     public void PrewarmDirectoryListing(string? directory) => _engine.PrewarmDirectoryListing(directory);
+    internal void UseDirectoryListingCache(DirectChildrenListingCache cache) => _engine.UseDirectoryListingCache(cache);
 
     public void Dispose()
     {

@@ -249,6 +249,7 @@ public sealed class HookProcess : IDisposable
 
             _keyboardHook.IsInlineSearchVisible = false;
             _keyboardHook.IsInlineWindowOnScreen = false;
+            _keyboardHook.InputHandoff.Cancel();
             _keyboardHook.IsQuickSearchWindowVisible = false;
             // No window left to want the host's path, so stop reading it: a dropped App link must not leave
             // steady demand latched on.
@@ -398,6 +399,8 @@ public sealed class HookProcess : IDisposable
                 _ipcServer.SendActivate();
             };
             _keyboardHook.OnCharacterTyped += ch => _ipcServer.SendMessage(new IpcMessage { Id = IpcMessageId.KeyChar, CharVal = ch });
+            _keyboardHook.OnInlineInputStarted += (generation, owner) => _ipcServer.SendMessage(new IpcMessage
+            { Id = IpcMessageId.InlineInputStarted, IntVal = generation, Hwnd = owner });
             _keyboardHook.OnBackspacePressed += () => _ipcServer.SendMessage(new IpcMessage { Id = IpcMessageId.KeyBackspace });
             _keyboardHook.OnEscapePressed += () => _ipcServer.SendMessage(new IpcMessage { Id = IpcMessageId.KeyEscape });
             _keyboardHook.OnEnterPressed += () => _ipcServer.SendMessage(new IpcMessage { Id = IpcMessageId.KeyEnter });

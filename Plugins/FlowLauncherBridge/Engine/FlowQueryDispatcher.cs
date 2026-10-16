@@ -1,4 +1,6 @@
 using Flow.Launcher.Plugin;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Lertaro.Plugins.FlowLauncherBridge.Engine;
 
@@ -8,8 +10,16 @@ namespace Lertaro.Plugins.FlowLauncherBridge.Engine;
 public class FlowQueryDispatcher
 {
     private readonly FlowPluginHost _host;
+    private readonly TimeSpan _queryTimeout;
+    private readonly ConcurrentDictionary<string, SemaphoreSlim> _queryGates = new(StringComparer.OrdinalIgnoreCase);
 
-    public FlowQueryDispatcher(FlowPluginHost host) => _host = host;
+    public FlowQueryDispatcher(FlowPluginHost host) : this(host, TimeSpan.FromSeconds(2)) { }
+
+    internal FlowQueryDispatcher(FlowPluginHost host, TimeSpan queryTimeout)
+    {
+        _host = host;
+        _queryTimeout = queryTimeout;
+    }
 
     public Query ParseQuery(string rawInput)
     {
@@ -64,9 +74,25 @@ public class FlowQueryDispatcher
 
         var tasks = targetPlugins.Select(async pair =>
         {
+            if (token.IsCancellationRequested) return [];
+            var started = Stopwatch.GetTimestamp();
+            var gate = _queryGates.GetOrAdd(pair.Metadata.ID, _ => new SemaphoreSlim(1, 1));
+            try { if (!await gate.WaitAsync(_queryTimeout, token).ConfigureAwait(false)) return []; }
+            catch (OperationCanceledException) { return []; }
+            var remaining = _queryTimeout - Stopwatch.GetElapsedTime(started);
+            if (remaining <= TimeSpan.Zero) { gate.Release(); return []; }
+            var cancellation = CancellationTokenSource.CreateLinkedTokenSource(token);
+            // Run outside the caller: a plugin may block before it even returns a Task.
+            var queryTask = Task.Run(async () => await pair.Plugin.QueryAsync(query, cancellation.Token).ConfigureAwait(false));
+            _ = queryTask.ContinueWith(completed =>
+            {
+                _ = completed.Exception;
+                gate.Release();
+                cancellation.Dispose();
+            }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
             try
             {
-                var results = await pair.Plugin.QueryAsync(query, token);
+                var results = await queryTask.WaitAsync(remaining, token).ConfigureAwait(false);
                 if (results != null)
                 {
                     foreach (var res in results)
@@ -80,7 +106,13 @@ public class FlowQueryDispatcher
             }
             catch (OperationCanceledException)
             {
+                try { cancellation.Cancel(); } catch { /* Plugin cancellation callbacks may themselves throw. */ }
                 // Normal query cancellation
+            }
+            catch (TimeoutException)
+            {
+                try { cancellation.Cancel(); } catch { /* Plugin cancellation callbacks may themselves throw. */ }
+                PluginSdk.Logger.Log($"插件 {pair.Metadata.Name} 响应较慢，已跳过本次搜索。", PluginSdk.LogLevel.Warn);
             }
             catch
             {
@@ -97,9 +129,9 @@ public class FlowQueryDispatcher
     {
         if (!string.IsNullOrEmpty(actionKeyword) && _host.KeywordPlugins.TryGetValue(actionKeyword, out var specificPlugins))
         {
-            return specificPlugins.Where(pair => !pair.Metadata.Disabled).ToList();
+            return specificPlugins.Where(pair => !pair.Metadata.Disabled && !_host.IsLoading(pair.Metadata.ID)).ToList();
         }
 
-        return _host.GlobalPlugins.Where(pair => !pair.Metadata.Disabled).ToList();
+        return _host.GlobalPlugins.Where(pair => !pair.Metadata.Disabled && !_host.IsLoading(pair.Metadata.ID)).ToList();
     }
 }

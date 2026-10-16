@@ -157,7 +157,7 @@ public sealed class InlineSearchWindowLayoutManager
     // the "active" result -- no separate hover-tracking state needed here anymore.
     public void UpdatePathPreviewVisibility() => _window.Dispatcher.BeginInvoke(new Action(() =>
                                                       {
-                                                          if (_window.LstResults.SelectedItem is not AppSearchResult activeResult)
+                                                          if (!_window.AreResultsExpanded || _window.LstResults.SelectedItem is not AppSearchResult activeResult)
                                                           {
                                                               SetPathBannerVisible(false);
                                                               return;

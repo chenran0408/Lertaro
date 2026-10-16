@@ -18,6 +18,26 @@ public class InlineSearchManager : IDisposable
     public static InlineSearchManager Instance => _instance ??= new InlineSearchManager();
 
     private InlineSearchWindow? _window;
+    internal ViewModels.Search.DirectChildrenListingCache DirectoryListingCache { get; } = new();
+    private string? _prewarmedScope;
+    private int _pendingInputGeneration;
+    internal bool HasPendingInput => _pendingInputGeneration != 0;
+    internal void PrepareInputHandoff(InlineSearchWindow window)
+    {
+        if (!HasPendingInput) return;
+        App.HookClient?.SendMessage(new IpcMessage { Id = IpcMessageId.CompleteInlineInput, IntVal = _pendingInputGeneration,
+            Hwnd = new System.Windows.Interop.WindowInteropHelper(window).Handle });
+    }
+
+    internal void CompleteInputHandoff(InlineSearchWindow? window)
+    {
+        if (_pendingInputGeneration == 0) return;
+        var ready = window != null && window.IsActive && window.SearchTextBox.IsKeyboardFocusWithin;
+        App.HookClient?.SendMessage(new IpcMessage { Id = IpcMessageId.CompleteInlineInput,
+            IntVal = _pendingInputGeneration, Hwnd = ready ? new System.Windows.Interop.WindowInteropHelper(window!).Handle : 0,
+            BoolVal = ready });
+        _pendingInputGeneration = 0;
+    }
     private readonly ExplorerTracker _explorerTracker;
     private readonly KeyboardHookService _keyboardHook;
     private readonly MouseHookService _mouseHook;
@@ -80,11 +100,12 @@ public class InlineSearchManager : IDisposable
                     _window?.UpdateSearchDisplay(string.Empty);
                     // The window exists and knows its folder, but the user has not typed yet -- start
                     // reading that folder now so the first character does not have to wait for the walk.
-                    PrewarmActiveFolderListing();
+                    PrewarmActiveFolderListing(newSession: true);
                 }
                 else
                 {
                     CloseInlineSearch("ExplorerActivated (Non-Dialog)");
+                    PrewarmActiveFolderListing(newSession: true);
                 }
             }));
 
@@ -127,14 +148,29 @@ public class InlineSearchManager : IDisposable
             }));
     }
 
-    // Starts reading the inline window's current folder so its first keystroke matches a warm listing
-    // instead of walking the folder (see DirectChildrenListingCache). Best-effort: with no window there is
-    // nothing to warm, and the empty-query search that also runs here does no listing work of its own.
-    private void PrewarmActiveFolderListing()
+    // Warm the active folder before typing, including Explorer sessions with no search window yet.
+    // A reused listing is checked off the UI thread and refreshed when it has changed or aged out.
+    internal void PrewarmActiveFolderListing(bool newSession = false)
     {
-        var scope = _window?.ViewModel.SearchScope;
-        if (!string.IsNullOrEmpty(scope))
-            _window!.ViewModel.Search.PrewarmDirectoryListing(scope);
+        var scope = _window?.ViewModel.SearchScope ?? _explorerTracker.ActivePath;
+        if (string.IsNullOrEmpty(scope)) return;
+        if (!newSession && string.Equals(_prewarmedScope, scope, StringComparison.OrdinalIgnoreCase)) return;
+        _prewarmedScope = scope;
+        _ = RefreshFolderListingAsync(scope);
+    }
+
+    private async Task RefreshFolderListingAsync(string scope)
+    {
+        try
+        {
+            if (!await DirectoryListingCache.RefreshForSessionAsync(scope).ConfigureAwait(false)) return;
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                if (_window != null && string.Equals(_window.ViewModel.SearchScope, scope, StringComparison.OrdinalIgnoreCase))
+                    _window.ViewModel.Search.PerformSearch(_window.SearchBox.SearchText ?? string.Empty);
+            }, DispatcherPriority.Background);
+        }
+        catch (Exception ex) { Logger.Log($"[InlineSearch] Folder warmup failed: {ex.Message}", LogLevel.Debug); }
     }
 
     private void WireUpMouseEvents() => _mouseHook.OnClickOutside += () => Application.Current.Dispatcher.BeginInvoke(new Action(() =>
@@ -145,12 +181,25 @@ public class InlineSearchManager : IDisposable
                                                      // the click-outside dismissal for every click.
                                                      if (_window == null || !_window.IsVisible) return;
                                                      if (_explorerTracker.IsActiveWindowDialog)
+                                                     {
+                                                         _window.CollapseDialogResults();
                                                          return;
+                                                     }
                                                      CloseInlineSearch("ClickOutside");
                                                  }));
 
     private void WireUpKeyboardEvents()
     {
+        _keyboardHook.OnInlineInputStarted += (generation, owner) => Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+        {
+            _pendingInputGeneration = generation;
+            if (ExplorerNativeHooks.GetForegroundWindow() != owner || _explorerTracker.ActiveHwnd != owner)
+            {
+                CompleteInputHandoff(null);
+                return;
+            }
+            EnsureWindowCreated();
+        }), DispatcherPriority.Input);
         var router = new InlineSearchKeyboardEventRouter(
             _keyboardHook,
             getWindow: () => _window,
@@ -252,11 +301,22 @@ public class InlineSearchManager : IDisposable
         _searchText = string.Empty;
 
         var win = _window;
+        var host = _currentHostHwnd;
+        var foreground = ExplorerNativeHooks.GetForegroundWindow();
+        ExplorerNativeHooks.GetWindowThreadProcessId(host, out var hostPid);
+        var restoreOwnPicker = host != 0 && hostPid == (uint)Environment.ProcessId
+            && _explorerTracker.IsActiveWindowDialog && _explorerTracker.ActiveHwnd == host
+            && (foreground == host || foreground == new System.Windows.Interop.WindowInteropHelper(win).Handle);
         _window = null;
+        CompleteInputHandoff(null);
         _currentHostHwnd = IntPtr.Zero;
         win.ViewModel.Monitor.StopStatusTimer();
         win.Hide();
         win.Close();
+        // WPF can reactivate a different managed window when a helper inside our own modal picker
+        // closes. Return focus after teardown so the picker's delayed confirmation still reaches it.
+        if (restoreOwnPicker && ExplorerNativeHooks.IsWindow(host))
+            ExplorerNativeHooks.SetForegroundWindow(host);
         PowerThrottlingHelper.WindowHidden("inline");
 
         // Inline search closes whenever you leave Explorer, so release the icon cache and let the working

@@ -10,6 +10,34 @@ namespace Lertaro.App.Tests.ViewModels.Search;
 [TestClass]
 public sealed class DirectChildrenListingCacheTests
 {
+    [TestMethod]
+    public async Task QuickReopen_ReusesTheSnapshot_AndRefreshesAfterExpiry()
+    {
+        using var dir = new TempDirectory("a.txt");
+        long now = 100;
+        var cache = new DirectChildrenListingCache(() => now);
+        var first = cache.GetAsync(dir.Path);
+        await first;
+        Assert.IsFalse(await cache.RefreshForSessionAsync(dir.Path));
+        Assert.AreSame(first, cache.GetAsync(dir.Path));
+        now += 5001;
+        Assert.IsTrue(await cache.RefreshForSessionAsync(dir.Path));
+        Assert.AreNotSame(first, cache.GetAsync(dir.Path));
+        await cache.GetAsync(dir.Path);
+    }
+
+    [TestMethod]
+    public async Task NewSessionAfterFolderChanges_RefreshesInsteadOfShowingAnOldSnapshot()
+    {
+        using var dir = new TempDirectory("a.txt");
+        var cache = new DirectChildrenListingCache();
+        await cache.GetAsync(dir.Path);
+        dir.Add("new.txt");
+        // Explicit timestamp avoids a filesystem's coarse timestamp resolution hiding the edit.
+        Directory.SetLastWriteTimeUtc(dir.Path, DateTime.UtcNow.AddSeconds(2));
+        Assert.IsTrue(await cache.RefreshForSessionAsync(dir.Path));
+        Assert.HasCount(2, await cache.GetAsync(dir.Path));
+    }
     private sealed class TempDirectory : IDisposable
     {
         public string Path { get; } = Directory.CreateTempSubdirectory("lertaro-listing-").FullName;

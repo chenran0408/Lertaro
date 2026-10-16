@@ -6,6 +6,37 @@ namespace Lertaro.App.Tests.Views.InlineSearchWindow.Helpers;
 public sealed class InlineSearchWindowPositionerTests
 {
     [TestMethod]
+    public void DialogWidth_IsCompactWhileExplorerKeepsItsExistingWidth()
+    {
+        Assert.AreEqual(465, InlineSearchWindowPositioner.CalculateDialogWidth(1200));
+        Assert.AreEqual(200, InlineSearchWindowPositioner.CalculateDialogWidth(300));
+        Assert.AreEqual(800, InlineSearchWindowPositioner.CalculateDockedWidth(1200));
+    }
+
+    [TestMethod]
+    public void DialogWithRoomAbove_IsPlacedOutsideWithoutCoveringItsControls()
+    {
+        var host = Box(500, 500, 1300, 1000);
+        Assert.IsTrue(InlineSearchWindowPositioner.TryPositionOutsideDialog(host, new(0, 0, 1920, 1080), 465, 300, 12, out var location));
+        Assert.IsTrue(location.Y + 300 - 12 <= host.Top);
+    }
+
+    [TestMethod]
+    public void DialogNearScreenTop_CanUseSpaceBesideIt()
+    {
+        var host = Box(100, 20, 900, 1050);
+        Assert.IsTrue(InlineSearchWindowPositioner.TryPositionOutsideDialog(host, new(0, 0, 1920, 1080), 465, 300, 12, out var location));
+        Assert.IsTrue(location.X + 12 >= host.Right);
+        Assert.IsTrue(location.Y >= 0 && location.Y + 300 <= 1080);
+    }
+
+    [TestMethod]
+    public void MaximizedDialogOrTinyMonitor_DoesNotClaimThereIsOutsideSpace()
+    {
+        Assert.IsFalse(InlineSearchWindowPositioner.TryPositionOutsideDialog(Box(0, 0, 1920, 1080), new(0, 0, 1920, 1080), 465, 300, 12, out _));
+        Assert.IsFalse(InlineSearchWindowPositioner.TryPositionOutsideDialog(Box(0, 0, 300, 200), new(0, 0, 300, 200), 465, 300, 12, out _));
+    }
+    [TestMethod]
     public void CalculateDockedWidth_UsesTwoThirdsOfTargetWindow() => Assert.AreEqual(800, InlineSearchWindowPositioner.CalculateDockedWidth(1200));
 
     [TestMethod]

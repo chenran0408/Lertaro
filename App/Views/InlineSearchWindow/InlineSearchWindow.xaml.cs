@@ -24,6 +24,8 @@ public partial class InlineSearchWindow : Window, ISearchWindow
     private readonly ShellMenuPresenter _menuPresenter;
     private readonly InlineSearchWindowInputHandler _inputHandler;
     private bool _isImeComposing;
+    private bool _dialogResultsExpanded;
+    internal bool AreResultsExpanded => !_manager.ExplorerTracker.IsActiveWindowDialog || _dialogResultsExpanded;
     private readonly InlineSearchWindowPositioner _positioner;
     private readonly DispatcherTimer _activeTimer;
     private string _searchText = string.Empty;
@@ -55,6 +57,7 @@ public partial class InlineSearchWindow : Window, ISearchWindow
         SystemMenuBlocker.Attach(this);
         _viewModel = viewModel;
         _manager = manager;
+        Topmost = !manager.ExplorerTracker.IsActiveWindowDialog;
         this.DataContext = _viewModel;
         _menuPresenter = new ShellMenuPresenter(this);
         _inputHandler = new InlineSearchWindowInputHandler(this);
@@ -81,6 +84,14 @@ public partial class InlineSearchWindow : Window, ISearchWindow
         _sizing = new InlineCardSizingSupport(this);
         _sizing.Attach();
         _focusSupport = new InlineSearchFocusSupport(this);
+        ResultsContainerWrapper.Visibility = AreResultsExpanded ? Visibility.Visible : Visibility.Collapsed;
+        _viewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(QuickSearchViewModel.SearchQuery) && !string.IsNullOrEmpty(_viewModel.SearchQuery))
+                ExpandDialogResults();
+        };
+        SearchBox.SearchTextBox.GotKeyboardFocus += (_, _) => ExpandDialogResults();
+        SearchBox.SearchTextBox.PreviewMouseLeftButtonDown += (_, _) => ExpandDialogResults();
         PreviewMouseLeftButtonDown += (_, _) => HasPendingMouseDown = true;
         PreviewMouseLeftButtonUp += (_, _) => HasPendingMouseDown = false;
         _activeTimer = new DispatcherTimer(DispatcherPriority.Background);
@@ -170,7 +181,7 @@ public partial class InlineSearchWindow : Window, ISearchWindow
 
                 // 3. Ensure topmost
 
-                InlineSearchWindowNativeMethods.SetWindowPos(hwnd, InlineSearchWindowNativeMethods.HWND_TOPMOST, 0, 0, 0, 0,
+                InlineSearchWindowNativeMethods.SetWindowPos(hwnd, tracker.IsActiveWindowDialog ? new IntPtr(-2) : InlineSearchWindowNativeMethods.HWND_TOPMOST, 0, 0, 0, 0,
                     InlineSearchWindowNativeMethods.SWP_NOMOVE | InlineSearchWindowNativeMethods.SWP_NOSIZE | InlineSearchWindowNativeMethods.SWP_SHOWWINDOW);
             }
 
@@ -231,6 +242,25 @@ public partial class InlineSearchWindow : Window, ISearchWindow
     public bool ActivateAndFocusSearchBox() => _focusSupport.ActivateAndFocus();
 
     public void HideWindow() => _manager.CloseInlineSearch();
+
+    internal void ExpandDialogResults()
+    {
+        if (!_manager.ExplorerTracker.IsActiveWindowDialog || _dialogResultsExpanded) return;
+        _dialogResultsExpanded = true;
+        ResultsContainerWrapper.Visibility = Visibility.Visible;
+        _sizing.RequestCardHeight();
+        _inputHandler.QueueResultsLayoutUpdate();
+    }
+
+    internal void CollapseDialogResults()
+    {
+        if (!_manager.ExplorerTracker.IsActiveWindowDialog || !_dialogResultsExpanded) return;
+        if (_menuPresenter.IsInActionsMode) _menuPresenter.ExitActionsMode();
+        _dialogResultsExpanded = false;
+        ResultsContainerWrapper.Visibility = Visibility.Collapsed;
+        PathPreviewBorder.Visibility = Visibility.Collapsed;
+        _sizing.RequestCardHeight();
+    }
 
     public void UpdateSearchDisplay(string text)
     {

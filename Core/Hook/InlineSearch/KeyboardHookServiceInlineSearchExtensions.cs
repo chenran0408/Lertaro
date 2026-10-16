@@ -171,23 +171,15 @@ internal static class KeyboardHookServiceInlineSearchExtensions
         {
             return false;
         }
-        var isTriggerKey = (vkCode == KeyboardNativeMethods.VK_PROCESSKEY) ||
-                            (vkCode >= 0x41 && vkCode <= 0x5A) ||
-                            (vkCode >= 0x30 && vkCode <= 0x39) ||
-                            (vkCode >= 0x60 && vkCode <= 0x69);
+        var isTriggerKey = InlineInputHandoff.IsPrintableKey(vkCode);
 
         if (isTriggerKey)
         {
-            // When an IME is composing, ignore what/how many keys are pressed: just pop the (empty)
-            // inline window and keep swallowing keys until focus is taken. Never let them through to
-            // the host window (which would drive the system's default IME composition popup instead).
+            // Preserve physical input until the search box confirms focus, then let its own IME compose it.
             var imeOn = vkCode == KeyboardNativeMethods.VK_PROCESSKEY || KeyboardUtils.IsImeActive(fgHwnd);
             if (imeOn)
             {
-                if (!service.IsInlineSearchVisible)
-                {
-                    service.RaiseCharacterTyped('\0');
-                }
+                service.BeginInputHandoff(fgHwnd, hookStruct);
                 return true;
             }
 
@@ -195,6 +187,7 @@ internal static class KeyboardHookServiceInlineSearchExtensions
             {
                 // No IME: inject the first typed character as before; later keys go to the focused box.
                 var ch = KeyboardUtils.GetUnicodeChar(hookStruct);
+                if (ch == '\0' || char.IsControl(ch)) return false;
                 service.RaiseCharacterTyped(ch);
                 return true;
             }

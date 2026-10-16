@@ -52,6 +52,22 @@ public sealed class FlowEnvironmentLocatorTests
     }
 
     [TestMethod]
+    public void RuntimeCache_DoesNotFollowThePreviousUserDataDirectory()
+    {
+        var oldNodeDir = FlowEnvironmentLocator.GetEmbeddedNodeDirectory();
+        var oldPythonDir = FlowEnvironmentLocator.GetEmbeddedPythonDirectory();
+        Directory.CreateDirectory(oldNodeDir);
+        Directory.CreateDirectory(oldPythonDir);
+        File.WriteAllText(Path.Combine(oldNodeDir, "node.exe"), "dummy");
+        File.WriteAllText(Path.Combine(oldPythonDir, "python.exe"), "dummy");
+        Assert.IsNotNull(FlowEnvironmentLocator.FindNodeExecutable());
+        Assert.IsNotNull(FlowEnvironmentLocator.FindPythonExecutable());
+        UserDataService.GetUserDataDirectoryFunc = () => Path.Combine(_tempUser!, "new-data");
+        Assert.IsNull(FlowEnvironmentLocator.FindNodeExecutable());
+        Assert.IsNull(FlowEnvironmentLocator.FindPythonExecutable());
+    }
+
+    [TestMethod]
     public void FindPythonExecutable_WhenInUserDirectory_ReturnsThatPath()
     {
         var embed = FlowEnvironmentLocator.GetEmbeddedPythonDirectory();

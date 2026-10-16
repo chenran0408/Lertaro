@@ -14,7 +14,8 @@ internal sealed class SearchExecutionEngine : IDisposable
     private readonly SearchService _searchService;
     private readonly SearchStreamRenderer _streamRenderer;
     // Per-engine, and the engine lives exactly as long as its window -- see DirectChildrenListingCache.
-    private readonly DirectChildrenListingCache _directChildrenListing = new();
+    private DirectChildrenListingCache _directChildrenListing = new();
+    internal void UseDirectoryListingCache(DirectChildrenListingCache cache) => _directChildrenListing = cache;
     private readonly object _searchCtsLock = new();
     private CancellationTokenSource? _searchCts;
     private CancellationTokenSource? _debounceCts;

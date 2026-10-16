@@ -1,4 +1,4 @@
-﻿{
+{
   "FlowLauncherBridge_PluginName": "Puente de complementos de Flow.Launcher",
   "FlowLauncherBridge_PluginDesc": "Aloja y ejecuta complementos y extensiones de la comunidad de Flow.Launcher dentro de Lertaro.",
   "FlowLauncherBridge_WebsiteLabel": "Explorar plugins de la comunidad Flow.Launcher",
@@ -33,5 +33,17 @@
   "FlowLauncherBridge_PreviewUnavailable": "Esta vista previa ya no está disponible. Vuelve a buscar.",
   "Plugin_Comp_Desc_FlowPreviewProvider": "Representa paneles de vista previa personalizados para complementos de Flow.Launcher dentro de la ventana de vista previa.",
   "Plugin_Comp_Desc_FlowInstantResultProvider": "Envía consultas de palabras clave a los complementos cargados de Flow.Launcher y administra los resultados instantáneos y la configuración.",
-  "Plugin_Comp_Desc_FlowLauncherBridgeTranslationProvider": "Proporciona traducciones multilingües y asignaciones de localización para los complementos del puente Flow.Launcher."
+  "Plugin_Comp_Desc_FlowLauncherBridgeTranslationProvider": "Proporciona traducciones multilingües y asignaciones de localización para los complementos del puente Flow.Launcher.",
+  "FlowLauncherBridge_UnsupportedLanguage": "Tipo de complemento no compatible",
+  "FlowLauncherBridge_RequiresNewerFlow": "Requiere una versión más reciente de Flow; no disponible",
+  "FlowLauncherBridge_CompatibilityUnverified": "Compatibilidad sin verificar",
+  "FlowLauncherBridge_BasicSearchTested": "Búsqueda básica probada; otras funciones sin verificar",
+  "FlowLauncherBridge_RecommendTimestamp": "Fecha, hora y marca de tiempo Unix actuales",
+  "FlowLauncherBridge_RecommendUuid": "Generar un UUID aleatorio",
+  "FlowLauncherBridge_RecommendSmartTimestamp": "Convertir fechas en inglés como tomorrow a varios formatos",
+  "FlowLauncherBridge_BrowsePlugins": "Explorar complementos de la comunidad",
+  "FlowLauncherBridge_BrowsePluginsDesc": "Los complementos con búsqueda probada aparecen primero",
+  "FlowLauncherBridge_CheckPluginUpdates": "Buscar actualizaciones de complementos",
+  "FlowLauncherBridge_CheckPluginUpdatesDesc": "Ver actualizaciones de los complementos instalados",
+  "FlowLauncherBridge_RetryFailedPlugin": "Seleccionar para reintentar"
 }

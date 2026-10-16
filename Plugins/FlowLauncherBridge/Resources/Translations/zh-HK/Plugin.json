@@ -1,4 +1,4 @@
-﻿{
+{
   "FlowLauncherBridge_PluginName": "Flow.Launcher 外掛程式橋接",
   "FlowLauncherBridge_PluginDesc": "在 Lertaro 中載入並執行 Flow.Launcher 社群外掛程式與擴充套件。",
   "FlowLauncherBridge_WebsiteLabel": "瀏覽 Flow.Launcher 社群外掛程式",
@@ -33,5 +33,17 @@
   "FlowLauncherBridge_PreviewUnavailable": "預覽已失效，請重新搜尋。",
   "Plugin_Comp_Desc_FlowPreviewProvider": "在快速預覽視窗中呈現 Flow.Launcher 外掛程式的自訂預覽面板。",
   "Plugin_Comp_Desc_FlowInstantResultProvider": "負責分发關鍵詞查詢至已載入的 Flow.Launcher 外掛程式並提供即時搜尋結果與設定管理。",
-  "Plugin_Comp_Desc_FlowLauncherBridgeTranslationProvider": "為 Flow.Launcher 橋接外掛程式提供多語言翻譯與本地化對應。"
+  "Plugin_Comp_Desc_FlowLauncherBridgeTranslationProvider": "為 Flow.Launcher 橋接外掛程式提供多語言翻譯與本地化對應。",
+  "FlowLauncherBridge_UnsupportedLanguage": "暫不支援此類外掛",
+  "FlowLauncherBridge_RequiresNewerFlow": "需要較新版本的 Flow，暫時無法安裝",
+  "FlowLauncherBridge_CompatibilityUnverified": "相容性待驗證",
+  "FlowLauncherBridge_BasicSearchTested": "基本搜尋已測試，其他功能待確認",
+  "FlowLauncherBridge_RecommendTimestamp": "時間戳記：查看目前日期、時間和時間戳記",
+  "FlowLauncherBridge_RecommendUuid": "UUID 產生器：快速產生隨機編號",
+  "FlowLauncherBridge_RecommendSmartTimestamp": "日期轉換：輸入 tomorrow 等英文日期，產生多種時間格式",
+  "FlowLauncherBridge_BrowsePlugins": "瀏覽社群外掛",
+  "FlowLauncherBridge_BrowsePluginsDesc": "基本搜尋已測試的外掛優先顯示",
+  "FlowLauncherBridge_CheckPluginUpdates": "檢查外掛更新",
+  "FlowLauncherBridge_CheckPluginUpdatesDesc": "查看已安裝外掛的可用更新",
+  "FlowLauncherBridge_RetryFailedPlugin": "按一下重試"
 }

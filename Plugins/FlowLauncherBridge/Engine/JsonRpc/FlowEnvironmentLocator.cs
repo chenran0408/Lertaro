@@ -17,6 +17,8 @@ public static class FlowEnvironmentLocator
 {
     private static string? _cachedPythonPath;
     private static string? _cachedNodePath;
+    private static readonly SemaphoreSlim PythonGate = new(1, 1);
+    private static readonly SemaphoreSlim NodeGate = new(1, 1);
 
     internal static void ResetCache()
     {
@@ -27,7 +29,9 @@ public static class FlowEnvironmentLocator
     public static string? FindPythonExecutable()
     {
         var sharedDir = GetEmbeddedPythonDirectory();
-        if (_cachedPythonPath != null && File.Exists(_cachedPythonPath))
+        try { FlowPluginPathHelper.ValidateChildDirectory(Path.GetDirectoryName(sharedDir)!, sharedDir); }
+        catch { return null; }
+        if (_cachedPythonPath != null && string.Equals(Path.GetDirectoryName(_cachedPythonPath), sharedDir, StringComparison.OrdinalIgnoreCase) && File.Exists(_cachedPythonPath))
         {
             FlowPythonDownloader.EnsureSiteCustomizeInstalled(sharedDir);
             return _cachedPythonPath;
@@ -47,27 +51,34 @@ public static class FlowEnvironmentLocator
 
     public static async Task<string?> EnsurePythonExecutableAsync()
     {
-        var existing = FindPythonExecutable();
-        if (existing != null)
-            return existing;
-
-        var targetDir = GetEmbeddedPythonDirectory();
-        var downloaded = await FlowPythonDownloader.DownloadAndSetupEmbeddedPythonAsync(targetDir).ConfigureAwait(false);
-        if (downloaded != null)
+        await PythonGate.WaitAsync().ConfigureAwait(false);
+        try
         {
-            _cachedPythonPath = downloaded;
-            return _cachedPythonPath;
-        }
+            var existing = FindPythonExecutable();
+            if (existing != null)
+                return existing;
 
-        return null;
+            var targetDir = GetEmbeddedPythonDirectory();
+            var downloaded = await FlowPythonDownloader.DownloadAndSetupEmbeddedPythonAsync(targetDir).ConfigureAwait(false);
+            if (downloaded != null)
+            {
+                _cachedPythonPath = downloaded;
+                return _cachedPythonPath;
+            }
+
+            return null;
+        }
+        finally { PythonGate.Release(); }
     }
 
     public static string? FindNodeExecutable()
     {
-        if (_cachedNodePath != null && File.Exists(_cachedNodePath))
+        var sharedDir = GetEmbeddedNodeDirectory();
+        try { FlowPluginPathHelper.ValidateChildDirectory(Path.GetDirectoryName(sharedDir)!, sharedDir); }
+        catch { return null; }
+        if (_cachedNodePath != null && string.Equals(Path.GetDirectoryName(_cachedNodePath), sharedDir, StringComparison.OrdinalIgnoreCase) && File.Exists(_cachedNodePath))
             return _cachedNodePath;
 
-        var sharedDir = GetEmbeddedNodeDirectory();
         var exe = FlowNodeDownloader.FindNodeInDir(sharedDir);
         if (exe != null)
         {
@@ -81,24 +92,29 @@ public static class FlowEnvironmentLocator
 
     public static async Task<string?> EnsureNodeExecutableAsync()
     {
-        var existing = FindNodeExecutable();
-        if (existing != null)
-            return existing;
-
-        var targetDir = GetEmbeddedNodeDirectory();
-        var downloaded = await FlowNodeDownloader.DownloadAndSetupEmbeddedNodeAsync(targetDir).ConfigureAwait(false);
-        if (downloaded != null)
+        await NodeGate.WaitAsync().ConfigureAwait(false);
+        try
         {
-            _cachedNodePath = downloaded;
-            return _cachedNodePath;
-        }
+            var existing = FindNodeExecutable();
+            if (existing != null)
+                return existing;
 
-        return null;
+            var targetDir = GetEmbeddedNodeDirectory();
+            var downloaded = await FlowNodeDownloader.DownloadAndSetupEmbeddedNodeAsync(targetDir).ConfigureAwait(false);
+            if (downloaded != null)
+            {
+                _cachedNodePath = downloaded;
+                return _cachedNodePath;
+            }
+
+            return null;
+        }
+        finally { NodeGate.Release(); }
     }
 
-    public static string GetEmbeddedPythonDirectory() => Path.Combine(FlowPipManager.GetFlowDataDirectory(), $"PythonEmbeded-{GetArchSuffix()}");
+    public static string GetEmbeddedPythonDirectory() => Path.Combine(FlowPipManager.GetFlowDataDirectory(), $"PythonEmbeded-{FlowRuntimeIntegrity.PythonVersion}-{GetArchSuffix()}");
 
-    public static string GetEmbeddedNodeDirectory() => Path.Combine(FlowPipManager.GetFlowDataDirectory(), $"NodeEmbeded-{GetArchSuffix()}");
+    public static string GetEmbeddedNodeDirectory() => Path.Combine(FlowPipManager.GetFlowDataDirectory(), $"NodeEmbeded-{FlowRuntimeIntegrity.NodeVersion}-{GetArchSuffix()}");
 
     private static string GetArchSuffix() => RuntimeInformation.ProcessArchitecture == Architecture.Arm64
         ? "arm64"

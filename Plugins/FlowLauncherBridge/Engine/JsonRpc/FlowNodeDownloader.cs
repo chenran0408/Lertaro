@@ -15,6 +15,8 @@ public static class FlowNodeDownloader
 
     public static async Task<string?> DownloadAndSetupEmbeddedNodeAsync(string targetDir)
     {
+        try { FlowPluginPathHelper.ValidateChildDirectory(Path.GetDirectoryName(Path.GetFullPath(targetDir))!, targetDir); }
+        catch { return null; }
         if (Directory.Exists(targetDir))
         {
             var existingExe = FindNodeInDir(targetDir);
@@ -26,7 +28,7 @@ public static class FlowNodeDownloader
 
         var url = GetDownloadUrl();
         var tempZip = Path.Combine(Path.GetTempPath(), $"node_embed_{Guid.NewGuid():N}.zip");
-        var tempExtractDir = Path.Combine(Path.GetTempPath(), $"node_extract_{Guid.NewGuid():N}");
+        var tempExtractDir = targetDir + $"-pending-{Guid.NewGuid():N}";
 
         try
         {
@@ -37,15 +39,16 @@ public static class FlowNodeDownloader
                 await response.Content.CopyToAsync(fs).ConfigureAwait(false);
             }
 
+            FlowRuntimeIntegrity.VerifyArchive(tempZip, FlowRuntimeIntegrity.NodeHash(RuntimeInformation.ProcessArchitecture == Architecture.Arm64));
             ZipFile.ExtractToDirectory(tempZip, tempExtractDir, overwriteFiles: true);
-
-            Directory.CreateDirectory(targetDir);
             var subDirs = Directory.GetDirectories(tempExtractDir);
             var sourceDir = (subDirs.Length == 1 && Directory.GetFiles(tempExtractDir).Length == 0)
                 ? subDirs[0]
                 : tempExtractDir;
 
-            CopyDirectory(sourceDir, targetDir);
+            if (FindNodeInDir(sourceDir) == null) return null;
+            if (Directory.Exists(targetDir)) Community.FlowPluginInstaller.SafeDeleteDirectory(targetDir);
+            Directory.Move(sourceDir, targetDir);
 
             return FindNodeInDir(targetDir);
         }
@@ -66,7 +69,7 @@ public static class FlowNodeDownloader
             ? "win-arm64"
             : "win-x64";
 
-        return $"https://nodejs.org/dist/v20.18.0/node-v20.18.0-{archSuffix}.zip";
+        return $"https://nodejs.org/dist/v{FlowRuntimeIntegrity.NodeVersion}/node-v{FlowRuntimeIntegrity.NodeVersion}-{archSuffix}.zip";
     }
 
     public static string? FindNodeInDir(string dir)
@@ -81,20 +84,4 @@ public static class FlowNodeDownloader
         return null;
     }
 
-    private static void CopyDirectory(string sourceDir, string destinationDir)
-    {
-        Directory.CreateDirectory(destinationDir);
-
-        foreach (var file in Directory.GetFiles(sourceDir))
-        {
-            var targetFilePath = Path.Combine(destinationDir, Path.GetFileName(file));
-            File.Copy(file, targetFilePath, true);
-        }
-
-        foreach (var subDir in Directory.GetDirectories(sourceDir))
-        {
-            var targetSubDir = Path.Combine(destinationDir, Path.GetFileName(subDir));
-            CopyDirectory(subDir, targetSubDir);
-        }
-    }
 }
