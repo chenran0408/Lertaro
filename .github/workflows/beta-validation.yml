@@ -23,3 +23,46 @@ jobs:
         run: dotnet test Tests/Core/Core.csproj -c Release -v quiet
       - name: Test bundled actions
         run: dotnet test Tests/Plugins/CoreExtensions/CoreExtensions.csproj -c Release -v quiet
+
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install package compiler
+        run: winget install JRSoftware.InnoSetup.7 --force --silent --no-upgrade --accept-source-agreements
+      - name: Build both installers
+        run: .\make.bat
+      - uses: actions/upload-artifact@v4
+        with:
+          name: beta-candidate
+          path: dist/*
+          if-no-files-found: error
+
+  install-smoke:
+    needs: package
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            suffix: ''
+            architecture: X64
+          - runner: windows-11-arm
+            suffix: '-arm64'
+            architecture: Arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/download-artifact@v4
+        with:
+          name: beta-candidate
+          path: candidate
+      - name: Install, start and uninstall
+        shell: pwsh
+        run: ./Tools/TestInstallerSmoke.ps1 -InstallerPath "candidate/Lertaro-Setup${{ matrix.suffix }}.exe" -Architecture '${{ matrix.architecture }}'
