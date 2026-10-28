@@ -19,6 +19,9 @@ internal sealed class AndroidLiquidGlassRenderer
     private Sample[]? _map;
     private (int Width, int Height, Size Size, Rect Bounds, double Radius, bool Squircle, double Strength, bool Launchpad) _key;
 
+    // Lertaro modification (2026-10-29): expose lifecycle clearing for hidden surfaces.
+    internal void ClearCachedBuffers() => _map = null;
+
     internal long InspectOwnedArrayBytes() => _map is null ? 0 : MemoryMarshal.AsBytes(_map.AsSpan()).Length;
 
     internal static double LensOffset(double depth, double height, double amount)

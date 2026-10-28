@@ -341,6 +341,7 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
         _refreshOperation?.Abort(); _refreshOperation = null; _refreshPending = false;
     }
 
+    // Lertaro modification (2026-10-29): release Android and optics maps together after render work settles.
     private void ClearOpticsCachedBuffers()
     {
         if (_worker.IsBusy)
@@ -349,14 +350,17 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
             return;
         }
         _optics.ClearCachedBuffers();
+        _androidGlass.ClearCachedBuffers();
     }
 
-    private void CompleteDeferredOpticsClear(LiquidGlassOptics frameOptics)
+    private void CompleteDeferredOpticsClear(LiquidGlassOptics frameOptics, AndroidLiquidGlassRenderer frameAndroidGlass)
     {
         if (!_opticsCacheClearPending || _worker.IsBusy) return;
         _opticsCacheClearPending = false;
         frameOptics.ClearCachedBuffers();
         if (!ReferenceEquals(frameOptics, _optics)) _optics.ClearCachedBuffers();
+        frameAndroidGlass.ClearCachedBuffers();
+        if (!ReferenceEquals(frameAndroidGlass, _androidGlass)) _androidGlass.ClearCachedBuffers();
     }
 
     public void Dispose()
@@ -660,7 +664,7 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
             finally
             {
                 result?.Dispose();
-                CompleteDeferredOpticsClear(optics);
+                CompleteDeferredOpticsClear(optics, androidGlass);
             }
         }
         else if (background!.IsCaptured && capturedSourceTicks > _lastCaptureSourceTicks
