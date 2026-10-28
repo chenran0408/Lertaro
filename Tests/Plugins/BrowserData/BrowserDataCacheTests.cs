@@ -1,4 +1,5 @@
 using System.IO;
+using System.Diagnostics.Metrics;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Data.Sqlite;
@@ -154,6 +155,51 @@ public sealed class BrowserDataCacheTests
 
         Assert.IsNull(entries.Bookmarks[0].Favicon);
         Assert.IsNotNull(entries.Bookmarks[1].Favicon);
+    }
+
+    [TestMethod]
+    public void SnapshotGauges_ReportCachedCountsAndUniqueFaviconBytes()
+    {
+        var shared = BitmapSource.Create(1, 1, 96, 96, PixelFormats.Bgra32, null, new byte[4], 4);
+        shared.Freeze();
+        var other = BitmapSource.Create(2, 1, 96, 96, PixelFormats.Bgra32, null, new byte[8], 8);
+        other.Freeze();
+        var first = new ProfileEntries
+        {
+            Profile = new BrowserProfileConfig { Name = "First", Path = "unused" },
+            Bookmarks = { new BrowserEntry("Bookmark", "https://bookmark.example", true, 0) { Favicon = shared } },
+            History = { new BrowserEntry("History", "https://history.example", false, 1) { Favicon = shared } },
+        };
+        var second = new ProfileEntries
+        {
+            Profile = new BrowserProfileConfig { Name = "Second", Path = "unused" },
+            Bookmarks = { new BrowserEntry("Other bookmark", "https://other.example", true, 0) { Favicon = other } },
+        };
+
+        var values = new Dictionary<string, long>();
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Meter.Name == "Lertaro.Plugins.BrowserData.Caches")
+                meterListener.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((instrument, value, _, _) => values[instrument.Name] = value);
+        listener.Start();
+
+        try
+        {
+            BrowserDataCache.ReplaceSnapshot([first, second]);
+            listener.RecordObservableInstruments();
+
+            Assert.AreEqual(2, values["lertaro.cache.browser_data.profiles"]);
+            Assert.AreEqual(2, values["lertaro.cache.browser_data.bookmarks"]);
+            Assert.AreEqual(1, values["lertaro.cache.browser_data.history"]);
+            Assert.AreEqual(12, values["lertaro.cache.browser_data.favicon_bitmap_bytes"]);
+        }
+        finally
+        {
+            BrowserDataCache.ReplaceSnapshot([]);
+        }
     }
 
     private static byte[] CreatePng(byte blue)

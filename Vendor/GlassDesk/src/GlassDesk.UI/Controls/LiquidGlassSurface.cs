@@ -290,25 +290,51 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
         InvalidateVisual();
     }
 
-    public object InspectPerformance() => new
+    public object InspectPerformance()
     {
-        sleeping = _performanceSleeping, generation = _lifecycleGeneration,
-        renderClockAttached = _renderClockAttached, watchdogEnabled = _timer.IsEnabled,
-        renderQueued = _renderFrameQueued, refreshQueued = _refreshPending, opticsBusy = _worker.IsBusy,
-        lastRenderTicks = _lastRenderTicks, renderCount = _renderCount, lastRenderMaterialReady = _lastRenderMaterialReady,
-        lastRenderOpticalMaterialReady = _lastRenderOpticalMaterialReady,
-        firstVisibleRenderMaterialReady = _firstVisibleRenderMaterialReady,
-        firstVisibleOpticalMaterialReady = _firstVisibleOpticalMaterialReady,
-        firstVisibleMaterialSource = _firstVisibleMaterialSource,
-        materialReady = _frame is not null || _transitionBackdrop is not null || _compatibilityBackdrop is not null,
-        compatibilityReady = _compatibilityBackdrop is not null, handoffActive = _handoffStarted != 0,
-        compatibilityIsDesktopSnapshot = _compatibilityIsDesktopSnapshot,
-        preparedDesktopSnapshots = _preparedDesktopSnapshots, revealMaterialInvalidationReason = RevealMaterialInvalidationReason,
-        capture = _background.InspectPerformance(),
-        source = BackdropSource.ToString(), retainedPixelBytes = (long)(_frame?.PixelWidth ?? 0) * (_frame?.PixelHeight ?? 0) * 4
-            + (long)(_transitionBackdrop?.PixelWidth ?? 0) * (_transitionBackdrop?.PixelHeight ?? 0) * 4
-            + (long)(_compatibilityBackdrop?.PixelWidth ?? 0) * (_compatibilityBackdrop?.PixelHeight ?? 0) * 4
-    };
+        var bitmapPixelBytes = EstimateUniqueBitmapPixelBytes(_frame, _transitionBackdrop, _compatibilityBackdrop);
+        var workerArrayBytes = _worker.InspectOwnedArrayBytes();
+        var opticsArrayBytes = _optics.InspectOwnedArrayBytes() + _androidGlass.InspectOwnedArrayBytes();
+        var lastSourceBytes = _lastSource?.LongLength ?? 0;
+        return new
+        {
+            sleeping = _performanceSleeping, generation = _lifecycleGeneration,
+            hidden = !IsVisible,
+            renderClockAttached = _renderClockAttached, watchdogEnabled = _timer.IsEnabled,
+            renderQueued = _renderFrameQueued, refreshQueued = _refreshPending, opticsBusy = _worker.IsBusy,
+            lastRenderTicks = _lastRenderTicks, renderCount = _renderCount, lastRenderMaterialReady = _lastRenderMaterialReady,
+            lastRenderOpticalMaterialReady = _lastRenderOpticalMaterialReady,
+            firstVisibleRenderMaterialReady = _firstVisibleRenderMaterialReady,
+            firstVisibleOpticalMaterialReady = _firstVisibleOpticalMaterialReady,
+            firstVisibleMaterialSource = _firstVisibleMaterialSource,
+            materialReady = _frame is not null || _transitionBackdrop is not null || _compatibilityBackdrop is not null,
+            compatibilityReady = _compatibilityBackdrop is not null, handoffActive = _handoffStarted != 0,
+            compatibilityIsDesktopSnapshot = _compatibilityIsDesktopSnapshot,
+            preparedDesktopSnapshots = _preparedDesktopSnapshots, revealMaterialInvalidationReason = RevealMaterialInvalidationReason,
+            capture = _background.InspectPerformance(),
+            source = BackdropSource.ToString(), retainedPixelBytes = (long)(_frame?.PixelWidth ?? 0) * (_frame?.PixelHeight ?? 0) * 4
+                + (long)(_transitionBackdrop?.PixelWidth ?? 0) * (_transitionBackdrop?.PixelHeight ?? 0) * 4
+                + (long)(_compatibilityBackdrop?.PixelWidth ?? 0) * (_compatibilityBackdrop?.PixelHeight ?? 0) * 4,
+            estimatedManagedBitmapPixelPayloadBytes = bitmapPixelBytes,
+            estimatedManagedWorkerArrayBytes = workerArrayBytes,
+            estimatedManagedOpticsArrayBytes = opticsArrayBytes,
+            estimatedLastSourceBytes = lastSourceBytes,
+            estimatedKnownManagedPixelAndArrayPayloadBytes = bitmapPixelBytes + workerArrayBytes + opticsArrayBytes + lastSourceBytes,
+            memoryEstimateScope = "Estimated managed surface payload only; excludes total process and GPU memory."
+        };
+    }
+
+    private static long EstimateUniqueBitmapPixelBytes(params BitmapSource?[] bitmaps)
+    {
+        var seen = new HashSet<BitmapSource>(ReferenceEqualityComparer.Instance);
+        long bytes = 0;
+        foreach (var bitmap in bitmaps)
+        {
+            if (bitmap is null || !seen.Add(bitmap)) continue;
+            bytes += (long)bitmap.PixelWidth * bitmap.PixelHeight * bitmap.Format.BitsPerPixel / 8;
+        }
+        return bytes;
+    }
 
     private void CancelQueuedRefresh()
     {

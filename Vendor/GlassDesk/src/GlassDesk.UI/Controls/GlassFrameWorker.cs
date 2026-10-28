@@ -20,6 +20,7 @@ internal sealed class GlassFrameWorker
     private byte[]? _scratch;
 
     internal bool IsBusy => Volatile.Read(ref _busy) != 0;
+    internal long InspectOwnedArrayBytes() => (_pixels?.LongLength ?? 0) + (_scratch?.LongLength ?? 0);
     internal void Invalidate() => Interlocked.Increment(ref _generation);
     internal bool IsCurrent(GlassFrameResult result) => result.Generation == Interlocked.Read(ref _generation);
     internal void ClearCachedBuffers()

@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace GlassDesk.UI.Controls;
 
@@ -36,6 +37,12 @@ public sealed class LiquidGlassOptics
         _map = null;
         _debugFrame = null;
     }
+
+    internal long InspectOwnedArrayBytes() =>
+        (_debugFrame?.LongLength ?? 0) + (_fineBuffer?.LongLength ?? 0) + (_broadBuffer?.LongLength ?? 0)
+        + (_filterScratch?.LongLength ?? 0) + (_faceBuffer?.LongLength ?? 0)
+        + (_innerBuffer?.LongLength ?? 0) + (_outerBuffer?.LongLength ?? 0)
+        + (_map is null ? 0 : MemoryMarshal.AsBytes(_map.AsSpan()).Length);
 
     public byte[] Render(byte[] sourceBgra, int pixelWidth, int pixelHeight, Size sizeDip,
         double cornerRadiusDip, bool squircle = false, double refractionStrength = 1, double detailSoftnessDip = 0,

@@ -4,7 +4,7 @@ using Lertaro.App.Helpers;
 
 namespace Lertaro.App.Tests.Helpers;
 
-[TestClass]
+[TestClass, DoNotParallelize]
 public sealed class WpfUiHelperDoubleTapTests
 {
     [STATestMethod]

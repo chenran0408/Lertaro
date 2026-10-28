@@ -103,7 +103,7 @@ public static class WpfUiHelper
         if (eventResults.TryGetValue(hotkey!, out var cached)) return cached;
         if (e.IsRepeat) { eventResults[hotkey!] = false; return false; }
 
-        var now = unchecked((uint)Environment.TickCount);
+        var now = unchecked((uint)e.Timestamp);
         var triggered = false;
         if (DoubleTapStates.TryGetValue(hotkey!, out var state)
             && state.Key == (int)key && unchecked(now - state.Time) <= 320)

@@ -1,3 +1,4 @@
+using System.Diagnostics.Metrics;
 using System.IO;
 using System.Windows.Media.Imaging;
 using Lertaro.Plugins.BrowserData.Readers;
@@ -31,10 +32,26 @@ internal static class BrowserDataCache
     private const string ComponentName = "BrowserDataInstantProvider";
     private static readonly TimeSpan RefreshInterval = TimeSpan.FromMinutes(10);
     private static readonly object Lock = new();
+    private static readonly Meter CacheMeter = new("Lertaro.Plugins.BrowserData.Caches");
     private static List<ProfileEntries> _snapshot = new();
+    private static SnapshotStatistics _snapshotStatistics = new(0, 0, 0, 0);
     private static string _lastSignature = string.Empty;
     private static DateTime _lastLoadUtc = DateTime.MinValue;
     private static bool _loading;
+
+    internal sealed record SnapshotStatistics(long Profiles, long Bookmarks, long History, long FaviconBitmapBytes);
+
+    static BrowserDataCache()
+    {
+        CacheMeter.CreateObservableGauge("lertaro.cache.browser_data.profiles",
+            () => Volatile.Read(ref _snapshotStatistics).Profiles);
+        CacheMeter.CreateObservableGauge("lertaro.cache.browser_data.bookmarks",
+            () => Volatile.Read(ref _snapshotStatistics).Bookmarks);
+        CacheMeter.CreateObservableGauge("lertaro.cache.browser_data.history",
+            () => Volatile.Read(ref _snapshotStatistics).History);
+        CacheMeter.CreateObservableGauge("lertaro.cache.browser_data.favicon_bitmap_bytes",
+            () => Volatile.Read(ref _snapshotStatistics).FaviconBitmapBytes);
+    }
 
     // NTFS hands these back under whatever case the browser chose, and the probe compares by name.
     private static readonly HashSet<string> MonitoredFileNames =
@@ -124,10 +141,7 @@ internal static class BrowserDataCache
             try
             {
                 var loaded = LoadAll(configured, indexBookmarks, indexHistory, blacklist);
-                lock (Lock)
-                {
-                    _snapshot = loaded;
-                }
+                ReplaceSnapshot(loaded);
                 MemoryMaintenanceService.RequestTrim();
             }
             catch (Exception ex)
@@ -142,6 +156,33 @@ internal static class BrowserDataCache
                 }
             }
         });
+    }
+
+    internal static void ReplaceSnapshot(List<ProfileEntries> snapshot)
+    {
+        var statistics = CalculateSnapshotStatistics(snapshot);
+        lock (Lock)
+        {
+            _snapshot = snapshot;
+            Volatile.Write(ref _snapshotStatistics, statistics);
+        }
+    }
+
+    private static SnapshotStatistics CalculateSnapshotStatistics(IReadOnlyList<ProfileEntries> snapshot)
+    {
+        long bookmarks = 0, history = 0, faviconBitmapBytes = 0;
+        var seenFavicons = new HashSet<BitmapSource>(ReferenceEqualityComparer.Instance);
+        foreach (var profile in snapshot)
+        {
+            bookmarks += profile.Bookmarks.Count;
+            history += profile.History.Count;
+            foreach (var entry in profile.Bookmarks.Concat(profile.History))
+            {
+                if (entry.Favicon is not { } bitmap || !seenFavicons.Add(bitmap)) continue;
+                faviconBitmapBytes += (long)bitmap.PixelWidth * bitmap.PixelHeight * bitmap.Format.BitsPerPixel / 8;
+            }
+        }
+        return new(snapshot.Count, bookmarks, history, faviconBitmapBytes);
     }
 
     /// <summary>

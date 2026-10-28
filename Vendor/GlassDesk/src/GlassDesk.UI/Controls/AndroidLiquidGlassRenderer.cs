@@ -19,6 +19,8 @@ internal sealed class AndroidLiquidGlassRenderer
     private Sample[]? _map;
     private (int Width, int Height, Size Size, Rect Bounds, double Radius, bool Squircle, double Strength, bool Launchpad) _key;
 
+    internal long InspectOwnedArrayBytes() => _map is null ? 0 : MemoryMarshal.AsBytes(_map.AsSpan()).Length;
+
     internal static double LensOffset(double depth, double height, double amount)
     {
         if (height <= 0 || amount <= 0 || depth >= height) return 0;

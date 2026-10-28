@@ -6,7 +6,7 @@ namespace Lertaro.App.Tests.Helpers;
 
 // The gate both search windows share for the "keep search box content" setting. Only the decision is
 // covered: selecting needs a live window, so both windows call this and then act on it.
-[TestClass]
+[TestClass, DoNotParallelize]
 public sealed class SearchInputHelperTests
 {
     [TestMethod]
