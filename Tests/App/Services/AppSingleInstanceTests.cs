@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.IO;
+using System.Text;
 using Lertaro.App.Services;
 
 namespace Lertaro.App.Tests.Services;
@@ -9,62 +12,54 @@ public sealed class AppSingleInstanceTests
     public void AcquireMutex_TakesOwnershipOfAbandonedMutex()
     {
         var mutexName = $@"Local\Lertaro.Tests.{Guid.NewGuid():N}";
-        Mutex? abandonedMutex = null;
-        Exception? workerException = null;
+        // Keep the named kernel object alive while its owning process is terminated.
+        using var mutexAnchor = new Mutex(false, mutexName, out var anchorCreatedNew);
+        Assert.IsTrue(anchorCreatedNew, "The test must create a unique mutex before starting its owner process.");
 
-        var ownerThread = new Thread(() =>
+        var script = $"$mutex = [System.Threading.Mutex]::OpenExisting('{mutexName}'); " +
+                     "if (-not $mutex.WaitOne(0)) { throw 'Could not acquire test mutex.' }; " +
+                     "[Console]::Out.WriteLine('READY'); [Console]::ReadLine() | Out-Null";
+        var encodedScript = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
+        var powershellPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.System),
+            "WindowsPowerShell", "v1.0", "powershell.exe");
+        var startInfo = new ProcessStartInfo(powershellPath)
         {
-            try
-            {
-                abandonedMutex = new Mutex(false, mutexName, out var createdNew);
-                if (!createdNew)
-                    throw new InvalidOperationException("The test mutex was unexpectedly reused.");
-                if (!abandonedMutex.WaitOne(0))
-                    throw new InvalidOperationException("The test thread could not acquire its new mutex.");
-            }
-            catch (Exception ex)
-            {
-                workerException = ex;
-            }
-        });
-        ownerThread.Start();
-        ownerThread.Join();
-        var ownerThreadAliveAfterJoin = ownerThread.IsAlive;
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-NonInteractive");
+        startInfo.ArgumentList.Add("-EncodedCommand");
+        startInfo.ArgumentList.Add(encodedScript);
 
+        using var ownerProcess = Process.Start(startInfo)
+            ?? throw new InvalidOperationException("Could not start the mutex owner process.");
         try
         {
-            Assert.IsNull(workerException, workerException?.ToString());
-            Assert.IsNotNull(abandonedMutex);
+            var ready = ownerProcess.StandardOutput.ReadLineAsync()
+                .WaitAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult();
+            Assert.AreEqual("READY", ready,
+                $"The owner process did not acquire the test mutex. {ownerProcess.StandardError.ReadToEnd()}");
+
+            ownerProcess.Kill(entireProcessTree: true);
+            ownerProcess.WaitForExit();
 
             using var acquiredMutex = AppSingleInstance.AcquireMutex(mutexName, out var createdNew);
 
-            var ownershipProbe = "not needed";
-            var probeAcquiredOwnership = false;
-            if (!createdNew)
-            {
-                try
-                {
-                    probeAcquiredOwnership = acquiredMutex.WaitOne(0);
-                    ownershipProbe = probeAcquiredOwnership ? "acquired" : "still owned by another thread";
-                }
-                catch (AbandonedMutexException)
-                {
-                    probeAcquiredOwnership = true;
-                    ownershipProbe = "abandoned; probe took ownership";
-                }
-            }
-
-            if (probeAcquiredOwnership)
-                acquiredMutex.ReleaseMutex();
-
-            Assert.IsTrue(createdNew,
-                $"An abandoned mutex should be treated as owned by this instance. " +
-                $"Owner thread alive after Join: {ownerThreadAliveAfterJoin}; follow-up WaitOne(0): {ownershipProbe}.");
+            Assert.IsTrue(createdNew, "An abandoned mutex should be treated as owned by this instance.");
             acquiredMutex.ReleaseMutex();
         }
         finally
         {
-            abandonedMutex?.Dispose();
+            if (!ownerProcess.HasExited)
+            {
+                ownerProcess.Kill(entireProcessTree: true);
+                ownerProcess.WaitForExit();
+            }
         }
     }
 
