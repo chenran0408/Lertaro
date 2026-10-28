@@ -31,7 +31,9 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
     private bool _performanceSleeping;
     private long _lastRenderTicks, _renderCount;
     private bool? _firstVisibleRenderMaterialReady;
+    private bool? _firstVisibleOpticalMaterialReady;
     private bool _lastRenderMaterialReady;
+    private bool _lastRenderOpticalMaterialReady;
     private long _lifecycleGeneration;
     private long _lastCaptureSequence, _lastCaptureGeneration, _lastCaptureSourceTicks;
     private long _revealCaptureUntil;
@@ -40,8 +42,6 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
     private readonly TransitionGlassLayer _compatibilityLayer = new();
     private BitmapSource? _compatibilityBackdrop;
     private Rect _compatibilityBounds;
-    private bool _wallpaperPreparationPending;
-    private CancellationTokenSource? _wallpaperCancellation;
     private long _handoffStarted;
     private (Rect Panel, double Radius) _compatibilityClipKey;
     private MaterialStamp? _materialStamp, _compatibilityStamp;
@@ -85,7 +85,7 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
     private readonly int _diagnosticId = Interlocked.Increment(ref _nextDiagnosticId);
     private string? _diagnosticMaterial;
     internal Func<GlassBackdropScene?> ReadBackdropScene { get; set; }
-    internal Func<PixelRect, int, int, byte[]?> CaptureRevealBackdrop { get; set; }
+    internal Func<PixelRect, int, int, nint, byte[]?> CaptureRevealBackdrop { get; set; }
     private GlassBackdropScene? _compatibilityScene;
     private bool _compatibilityIsDesktopSnapshot;
     private Point? _revealOrigin;
@@ -103,13 +103,16 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
             ? ThemeService.Current?.Appearance.LauncherGlassTransparency ?? AppearanceSettings.DefaultLauncherGlassTransparency
             : ThemeService.Current?.Appearance.DockGlassTransparency ?? AppearanceSettings.DefaultDockGlassTransparency);
     public GlassBackdropSource BackdropSource { get; private set; }
+    internal string CurrentFirstDisplayMaterialSource => ThemeService.Current?.UseOpaquePanels == true ? "Opaque"
+        : BackdropRecovery.RequiresBasicRendering || _background.RequiresBasicBackground ? "Basic"
+        : _frame is not null || _transitionBackdrop is not null ? BackdropSource.ToString()
+        : _compatibilityIsDesktopSnapshot && _compatibilityBackdrop is not null ? "DesktopSnapshot" : "Ambient";
     internal bool IsCurrentRevealMaterialReady
     {
         get
         {
             EnsureBackdropScene(revealing: true);
-            if (ThemeService.Current?.UseOpaquePanels == true || BackdropRecovery.RequiresBasicRendering
-                || _background.RequiresBasicBackground) return true;
+            if (ThemeService.Current?.UseOpaquePanels == true) return true;
             var stamp = ReadMaterialStamp();
             return _backdropScene is not null &&
                 ((_frame is not null && _frameScene?.Equals(_backdropScene) == true
@@ -197,6 +200,7 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
         IsVisibleChanged += (_, _) =>
         {
             _firstVisibleRenderMaterialReady = null;
+            _firstVisibleOpticalMaterialReady = null;
             _firstVisibleMaterialSource = null;
             UpdateRenderClock();
             if (!IsVisible)
@@ -241,12 +245,11 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
         _compatibilityBackdrop = null; _compatibilityStamp = null;
         _compatibilityIsDesktopSnapshot = false; _compatibilityScene = null;
         _handoffStarted = _materialRetentionUntil = _revealCaptureUntil = 0;
-        _wallpaperCancellation?.Cancel(); _wallpaperCancellation = null;
-        _wallpaperPreparationPending = false;
         _background.Suspend(); _timer.Stop(); StopRenderClock(); CancelQueuedRefresh();
         _transitionLayer.SetBackdrop(null); _transitionLayer.Opacity = 0;
         _compatibilityLayer.SetBackdrop(null); _compatibilityLayer.Opacity = 0;
         _firstVisibleRenderMaterialReady = null; _firstVisibleMaterialSource = null;
+        _firstVisibleOpticalMaterialReady = null;
         BackdropSource = GlassBackdropSource.Transparent;
         InvalidateVisual();
     }
@@ -278,8 +281,6 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
             _compatibilityBackdrop = null; _compatibilityStamp = null;
             _compatibilityIsDesktopSnapshot = false; _compatibilityScene = null;
             _compatibilityLayer.SetBackdrop(null); _compatibilityLayer.Opacity = 0;
-            _wallpaperPreparationPending = false;
-            _wallpaperCancellation?.Cancel(); _wallpaperCancellation = null;
         }
         else if (IsLoaded && IsVisible && IsBackdropActive?.Invoke() != false)
         {
@@ -294,7 +295,9 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
         renderClockAttached = _renderClockAttached, watchdogEnabled = _timer.IsEnabled,
         renderQueued = _renderFrameQueued, refreshQueued = _refreshPending, opticsBusy = _worker.IsBusy,
         lastRenderTicks = _lastRenderTicks, renderCount = _renderCount, lastRenderMaterialReady = _lastRenderMaterialReady,
+        lastRenderOpticalMaterialReady = _lastRenderOpticalMaterialReady,
         firstVisibleRenderMaterialReady = _firstVisibleRenderMaterialReady,
+        firstVisibleOpticalMaterialReady = _firstVisibleOpticalMaterialReady,
         firstVisibleMaterialSource = _firstVisibleMaterialSource,
         materialReady = _frame is not null || _transitionBackdrop is not null || _compatibilityBackdrop is not null,
         compatibilityReady = _compatibilityBackdrop is not null, handoffActive = _handoffStarted != 0,
@@ -320,7 +323,6 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
         StopRenderClock();
         CancelQueuedRefresh(); ++_lifecycleGeneration;
         _revealCaptureUntil = 0;
-        _wallpaperCancellation?.Cancel(); _wallpaperCancellation = null;
         _timer.Stop(); _background.Dispose(); _frame = null; _lastSource = null;
         _transitionBackdrop = null;
         _compatibilityBackdrop = null;
@@ -336,8 +338,6 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
         // The notification can represent wallpaper/system changes even when the
         // resolved theme and transparency numbers remain identical.
         ++_lifecycleGeneration;
-        _wallpaperCancellation?.Cancel(); _wallpaperCancellation = null;
-        _wallpaperPreparationPending = false;
         _frame = null; _frameScene = null;
         _transitionBackdrop = null; _transitionBackdropScene = null;
         _compatibilityBackdrop = null; _compatibilityStamp = null;
@@ -707,6 +707,8 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
             : _frame is not null && _sampledGlassPanelBounds == rect && _sampledGlassPanelRadius == radius
                 || _transitionBackdrop is not null && _transitionBackdropBounds.Contains(rect) ? "Live"
             : _compatibilityIsDesktopSnapshot && _compatibilityBackdrop is not null ? "DesktopSnapshot" : "Ambient";
+        _lastRenderOpticalMaterialReady = displayedSource is "Live" or "DesktopSnapshot";
+        _firstVisibleOpticalMaterialReady ??= _lastRenderOpticalMaterialReady;
         if (_diagnosticMaterial != displayedSource)
         {
             var visibleLoss = _diagnosticMaterial == "Live" && (displayedSource is "Ambient" or "Basic")
@@ -971,184 +973,152 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
         compatible.Freeze(); _compatibilityBackdrop = compatible;
         _compatibilityIsDesktopSnapshot = false; _compatibilityScene = null;
         _handoffStarted = 0;
-        // A static Windows wallpaper can differ completely from the composed scene
-        // (including dynamic wallpapers). Do not flash it over the launchpad.
-        if (UseLaunchpadOptics || IsBackdropActive is not null) return;
-        if (_performanceSleeping || _wallpaperPreparationPending || PresentationSource.FromVisual(this) is null) return;
-        PrepareWallpaperMaterial(stamp, bounds);
+        // Startup in live desktop mode must wait for a validated composed frame.
+        // Reading the Windows wallpaper here can reveal a hidden solid-color layer
+        // beneath dynamic wallpapers. Explicit wallpaper mode is handled by
+        // GlassBackgroundLayer when desktop capture is disabled.
     }
 
     /// <summary>Prepare current, fully filtered glass before a hidden launcher becomes visible.</summary>
-    public void PrepareRevealMaterial(PixelRect host, PixelRect panel, double dpi)
+    public Task<bool> PrepareRevealMaterial(PixelRect host, PixelRect panel, double dpi)
+        => PrepareRevealMaterial(host, panel, dpi, beforeFirstShow: false);
+
+    internal Task<bool> PrepareRevealMaterial(PixelRect host, PixelRect panel, double dpi, bool beforeFirstShow)
     {
         if (Window.GetWindow(this) is not { } revealOwner
-            || revealOwner.IsVisible && IsBackdropActive?.Invoke() != false || ThemeService.Current?.UseOpaquePanels == true
-            || BackdropRecovery.RequiresBasicRendering || host.Width <= 0 || host.Height <= 0) return;
+            || !beforeFirstShow && revealOwner.IsVisible && IsBackdropActive?.Invoke() != false
+            || ThemeService.Current?.UseOpaquePanels == true
+            || BackdropRecovery.RequiresBasicRendering || host.Width <= 0 || host.Height <= 0) return Task.FromResult(false);
         var size = new Size(host.Width * 96d / dpi, host.Height * 96d / dpi);
         _revealOrigin = new Point(host.X, host.Y);
         _revealHost = host;
-        Measure(size); Arrange(new Rect(size));
         EnsureBackdropScene(revealing: true);
-        using var primed = PrimeRevealCapture(host, dpi, out var primedRegion);
-        if (_frame is not null || _transitionBackdrop is not null) return;
+        if (_frame is not null || _transitionBackdrop is not null) return Task.FromResult(IsCurrentRevealMaterialReady);
         if (_compatibilityIsDesktopSnapshot && _compatibilityScene?.Equals(_backdropScene) == true
-            && _compatibilityStamp == ReadMaterialStamp()) return;
+            && _compatibilityStamp == ReadMaterialStamp()) return Task.FromResult(IsCurrentRevealMaterialReady);
         var region = new PixelRect(Math.Max(host.X, panel.X), Math.Max(host.Y, panel.Y),
             Math.Min(host.Right, panel.Right) - Math.Max(host.X, panel.X),
             Math.Min(host.Bottom, panel.Bottom) - Math.Max(host.Y, panel.Y));
-        if (region.Width <= 0 || region.Height <= 0) return;
-        var scale = Math.Min(1, Math.Min(2048d / Math.Max(host.Width, host.Height),
-            Math.Sqrt(320_000d / ((double)host.Width * host.Height))));
+        if (region.Width <= 0 || region.Height <= 0) return Task.FromResult(false);
+        var scale = Math.Min(1, Math.Min(1024d / Math.Max(host.Width, host.Height),
+            Math.Sqrt(96_000d / ((double)host.Width * host.Height))));
         var width = Math.Max(1, (int)Math.Floor(host.Width * scale));
         var height = Math.Max(1, (int)Math.Floor(host.Height * scale));
         var captureWidth = Math.Max(1, (int)Math.Floor(region.Width * scale));
         var captureHeight = Math.Max(1, (int)Math.Floor(region.Height * scale));
         var scene = _backdropScene;
-        var pixels = CaptureRevealBackdrop(region, captureWidth, captureHeight);
-        var usedNative = false;
-        // The existing prewarm owner already excludes every product window. A
-        // launcher/morph can make GDI unsafe while this native frame is available;
-        // consume it instead of dropping it and exposing an ambient first frame.
-        if ((pixels is null || pixels.Length != captureWidth * captureHeight * 4 || IsSolidBlack(pixels))
-            && !UseLaunchpadOptics && primed is { IsCaptured: true }
-            && primed.Source is GlassBackdropSource.LiveDesktop or GlassBackdropSource.CompatibleScene
-            && _background.LastCaptureTiming is { } timing
-            && Stopwatch.GetTimestamp() - timing.SourceTicks is var age && age >= 0 && age <= Stopwatch.Frequency * 120 / 1000)
-        {
-            usedNative = true;
-            pixels = new byte[captureWidth * captureHeight * 4];
-            for (var y = 0; y < captureHeight; y++)
-            {
-                var sy = Math.Clamp((int)((region.Y + (y + .5) * region.Height / captureHeight - primedRegion.Y)
-                    * primed.Height / primedRegion.Height), 0, primed.Height - 1);
-                for (var x = 0; x < captureWidth; x++)
-                {
-                    var sx = Math.Clamp((int)((region.X + (x + .5) * region.Width / captureWidth - primedRegion.X)
-                        * primed.Width / primedRegion.Width), 0, primed.Width - 1);
-                    primed.Pixels.AsSpan((sy * primed.Width + sx) * 4, 4).CopyTo(pixels.AsSpan((y * captureWidth + x) * 4, 4));
-                }
-            }
-        }
-        if (pixels is null || pixels.Length != captureWidth * captureHeight * 4 || (!usedNative && IsSolidBlack(pixels))
-            || scene is null || !scene.Equals(ReadBackdropScene())) return;
-        // Extend only outside the destination panel. The Dock lies outside this
-        // capture and cannot be burnt into the expanding or resting launchpad.
-        var source = new byte[width * height * 4];
-        for (var y = 0; y < height; y++)
-        {
-            var sy = Math.Clamp((int)((host.Y + (y + .5) * host.Height / height - region.Y)
-                * captureHeight / region.Height), 0, captureHeight - 1);
-            for (var x = 0; x < width; x++)
-            {
-                var sx = Math.Clamp((int)((host.X + (x + .5) * host.Width / width - region.X)
-                    * captureWidth / region.Width), 0, captureWidth - 1);
-                pixels.AsSpan((sy * captureWidth + sx) * 4, 4).CopyTo(source.AsSpan((y * width + x) * 4, 4));
-            }
-        }
         var stamp = ReadMaterialStamp();
-        var filtered = new byte[source.Length]; var scratch = new byte[source.Length];
-        RenderMaterialBackdropInto(stamp.Material, source, filtered, scratch, width, height,
-            size, stamp.Dark, 1, stamp.Clarity, stamp.Launchpad);
-        var bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32, null, filtered, width * 4);
-        bitmap.Freeze();
-        _wallpaperCancellation?.Cancel();
-        _compatibilityBackdrop = bitmap; _compatibilityStamp = stamp; _compatibilityBounds = new Rect(size);
-        _compatibilityScene = scene; _compatibilityIsDesktopSnapshot = true; _handoffStarted = 0;
-        ++_preparedDesktopSnapshots; RevealMaterialInvalidationReason = null;
-        UpdateTransitionLayer(size); InvalidateVisual();
+        var emptyOwner = !beforeFirstShow && revealOwner.IsVisible && IsBackdropActive?.Invoke() == false
+            ? new System.Windows.Interop.WindowInteropHelper(revealOwner).Handle : 0;
+        BackdropRecovery.Record(new("RevealPreparation", "Started", Stopwatch.GetTimestamp(),
+            Generation: BackdropRecovery.Generation, SurfaceId: _diagnosticId,
+            Surface: UseLaunchpadOptics ? "Launcher" : "Dock", SceneHash: scene?.GetHashCode() ?? 0,
+            Width: width, Height: height));
+        return PrepareRevealMaterialAsync(host, region, width, height, captureWidth, captureHeight,
+            size, stamp, scene, emptyOwner, beforeFirstShow, revealOwner);
     }
 
-    private byte[]? CaptureHiddenDesktop(PixelRect region, int width, int height)
+    private async Task<bool> PrepareRevealMaterialAsync(PixelRect host, PixelRect region, int width, int height,
+        int captureWidth, int captureHeight, Size size, MaterialStamp stamp, GlassBackdropScene? scene,
+        nint emptyOwner, bool beforeFirstShow, Window revealOwner)
+    {
+        var generation = _lifecycleGeneration;
+        var captureStartTicks = Stopwatch.GetTimestamp();
+        (BitmapSource Bitmap, long SourceTicks, long EndTicks)? prepared;
+        try
+        {
+            prepared = await Task.Run<(BitmapSource Bitmap, long SourceTicks, long EndTicks)?>(() =>
+            {
+                var pixels = CaptureRevealBackdrop(region, captureWidth, captureHeight, emptyOwner);
+                var captureEndTicks = Stopwatch.GetTimestamp();
+                if (pixels is null)
+                {
+                    BackdropRecovery.Record(new("RevealPreparation", "SampleUnavailable", captureEndTicks,
+                        SourceTicks: captureStartTicks, EndTicks: captureEndTicks, SurfaceId: _diagnosticId,
+                        Surface: UseLaunchpadOptics ? "Launcher" : "Dock", SceneHash: scene?.GetHashCode() ?? 0));
+                    return null;
+                }
+                if (pixels.Length != captureWidth * captureHeight * 4)
+                {
+                    BackdropRecovery.Record(new("RevealPreparation", "SampleDimensionsInvalid", captureEndTicks,
+                        SourceTicks: captureStartTicks, EndTicks: captureEndTicks, SurfaceId: _diagnosticId,
+                        Surface: UseLaunchpadOptics ? "Launcher" : "Dock", SceneHash: scene?.GetHashCode() ?? 0));
+                    return null;
+                }
+                if (IsSolidBlack(pixels))
+                {
+                    BackdropRecovery.Record(new("RevealPreparation", "SampleSolidBlack", captureEndTicks,
+                        SourceTicks: captureStartTicks, EndTicks: captureEndTicks, SurfaceId: _diagnosticId,
+                        Surface: UseLaunchpadOptics ? "Launcher" : "Dock", SceneHash: scene?.GetHashCode() ?? 0));
+                    return null;
+                }
+                var source = new byte[width * height * 4];
+                for (var y = 0; y < height; y++)
+                {
+                    var sy = Math.Clamp((int)((host.Y + (y + .5) * host.Height / height - region.Y)
+                        * captureHeight / region.Height), 0, captureHeight - 1);
+                    for (var x = 0; x < width; x++)
+                    {
+                        var sx = Math.Clamp((int)((host.X + (x + .5) * host.Width / width - region.X)
+                            * captureWidth / region.Width), 0, captureWidth - 1);
+                        pixels.AsSpan((sy * captureWidth + sx) * 4, 4).CopyTo(source.AsSpan((y * width + x) * 4, 4));
+                    }
+                }
+                var filtered = new byte[source.Length]; var scratch = new byte[source.Length];
+                RenderMaterialBackdropInto(stamp.Material, source, filtered, scratch, width, height,
+                    size, stamp.Dark, 1, stamp.Clarity, stamp.Launchpad);
+                var opticsEndTicks = Stopwatch.GetTimestamp();
+                var bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32, null, filtered, width * 4);
+                bitmap.Freeze();
+                BackdropRecovery.Record(new("RevealPreparation", "OpticsCompleted", opticsEndTicks,
+                    SourceTicks: captureStartTicks, EndTicks: opticsEndTicks, SurfaceId: _diagnosticId,
+                    Surface: UseLaunchpadOptics ? "Launcher" : "Dock", SceneHash: scene?.GetHashCode() ?? 0,
+                    Width: width, Height: height));
+                return (bitmap, captureStartTicks, captureEndTicks);
+            });
+        }
+        catch (Exception error) when (error is IOException or InvalidOperationException
+            or System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException
+            or ArgumentException or NotSupportedException)
+        {
+            BackdropRecovery.Record(new("RevealPreparation", error.GetType().Name, Stopwatch.GetTimestamp(),
+                Generation: BackdropRecovery.Generation, SurfaceId: _diagnosticId,
+                Surface: UseLaunchpadOptics ? "Launcher" : "Dock", SceneHash: scene?.GetHashCode() ?? 0));
+            return false;
+        }
+        if (prepared is null || Dispatcher.HasShutdownStarted || Dispatcher.HasShutdownFinished) return false;
+        return await Dispatcher.InvokeAsync(() =>
+        {
+            var rejected = generation != _lifecycleGeneration ? "GenerationChanged"
+                : _performanceSleeping ? "Sleeping"
+                : scene is null ? "SceneUnknown"
+                : beforeFirstShow && revealOwner.IsVisible ? "WindowShownBeforeSample"
+                : Stopwatch.GetTimestamp() - prepared.Value.SourceTicks > Stopwatch.Frequency * 120 / 1000 ? "SampleExpired"
+                : !scene.Equals(ReadBackdropScene()) ? "SceneChanged"
+                : stamp != ReadMaterialStamp() ? "MaterialChanged" : null;
+            if (rejected is not null)
+            {
+                BackdropRecovery.Record(new("RevealPreparation", rejected, Stopwatch.GetTimestamp(),
+                    SourceTicks: prepared.Value.SourceTicks, EndTicks: prepared.Value.EndTicks,
+                    SurfaceId: _diagnosticId, Surface: UseLaunchpadOptics ? "Launcher" : "Dock",
+                    SceneHash: scene?.GetHashCode() ?? 0, Width: width, Height: height));
+                return false;
+            }
+            _compatibilityBackdrop = prepared.Value.Bitmap; _compatibilityStamp = stamp;
+            _compatibilityBounds = new Rect(size); _compatibilityScene = scene;
+            _compatibilityIsDesktopSnapshot = true; _handoffStarted = 0;
+            ++_preparedDesktopSnapshots; RevealMaterialInvalidationReason = null;
+            RecordSurfaceTrace("RevealMaterialPrepared", "DesktopRegionSampler", "DesktopRegionSampler",
+                prepared.Value.SourceTicks, prepared.Value.EndTicks);
+            UpdateTransitionLayer(size); InvalidateVisual();
+            return IsCurrentRevealMaterialReady;
+        }, DispatcherPriority.Send);
+    }
+
+    private static byte[]? CaptureHiddenDesktop(PixelRect region, int width, int height, nint emptyOwner)
     {
         using var sampler = new GlassDesk.Platform.DesktopRegionSampler();
-        var owner = Window.GetWindow(this);
-        var emptyOwner = owner is { IsVisible: true } && IsBackdropActive?.Invoke() == false
-            ? new System.Windows.Interop.WindowInteropHelper(owner).Handle : 0;
         return sampler.TryCaptureBeforeReveal(region, width, height, emptyOwner, out var pixels) ? pixels : null;
-    }
-
-    private GlassBackgroundFrame? PrimeRevealCapture(PixelRect host, double dpi, out PixelRect region)
-    {
-        region = default;
-        if (_performanceSleeping || Window.GetWindow(this) is not GlassWindow owner
-            || owner.SurfaceMode != GlassSurfaceMode.OpticalGlass) return null;
-        var scaleFactor = dpi / 96;
-        var bounds = _transitionCaptureBounds ?? new Rect(0, 0, host.Width / scaleFactor, host.Height / scaleFactor);
-        // Use the full fixed slide/morph capture bounds, not just the resting
-        // panel. Otherwise the visible frame changes resolution/generation and
-        // throws away the prewarmed snapshot on wide Docks.
-        var left = (int)Math.Floor(host.X + (bounds.Left - 48) * scaleFactor);
-        var top = (int)Math.Floor(host.Y + (bounds.Top - 48) * scaleFactor);
-        var right = (int)Math.Ceiling(host.X + (bounds.Right + 48) * scaleFactor);
-        var bottom = (int)Math.Ceiling(host.Y + (bounds.Bottom + 48) * scaleFactor);
-        var requested = new PixelRect(left, top, right - left, bottom - top);
-        var display = owner.PrimaryDisplaySession?.Display ?? DisplayService.Primary();
-        if (display is null) return null;
-        region = ClipRegion(requested, display.Bounds);
-        if (region.Width <= 0 || region.Height <= 0) return null;
-        var budget = UseLaunchpadOptics
-            ? 320_000 + 680_000 * Math.Clamp((BackgroundClarity - .5) * 2, 0, 1) : 320_000;
-        var scale = Math.Min(1, Math.Min(2048d / Math.Max(requested.Width, requested.Height),
-            Math.Sqrt(budget / ((double)requested.Width * requested.Height))));
-        // Start the existing isolated owner before GDI and filtering block the
-        // Dispatcher. The first visible render uses this same crop and sample size.
-        var pending = _background.Capture(region, Math.Max(1, (int)Math.Floor(region.Width * scale)),
-            Math.Max(1, (int)Math.Floor(region.Height * scale)), _panelRadius, true);
-        _revealCaptureUntil = Stopwatch.GetTimestamp() + Stopwatch.Frequency;
-        _timer.Interval = TimeSpan.FromMilliseconds(100); _timer.Start();
-        return pending;
-    }
-
-    private void PrepareWallpaperMaterial(MaterialStamp stamp, Rect bounds)
-    {
-        _wallpaperPreparationPending = true;
-        var cancellation = new CancellationTokenSource();
-        _wallpaperCancellation = cancellation;
-        var token = cancellation.Token;
-        var generation = _lifecycleGeneration;
-        var scene = _backdropScene;
-        var region = new Rect(stamp.Origin.X, stamp.Origin.Y,
-            bounds.Width * stamp.Dpi.DpiScaleX, bounds.Height * stamp.Dpi.DpiScaleY);
-        var scale = Math.Min(1, Math.Min(2048.0 / Math.Max(region.Width, region.Height),
-            Math.Sqrt(320_000 / (region.Width * region.Height))));
-        var width = Math.Max(1, (int)Math.Floor(region.Width * scale));
-        var height = Math.Max(1, (int)Math.Floor(region.Height * scale));
-        var preparation = new Thread(() =>
-        {
-            BitmapSource? result = null;
-            try
-            {
-                var wallpaper = new WallpaperBackdrop();
-                if (!token.IsCancellationRequested) wallpaper.Update(region, width, height, 0);
-                var pixels = wallpaper.Pixels;
-                // A hidden black Windows wallpaper is common under dynamic wallpaper.
-                // Never show that bitmap as a replacement for the visible background.
-                if (!token.IsCancellationRequested && pixels is not null && !IsSolidBlack(pixels))
-                {
-                    var filtered = new byte[pixels.Length]; var scratch = new byte[pixels.Length];
-                    RenderMaterialBackdropInto(stamp.Material, pixels, filtered, scratch, width, height,
-                        bounds.Size, stamp.Dark, 1, stamp.Clarity, stamp.Launchpad);
-                    result = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32, null, filtered, width * 4);
-                    result.Freeze();
-                }
-            }
-            catch (Exception error) when (error is IOException or InvalidOperationException or System.Runtime.InteropServices.COMException
-                or ArgumentException or NotSupportedException)
-            { Trace.WriteLine("Compatible first material: " + error.Message); }
-            if (Dispatcher.HasShutdownStarted || Dispatcher.HasShutdownFinished) { cancellation.Dispose(); return; }
-            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
-            {
-                if (ReferenceEquals(_wallpaperCancellation, cancellation)) _wallpaperCancellation = null;
-                cancellation.Dispose();
-                if (generation != _lifecycleGeneration) return;
-                _wallpaperPreparationPending = false;
-                if (token.IsCancellationRequested || _compatibilityIsDesktopSnapshot || _performanceSleeping || result is null || stamp != ReadMaterialStamp()
-                    || scene is null || !scene.Equals(_backdropScene) || _handoffStarted != 0
-                    || _frame is not null || _transitionBackdrop is not null) return;
-                _compatibilityBackdrop = result; UpdateTransitionLayer(); InvalidateVisual();
-            }));
-        }) { IsBackground = true, Name = "GlassDesk first wallpaper material" };
-        preparation.SetApartmentState(ApartmentState.STA); preparation.Start();
     }
 
     private static bool IsSolidBlack(byte[] pixels)
@@ -1261,10 +1231,12 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
         RecordSurfaceTrace(!expected && visible && active ? "MaterialLoss" : "MaterialState", reason, _diagnosticMaterial);
     }
 
-    private void RecordSurfaceTrace(string stage, string reason, string? source)
+    private void RecordSurfaceTrace(string stage, string reason, string? source,
+        long? sourceTicks = null, long? endTicks = null)
     {
         var timing = _background.LastCaptureTiming;
-        BackdropRecovery.Record(new(stage, reason, Stopwatch.GetTimestamp(), timing?.SourceTicks ?? 0,
+        BackdropRecovery.Record(new(stage, reason, Stopwatch.GetTimestamp(), sourceTicks ?? timing?.SourceTicks ?? 0,
+            EndTicks: endTicks ?? timing?.EndTicks ?? 0,
             Generation: BackdropRecovery.Generation, SurfaceId: _diagnosticId, Surface: UseLaunchpadOptics ? "Launcher" : "Dock",
             MaterialSource: source, Visible: Window.GetWindow(this)?.IsVisible == true && IsVisible,
             Active: IsBackdropActive?.Invoke() != false, Sleeping: _performanceSleeping,

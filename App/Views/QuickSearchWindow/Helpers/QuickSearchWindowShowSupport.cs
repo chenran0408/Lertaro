@@ -19,9 +19,10 @@ internal sealed class QuickSearchWindowShowSupport
 
     internal QuickSearchWindowShowSupport(QuickSearchWindowController controller) => _controller = controller;
 
-    internal void ShowWindow(string? initialQuery, bool caretAtEnd = false)
+    internal async void ShowWindow(string? initialQuery, bool caretAtEnd = false)
     {
         _controller.VisibilityOperationToken++;
+        var visibilityToken = _controller.VisibilityOperationToken;
         PowerThrottlingHelper.WindowShowing("quick");
         IdleWorkingSetTrimmer.WindowShowing();
         ShellOverlayDismissHelper.DismissOverlayIfForeground();
@@ -37,8 +38,6 @@ internal sealed class QuickSearchWindowShowSupport
         window.ViewModel.IsInlineSearchContext = false;
         App.HideInlineSearch();
         QuickLookManager.Instance.Reset();
-        InlineSearchManager.Instance.KeyboardHook.IsQuickSearchWindowVisible = true;
-        InlineSearchManager.Instance.KeyboardHook.Stop();
         window.ViewModel.EnsureServiceMonitoringActive();
         var useClipboardText = false;
         var searchQuery = SearchTextPasteFormatter.FormatForSearch(initialQuery) ?? string.Empty;
@@ -70,31 +69,37 @@ internal sealed class QuickSearchWindowShowSupport
         var fadeContent = window.Content as UIElement;
         fadeContent?.BeginAnimation(UIElement.OpacityProperty, null);
         fadeContent?.Opacity = 0;
-        window.Show();
-        window.WindowState = WindowState.Normal;
-        _controller.PositionWindow();
-
-        if (fadeContent != null)
+        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, () =>
         {
-            var targetOpacity = ThemeManager.Instance.ActiveTheme?.WindowOpacity ?? 1.0;
-            var fadeIn = new DoubleAnimation(targetOpacity, (Duration)System.Windows.Application.Current.FindResource("DurationWindowFadeIn"))
+            // Keep the inline hook live until the prepared window is ready to receive focus. During
+            // prewarm the host remains the foreground target and the hidden window owns no input.
+            InlineSearchManager.Instance.KeyboardHook.IsQuickSearchWindowVisible = true;
+            InlineSearchManager.Instance.KeyboardHook.Stop();
+            window.Show();
+            window.WindowState = WindowState.Normal;
+            _controller.PositionWindow();
+
+            if (fadeContent != null)
             {
-                EasingFunction = System.Windows.Application.Current.TryFindResource("EaseOutCubic") as IEasingFunction
-            };
-            fadeContent.BeginAnimation(UIElement.OpacityProperty, fadeIn);
-        }
+                var targetOpacity = ThemeManager.Instance.ActiveTheme?.WindowOpacity ?? 1.0;
+                var fadeIn = new DoubleAnimation(targetOpacity, (Duration)System.Windows.Application.Current.FindResource("DurationWindowFadeIn"))
+                {
+                    EasingFunction = System.Windows.Application.Current.TryFindResource("EaseOutCubic") as IEasingFunction
+                };
+                fadeContent.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+            }
 
-        _controller.ForegroundWatcher.Start();
-        // Selecting the kept text is what makes it usable instead of in the way: the next keystroke
-        // overwrites it, so the window still reads as a fresh search box.
-        _controller.ActivateAndFocus(useClipboardText || keepSearchText, caretAtEnd);
+            _controller.ForegroundWatcher.Start();
+            // Selecting the kept text is what makes it usable instead of in the way: the next keystroke
+            // overwrites it, so the window still reads as a fresh search box.
+            _controller.ActivateAndFocus(useClipboardText || keepSearchText, caretAtEnd);
 
-        // The launch panel's sources are read here rather than earlier in this sequence, where they used to
-        // be: reading them probes the disk and asks every plugin provider, and on the show path that work
-        // was the summon's own latency. Background priority puts it behind the first frame and the focus
-        // grab, so the window is up and usable first and the tiles replace the last summon's own.
-        window.Dispatcher.BeginInvoke(
-            DispatcherPriority.Background, new Action(window.ViewModel.RefreshLaunchItems));
+            // The launch panel's sources are read here rather than earlier in this sequence, where they used to
+            // be: reading them probes the disk and asks every plugin provider. Background priority puts it
+            // behind the first frame and focus grab.
+            window.Dispatcher.BeginInvoke(
+                DispatcherPriority.Background, new Action(window.ViewModel.RefreshLaunchItems));
+        }, () => _controller.VisibilityOperationToken == visibilityToken);
     }
 
     /// <summary>

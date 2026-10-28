@@ -172,7 +172,7 @@
                                                         Value="{Binding HotkeyValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                         DefaultValue="{Binding DefaultHotkey}"/>
                                                     <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ConflictWarning}"
-                                                        FontSize="10" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
+                                                        FontSize="14" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
                                                         Margin="0,2,0,0" Visibility="{Binding ConflictWarning, Converter={StaticResource StringToVis}}"/>
                                                 </Grid>
                                             </DataTemplate>

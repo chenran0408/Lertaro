@@ -71,6 +71,7 @@ public class UserSettings
     public string LogLevel { get; set; } = "Info";
     public string PreferredLanguage { get; set; } = GetDefaultSystemLanguage();
     public string Theme { get; set; } = "Light";
+    public bool GlassEffectsEnabled { get; set; } = true;
     public BackgroundSettings Background { get; set; } = new();
     public bool ThemeFollowSystem { get; set; } = false;
     // Empty means "unset". The selected palette is now limited to GlassDesk Light/Dark modes;

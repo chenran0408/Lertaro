@@ -17,6 +17,8 @@ copied beside the app so scene capture works when the project is referenced as a
 library. Other retained upstream files and their license records are in this
 directory.
 
+Typography legibility adjustment (2026-10-28): GlassDesk palette secondary text opacity is raised from 70% to 94% for legibility over live wallpaper. The app-level UI supplies a 14 DIP medium-weight baseline and a restrained text shadow on glass surfaces.
+
 ## License scope
 
 The upstream `docs/licensing/FILE-LICENSES.json` marks `GlassWindow.cs`,

@@ -18,6 +18,7 @@ public class ThemeSettingsViewModel : ViewModelBase
     private ThemeOption? _selectedLightTheme;
     private ThemeOption? _selectedDarkTheme;
     private bool _followSystem;
+    private bool _glassEffectsEnabled;
     private IReadOnlyList<ThemeOption>? _themeOptions;
     private IReadOnlyList<ThemeOption>? _lightThemeOptions;
     private IReadOnlyList<ThemeOption>? _darkThemeOptions;
@@ -34,6 +35,7 @@ public class ThemeSettingsViewModel : ViewModelBase
         _selectedDarkTheme = DarkThemeOptions.FirstOrDefault(o => o.Value == _userSettings.DarkThemeId)
                              ?? DarkThemeOptions.FirstOrDefault();
         _followSystem = _userSettings.ThemeFollowSystem;
+        _glassEffectsEnabled = _userSettings.GlassEffectsEnabled;
 
         // Dynamically refresh properties when the language changes -- ThemeOption.Label is a
         // TranslationService lookup (Theme_<Id>), so it genuinely changes text, unlike the option's
@@ -151,6 +153,26 @@ public class ThemeSettingsViewModel : ViewModelBase
                 {
                     ThemeManager.Instance.ApplyTheme(targetThemeId, saveSettings: false);
                 }
+            }
+        }
+    }
+
+    public bool GlassEffectsEnabled
+    {
+        get => _glassEffectsEnabled;
+        set
+        {
+            if (_glassEffectsEnabled == value) return;
+            _glassEffectsEnabled = value;
+            _userSettings.GlassEffectsEnabled = value;
+            _userSettings.Save();
+            OnPropertyChanged();
+
+            var themeService = GlassDesk.UI.Theming.ThemeService.Current;
+            if (themeService != null)
+            {
+                themeService.Appearance.ReduceTransparency = !value;
+                themeService.Update(themeService.Appearance);
             }
         }
     }

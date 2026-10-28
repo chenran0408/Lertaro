@@ -84,6 +84,7 @@
   "Appearance_ModeLight": "Light",
   "Appearance_ModeDark": "Dark",
   "Appearance_ModeFollowSystem": "Follow System",
+  "Appearance_GlassEffects": "Enable glass effects",
   "Settings_Plugins": "Plugins",
   "Settings_About": "About",
   "Settings_History": "History",

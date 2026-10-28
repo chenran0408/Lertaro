@@ -31,6 +31,8 @@ public enum GlassSurfaceMode
     OpticalGlass = 2,
 }
 
+public readonly record struct FirstDisplayPreparationResult(bool IsOpticalMaterialReady, string Source);
+
 /// <summary>
 /// 本产品显示的每个窗口的基类。
 /// </summary>
@@ -374,6 +376,107 @@ public abstract class GlassWindow : Window
         {
             theme.Changed += OnThemeChanged;
         }
+    }
+
+    /// <summary>Asynchronously prepare this hidden window's first optical material before calling Show.</summary>
+    public async Task<FirstDisplayPreparationResult> PrepareFirstDisplayAsync()
+    {
+        Dispatcher.VerifyAccess();
+        if (IsVisible) throw new InvalidOperationException("First-display preparation requires a hidden window.");
+        _ = new WindowInteropHelper(this).EnsureHandle();
+        UpdateLayout();
+        if (SurfaceMode != GlassSurfaceMode.OpticalGlass
+            || DisplayService.GetWindowPixelBounds(Handle) is not { Width: > 0, Height: > 0 } host)
+        {
+            var reason = SurfaceMode == GlassSurfaceMode.OpticalGlass ? "NoDisplayBounds" : "Opaque";
+            BackdropRecovery.Record(new("FirstDisplay", reason, System.Diagnostics.Stopwatch.GetTimestamp(),
+                WindowHandle: Handle.ToInt64(), Surface: "Window"));
+            return new(false, reason);
+        }
+
+        var dpi = PrimaryDisplaySession is { IsAvailable: true } session
+            ? session.Display.Dpi
+            : DisplayService.DpiForWindow(Handle);
+        if (dpi <= 0) return RecordFirstDisplayFailure("InvalidDpi");
+        var root = Content as UIElement;
+        if (root is null) return RecordFirstDisplayFailure("NoVisualContent");
+
+        // Hidden HWNDs can defer WPF's normal layout pass. Arrange the content
+        // against its known client size so nested optical surfaces have real
+        // RenderSize/transform data before the first Show.
+        var layoutSize = new Size(host.Width * 96d / dpi, host.Height * 96d / dpi);
+        root.Measure(layoutSize);
+        root.Arrange(new Rect(layoutSize));
+
+        var pending = new Stack<DependencyObject>();
+        pending.Push(root);
+        var surfaces = new List<(LiquidGlassSurface Surface, PixelRect Panel)>();
+        var foundSurfaces = 0;
+        LiquidGlassSurface? onlySurface = null;
+        while (pending.Count > 0)
+        {
+            var element = pending.Pop();
+            if (element is LiquidGlassSurface surface)
+            {
+                foundSurfaces++;
+                onlySurface = surface;
+                var bounds = surface.CaptureBoundsInWindow;
+                if (bounds is null && surface.RenderSize.Width > 0 && surface.RenderSize.Height > 0
+                    && ReferenceEquals(VisualTreeHelper.GetParent(surface), this))
+                    bounds = new Rect(surface.RenderSize);
+                else if (bounds is null && surface.RenderSize.Width > 0 && surface.RenderSize.Height > 0
+                    && PresentationSource.FromVisual(surface) is not null)
+                    bounds = surface.TransformToAncestor(this).TransformBounds(new Rect(surface.RenderSize));
+                if (bounds is { Width: > 0, Height: > 0 } panelBounds)
+                {
+                    var panel = new PixelRect(host.X + (int)Math.Floor(panelBounds.X * dpi / 96),
+                        host.Y + (int)Math.Floor(panelBounds.Y * dpi / 96),
+                        Math.Max(1, (int)Math.Ceiling(panelBounds.Width * dpi / 96)),
+                        Math.Max(1, (int)Math.Ceiling(panelBounds.Height * dpi / 96)));
+                    surfaces.Add((surface, panel));
+                }
+                else
+                {
+                    BackdropRecovery.Record(new("FirstDisplay", "PanelBoundsUnavailable",
+                        System.Diagnostics.Stopwatch.GetTimestamp(), WindowHandle: Handle.ToInt64(),
+                        Surface: surface.Name, Width: (int)surface.RenderSize.Width,
+                        Height: (int)surface.RenderSize.Height));
+                }
+            }
+
+            var children = VisualTreeHelper.GetChildrenCount(element);
+            for (var i = children - 1; i >= 0; i--) pending.Push(VisualTreeHelper.GetChild(element, i));
+        }
+
+        if (surfaces.Count == 0 && foundSurfaces == 1 && onlySurface is not null)
+        {
+            // A single glass surface is the window's panel. Some deferred control
+            // templates still report zero arranged size while the HWND is hidden;
+            // the known window bounds are the correct capture extent in that case.
+            surfaces.Add((onlySurface, host));
+            BackdropRecovery.Record(new("FirstDisplay", "PanelBoundsWindowFallback",
+                System.Diagnostics.Stopwatch.GetTimestamp(), WindowHandle: Handle.ToInt64(),
+                Surface: onlySurface.Name, Width: host.Width, Height: host.Height));
+        }
+        if (surfaces.Count == 0)
+            return RecordFirstDisplayFailure(foundSurfaces == 0 ? "NoSurface" : "NoPanelBounds");
+        var preparations = surfaces.Select(item => item.Surface
+            .PrepareRevealMaterial(host, item.Panel, dpi, beforeFirstShow: true)).ToArray();
+        await Task.WhenAll(preparations);
+        var ready = surfaces.Count > 0 && surfaces.All(item => item.Surface.IsCurrentRevealMaterialReady);
+        var sources = surfaces.Select(item => item.Surface.CurrentFirstDisplayMaterialSource).Distinct().ToArray();
+        var source = sources.Length == 1 ? sources[0] : "Mixed";
+        BackdropRecovery.Record(new("FirstDisplay", ready ? "OpticalReady" : "OpticalUnavailable",
+            System.Diagnostics.Stopwatch.GetTimestamp(), WindowHandle: Handle.ToInt64(),
+            Surface: source, Width: (int)ActualWidth, Height: (int)ActualHeight));
+        return new(ready, source);
+    }
+
+    private FirstDisplayPreparationResult RecordFirstDisplayFailure(string reason)
+    {
+        BackdropRecovery.Record(new("FirstDisplay", reason, System.Diagnostics.Stopwatch.GetTimestamp(),
+            WindowHandle: Handle.ToInt64(), Surface: "Window"));
+        return new(false, reason);
     }
 
     /// <summary>

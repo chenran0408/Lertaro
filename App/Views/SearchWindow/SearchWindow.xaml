@@ -239,7 +239,7 @@
                         <!-- Keyboard hint -->
                         <TextBlock Grid.Column="2"
                                    Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_HintKeyboard]}"
-                                   FontSize="11"
+                                   FontSize="14"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                    
                                    VerticalAlignment="Center"/>

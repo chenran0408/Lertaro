@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Media.Animation;
 using Lertaro.App.Helpers.Visuals;
+using Lertaro.App.Services;
 using Lertaro.App.Views.Notifications;
 using Lertaro.Core;
 using Lertaro.PluginSdk.Abstractions;
@@ -69,26 +70,34 @@ internal sealed class NotificationWindowManager(
         // ShowActivated=False on both kinds: a notification that takes the foreground is worse than one that
         // never arrived, for anyone typing. Which kind of window this is was decided by the window itself from
         // the active theme's opacity, before it had a handle to commit that with.
-        // Parked before it is ever shown, because Show() hands the window to the OS and the OS paints it -- at
-        // WPF's cascade position, which an outside sampler caught twice at y=26 and y=182 before the card leapt
-        // 570 to 730px into the stack. The stack cannot know a card's height until the window exists, so there is
-        // no correct position to place it at here; there is only a position nobody can see.
+        // Park until layout has supplied the card's height; Restack places it before the HWND is shown.
         window.Left = isCard ? area.Right - CardWidthDip - EdgeMarginDip : area.X + area.Width / 2;
         window.Top = OffScreenParkTopDip;
         AltTabExcluder.Attach(window);
-        window.Show();
-        // ActualHeight is only known after the first layout, and the stack is measured in it. Nothing was
-        // rendered yet at alpha 1, so the layout is flushed here and the card is placed at its real size on the
-        // first pass; re-laying out when the first frame is up is left as the correction it now is, not as the
-        // visible jump the window would otherwise make from the bottom edge of the screen.
+        // The stack is measured in ActualHeight, so flush layout while the card is still hidden.
         window.UpdateLayout();
+        runner.Arriving = false;
         Restack(animated: false);
-        // Re-laid out when the first frame is up, and animated this time. A card's height is not final until it
-        // has actually been arranged: the body text re-wraps against the pixel-rounded content width and can come
-        // out a line taller than the pre-render measure said -- the sampler saw exactly that, a 196px slide
-        // stopping at 177 and the last 19px arriving as a step, because this pass corrected every card above the
-        // new one with animated:false. The correction cannot be avoided, so it is drawn instead.
-        window.ContentRendered += (_, _) => Restack(animated: true);
+        new System.Windows.Interop.WindowInteropHelper(window).EnsureHandle();
+        // The first rendered frame may still correct pixel-rounded text wrapping; restack then moves only cards
+        // whose measured slot changed.
+        _ = ShowPreparedNotificationAsync(window, runner);
+    }
+
+    private async Task ShowPreparedNotificationAsync(Window window, NotificationRunner runner)
+    {
+        void Show()
+        {
+            if (!_runners.TryGetValue(runner.Item, out var current) || !ReferenceEquals(current, runner)) return;
+            window.Show();
+            window.ContentRendered += (_, _) => Restack(animated: true);
+        }
+
+        if (window is GlassDesk.UI.Controls.GlassWindow glassWindow)
+            await GlassWindowPresentationHelper.ShowWhenPreparedAsync(glassWindow, Show,
+                () => _runners.TryGetValue(runner.Item, out var current) && ReferenceEquals(current, runner));
+        else
+            Show();
     }
 
     /// <summary>Takes a notification's window down without reporting it, for a caller that reports a batch of

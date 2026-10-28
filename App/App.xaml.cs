@@ -141,7 +141,8 @@ public partial class App : Application
             _glassTheme.Update(new GlassDesk.Core.Models.Settings.AppearanceSettings
             {
                 Theme = GlassDesk.Core.Models.ThemeMode.Dark,
-                GlassMaterial = ResolveGlassMaterial(e.Args)
+                GlassMaterial = ResolveGlassMaterial(e.Args),
+                ReduceTransparency = !settings.GlassEffectsEnabled
             });
             var startGlassDiagnostics = typeof(GlassDesk.UI.BackdropRecovery).GetMethod(
                 "BeginAutomaticDiagnostics", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
@@ -197,7 +198,8 @@ public partial class App : Application
                     MainWindow.Closed += (_, _) => telemetry.Stop();
                 }
             };
-            MainWindow.Show();
+            await Services.GlassWindowPresentationHelper.ShowWhenPreparedAsync(
+                (GlassDesk.UI.Controls.GlassWindow)MainWindow, () => MainWindow.Show());
             Logger.Log("[GlassPreview] QuickPanel window shown.");
             return;
         }
@@ -386,7 +388,8 @@ public partial class App : Application
                     : GlassDesk.Core.Models.ThemeMode.Dark,
                 GlassMaterial = settings.Background.Kind == BackgroundKind.Material
                     ? MapLegacyGlassMaterial(settings.Background)
-                    : ResolveGlassMaterial(e.Args)
+                    : ResolveGlassMaterial(e.Args),
+                ReduceTransparency = !settings.GlassEffectsEnabled
             };
             _glassTheme = GlassDesk.UI.Theming.ThemeService.Initialize(Dispatcher);
             _glassTheme.Update(glassAppearance);
@@ -407,6 +410,8 @@ public partial class App : Application
         base.OnStartup(e);
         _startupInitialized = true;
         MainWindow = new QuickSearchWindow();
+        // The first-load lifecycle hides this seed window inside its Loaded handler, before WPF
+        // presents a frame. It exists to initialize startup services, not as a user-visible summon.
         MainWindow.Show();
 
         _ = Dispatcher.BeginInvoke(new Action(() =>
@@ -488,7 +493,8 @@ public partial class App : Application
                 : GlassDesk.Core.Models.ThemeMode.Dark,
             GlassMaterial = background.Kind == BackgroundKind.Material
                 ? MapLegacyGlassMaterial(background)
-                : GlassDesk.Core.Models.GlassMaterialMode.AndroidLiquidGlass
+                : GlassDesk.Core.Models.GlassMaterialMode.AndroidLiquidGlass,
+            ReduceTransparency = !UserSettings.Load().GlassEffectsEnabled
         };
         _glassTheme.Update(theme);
     }

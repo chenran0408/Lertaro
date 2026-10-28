@@ -7,7 +7,7 @@ using GlassDesk.UI;
 // Lertaro modification: preserve a short exception message in local capture diagnostics to identify provider failures.
 internal sealed class SharedBackdropFeed : IDisposable
 {
-    private const int CaptureCadenceMilliseconds=16;
+    private const int CaptureCadenceMilliseconds=20;
     private const int CaptureFailureReasonLimit = 128;
     private readonly TimeSpan _idleBufferRetention=TimeSpan.FromSeconds(30);
     private readonly object _gate=new();

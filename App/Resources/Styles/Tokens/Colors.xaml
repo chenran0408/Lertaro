@@ -15,12 +15,14 @@
     <SolidColorBrush x:Key="LiquidControlEdge" Color="#55FFFFFF"/>
     <SolidColorBrush x:Key="LiquidControlEdgeActive" Color="#BFFFFFFF"/>
     <SolidColorBrush x:Key="LiquidControlText" Color="#F7F7FA"/>
-    <SolidColorBrush x:Key="LiquidControlMuted" Color="#BFC4CC"/>
+    <SolidColorBrush x:Key="LiquidControlMuted" Color="#E4E6EA"/>
     <SolidColorBrush x:Key="LiquidControlPopup" Color="#EC22242B"/>
     <SolidColorBrush x:Key="LiquidControlAccent" Color="#FF1684FF"/>
 
     <!-- GlassWindow exposes the per-window GlassPalette brushes, including its light/dark mapping. -->
     <Style x:Key="GlassTextPrimary" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="{DynamicResource AppUiFontWeight}"/>
         <Setter Property="Foreground">
             <Setter.Value>
                 <Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}"
@@ -29,6 +31,8 @@
         </Setter>
     </Style>
     <Style x:Key="GlassTextSecondary" TargetType="TextBlock" BasedOn="{StaticResource GlassTextPrimary}">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="Foreground">
             <Setter.Value>
                 <Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}"

@@ -62,7 +62,7 @@
                         Visibility="{Binding LocalDrive.IsLocalDrivesEmpty, Converter={StaticResource BoolToVis}}">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="&#xE783;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="36" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
-                        <TextBlock Text="{Binding LocalDrive.DrivesPlaceholderText}" FontSize="13" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding LocalDrive.DrivesPlaceholderText}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 

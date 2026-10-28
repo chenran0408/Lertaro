@@ -1,5 +1,6 @@
 using Lertaro.App.Views.LocalSend;
 using Lertaro.App.ViewModels.LocalSend;
+using Lertaro.App.Services;
 using Lertaro.Core;
 using Lertaro.Core.Services.LocalSend;
 using Lertaro.Core.Services.LocalSend.Models;
@@ -70,9 +71,9 @@ public static class LocalSendAppEventHandler
         IEnumerable<string>? files = null,
         string? text = null,
         LocalSendSendMode? mode = null,
-        bool ignoreIfOpen = false) => Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+        bool ignoreIfOpen = false) => Application.Current.Dispatcher.BeginInvoke(new Action(async () =>
     {
-        if (_activeSendWindow != null && _activeSendWindow.IsLoaded)
+        if (_activeSendWindow != null)
         {
             if (ignoreIfOpen) return;
             _activeSendWindow.Activate();
@@ -106,10 +107,14 @@ public static class LocalSendAppEventHandler
             _isSendWindowOpen = false;
             DeviceValidationTimer.Stop();
         };
-        _activeSendWindow.Show();
-        _activeSendWindow.Activate();
-        DeviceValidationTimer.Start();
-        _ = RefreshDevicesAsync();
+        var window = _activeSendWindow;
+        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, () =>
+        {
+            window.Show();
+            window.Activate();
+            DeviceValidationTimer.Start();
+            _ = RefreshDevicesAsync();
+        }, () => ReferenceEquals(_activeSendWindow, window));
     }));
 
     private static async Task RefreshDevicesAsync()
@@ -119,7 +124,7 @@ public static class LocalSendAppEventHandler
         await manager.DiscoverDevicesAsync().ConfigureAwait(false);
     }
 
-    private static void OnUploadRequested(object? sender, LocalSendUploadRequestArgs e) => Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+    private static void OnUploadRequested(object? sender, LocalSendUploadRequestArgs e) => Application.Current.Dispatcher.BeginInvoke(new Action(async () =>
     {
         // A receive dialog is modal; if a second request arrives while one is already open, opening
         // another would overwrite _activeReceiveWindow and corrupt the close-handler state. Drop the
@@ -130,6 +135,9 @@ public static class LocalSendAppEventHandler
         _activeReceiveWindow = new LocalSendReceiveWindow(e);
         _isReceiveWindowOpen = true;
         _activeReceiveWindow.Closed += (_, _) => { _activeReceiveWindow = null; _isReceiveWindowOpen = false; };
-        _activeReceiveWindow.ShowDialog();
+        var window = _activeReceiveWindow;
+        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, static () => { },
+            () => ReferenceEquals(_activeReceiveWindow, window));
+        if (ReferenceEquals(_activeReceiveWindow, window)) window.ShowDialog();
     }));
 }

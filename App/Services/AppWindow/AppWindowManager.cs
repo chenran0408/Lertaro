@@ -3,6 +3,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using Lertaro.App.Helpers;
+using Lertaro.App.Services;
 using Lertaro.App.Views.QuickSearchWindow.Helpers;
 using Lertaro.Core;
 
@@ -43,14 +44,7 @@ public static class AppWindowManager
                 _settingsWindow.SelectSection(targetSection);
             }
 
-            if (!_settingsWindow.IsVisible)
-                _settingsWindow.Show();
-
-            if (_settingsWindow.WindowState == WindowState.Minimized)
-                _settingsWindow.WindowState = WindowState.Normal;
-
-            _settingsWindow.Activate();
-            _settingsWindow.FocusSearchBox();
+            ShowSettingsWindowPrepared(_settingsWindow, focusSearch: true);
         });
     }
 
@@ -73,13 +67,19 @@ public static class AppWindowManager
             // (ActivateSearchResult), so it still lands correctly once layout has actually happened.
             _settingsWindow.JumpToEntry(entryIndex);
 
-            if (!_settingsWindow.IsVisible)
-                _settingsWindow.Show();
+            ShowSettingsWindowPrepared(_settingsWindow, focusSearch: false);
+        });
+    }
 
-            if (_settingsWindow.WindowState == WindowState.Minimized)
-                _settingsWindow.WindowState = WindowState.Normal;
-
-            _settingsWindow.Activate();
+    private static async void ShowSettingsWindowPrepared(SettingsWindow window, bool focusSearch)
+    {
+        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, () =>
+        {
+            if (!window.IsVisible) window.Show();
+            if (window.WindowState == WindowState.Minimized)
+                window.WindowState = WindowState.Normal;
+            window.Activate();
+            if (focusSearch) window.FocusSearchBox();
         });
     }
 
@@ -255,7 +255,7 @@ public static class AppWindowManager
         return kept;
     }
 
-    private static void ShowAndActivateSearchWindow(SearchWindow window, bool bringToFront)
+    private static async void ShowAndActivateSearchWindow(SearchWindow window, bool bringToFront)
     {
         // Mirrors QuickSearchWindowController.ShowWindow's pre-show sequence: shell overlays are
         // dismissed while they still truthfully hold the foreground, and power throttling is lifted
@@ -267,19 +267,22 @@ public static class AppWindowManager
         if (bringToFront)
             IdleWorkingSetTrimmer.WindowShowing();
 
-        if (!window.IsVisible)
-            window.Show();
-        if (window.WindowState == WindowState.Minimized)
-            window.WindowState = WindowState.Normal;
-        if (bringToFront)
-            ActivateAndFocusSearchWindow(window);
-        else
+        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, () =>
         {
-            window.Activate();
-            window.FocusSearch();
-        }
-        // Session-start hook for the full window -- mirrors QuickSearchViewModel.
-        ViewModels.Search.SearchReachabilityGate.BeginSession();
+            if (!window.IsVisible)
+                window.Show();
+            if (window.WindowState == WindowState.Minimized)
+                window.WindowState = WindowState.Normal;
+            if (bringToFront)
+                ActivateAndFocusSearchWindow(window);
+            else
+            {
+                window.Activate();
+                window.FocusSearch();
+            }
+            // Session-start hook for the full window -- mirrors QuickSearchViewModel.
+            ViewModels.Search.SearchReachabilityGate.BeginSession();
+        });
     }
 
     // A visible but inactive full window is still on screen, so the global shortcut refocuses it. An

@@ -9,9 +9,9 @@ namespace Lertaro.App.Services;
 // is about geometry rather than about the preview's lifetime.
 public partial class QuickLookManager
 {
-    private void PositionWindow(bool animate = false)
+    private void PositionWindow(bool animate = false, bool allowHidden = false)
     {
-        if (_window == null || _owner == null || !_window.IsVisible) return;
+        if (_window == null || _owner == null || (!_window.IsVisible && !allowHidden)) return;
 
         var computed = TryComputeTargetRect(_owner);
         if (computed == null) return;

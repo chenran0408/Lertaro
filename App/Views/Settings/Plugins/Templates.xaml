@@ -245,16 +245,16 @@
          awkward gap between them; stacking keeps each field readable at any window width. -->
     <DataTemplate x:Key="ArrayDetailStackedFieldTemplate">
         <StackPanel Margin="0,0,0,14">
-            <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
+            <TextBlock Text="{Binding Label}" FontSize="14" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                        TextWrapping="Wrap" Margin="0,0,0,4" Visibility="{Binding Label, Converter={StaticResource StringToVis}}"/>
-            <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap"
+            <TextBlock Text="{Binding Description}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap"
                        Margin="0,0,0,6" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
             <!-- Two features answering to one trigger word, named at the field that is creating the
                  collision. An array item's sub-fields render through THIS template rather than the
                  implicit PluginConfigFieldViewModel one, so without this line every trigger word a plugin
                  configures inside an array (a web-search engine's keyword, a custom command, a file
                  filter) warned about nothing. -->
-            <TextBlock Text="{Binding ConflictWarning}" FontSize="10" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
+            <TextBlock Text="{Binding ConflictWarning}" FontSize="14" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
                        Margin="0,0,0,6" Visibility="{Binding ConflictWarning, Converter={StaticResource StringToVis}}"/>
             <ctrl:InlineEditorHost AutoExpandEnabled="{Binding SupportsInlineEditing}"
                                    EditorTemplate="{StaticResource PluginInlineEditorTemplate}"
@@ -277,9 +277,9 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
-                <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
+                <TextBlock Text="{Binding Label}" FontSize="14" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                            TextWrapping="Wrap" MaxWidth="320" HorizontalAlignment="Left" Visibility="{Binding Label, Converter={StaticResource StringToVis}}"/>
-                <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap"
+                <TextBlock Text="{Binding Description}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap"
                            MaxWidth="320" HorizontalAlignment="Left" Margin="0,2,0,0" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
             </StackPanel>
             <CheckBox Grid.Column="1" IsChecked="{Binding Value, Mode=TwoWay}" VerticalAlignment="Center"/>

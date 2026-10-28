@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Lertaro.App.Converters;
+using Lertaro.App.Services;
 using Lertaro.App.ViewModels.QuickPanel;
 using Lertaro.App.Views.QuickPanel;
 
@@ -267,17 +268,19 @@ public sealed partial class QuickPanelManager : IDisposable
             _window.Left = position.X;
             _window.Top = position.Y;
         }
-        _window.Show();
+        var windowToShow = _window;
+        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(windowToShow, () =>
+        {
+            windowToShow.Show();
 
-        // After Show, and only then: the window has to exist as a real HWND before it can be given the
-        // foreground. ShowActivated="False" means it comes up without focus by design, so this is what
-        // actually hands it over.
-        _window.ActivateAndFocus();
+            // After Show, and only then: the window has to exist as a real HWND before it can be given
+            // the foreground. ShowActivated="False" means it comes up without focus by design.
+            windowToShow.ActivateAndFocus();
 
-        // Only now, and only for as long as the panel is up: from here a change to any folder on screen
-        // reloads the group showing it, whoever made the change -- a drop landing, a download finishing,
-        // a file deleted from Explorer behind the panel.
-        _viewModel.StartWatching();
+            // Only now, and only for as long as the panel is up: from here a change to any folder on
+            // screen reloads the group showing it.
+            _viewModel.StartWatching();
+        }, () => ReferenceEquals(_window, windowToShow));
 
     }
 

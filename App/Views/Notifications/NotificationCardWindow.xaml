@@ -95,7 +95,7 @@
                         <TextBlock Grid.Column="0" x:Name="LevelIcon" Width="16" FontFamily="{DynamicResource AppIconFontFamily}"
                                    FontSize="14" Text="&#xE946;" VerticalAlignment="Center" Margin="0,0,8,0"
                                    Foreground="{DynamicResource AccentBlue}"/>
-                        <TextBlock Grid.Column="1" x:Name="TxtTitle" FontSize="13" FontWeight="SemiBold"
+                        <TextBlock Grid.Column="1" x:Name="TxtTitle" FontSize="15" FontWeight="SemiBold"
                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                             <Button x:Name="BtnReadAll" Style="{StaticResource TitleBarButton}" Content="&#xE73E;"
@@ -120,8 +120,8 @@
                 <ScrollViewer x:Name="BodyScroll" Grid.Row="2" VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled" Margin="12,6,8,12" Padding="0,0,4,0"
                               IsDeferredScrollingEnabled="False" CanContentScroll="False">
-                    <TextBlock x:Name="TxtBody" FontSize="12" TextWrapping="Wrap"
-                               LineHeight="16.2" LineStackingStrategy="BlockLineHeight"
+                    <TextBlock x:Name="TxtBody" FontSize="14" TextWrapping="Wrap"
+                               LineHeight="18.2" LineStackingStrategy="BlockLineHeight"
                                MouseLeftButtonUp="Body_MouseLeftButtonUp"/>
                 </ScrollViewer>
             </Grid>

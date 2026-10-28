@@ -24,6 +24,10 @@ internal sealed class InlineSearchWindowCreationSupport
         IdleWorkingSetTrimmer.WindowShowing();
         if (_manager.Window != null)
         {
+            // A newly created window may still be preparing its first display. Keep its HWND hidden and
+            // leave input with the host until the preparation continuation performs the handoff.
+            if (!_manager.Window.IsVisible) return;
+
             _manager.PrepareInputHandoff(_manager.Window);
             if (_manager.HasPendingInput)
                 _manager.CompleteInputHandoff(_manager.Window.ActivateAndFocusSearchBox() ? _manager.Window : null);
@@ -43,15 +47,25 @@ internal sealed class InlineSearchWindowCreationSupport
         var window = new InlineSearchWindow(viewModel, _manager);
         _manager.Window = window;
         _manager.CurrentHostHwnd = tracker.ActiveHwnd;
-        _manager.KeyboardHook.IsInlineSearchVisible = true;
-        _manager.KeyboardHook.IsInlineWindowOnScreen = true;
-        _manager.MouseHook.Start();
 
         new System.Windows.Interop.WindowInteropHelper(window).EnsureHandle();
-        _manager.PrepareInputHandoff(window);
         window.Positioner.PositionWindowImmediate();
-        window.Show();
-        window.ViewModel.EnsureServiceMonitoringActive();
+
+        _ = ShowPreparedWindowAsync(window, tracker);
+        Logger.Log($"[InlineSearchManager] Created InlineSearchWindow; waiting to show. Scope: {viewModel.SearchScope}", LogLevel.Debug);
+        Logger.Log($"[InlineSearchPerformance] Window creation took {System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds:F1}ms before first-display preparation.", LogLevel.Debug);
+    }
+
+    private async Task ShowPreparedWindowAsync(InlineSearchWindow window, Core.Hook.ExplorerTracker tracker)
+    {
+        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, () =>
+        {
+            window.Show();
+            _manager.KeyboardHook.IsInlineSearchVisible = true;
+            _manager.KeyboardHook.IsInlineWindowOnScreen = true;
+            _manager.MouseHook.Start();
+            window.ViewModel.EnsureServiceMonitoringActive();
+            _manager.PrepareInputHandoff(window);
 
         var foreground = ExplorerNativeHooks.GetForegroundWindow();
         var isTextInputFocused = foreground != IntPtr.Zero && InputFocusEvaluator.IsForegroundTextInputFocused(foreground);
@@ -96,7 +110,7 @@ internal sealed class InlineSearchWindowCreationSupport
             }), DispatcherPriority.Input);
         }
 
-        Logger.Log($"[InlineSearchManager] Created and shown new InlineSearchWindow. Scope: {viewModel.SearchScope}", LogLevel.Debug);
-        Logger.Log($"[InlineSearchPerformance] Window ready in {System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds:F1}ms.", LogLevel.Debug);
+            Logger.Log($"[InlineSearchManager] Created and shown new InlineSearchWindow. Scope: {window.ViewModel.SearchScope}", LogLevel.Debug);
+        }, () => ReferenceEquals(_manager.Window, window) && _manager.ExplorerTracker.ActiveHwnd == tracker.ActiveHwnd);
     }
 }

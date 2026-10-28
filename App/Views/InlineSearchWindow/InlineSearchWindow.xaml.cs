@@ -182,7 +182,7 @@ public partial class InlineSearchWindow : GlassDesk.UI.Controls.GlassWindow, ISe
                 // 3. Ensure topmost
 
                 InlineSearchWindowNativeMethods.SetWindowPos(hwnd, tracker.IsActiveWindowDialog ? new IntPtr(-2) : InlineSearchWindowNativeMethods.HWND_TOPMOST, 0, 0, 0, 0,
-                    InlineSearchWindowNativeMethods.SWP_NOMOVE | InlineSearchWindowNativeMethods.SWP_NOSIZE | InlineSearchWindowNativeMethods.SWP_SHOWWINDOW);
+                    InlineSearchWindowNativeMethods.SWP_NOMOVE | InlineSearchWindowNativeMethods.SWP_NOSIZE);
             }
 
             if (IsVisible) _positioner.PositionWindow();

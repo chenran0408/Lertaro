@@ -48,6 +48,11 @@ if exist "%LOCALAPPDATA%\Programs\Inno Setup 7\ISCC.exe" (
     goto :iscc_found
 )
 
+if exist "D:\Dev\Toolchains\InnoSetup7\ISCC.exe" (
+    set "ISCC=D:\Dev\Toolchains\InnoSetup7\ISCC.exe"
+    goto :iscc_found
+)
+
 :iscc_not_found
 echo [Error] Inno Setup 7 compiler (ISCC.exe) not found.
 echo Checked paths:
@@ -132,13 +137,13 @@ mkdir "%OUT%"
 echo.
 echo [1/4] Publishing App/Service/Cli in Release mode...
 for %%p in (App\App.csproj Service\Service.csproj Cli\Cli.csproj TaskbarHost\TaskbarHost.csproj) do (
-    dotnet publish "%ROOT%%%p" -c Release -o "%OUT%" %RIDARGS% -v quiet
+    dotnet publish "%ROOT%%%p" -c Release -o "%OUT%" %RIDARGS% -p:ErrorOnDuplicatePublishOutputFiles=false -v quiet
     if errorlevel 1 exit /b 1
 )
 
 echo.
 echo [2/4] Publishing Plugins in Release mode...
-%BUILD_POWERSHELL% -NoProfile -Command "$projects = ([xml](Get-Content -LiteralPath '%ROOT%Lertaro.Plugins.slnx')).Solution.Project; foreach ($project in $projects) { dotnet publish (Join-Path '%ROOT%' $project.Path) -c Release -o '%OUT%\Plugins' %RIDARGS% -v quiet; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }"
+%BUILD_POWERSHELL% -NoProfile -Command "$projects = ([xml](Get-Content -LiteralPath '%ROOT%Lertaro.Plugins.slnx')).Solution.Project; foreach ($project in $projects) { dotnet publish (Join-Path '%ROOT%' $project.Path) -c Release -o '%OUT%\Plugins' %RIDARGS% -p:ErrorOnDuplicatePublishOutputFiles=false -v quiet; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }"
 if errorlevel 1 exit /b 1
 
 

@@ -16,6 +16,7 @@ internal static class AppTypography
     internal const string IconFontKey = "AppIconFontFamily";
     internal const string LanguageKey = "AppUiLanguage";
     internal const string UiFontWeightKey = "AppUiFontWeight";
+    internal const string UiFontSizeKey = "AppUiFontSize";
 
     // WPF's built-in composite selects Windows fonts by script AND Language, including regional
     // CJK glyphs. Keep that maintained fallback table instead of ordering CJK families ourselves.
@@ -30,6 +31,7 @@ internal static class AppTypography
         resources[UiFontKey] = UiFont;
         resources[MonospaceFontKey] = MonospaceFont;
         resources[IconFontKey] = IconFont;
+        resources[UiFontSizeKey] = 14d;
         UpdateLanguage(resources, culture);
         if (_registered) return;
         _registered = true;
@@ -45,10 +47,9 @@ internal static class AppTypography
     {
         var language = ResolveLanguage(culture);
         resources[LanguageKey] = language;
-        // Windows' message font can be lighter than 400 (305 on the affected system).
-        // Regular and Normal both parse as 400, so anchor the Chinese UI's inherited weight explicitly.
-        var isChinese = language.IetfLanguageTag == "zh" || language.IetfLanguageTag.StartsWith("zh-", StringComparison.Ordinal);
-        resources[UiFontWeightKey] = isChinese ? FontWeights.Normal : System.Windows.SystemFonts.MessageFontWeight;
+        // Glass surfaces show busy wallpaper through the text. Keep a consistent medium weight
+        // across Windows locales instead of inheriting a system message font that can be too light.
+        resources[UiFontWeightKey] = FontWeights.Medium;
     }
 
     internal static XmlLanguage ResolveLanguage(string? culture)
@@ -74,6 +75,10 @@ internal static class AppTypography
             root.SetResourceReference(TextElement.FontFamilyProperty, UiFontKey);
         if (root.ReadLocalValue(FrameworkElement.LanguageProperty) == DependencyProperty.UnsetValue)
             root.SetResourceReference(FrameworkElement.LanguageProperty, LanguageKey);
+        var sizeSource = DependencyPropertyHelper.GetValueSource(root, TextElement.FontSizeProperty).BaseValueSource;
+        if (sizeSource is BaseValueSource.Default or BaseValueSource.Inherited
+            or BaseValueSource.DefaultStyle or BaseValueSource.DefaultStyleTrigger)
+            root.SetResourceReference(TextElement.FontSizeProperty, UiFontSizeKey);
         var weightSource = DependencyPropertyHelper.GetValueSource(root, TextElement.FontWeightProperty).BaseValueSource;
         if (weightSource is BaseValueSource.Default or BaseValueSource.Inherited
             or BaseValueSource.DefaultStyle or BaseValueSource.DefaultStyleTrigger)

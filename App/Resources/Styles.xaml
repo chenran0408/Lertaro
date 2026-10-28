@@ -20,4 +20,20 @@
     </ResourceDictionary.MergedDictionaries>
     <!-- Match GlassDesk GlassWindow ForegroundBrush and SecondaryForegroundBrush propagation. -->
     <Style TargetType="TextBlock" BasedOn="{StaticResource GlassTextPrimary}"/>
+    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="{DynamicResource AppUiFontWeight}"/>
+    </Style>
+    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="{DynamicResource AppUiFontWeight}"/>
+    </Style>
+    <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="{DynamicResource AppUiFontWeight}"/>
+    </Style>
+    <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="{DynamicResource AppUiFontWeight}"/>
+    </Style>
 </ResourceDictionary>

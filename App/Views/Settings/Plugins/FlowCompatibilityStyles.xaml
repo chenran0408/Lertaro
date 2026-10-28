@@ -27,7 +27,7 @@
     <sys:Double x:Key="SettingPanelAreaTextBoxMinHeight">150</sys:Double>
 
     <Style x:Key="SettingPanelTextBlockDescriptionStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="Margin" Value="0,2,0,0" />
         <Setter Property="Foreground"><Setter.Value><Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlMuted}"/></Setter.Value></Setter>
     </Style>

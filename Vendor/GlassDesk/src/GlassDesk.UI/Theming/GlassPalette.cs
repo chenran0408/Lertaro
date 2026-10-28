@@ -113,7 +113,7 @@ public sealed class GlassPalette
                 acrylicTintAlpha: 0x18,
                 panelBorder: Color.FromArgb(0x26, 0xFF, 0xFF, 0xFF),
                 foreground: Color.FromRgb(0xF2, 0xF2, 0xF7),
-                secondaryForeground: Color.FromArgb(0xB3, 0xF2, 0xF2, 0xF7));
+                secondaryForeground: Color.FromArgb(0xF0, 0xF2, 0xF2, 0xF7));
         }
 
         return new GlassPalette(
@@ -128,7 +128,7 @@ public sealed class GlassPalette
             acrylicTintAlpha: 0x20,
             panelBorder: Color.FromArgb(0x59, 0xFF, 0xFF, 0xFF),
             foreground: Color.FromRgb(0x1C, 0x1C, 0x1E),
-            secondaryForeground: Color.FromArgb(0xB3, 0x1C, 0x1C, 0x1E));
+            secondaryForeground: Color.FromArgb(0xF0, 0x1C, 0x1C, 0x1E));
     }
 
     /// <summary>

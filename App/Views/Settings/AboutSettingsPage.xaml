@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:services="clr-namespace:Lertaro.App.Services"
              xmlns:update="clr-namespace:Lertaro.App.Services.Update"
-             FontSize="12"
+             FontSize="14"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="700">
     <UserControl.Resources>
@@ -159,7 +159,7 @@
                     <!-- Warning Tip for Non-Admins -->
                     <TextBlock x:Name="TxtNoAdminWarning" Visibility="Collapsed"
                                Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_NoAdminTip]}"
-                               Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap" Margin="0,12,0,0" FontSize="12"/>
+                               Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap" Margin="0,12,0,0" FontSize="14"/>
 
                     <!-- Actions when new version found -->
                     <StackPanel x:Name="SpUpdateActions" Orientation="Horizontal" Margin="0,12,0,0" Visibility="Collapsed">

@@ -36,6 +36,7 @@ public partial class QuickLookManager
     // LocationChanged/SizeChanged but deliberately NOT Deactivated -- see ShowOrUpdate's own comment.
     private bool _ownerTrackingAttached;
     private bool _ownerDeactivateAttached;
+    private int _showOperationToken;
     // Set while both windows are hidden for a preview handler's own popup dialog (see
     // PreviewDialogSignal) -- distinguishes that from every other reason _window/_owner might be
     // hidden, so DialogClosed only ever re-shows what this specific mechanism hid.
@@ -60,6 +61,7 @@ public partial class QuickLookManager
     private void OnPreviewDialogOpened()
     {
         if (_owner == null || _window == null) return;
+        _showOperationToken++;
         _owner.Dispatcher.BeginInvoke(new Action(() =>
         {
             if (_owner == null || _window == null) return;
@@ -79,7 +81,8 @@ public partial class QuickLookManager
         {
             _hiddenForDialog = false;
             owner.Show();
-            window.Show();
+            var token = ++_showOperationToken;
+            _ = ShowPreparedPreviewAsync(owner, window, token);
         }));
     }
 
@@ -214,6 +217,7 @@ public partial class QuickLookManager
 
     public void Hide()
     {
+        _showOperationToken++;
         if (_window != null)
         {
             _window.Hide();
@@ -227,6 +231,7 @@ public partial class QuickLookManager
 
     private void ShowOrUpdate(Window owner, string path)
     {
+        var showOperationToken = ++_showOperationToken;
         _owner = owner;
 
         // Keep the preview-handler pool alive across this owner's hide/show cycles; release it only when
@@ -278,9 +283,18 @@ public partial class QuickLookManager
         if (isFirstShow)
         {
             _window.Owner = owner;
-            _window.Show();
+            PositionWindow(allowHidden: true);
+            _ = ShowPreparedPreviewAsync(owner, _window, showOperationToken);
+            return;
         }
 
-        PositionWindow(animate: isFirstShow);
+        PositionWindow();
+    }
+
+    private async Task ShowPreparedPreviewAsync(Window owner, Views.QuickLook.QuickLookWindow window, int token)
+    {
+        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, () => window.Show(),
+            () => ReferenceEquals(_owner, owner) && ReferenceEquals(_window, window)
+                && _showOperationToken == token && !_hiddenForDialog && !window.IsShowingExternalPreview);
     }
 }

@@ -1,4 +1,5 @@
 using System.Windows;
+using Lertaro.App.Services;
 
 namespace Lertaro.App.Views.Settings.QuickPanel;
 
@@ -8,7 +9,7 @@ public partial class QuickPanelWindowSizeEditor : System.Windows.Controls.UserCo
 
     public QuickPanelWindowSizeEditor() => InitializeComponent();
 
-    private void OnPreview(object sender, RoutedEventArgs e)
+    private async void OnPreview(object sender, RoutedEventArgs e)
     {
         if (_preview != null)
         {
@@ -31,8 +32,10 @@ public partial class QuickPanelWindowSizeEditor : System.Windows.Controls.UserCo
             _preview.Left = area.Left / dpi.DpiScaleX;
             _preview.Top = area.Top / dpi.DpiScaleY;
         }
+        var preview = _preview;
         _preview.Closed += (_, _) => _preview = null;
-        _preview.Show();
+        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(preview, preview.Show,
+            () => ReferenceEquals(_preview, preview));
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e) => _preview?.Close();

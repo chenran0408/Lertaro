@@ -51,8 +51,8 @@
                     <CheckBox IsChecked="{Binding IsPluginEnabled}" Margin="0,8,0,0"
                               Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_EnableAssembly]}"/>
                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_AssemblyRestartHint]}"
-                               TextWrapping="Wrap" FontSize="12" FontWeight="Bold" Margin="0,4,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
-                    <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" FontSize="12">
+                               TextWrapping="Wrap" FontSize="14" FontWeight="Bold" Margin="0,4,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
+                    <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" FontSize="14">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Visible"/>
@@ -195,7 +195,7 @@
 
                         <!-- No components placeholder -->
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_NoComponents]}"
-                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" FontSize="12"
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" FontSize="14"
                                    Visibility="{Binding HasNoComponents, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
                     <!-- Component list: virtualized ListBox over the flat ComponentRows list. -->

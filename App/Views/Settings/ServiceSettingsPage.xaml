@@ -100,7 +100,7 @@
                     <!-- Title & description -->
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Service.LoadingTitle}" FontSize="15" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" Margin="0,0,0,6"/>
-                        <TextBlock Text="{Binding Service.LoadingStats}" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding Service.LoadingStats}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap"/>
                     </StackPanel>
                     
                     <!-- Action Button -->
@@ -213,7 +213,7 @@
                         Background="{StaticResource LiquidControlFill}"
                         BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1">
                     <Grid>
-                        <TextBox Background="Transparent" BorderThickness="0" FontSize="12"
+                        <TextBox Background="Transparent" BorderThickness="0" FontSize="14"
                                  Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                  CaretBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                  Padding="10,0" VerticalContentAlignment="Center"

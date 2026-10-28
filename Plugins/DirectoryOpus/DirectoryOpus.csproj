@@ -6,6 +6,7 @@
     <!-- For FavoritesIcon, which rasterizes a WPF vector Geometry to the HBITMAP a DynamicMenuItem
          carries: same reason TotalCommander's own csproj sets it. -->
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>Lertaro.Plugins.DirectoryOpus</AssemblyName>
     <Version>1.4.0</Version>
