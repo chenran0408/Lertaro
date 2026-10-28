@@ -135,7 +135,34 @@ public abstract class GlassWindow : Window
 
         // 窗口默认不可调整大小；需要调整大小的窗口自行开启。
         ResizeMode = ResizeMode.NoResize;
+
+        IsVisibleChanged += (_, e) =>
+        {
+            if (e.NewValue is false)
+                SetGlassSurfacesPerformanceSleeping(true);
+        };
     }
+
+    private void SetGlassSurfacesPerformanceSleeping(bool sleeping)
+    {
+        if (Content is not DependencyObject root) return;
+
+        var pending = new Stack<DependencyObject>();
+        pending.Push(root);
+        while (pending.Count > 0)
+        {
+            var element = pending.Pop();
+            if (element is LiquidGlassSurface surface)
+                surface.SetPerformanceSleeping(sleeping);
+
+            var children = VisualTreeHelper.GetChildrenCount(element);
+            for (var i = children - 1; i >= 0; i--)
+                pending.Push(VisualTreeHelper.GetChild(element, i));
+        }
+    }
+
+    /// <summary>Wakes glass surfaces before revealing the window when first-display preparation is still running.</summary>
+    public void WakeGlassSurfacesForDisplay() => SetGlassSurfacesPerformanceSleeping(false);
 
     /// <summary>当前主题的配色。主题变化时整体替换。</summary>
     public GlassPalette? Palette
@@ -383,6 +410,7 @@ public abstract class GlassWindow : Window
     {
         Dispatcher.VerifyAccess();
         if (IsVisible) throw new InvalidOperationException("First-display preparation requires a hidden window.");
+        SetGlassSurfacesPerformanceSleeping(false);
         _ = new WindowInteropHelper(this).EnsureHandle();
         UpdateLayout();
         if (SurfaceMode != GlassSurfaceMode.OpticalGlass
@@ -407,6 +435,9 @@ public abstract class GlassWindow : Window
         var layoutSize = new Size(host.Width * 96d / dpi, host.Height * 96d / dpi);
         root.Measure(layoutSize);
         root.Arrange(new Rect(layoutSize));
+        // Templates can materialize glass surfaces during the hidden layout above.
+        // Wake those too before sampling their reveal material.
+        SetGlassSurfacesPerformanceSleeping(false);
 
         var pending = new Stack<DependencyObject>();
         pending.Push(root);
