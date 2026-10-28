@@ -16,9 +16,11 @@ public sealed class AppSingleInstanceTests
         {
             try
             {
-                abandonedMutex = new Mutex(true, mutexName, out var createdNew);
+                abandonedMutex = new Mutex(false, mutexName, out var createdNew);
                 if (!createdNew)
                     throw new InvalidOperationException("The test mutex was unexpectedly reused.");
+                if (!abandonedMutex.WaitOne(0))
+                    throw new InvalidOperationException("The test thread could not acquire its new mutex.");
             }
             catch (Exception ex)
             {
