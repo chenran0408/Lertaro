@@ -119,7 +119,7 @@ public sealed class AppTypographyTests
         Assert.AreEqual(AppTypography.UiFont, header.FontFamily);
         Assert.AreEqual(FontWeights.Medium, header.FontWeight);
         Assert.AreEqual("zh-cn", header.Language.IetfLanguageTag);
-        Assert.AreEqual(12, header.FontSize);
+        Assert.AreEqual(14, header.FontSize);
         Assert.AreEqual(AppTypography.IconFont, icon.FontFamily);
         var arrow = Assert.ContainsSingle(TextBlocks(item).Where(text => text.Name == "Arrow"));
         Assert.AreEqual(AppTypography.IconFont, arrow.FontFamily);

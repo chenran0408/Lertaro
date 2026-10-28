@@ -84,7 +84,7 @@
                                     </TextBlock>
                                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
                                 </DockPanel>
-                                <TextBlock Text="{Binding WindowTitle}" FontSize="12" TextTrimming="CharacterEllipsis"
+                                <TextBlock Text="{Binding WindowTitle}" FontSize="14" TextTrimming="CharacterEllipsis"
                                            ToolTip="{Binding WindowTitle}" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
                             </StackPanel>
                         </CheckBox>

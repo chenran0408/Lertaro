@@ -133,7 +133,7 @@
                                                        local:TextHighlighter.HighlightText="{Binding Text, ElementName=TxtSettingsSearch}"
                                                        local:TextHighlighter.HighlightBrush="{DynamicResource AccentBlue}"
                                                        FontSize="14" TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text="{Binding SectionLabel}" FontSize="13"
+                                            <TextBlock Text="{Binding SectionLabel}" FontSize="14"
                                                        Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,2,0,0"
                                                        TextTrimming="CharacterEllipsis"/>
                                         </StackPanel>

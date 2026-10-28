@@ -79,7 +79,7 @@
             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_Subtitle]}"
                        FontSize="22" FontWeight="SemiBold" Style="{StaticResource GlassTextPrimary}"/>
             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_IndexedOnly]}"
-                       Margin="0,5,0,0" FontSize="12" Style="{StaticResource GlassTextSecondary}"/>
+                       Margin="0,5,0,0" FontSize="14" Style="{StaticResource GlassTextSecondary}"/>
         </StackPanel>
 
         <Border Grid.Row="1" Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}"
@@ -104,7 +104,7 @@
                     <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="&#xE9D5;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="34"
                                    Style="{StaticResource GlassTextSecondary}" HorizontalAlignment="Center"/>
-                        <TextBlock x:Name="EmptyText" Margin="0,10,0,0" FontSize="13"
+                        <TextBlock x:Name="EmptyText" Margin="0,10,0,0" FontSize="14"
                                    Style="{StaticResource GlassTextSecondary}" TextAlignment="Center"/>
                     </StackPanel>
                 </Grid>
@@ -117,9 +117,9 @@
                     <Grid Grid.Row="0" Margin="8,5,8,8">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_Name]}"
-                                   FontSize="12" FontWeight="SemiBold" Style="{StaticResource GlassTextSecondary}"/>
+                                   FontSize="14" FontWeight="SemiBold" Style="{StaticResource GlassTextSecondary}"/>
                         <TextBlock Grid.Column="1" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_Size]}"
-                                   FontSize="12" FontWeight="SemiBold" Style="{StaticResource GlassTextSecondary}"/>
+                                   FontSize="14" FontWeight="SemiBold" Style="{StaticResource GlassTextSecondary}"/>
                     </Grid>
                     <Button x:Name="ParentListButton" Grid.Row="1" Height="34" Margin="0,0,0,3"
                             Style="{StaticResource SpaceBreadcrumbButton}" HorizontalContentAlignment="Left"
@@ -127,7 +127,7 @@
                         <StackPanel Orientation="Horizontal" Margin="10,0">
                             <TextBlock Text="&#xE74A;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="11" VerticalAlignment="Center" Margin="0,0,9,0"/>
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_Parent]}"
-                                       FontSize="12.5" VerticalAlignment="Center"/>
+                                       FontSize="14" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                     <ListBox x:Name="ItemsList" Grid.Row="2" Background="Transparent" BorderThickness="0"
@@ -155,7 +155,7 @@
                                     </TextBlock>
                                     <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
                                                   Focusable="False" Background="Transparent">
-                                        <TextBlock Text="{Binding Name}" FontSize="12.5" VerticalAlignment="Center"
+                                        <TextBlock Text="{Binding Name}" FontSize="14" VerticalAlignment="Center"
                                                    Style="{StaticResource GlassTextPrimary}"
                                                    helpers:MarqueeBehavior.EnableMarquee="True"/>
                                     </ScrollViewer>
@@ -169,8 +169,8 @@
                                             <Setter Property="Visibility" Value="Collapsed"/>
                                             <Style.Triggers><DataTrigger Binding="{Binding IsVolume}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
                                         </Style></StackPanel.Style>
-                                        <TextBlock Text="{Binding CapacityText}" TextWrapping="Wrap" FontSize="11" Style="{StaticResource GlassTextSecondary}"/>
-                                        <TextBlock Text="{Binding IndexStatusText}" TextWrapping="Wrap" FontSize="11">
+                                        <TextBlock Text="{Binding CapacityText}" TextWrapping="Wrap" FontSize="14" Style="{StaticResource GlassTextSecondary}"/>
+                                        <TextBlock Text="{Binding IndexStatusText}" TextWrapping="Wrap" FontSize="14">
                                             <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource GlassTextSecondary}">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                                 <Style.Triggers><DataTrigger Binding="{Binding IsIndexed}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
@@ -189,9 +189,9 @@
                 BorderThickness="0,1,0,0" Padding="20,9">
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                <TextBlock x:Name="SummaryText" Style="{StaticResource GlassTextSecondary}" FontSize="11.5"/>
+                <TextBlock x:Name="SummaryText" Style="{StaticResource GlassTextSecondary}" FontSize="14"/>
                 <TextBlock Grid.Column="1" Margin="12,0,0,0" TextTrimming="CharacterEllipsis" x:Name="LogicalSizeHint" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_LogicalSize]}"
-                           HorizontalAlignment="Right" Style="{StaticResource GlassTextSecondary}" FontSize="11.5"/>
+                           HorizontalAlignment="Right" Style="{StaticResource GlassTextSecondary}" FontSize="14"/>
             </Grid>
         </Border>
     </Grid>

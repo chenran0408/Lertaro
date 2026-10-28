@@ -164,6 +164,13 @@ public abstract class GlassWindow : Window
     /// <summary>Wakes glass surfaces before revealing the window when first-display preparation is still running.</summary>
     public void WakeGlassSurfacesForDisplay() => SetGlassSurfacesPerformanceSleeping(false);
 
+    /// <summary>Returns glass surfaces to deep sleep when a prepared reveal is cancelled while still hidden.</summary>
+    public void SleepGlassSurfacesIfHidden()
+    {
+        Dispatcher.VerifyAccess();
+        if (!IsVisible) SetGlassSurfacesPerformanceSleeping(true);
+    }
+
     /// <summary>当前主题的配色。主题变化时整体替换。</summary>
     public GlassPalette? Palette
     {

@@ -47,7 +47,7 @@
                                  CaretBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                  Padding="0,0,8,0" VerticalContentAlignment="Center"
                                  Text="{Binding RuntimeStatusSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Margin="3,0,0,0" IsHitTestVisible="False" FontSize="12" VerticalAlignment="Center"
+                        <TextBlock Margin="3,0,0,0" IsHitTestVisible="False" FontSize="14" VerticalAlignment="Center"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                    Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_RuntimeStatusSearchPlaceholder]}">
                             <TextBlock.Style>

@@ -35,7 +35,7 @@
                        Margin="0">
 					<TextBlock.Style>
 						<Style TargetType="TextBlock">
-							<Setter Property="FontSize" Value="12"/>
+							<Setter Property="FontSize" Value="14"/>
 							<Style.Triggers>
 								<DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=Title}" Value="Lertaro">
 									<Setter Property="FontSize" Value="{Binding ScaledSectionFontSize}"/>
@@ -89,13 +89,13 @@
                            helpers:MarqueeBehavior.EnableMarquee="{Binding IsSelected}">
 					<TextBlock.Style>
 						<Style TargetType="TextBlock">
-							<Setter Property="FontSize" Value="13"/>
+							<Setter Property="FontSize" Value="14"/>
 							<Style.Triggers>
 								<DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=Title}" Value="Lertaro">
 									<Setter Property="FontSize" Value="{Binding ScaledTextFontSize}"/>
 								</DataTrigger>
 								<DataTrigger Binding="{Binding IsCompact}" Value="True">
-									<Setter Property="FontSize" Value="12.5"/>
+									<Setter Property="FontSize" Value="14"/>
 								</DataTrigger>
 							</Style.Triggers>
 						</Style>

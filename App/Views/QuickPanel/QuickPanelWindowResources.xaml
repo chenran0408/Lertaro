@@ -206,7 +206,7 @@
             </Border>
             <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Focusable="False" Margin="0,3,0,0"
                           conv:ScrollViewerHelper.BubbleMouseWheel="True">
-                <TextBlock FontSize="12"
+                <TextBlock FontSize="14"
                            conv:TextHighlighter.HighlightText="{Binding DataContext.SearchQuery, RelativeSource={RelativeSource AncestorType=Window}}"
                            conv:TextHighlighter.HighlightBrush="{DynamicResource AccentBlue}"
                            Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"

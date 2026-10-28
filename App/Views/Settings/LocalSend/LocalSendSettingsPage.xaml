@@ -33,7 +33,7 @@
                     <DockPanel Margin="0,0,0,12">
                         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_StatusTitle]}"
-                                       FontSize="13" FontWeight="Medium" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
+                                       FontSize="14" FontWeight="Medium" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                             <TextBlock FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,2,0,0">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
@@ -71,7 +71,7 @@
                                         </Style>
                                     </Ellipse.Style>
                                 </Ellipse>
-                                <TextBlock FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center">
+                                <TextBlock FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Text" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_StatusRunning]}"/>
@@ -94,7 +94,7 @@
                     <DockPanel x:Name="RowLocalSendEnable" Margin="0,0,0,12">
                         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_Enable]}"
-                                       FontSize="13" FontWeight="Medium" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
+                                       FontSize="14" FontWeight="Medium" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_EnableDesc]}"
                                        FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,2,0,0"/>
                         </StackPanel>
@@ -111,7 +111,7 @@
                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_DeviceAlias]}"
-                                           FontSize="13" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
+                                           FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                                 <Border Margin="6,0,0,0" Padding="5,1,5,1" CornerRadius="3"
                                         Background="{StaticResource LiquidControlFill}"
                                         BorderBrush="{DynamicResource LiquidControlEdge}" BorderThickness="1"
@@ -158,7 +158,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_DiscoveryTimeout]}"
-                                       FontSize="13" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
+                                       FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_DiscoveryTimeoutDesc]}"
                                        FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,2,0,0"/>
                         </StackPanel>
@@ -173,7 +173,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_Port]}"
-                                       FontSize="13" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
+                                       FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_PortDesc]}"
                                        FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,2,0,0"/>
                         </StackPanel>
@@ -190,7 +190,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_ReceivePin]}"
-                                       FontSize="13" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
+                                       FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_ReceivePinDesc]}"
                                        FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,2,0,0"/>
                         </StackPanel>
@@ -203,7 +203,7 @@
                     <DockPanel x:Name="RowLocalSendEnableHttps" Margin="0,0,0,12">
                         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_EnableHttps]}"
-                                       FontSize="13" FontWeight="Medium" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
+                                       FontSize="14" FontWeight="Medium" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_EnableHttpsDesc]}"
                                        FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,2,0,0"/>
                         </StackPanel>
@@ -215,7 +215,7 @@
                     <DockPanel x:Name="RowLocalSendCreateChecksums" Margin="0,0,0,12">
                         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_CreateChecksums]}"
-                                       FontSize="13" FontWeight="Medium" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
+                                       FontSize="14" FontWeight="Medium" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_CreateChecksumsDesc]}"
                                        FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,2,0,0"/>
                         </StackPanel>
@@ -227,7 +227,7 @@
                     <DockPanel x:Name="RowLocalSendVerifyChecksums" Margin="0,0,0,12">
                         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_VerifyChecksums]}"
-                                       FontSize="13" FontWeight="Medium" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
+                                       FontSize="14" FontWeight="Medium" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_VerifyChecksumsDesc]}"
                                        FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,2,0,0"/>
                         </StackPanel>
@@ -239,7 +239,7 @@
                     <DockPanel x:Name="RowLocalSendQuickSave" Margin="0,0,0,12">
                         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_QuickSave]}"
-                                       FontSize="13" FontWeight="Medium" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
+                                       FontSize="14" FontWeight="Medium" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_QuickSaveDesc]}"
                                        FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,2,0,0"/>
                         </StackPanel>
@@ -263,8 +263,8 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_DownloadDir]}"
-                                       FontSize="13" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
-                            <TextBlock Text="{Binding DownloadDirectoryDisplay}" FontSize="11"
+                                       FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
+                            <TextBlock Text="{Binding DownloadDirectoryDisplay}" FontSize="14"
                                        Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                         <Button Grid.Column="1" Style="{StaticResource SettingsButton}"

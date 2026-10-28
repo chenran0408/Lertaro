@@ -72,7 +72,7 @@
                                                            local:TextHighlighter.Text="{Binding Name}"
                                                            local:TextHighlighter.HighlightText="{Binding SearchQuery}"
                                                            local:TextHighlighter.HighlightBrush="{DynamicResource AccentBlue}"
-                                                           FontSize="13"
+                                                           FontSize="14"
                                                            VerticalAlignment="Center"
                                                            helpers:MarqueeBehavior.EnableMarquee="True"/>
                                             </ScrollViewer>
@@ -92,7 +92,7 @@
                                                            local:TextHighlighter.Text="{Binding ParentDir}"
                                                            local:TextHighlighter.HighlightText="{Binding SearchQuery}"
                                                            local:TextHighlighter.HighlightBrush="{DynamicResource AccentBlue}"
-                                                           FontSize="12"
+                                                           FontSize="14"
                                                            VerticalAlignment="Center"
                                                            helpers:MarqueeBehavior.EnableMarquee="True"/>
                                             </ScrollViewer>
@@ -157,14 +157,14 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_ActionsTargetTitle]}" Foreground="{DynamicResource AccentBlue}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_ActionsTargetTitle]}" Foreground="{DynamicResource AccentBlue}" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <!-- ScrollViewer clips the target label while MarqueeBehavior reveals its natural width. -->
                             <ScrollViewer Grid.Column="1" Margin="0,0,12,0" Background="Transparent" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Focusable="False"
                                           local:ScrollViewerHelper.BubbleMouseWheel="True">
-                                <TextBlock x:Name="TxtActionsTarget" Text="" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" FontSize="12" VerticalAlignment="Center"
+                                <TextBlock x:Name="TxtActionsTarget" Text="" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" FontSize="14" VerticalAlignment="Center"
                                            helpers:MarqueeBehavior.EnableMarquee="True"/>
                             </ScrollViewer>
-                            <TextBlock Grid.Column="2" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_EscBack]}" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_EscBack]}" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" FontSize="14" VerticalAlignment="Center"/>
                         </Grid>
                     </Border>
                     <!-- Quick-window-only action filter. It keeps the main query untouched. -->
@@ -182,12 +182,12 @@
                                 <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="12"
                                            Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center" Margin="8,0,4,0"/>
                                 <Grid Grid.Column="1">
-                                    <TextBox x:Name="TxtActionsSearch" Background="Transparent" BorderThickness="0" FontSize="12"
+                                    <TextBox x:Name="TxtActionsSearch" Background="Transparent" BorderThickness="0" FontSize="14"
                                              Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                              CaretBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                              Padding="0,0,8,0" VerticalContentAlignment="Center"/>
                                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_ActionsSearchPlaceholder]}"
-                                               IsHitTestVisible="False" FontSize="12" VerticalAlignment="Center"
+                                               IsHitTestVisible="False" FontSize="14" VerticalAlignment="Center"
                                                Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
@@ -222,7 +222,7 @@
                                Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_NoResult]}"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
-                               FontSize="13"
+                               FontSize="14"
                                Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">

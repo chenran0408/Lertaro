@@ -150,7 +150,7 @@
     <!-- ═══════════ Modern GridView Header Style ═══════════ -->
     <Style TargetType="GridViewColumnHeader">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         
         <Setter Property="Padding" Value="16,10,16,10"/>

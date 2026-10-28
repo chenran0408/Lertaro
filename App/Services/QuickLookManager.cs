@@ -80,10 +80,24 @@ public partial class QuickLookManager
         owner.Dispatcher.BeginInvoke(new Action(() =>
         {
             _hiddenForDialog = false;
-            owner.Show();
             var token = ++_showOperationToken;
-            _ = ShowPreparedPreviewAsync(owner, window, token);
+            bool IsCurrent() => ReferenceEquals(_owner, owner) && ReferenceEquals(_window, window)
+                && _showOperationToken == token && !_hiddenForDialog;
+            _ = ShowOwnerWhenPreparedAsync(owner, () =>
+            {
+                if (!IsCurrent()) return;
+                owner.Show();
+                _ = ShowPreparedPreviewAsync(owner, window, token);
+            }, IsCurrent);
         }));
+    }
+
+    internal static Task ShowOwnerWhenPreparedAsync(Window owner, Action show, Func<bool> isCurrent)
+    {
+        if (owner is GlassDesk.UI.Controls.GlassWindow glassWindow)
+            return GlassWindowPresentationHelper.ShowWhenPreparedAsync(glassWindow, show, isCurrent);
+        if (isCurrent()) show();
+        return Task.CompletedTask;
     }
 
     // A native (HwndHost) preview handler's own out-of-process window just grabbed OS keyboard focus for

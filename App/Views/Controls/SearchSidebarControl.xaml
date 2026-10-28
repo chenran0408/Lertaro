@@ -49,7 +49,7 @@
                                             </Style>
                                         </Button.Style>
                                     </Button>
-                                    <TextBlock Text="{Binding Header}" FontSize="11" FontWeight="Bold"
+                                    <TextBlock Text="{Binding Header}" FontSize="14" FontWeight="Bold"
                                                Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center"/>
                                 </DockPanel>
                                 <!-- ItemsControl (not ListBox): each item toggles its own IsSelected
@@ -75,7 +75,7 @@
                                                                Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                                                TextAlignment="Right"
                                                                VerticalAlignment="Center"/>
-                                                    <TextBlock Text="{Binding DisplayName}" helpers:TrimmedTextToolTip.Text="{Binding DisplayName}" FontSize="13"
+                                                    <TextBlock Text="{Binding DisplayName}" helpers:TrimmedTextToolTip.Text="{Binding DisplayName}" FontSize="14"
                                                                VerticalAlignment="Center"
                                                                TextWrapping="NoWrap"
                                                                TextTrimming="CharacterEllipsis"/>

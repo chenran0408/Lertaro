@@ -43,14 +43,14 @@
     </Style>
     <Style x:Key="SettingTitleLabel" TargetType="{x:Type TextBlock}">
         <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Margin" Value="0,0,0,2" />
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
     <Style x:Key="SettingSubTitleLabel" TargetType="{x:Type TextBlock}">
         <Setter Property="Foreground"><Setter.Value><Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlMuted}"/></Setter.Value></Setter>
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="Margin" Value="0" />
         <Setter Property="Padding" Value="0,0,24,0" />
         <Setter Property="TextWrapping" Value="WrapWithOverflow" />
@@ -117,14 +117,14 @@
     <Style x:Key="DefaultTextBoxStyle" TargetType="{x:Type TextBox}" BasedOn="{StaticResource RuleTextBox}">
         <Setter Property="Height" Value="28"/>
         <Setter Property="Padding" Value="8,3"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
     </Style>
     <Style x:Key="DefaultComboBoxStyle" TargetType="{x:Type ComboBox}" BasedOn="{StaticResource SettingsComboBox}">
         <Setter Property="Height" Value="28"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
     </Style>
     <Style x:Key="DefaultComboBoxItemStyle" TargetType="{x:Type ComboBoxItem}" BasedOn="{StaticResource SettingsComboBoxItem}">
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
     </Style>
     <Style x:Key="DefaultCheckBoxStyle" TargetType="{x:Type CheckBox}" BasedOn="{StaticResource ThemedCheckBox}">
         <Setter Property="Margin" Value="0,6"/>
@@ -147,11 +147,11 @@
     </Style>
     <Style x:Key="DefaultTextBlockStyle" TargetType="{x:Type TextBlock}">
         <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
     </Style>
     <Style x:Key="DefaultLabelStyle" TargetType="{x:Type Label}">
         <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
         <Setter Property="Padding" Value="0,0,0,4"/>
     </Style>
     <Style x:Key="DefaultSeparatorStyle" TargetType="{x:Type Separator}" BasedOn="{StaticResource SettingPanelSeparatorStyle}" />
@@ -162,11 +162,11 @@
         <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
     </Style>
     <Style x:Key="SettingPanelTextBlockStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
     </Style>
     <Style x:Key="SettingPanelTextBlockTitleStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
     </Style>

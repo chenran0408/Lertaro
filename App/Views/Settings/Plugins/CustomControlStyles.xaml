@@ -19,16 +19,16 @@
     <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource ThemedTextBox}">
         <Setter Property="Height" Value="28"/>
         <Setter Property="Padding" Value="8,3"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
     </Style>
 
     <!-- Implicit ComboBox: reuses the app's existing SettingsComboBox style -->
     <Style TargetType="{x:Type ComboBox}" BasedOn="{StaticResource SettingsComboBox}">
         <Setter Property="Height" Value="28"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
     </Style>
     <Style TargetType="{x:Type ComboBoxItem}" BasedOn="{StaticResource SettingsComboBoxItem}">
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
     </Style>
 
     <!-- Implicit ListBox: themed container background and border -->
@@ -62,11 +62,11 @@
     <!-- Implicit TextBlock and Label -->
     <Style TargetType="{x:Type TextBlock}">
         <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
     </Style>
     <Style TargetType="{x:Type Label}">
         <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
         <Setter Property="Padding" Value="0,0,0,4"/>
     </Style>
 

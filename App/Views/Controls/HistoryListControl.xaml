@@ -17,7 +17,7 @@
             <Style x:Key="HistorySearchTextBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
                 <Setter Property="Height" Value="34"/>
                 <Setter Property="Padding" Value="10,0"/>
-                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontSize" Value="14"/>
                 <Setter Property="Background" Value="{DynamicResource LiquidControlFill}"/>
                 <Setter Property="Foreground" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource LiquidControlEdge}"/>
@@ -70,9 +70,9 @@
                                    Foreground="{DynamicResource AccentColor}" VerticalAlignment="Center"/>
 
                         <StackPanel Grid.Column="1" Orientation="Vertical" Margin="8,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Primary}" FontSize="13" FontWeight="SemiBold"
+                            <TextBlock Text="{Binding Primary}" FontSize="14" FontWeight="SemiBold"
                                        Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Text="{Binding Secondary}" FontSize="11"
+                            <TextBlock Text="{Binding Secondary}" FontSize="14"
                                        Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
@@ -125,7 +125,7 @@
                      tabs share this one control with different History DataContexts. -->
                 <TextBlock Grid.Row="0" Margin="10,0,0,8"
                            Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
-                           FontSize="13"
+                           FontSize="14"
                            VerticalAlignment="Center" HorizontalAlignment="Left"
                            IsHitTestVisible="False"
                            Text="{Binding PlaceholderText, RelativeSource={RelativeSource AncestorType=UserControl}}">

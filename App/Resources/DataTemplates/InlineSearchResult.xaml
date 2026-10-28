@@ -44,7 +44,7 @@
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
-                <TextBlock FontSize="12"
+                <TextBlock FontSize="14"
                        Foreground="{DynamicResource AccentBlue}"
                        VerticalAlignment="Center"
                        Text="{Binding Name}"/>
@@ -172,7 +172,7 @@
                             </Style>
                         </ScrollViewer.Style>
                         <TextBlock 
-                                   FontSize="11"
+                                   FontSize="14"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                    VerticalAlignment="Center"
                                    helpers:MarqueeBehavior.EnableMarquee="True"
@@ -219,7 +219,7 @@
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
                                     <!-- Separator line (hidden for the first column) -->
-                                    <TextBlock Text="  │  " Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Opacity="0.4" VerticalAlignment="Center" FontSize="13">
+                                    <TextBlock Text="  │  " Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Opacity="0.4" VerticalAlignment="Center" FontSize="14">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Style.Triggers>

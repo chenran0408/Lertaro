@@ -69,7 +69,7 @@
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <StackPanel Orientation="Horizontal" Background="Transparent">
-                                    <TextBlock x:Name="Txt" Text="{Binding DisplayWebsiteLabel}" FontSize="12" Foreground="{DynamicResource AccentBlue}"/>
+                                    <TextBlock x:Name="Txt" Text="{Binding DisplayWebsiteLabel}" FontSize="14" Foreground="{DynamicResource AccentBlue}"/>
                                     <TextBlock Text="&#xE8A7;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="11" Foreground="{DynamicResource AccentBlue}" Margin="4,1,0,0" VerticalAlignment="Center"/>
                                 </StackPanel>
                                 <ControlTemplate.Triggers>
@@ -185,10 +185,10 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0"
                                        Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_ComponentsTitle]}"
-                                       FontSize="11" FontWeight="SemiBold"
+                                       FontSize="14" FontWeight="SemiBold"
                                        Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center"/>
                             <Button Grid.Column="1" Content="{Binding SelectAllToggleLabel}" Command="{Binding ToggleAllComponentsCommand}"
-                                    Style="{StaticResource LinkButton}" FontSize="11"
+                                    Style="{StaticResource LinkButton}" FontSize="14"
                                     HorizontalAlignment="Right" VerticalAlignment="Center"
                                     Visibility="{Binding HasToggleableComponents, Converter={StaticResource BoolToVis}}"/>
                         </Grid>
@@ -242,12 +242,12 @@
                                                 Background="{Binding ComponentType, Converter={StaticResource TypeToBrush}}"
                                                 Margin="0,0,6,0" VerticalAlignment="Center"/>
                                         <TextBlock Text="{Binding GroupName}"
-                                                   FontSize="11" FontWeight="Bold"
+                                                   FontSize="14" FontWeight="Bold"
                                                    Foreground="{Binding ComponentType, Converter={StaticResource TypeToBrush}}"
                                                    VerticalAlignment="Center"/>
                                     </StackPanel>
                                     <Button Grid.Column="1" Content="{Binding SelectAllToggleLabel}" Command="{Binding ToggleAllCommand}"
-                                            Style="{StaticResource LinkButton}" FontSize="11"
+                                            Style="{StaticResource LinkButton}" FontSize="14"
                                             HorizontalAlignment="Right" VerticalAlignment="Center"
                                             Visibility="{Binding HasToggleableComponents, Converter={StaticResource BoolToVis}}"/>
                                 </Grid>
@@ -264,7 +264,7 @@
 
                                         <TextBlock Grid.Column="0"
                                                    Text="{Binding DisplayName}"
-                                                   FontSize="12"
+                                                   FontSize="14"
                                                    TextWrapping="Wrap"
                                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                                    VerticalAlignment="Center"/>
@@ -292,7 +292,7 @@
                                                     </Style.Triggers>
                                                 </Style>
                                             </Border.Style>
-                                            <TextBlock Text="!" FontSize="9" FontWeight="Bold"
+                                            <TextBlock Text="!" FontSize="14" FontWeight="Bold"
                                                        Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                                        HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0"/>
                                         </Border>

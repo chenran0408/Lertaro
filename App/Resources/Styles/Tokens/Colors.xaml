@@ -31,7 +31,7 @@
         </Setter>
     </Style>
     <Style x:Key="GlassTextSecondary" TargetType="TextBlock" BasedOn="{StaticResource GlassTextPrimary}">
-        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="Foreground">
             <Setter.Value>

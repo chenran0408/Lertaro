@@ -84,7 +84,7 @@
     <Style x:Key="SettingsTextBox" TargetType="TextBox" BasedOn="{StaticResource ThemedTextBox}">
         <Setter Property="Height" Value="30"/>
         <Setter Property="Padding" Value="8,0"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
 </ResourceDictionary>

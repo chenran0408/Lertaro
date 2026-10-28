@@ -38,6 +38,7 @@ internal sealed class NotificationWindowManager(
 
     // Fixed, deliberately: the stack shifting down to make room is not something the user asked to tune.
     private const int RestackAnimationMs = 200;
+    private int _sessionVisibilityGeneration;
 
     // How far above its slot a new card starts on its way into it. Above, not below: a new card lands on top of
     // the stack, where there is nothing to overlap, whereas rising from below would drag it through the card under
@@ -154,8 +155,34 @@ internal sealed class NotificationWindowManager(
     /// the service's business, so nothing here touches it.</summary>
     internal void HideForSession(bool hidden)
     {
-        foreach (var runner in _runners.Values)
-            runner.Window.Visibility = hidden ? Visibility.Hidden : Visibility.Visible;
+        var generation = ++_sessionVisibilityGeneration;
+        foreach (var runner in _runners.Values.ToArray())
+        {
+            var item = runner.Item;
+            _ = SetSessionWindowVisibilityAsync(runner.Window, !hidden, () =>
+                generation == _sessionVisibilityGeneration
+                && _runners.TryGetValue(item, out var current)
+                && ReferenceEquals(current, runner));
+        }
+    }
+
+    internal static Task SetSessionWindowVisibilityAsync(Window window, bool visible, Func<bool> isCurrent)
+    {
+        if (!visible)
+        {
+            if (isCurrent()) window.Visibility = Visibility.Hidden;
+            return Task.CompletedTask;
+        }
+
+        void Show()
+        {
+            if (isCurrent()) window.Visibility = Visibility.Visible;
+        }
+
+        if (window is GlassDesk.UI.Controls.GlassWindow glassWindow)
+            return GlassWindowPresentationHelper.ShowWhenPreparedAsync(glassWindow, Show, isCurrent);
+        Show();
+        return Task.CompletedTask;
     }
 
     /// <summary>Places every visible notification: cards stack upward from the bottom-right corner of the anchor

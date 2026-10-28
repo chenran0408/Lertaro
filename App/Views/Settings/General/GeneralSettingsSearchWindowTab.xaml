@@ -47,7 +47,7 @@
                             <Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
                         </Grid>
 
-                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="13" FontWeight="SemiBold"
+                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="14" FontWeight="SemiBold"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" VerticalAlignment="Center"
                                    TextTrimming="CharacterEllipsis"/>
 
@@ -96,7 +96,7 @@
                             <Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
                         </Grid>
 
-                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="13" FontWeight="SemiBold"
+                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="14" FontWeight="SemiBold"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" VerticalAlignment="Center"
                                    TextTrimming="CharacterEllipsis"/>
 
@@ -145,7 +145,7 @@
                             <Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
                         </Grid>
 
-                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="13" FontWeight="SemiBold"
+                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="14" FontWeight="SemiBold"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" VerticalAlignment="Center"
                                    TextTrimming="CharacterEllipsis"/>
 
@@ -221,7 +221,7 @@
         <Border Style="{StaticResource SettingsCard}" Margin="0,12,0,0">
             <StackPanel>
                 <TextBlock x:Name="RowColumnOrderList" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ColumnOrderTitle]}"
-                           FontWeight="SemiBold" FontSize="13" Margin="0,0,0,4"/>
+                           FontWeight="SemiBold" FontSize="14" Margin="0,0,0,4"/>
                 <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ColumnOrderHint]}"
                            Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
@@ -238,7 +238,7 @@
         <Border Style="{StaticResource SettingsCard}" Margin="0,12,0,0">
             <StackPanel>
                 <TextBlock x:Name="RowSidebarGroupOrderList" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_SidebarGroupOrderTitle]}"
-                           FontWeight="SemiBold" FontSize="13" Margin="0,0,0,4"/>
+                           FontWeight="SemiBold" FontSize="14" Margin="0,0,0,4"/>
                 <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_SidebarGroupOrderHint]}"
                            Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
@@ -255,7 +255,7 @@
         <Border Style="{StaticResource SettingsCard}" Margin="0,12,0,0">
             <StackPanel>
                 <TextBlock x:Name="RowActionMenuGroupOrderList" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ActionMenuGroupOrderTitle]}"
-                           FontWeight="SemiBold" FontSize="13" Margin="0,0,0,4"/>
+                           FontWeight="SemiBold" FontSize="14" Margin="0,0,0,4"/>
                 <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ActionMenuGroupOrderHint]}"
                            Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
 

@@ -76,12 +76,19 @@ internal static class GlassWindowPresentationHelper
         if (!completed)
         {
             Logger.Log($"[GlassWindow] First-display preparation exceeded {PreShowBudget.TotalMilliseconds:0}ms; showing neutral material while it continues.", LogLevel.Debug);
-            preparation.ObserveLateCompletionOnce();
+            preparation.ObserveLateCompletionOnce(isCurrent);
         }
 
         // Async preparation can finish after the summon that requested it has been superseded.
         // The owner supplies its existing operation/version check where that distinction matters.
-        if (isCurrent != null && !isCurrent()) return;
+        if (isCurrent != null && !isCurrent())
+        {
+            // Preparation wakes surfaces before capture. If this summon was superseded,
+            // release that backing only while the window is still hidden; another
+            // concurrent reveal may already have made it visible.
+            preparation.InvalidateAndSleepIfHidden();
+            return;
+        }
 
         if (!completed)
             window.WakeGlassSurfacesForDisplay();
@@ -109,12 +116,17 @@ internal static class GlassWindowPresentationHelper
         return preparation;
     }
 
-    private static async Task ObserveLateCompletionAsync(Task<FirstDisplayPreparationResult> task)
+    private static async Task ObserveLateCompletionAsync(
+        Preparation preparation,
+        Task<FirstDisplayPreparationResult> task,
+        Func<bool>? isCurrent)
     {
         try
         {
             var result = await task;
             Logger.Log($"[GlassWindow] Late first-display material source: {result.Source} (optical ready: {result.IsOpticalMaterialReady}).", LogLevel.Debug);
+            if (isCurrent != null && !isCurrent())
+                preparation.InvalidateAndSleepIfHidden();
         }
         catch (Exception ex)
         {
@@ -143,11 +155,24 @@ internal static class GlassWindowPresentationHelper
                 TaskScheduler.Default);
         }
 
-        internal void ObserveLateCompletionOnce()
+        internal void ObserveLateCompletionOnce(Func<bool>? isCurrent)
         {
             if (_lateObserverStarted) return;
             _lateObserverStarted = true;
-            _ = ObserveLateCompletionAsync(Task);
+            _ = ObserveLateCompletionAsync(this, Task, isCurrent);
+        }
+
+        internal void InvalidateAndSleepIfHidden()
+        {
+            _window.Dispatcher.VerifyAccess();
+            if (_window.IsVisible) return;
+            if (!Preparations.TryGetValue(_window, out var current) || !ReferenceEquals(current, this)) return;
+
+            // Other summons may be awaiting this same task. Prevent them from treating
+            // its now-cleared backing as a valid prepared result.
+            _hidden = true;
+            _window.SleepGlassSurfacesIfHidden();
+            RemoveIfHidden();
         }
 
         internal void OnVisibilityChanged(object? sender, DependencyPropertyChangedEventArgs e)

@@ -238,7 +238,7 @@
                             </Grid>
 
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis"/>
                                 <Border CornerRadius="4" BorderThickness="1" BorderBrush="Transparent"
                                         Margin="0,3,0,0" HorizontalAlignment="Left">
                                     <Grid>
@@ -257,7 +257,7 @@
                                                 </Style>
                                             </Border.Style>
                                         </Border>
-                                        <TextBlock Text="{Binding Version, StringFormat='v{0}'}" FontSize="10"
+                                        <TextBlock Text="{Binding Version, StringFormat='v{0}'}" FontSize="14"
                                                    Padding="7,2,7,2" Foreground="{DynamicResource ShortcutColor}"/>
                                     </Grid>
                                 </Border>

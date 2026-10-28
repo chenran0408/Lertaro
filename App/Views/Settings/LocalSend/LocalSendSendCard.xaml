@@ -33,7 +33,7 @@
                                 </Binding>
                             </Setter.Value>
                         </Setter>
-                        <Setter Property="FontSize" Value="11"/>
+                        <Setter Property="FontSize" Value="14"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsServiceRunning}" Value="False">
                                 <Setter Property="Visibility" Value="Visible"/>

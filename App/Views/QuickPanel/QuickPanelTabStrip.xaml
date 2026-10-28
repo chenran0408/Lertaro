@@ -58,7 +58,7 @@
                                              smallest tabs in the app, and the padding is the target now
                                              that the style's template actually hit-tests it. The gap
                                              between tabs absorbs the width, so nothing moves. -->
-                                        <Setter Property="FontSize" Value="12"/>
+                                        <Setter Property="FontSize" Value="14"/>
                                         <Setter Property="Padding" Value="6,3,6,8"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsSelected}" Value="True">

@@ -230,7 +230,7 @@
                                        
                                        VerticalAlignment="Center"/>
                             <TextBlock x:Name="TxtSelectedResultCount"
-                                       FontSize="12" FontWeight="Medium"
+                                       FontSize="14" FontWeight="Medium"
                                        Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                        Visibility="Collapsed"
                                        Margin="12,0,0,0"

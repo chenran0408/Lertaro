@@ -40,7 +40,7 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
                             <Image x:Name="TitleBarLogo" Width="16" Height="16" Margin="0,0,8,0"/>
                             <TextBlock x:Name="TxtTitle" Text="Lertaro"
-                                        FontSize="12.5" FontWeight="SemiBold"
+                                        FontSize="14" FontWeight="SemiBold"
                                        Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" VerticalAlignment="Center"/>
                         </StackPanel>
                         <!-- Title Bar (no close button needed for simple alert message boxes) -->
@@ -64,7 +64,7 @@
                     <ScrollViewer Grid.Column="1" MaxHeight="400" VerticalScrollBarVisibility="Auto"
                                   VerticalAlignment="Center" Margin="14,0,0,0">
                         <TextBlock x:Name="TxtMessage"
-                                   TextWrapping="Wrap" FontSize="13.5" LineHeight="20"
+                                   TextWrapping="Wrap" FontSize="14" LineHeight="20"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                     </ScrollViewer>
                 </Grid>

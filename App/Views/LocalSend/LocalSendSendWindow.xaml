@@ -27,7 +27,7 @@
                 <Border Grid.Row="0" Background="Transparent" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
                         <Image x:Name="TitleBarLogo" Width="18" Height="18" Margin="0,0,8,0"/>
-                        <TextBlock x:Name="TxtWindowTitle" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_SendWindowTitle]}" FontSize="13" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
+                        <TextBlock x:Name="TxtWindowTitle" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_SendWindowTitle]}" FontSize="14" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                     </StackPanel>
                 </Border>
                 <Grid Grid.Row="1">

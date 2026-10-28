@@ -46,7 +46,7 @@
                             <Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
                         </Grid>
 
-                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="13" FontWeight="SemiBold"
+                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="14" FontWeight="SemiBold"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" VerticalAlignment="Center"
                                    TextTrimming="CharacterEllipsis"/>
 
@@ -97,7 +97,7 @@
                             <Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
                         </Grid>
 
-                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="13" FontWeight="SemiBold"
+                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="14" FontWeight="SemiBold"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" VerticalAlignment="Center"
                                    TextTrimming="CharacterEllipsis"/>
 
@@ -128,7 +128,7 @@
         <Border Style="{StaticResource SettingsCard}">
             <StackPanel>
                 <TextBlock x:Name="RowPreviewProvidersList" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_PreviewProvidersListTitle]}"
-                           FontWeight="SemiBold" FontSize="13" Margin="0,0,0,4"/>
+                           FontWeight="SemiBold" FontSize="14" Margin="0,0,0,4"/>
                 <TextBlock Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"
                             Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_PreviewProvidersHint]}"/>
 
@@ -145,7 +145,7 @@
         <Border Style="{StaticResource SettingsCard}" Margin="0,12,0,0">
             <StackPanel>
                 <TextBlock x:Name="RowThumbnailProvidersList" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ThumbnailProvidersListTitle]}"
-                           FontWeight="SemiBold" FontSize="13" Margin="0,0,0,4"/>
+                           FontWeight="SemiBold" FontSize="14" Margin="0,0,0,4"/>
                 <TextBlock Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"
                             Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ThumbnailProvidersHint]}"/>
 

@@ -29,6 +29,8 @@ internal static class SearchableItemCache
     {
         CacheMeter.CreateObservableGauge("lertaro.cache.searchable_items.entries", ObserveEntryCount);
         CacheMeter.CreateObservableGauge("lertaro.cache.searchable_items.bitmap_bytes", ObserveUniqueBitmapBytes);
+        CacheMeter.CreateObservableGauge("lertaro.cache.searchable_items.provider_entries", ObserveProviderEntryCounts);
+        CacheMeter.CreateObservableGauge("lertaro.cache.searchable_items.provider_bitmap_bytes", ObserveProviderUniqueBitmapBytes);
         TranslationManager.Instance.PropertyChanged += (_, _) => Clear();
     }
 
@@ -56,6 +58,27 @@ internal static class SearchableItemCache
             bytes += (long)bitmap.PixelWidth * bitmap.PixelHeight * bitmap.Format.BitsPerPixel / 8;
         }
         return bytes;
+    }
+
+    private static IEnumerable<Measurement<long>> ObserveProviderEntryCounts()
+    {
+        foreach (var (providerId, entries) in _cache)
+            yield return new Measurement<long>(entries.Count, new KeyValuePair<string, object?>("providerId", providerId));
+    }
+
+    private static IEnumerable<Measurement<long>> ObserveProviderUniqueBitmapBytes()
+    {
+        foreach (var (providerId, entries) in _cache)
+        {
+            var seen = new HashSet<System.Windows.Media.ImageSource>(ReferenceEqualityComparer.Instance);
+            long bytes = 0;
+            foreach (var entry in entries)
+            {
+                if (entry.Icon is not System.Windows.Media.Imaging.BitmapSource bitmap || !seen.Add(entry.Icon)) continue;
+                bytes += (long)bitmap.PixelWidth * bitmap.PixelHeight * bitmap.Format.BitsPerPixel / 8;
+            }
+            yield return new Measurement<long>(bytes, new KeyValuePair<string, object?>("providerId", providerId));
+        }
     }
 
     private static int _watchingComponentChanges;
@@ -107,6 +130,8 @@ internal static class SearchableItemCache
     // own Start Menu, neither of which a test has -- but what has to hold is about the cache's own
     // bookkeeping around a reload, which these make reachable without either.
     internal static void Seed(string providerId, List<CacheEntry> entries) => _cache[providerId] = entries;
+
+    internal static void ClearForTests() => Clear();
 
     internal static bool IsStale(string providerId) => _stale.ContainsKey(providerId);
 

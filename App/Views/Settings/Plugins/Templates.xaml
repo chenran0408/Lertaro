@@ -49,7 +49,7 @@
     <Style TargetType="TextBox" BasedOn="{StaticResource ThemedTextBox}">
         <Setter Property="Padding" Value="6,2"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
     </Style>
     <DataTemplate x:Key="PluginInlineEditorTemplate">
         <Grid>
@@ -171,7 +171,7 @@
             <!-- Button fields: a plain action button (e.g. rebuild the plugin's index). The schema's
                  OnClick delegate runs on click; nothing is stored for the field itself. -->
             <DataTrigger Binding="{Binding IsButton}" Value="True">
-                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><Button Command="{Binding ButtonClickCommand}" Content="{Binding Label}" Style="{StaticResource PrimarySettingsButton}" Height="26" MinWidth="96" Padding="10,0" FontSize="11" Cursor="Hand" VerticalAlignment="Center"/></DataTemplate></Setter.Value></Setter>
+                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><Button Command="{Binding ButtonClickCommand}" Content="{Binding Label}" Style="{StaticResource PrimarySettingsButton}" Height="26" MinWidth="96" Padding="10,0" FontSize="14" Cursor="Hand" VerticalAlignment="Center"/></DataTemplate></Setter.Value></Setter>
             </DataTrigger>
         </Style.Triggers>
     </Style>
@@ -191,7 +191,7 @@
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FontFamily" Value="{DynamicResource AppIconFontFamily}"/>
-        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontSize" Value="14"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">

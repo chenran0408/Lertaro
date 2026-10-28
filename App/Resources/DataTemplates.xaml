@@ -13,7 +13,7 @@
     <!-- ═══════════ Search Result Item Template ═══════════ -->
     <DataTemplate x:Key="SearchResultTemplate" DataType="{x:Type app:AppSearchResult}">
         <DockPanel LastChildFill="True">
-            <TextBlock FontSize="12"
+            <TextBlock FontSize="14"
                        Foreground="{DynamicResource AccentBlue}"
                        VerticalAlignment="Center"
                        Text="{Binding Name}">

@@ -66,10 +66,10 @@
             <TextBlock Style="{StaticResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_Hint]}"/>
             <CheckBox x:Name="RowQuickLaunchEnabled" Margin="0,12,0,8"
                       Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_Enabled]}"
-                      IsChecked="{Binding IsEnabled}" FontSize="13"/>
+                      IsChecked="{Binding IsEnabled}" FontSize="14"/>
             <CheckBox x:Name="RowQuickLaunchShowShortcutBadges" Margin="0,0,0,8"
                       Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ShowShortcutBadges]}"
-                      IsChecked="{Binding ShowShortcutBadges}" FontSize="13"/>
+                      IsChecked="{Binding ShowShortcutBadges}" FontSize="14"/>
             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ShiftWheelHint]}"
                        Style="{StaticResource SettingsHintText}" Margin="0,0,0,14"/>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
@@ -141,7 +141,7 @@
                     <StackPanel>
                         <TextBlock x:Name="RowQuickLaunchItemsTitle"
                                    Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ItemsTitle]}"
-                                   FontWeight="SemiBold" FontSize="13"/>
+                                   FontWeight="SemiBold" FontSize="14"/>
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ItemsDesc]}"
                                    Style="{StaticResource SettingsHintText}" Margin="0,4,0,12"/>
                         <Grid Margin="0,0,0,12">
@@ -152,7 +152,7 @@
                         <Separator Background="{StaticResource LiquidControlEdge}" Height="1" Margin="0,0,0,12"/>
                         <Grid Margin="0,0,0,8">
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ListTitle]}"
-                                       FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center"/>
+                                       FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
                             <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ClearList]}"
                                     Style="{StaticResource SettingsButton}" HorizontalAlignment="Right"
                                     Visibility="{Binding HasItems, Converter={StaticResource BoolToVis}}"
@@ -175,7 +175,7 @@
                     <StackPanel>
                         <TextBlock x:Name="RowQuickLaunchSourceTitle"
                                    Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_SourceTitle]}"
-                                   FontWeight="SemiBold" FontSize="13"/>
+                                   FontWeight="SemiBold" FontSize="14"/>
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_SourceDesc]}"
                                    Style="{StaticResource SettingsHintText}" Margin="0,4,0,8"/>
                         <ItemsControl ItemsSource="{Binding Sources}" helpers:DragReorder.IsEnabled="True">

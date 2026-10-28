@@ -1,6 +1,8 @@
 using GlassDesk.UI.Controls;
+using Lertaro.App.Services.Notifications;
 using Lertaro.App.Services;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -127,6 +129,209 @@ public sealed class GlassWindowPresentationHelperTests
     }
 
     [StaTestMethod]
+    public void StalePreparedReveal_LeavesHiddenSurfaceAsleepAndClearsBacking()
+    {
+        InstallDispatcherContext();
+        var surface = new LiquidGlassSurface();
+        var window = CreateOffscreenGlassWindow(surface);
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        try
+        {
+            Pump(GlassWindowPresentationHelper.ShowWhenPreparedAsync(
+                window,
+                window.Show,
+                isCurrent: static () => true,
+                prepareFirstDisplay: candidate =>
+                {
+                    candidate.WakeGlassSurfacesForDisplay();
+                    typeof(LiquidGlassSurface).GetField("_lastSource", flags)!.SetValue(surface, new byte[23]);
+                    typeof(LiquidGlassSurface).GetField("_frame", flags)!.SetValue(surface,
+                        new WriteableBitmap(2, 2, 96, 96, PixelFormats.Pbgra32, null));
+                    return Task.FromResult(new FirstDisplayPreparationResult(true, "test"));
+                }));
+            window.Hide();
+
+            Pump(GlassWindowPresentationHelper.ShowWhenPreparedAsync(
+                window,
+                window.Show,
+                isCurrent: static () => false,
+                prepareFirstDisplay: candidate =>
+                {
+                    candidate.WakeGlassSurfacesForDisplay();
+                    typeof(LiquidGlassSurface).GetField("_lastSource", flags)!.SetValue(surface, new byte[23]);
+                    typeof(LiquidGlassSurface).GetField("_frame", flags)!.SetValue(surface,
+                        new WriteableBitmap(2, 2, 96, 96, PixelFormats.Pbgra32, null));
+                    return Task.FromResult(new FirstDisplayPreparationResult(true, "cancelled"));
+                }));
+
+            Assert.IsFalse(window.IsVisible, "A stale reveal must not show the window.");
+            var state = surface.InspectPerformance();
+            Assert.IsTrue(Read<bool>(state, "sleeping"), "A cancelled hidden reveal must return the surface to deep sleep.");
+            Assert.AreEqual(0L, Read<long>(state, "estimatedLastSourceBytes"));
+            Assert.AreEqual(0L, Read<long>(state, "estimatedManagedBitmapPixelPayloadBytes"));
+            Assert.AreEqual(0L, Read<long>(state, "estimatedKnownManagedPixelAndArrayPayloadBytes"));
+        }
+        finally
+        {
+            if (window.IsVisible) window.Close();
+        }
+    }
+
+    [StaTestMethod]
+    public void StalePreparedReveal_DoesNotSleepWindowAlreadyShownByConcurrentOperation()
+    {
+        InstallDispatcherContext();
+        var surface = new LiquidGlassSurface();
+        var window = CreateOffscreenGlassWindow(surface);
+        try
+        {
+            Pump(GlassWindowPresentationHelper.ShowWhenPreparedAsync(
+                window,
+                static () => { },
+                isCurrent: static () => false,
+                prepareFirstDisplay: candidate =>
+                {
+                    candidate.WakeGlassSurfacesForDisplay();
+                    candidate.Show();
+                    return Task.FromResult(new FirstDisplayPreparationResult(true, "concurrent"));
+                }));
+
+            Assert.IsTrue(window.IsVisible);
+            Assert.IsFalse(Read<bool>(surface.InspectPerformance(), "sleeping"),
+                "A stale callback must not sleep surfaces after another operation has shown the window.");
+        }
+        finally
+        {
+            if (window.IsVisible) window.Close();
+        }
+    }
+
+    [StaTestMethod]
+    public void ConcurrentSummons_StaleFirstInvalidatesSharedPreparationBeforeCurrentReveal()
+    {
+        InstallDispatcherContext();
+        var surface = new LiquidGlassSurface();
+        var window = CreateOffscreenGlassWindow(surface);
+        var firstPreparation = new TaskCompletionSource<FirstDisplayPreparationResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var preparationCount = 0;
+        var staleShowCount = 0;
+        var currentShowAwake = false;
+        long currentShowBitmapBytes = 0;
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+
+        Task<FirstDisplayPreparationResult> Prepare(GlassWindow candidate)
+        {
+            preparationCount++;
+            candidate.WakeGlassSurfacesForDisplay();
+            typeof(LiquidGlassSurface).GetField("_lastSource", flags)!.SetValue(surface, new byte[23]);
+            var side = preparationCount == 1 ? 2 : 3;
+            typeof(LiquidGlassSurface).GetField("_frame", flags)!.SetValue(surface,
+                new WriteableBitmap(side, side, 96, 96, PixelFormats.Pbgra32, null));
+            return preparationCount == 1
+                ? firstPreparation.Task
+                : Task.FromResult(new FirstDisplayPreparationResult(true, "fresh"));
+        }
+
+        try
+        {
+            var staleSummon = GlassWindowPresentationHelper.ShowWhenPreparedAsync(
+                window,
+                () => { staleShowCount++; window.Show(); },
+                isCurrent: static () => false,
+                prepareFirstDisplay: Prepare);
+            var currentSummon = GlassWindowPresentationHelper.ShowWhenPreparedAsync(
+                window,
+                () =>
+                {
+                    currentShowAwake = !Read<bool>(surface.InspectPerformance(), "sleeping");
+                    currentShowBitmapBytes = Read<long>(surface.InspectPerformance(), "estimatedManagedBitmapPixelPayloadBytes");
+                    window.Show();
+                },
+                isCurrent: static () => true,
+                prepareFirstDisplay: Prepare);
+
+            Assert.AreEqual(1, preparationCount, "Both summons must initially share the pending preparation.");
+            window.Dispatcher.BeginInvoke(new Action(() =>
+                firstPreparation.SetResult(new FirstDisplayPreparationResult(true, "shared"))));
+            Pump(Task.WhenAll(staleSummon, currentSummon));
+
+            Assert.AreEqual(0, staleShowCount, "The superseded summon must not show the window.");
+            Assert.AreEqual(2, preparationCount, "The current summon must prepare fresh backing after the stale summon invalidates the shared result.");
+            Assert.IsTrue(currentShowAwake, "The current summon must not reveal a surface put to sleep by the stale summon.");
+            Assert.AreEqual(36L, currentShowBitmapBytes, "The current summon must present its fresh bitmap, not the cleared shared result.");
+            Assert.IsTrue(window.IsVisible);
+        }
+        finally
+        {
+            if (!firstPreparation.Task.IsCompleted)
+                firstPreparation.SetResult(new FirstDisplayPreparationResult(true, "cleanup"));
+            if (window.IsVisible) window.Close();
+        }
+    }
+
+    [StaTestMethod]
+    public void QuickLookDialogRestore_PreparesHiddenGlassOwnerBeforeShowing()
+    {
+        InstallDispatcherContext();
+        var surface = new LiquidGlassSurface();
+        var window = CreateOffscreenGlassWindow(surface);
+        var awakeWhenVisible = false;
+        window.IsVisibleChanged += (_, e) =>
+        {
+            if (e.NewValue is true)
+                awakeWhenVisible = !Read<bool>(surface.InspectPerformance(), "sleeping");
+        };
+
+        try
+        {
+            Pump(GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, window.Show));
+            window.Hide();
+            Assert.IsTrue(Read<bool>(surface.InspectPerformance(), "sleeping"));
+            awakeWhenVisible = false;
+
+            Pump(QuickLookManager.ShowOwnerWhenPreparedAsync(window, window.Show, static () => true));
+
+            Assert.IsTrue(window.IsVisible);
+            Assert.IsTrue(awakeWhenVisible, "A QuickLook dialog restore must prepare the owner before it is shown.");
+        }
+        finally
+        {
+            if (window.IsVisible) window.Close();
+        }
+    }
+
+    [StaTestMethod]
+    public void NotificationSessionUnlock_PreparesHiddenGlassWindowBeforeShowing()
+    {
+        InstallDispatcherContext();
+        var surface = new LiquidGlassSurface();
+        var window = CreateOffscreenGlassWindow(surface);
+        var awakeWhenVisible = false;
+        window.IsVisibleChanged += (_, e) =>
+        {
+            if (e.NewValue is true)
+                awakeWhenVisible = !Read<bool>(surface.InspectPerformance(), "sleeping");
+        };
+
+        try
+        {
+            Pump(GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, window.Show));
+            Pump(NotificationWindowManager.SetSessionWindowVisibilityAsync(window, visible: false, static () => true));
+            Assert.IsTrue(Read<bool>(surface.InspectPerformance(), "sleeping"));
+            awakeWhenVisible = false;
+
+            Pump(NotificationWindowManager.SetSessionWindowVisibilityAsync(window, visible: true, static () => true));
+
+            Assert.AreEqual(Visibility.Visible, window.Visibility);
+            Assert.IsTrue(awakeWhenVisible, "Session unlock must prepare the notification surface before it is shown.");
+        }
+        finally
+        {
+            if (window.IsVisible) window.Close();
+        }
+    }
+
+    [StaTestMethod]
     public void HideThenShowWhilePreparationIsInFlight_ReusesTaskThenPreparesFreshly()
     {
         InstallDispatcherContext();
@@ -226,6 +431,15 @@ public sealed class GlassWindowPresentationHelperTests
     private static T Read<T>(object state, string propertyName) =>
         (T)(state.GetType().GetProperty(propertyName)?.GetValue(state)
             ?? throw new AssertFailedException($"Missing performance property '{propertyName}'."));
+
+    private static TestGlassWindow CreateOffscreenGlassWindow(LiquidGlassSurface surface) => new()
+    {
+        Content = surface,
+        Left = -32000,
+        Top = -32000,
+        Width = 240,
+        Height = 120
+    };
 
     private static Dispatcher InstallDispatcherContext()
     {

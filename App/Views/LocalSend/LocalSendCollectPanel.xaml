@@ -61,7 +61,7 @@
                             <DataTemplate>
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{Binding DisplayName}" ToolTip="{Binding Path}" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="{Binding DisplayName}" ToolTip="{Binding Path}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                     <Button Grid.Column="1" Content="&#xE74D;" Click="RemoveItem_Click" Style="{StaticResource RemoveItemButtonStyle}" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_Remove]}" AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_Remove]}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="4,0,0,0"/>
                                 </Grid>
                             </DataTemplate>
@@ -71,7 +71,7 @@
             </Grid>
             <Grid Grid.Row="1">
                 <Grid.Style><Style TargetType="Grid"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsTextMode}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Grid.Style>
-                <TextBox Text="{Binding TextToSend, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MultiLineTextBoxStyle}" Background="{StaticResource LiquidControlFill}" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" CaretBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Padding="8,6" FontSize="12"/>
+                <TextBox Text="{Binding TextToSend, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MultiLineTextBoxStyle}" Background="{StaticResource LiquidControlFill}" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" CaretBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Padding="8,6" FontSize="14"/>
             </Grid>
         </Grid>
         <Border Grid.Row="1" Background="Transparent" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,1,0,0" Padding="16,0">

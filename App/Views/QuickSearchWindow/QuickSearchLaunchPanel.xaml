@@ -132,7 +132,7 @@
                                                   VerticalScrollBarVisibility="Disabled" Focusable="False"
                                                   converters:ScrollViewerHelper.BubbleMouseWheel="True">
                                         <TextBlock Text="{Binding Name}" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
-                                                   FontSize="11" TextWrapping="NoWrap" TextTrimming="None"
+                                                   FontSize="14" TextWrapping="NoWrap" TextTrimming="None"
                                                    HorizontalAlignment="Center" TextAlignment="Center"
                                                    helpers:MarqueeBehavior.EnableMarquee="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=IsMouseOver}"/>
                                     </ScrollViewer>
@@ -180,7 +180,7 @@
                                         CommandParameter="{Binding}">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource TabHeaderButtonStyle}">
-                                        <Setter Property="FontSize" Value="12"/>
+                                        <Setter Property="FontSize" Value="14"/>
                                         <Setter Property="Padding" Value="0,3,0,8"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsSelected}" Value="True">

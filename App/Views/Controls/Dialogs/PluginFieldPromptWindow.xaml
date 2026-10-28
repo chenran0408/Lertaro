@@ -59,7 +59,7 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
                             <Image x:Name="TitleBarLogo" Width="16" Height="16" Margin="0,0,8,0"/>
                             <TextBlock x:Name="TxtTitle" Text="Lertaro"
-                                       FontSize="12.5" FontWeight="SemiBold"
+                                       FontSize="14" FontWeight="SemiBold"
                                        Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" VerticalAlignment="Center"/>
                         </StackPanel>
                         <Button Content="&#xE8BB;" Style="{StaticResource CloseButton}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,6,0" Click="BtnClose_Click"/>

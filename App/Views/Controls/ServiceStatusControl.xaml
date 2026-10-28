@@ -30,7 +30,7 @@
             
             <!-- Details / Stats -->
             <TextBlock x:Name="TxtLoadingStats" Text="{Binding LoadingStats}"
-                       FontSize="13" 
+                       FontSize="14"
                        Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                        HorizontalAlignment="Center"
                        Margin="0,8,0,0"

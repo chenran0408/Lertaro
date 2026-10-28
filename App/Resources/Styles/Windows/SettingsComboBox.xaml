@@ -11,7 +11,7 @@
         <Setter Property="Padding" Value="10,0"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
     </Style>
 
     <!-- Settings pages use the same GlassDesk ComboBox template as the other application windows. -->
@@ -20,7 +20,7 @@
         <Setter Property="Height" Value="34"/>
         <Setter Property="MinWidth" Value="116"/>
         <Setter Property="Padding" Value="10,0,8,0"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="ItemContainerStyle" Value="{StaticResource SettingsComboBoxItem}"/>

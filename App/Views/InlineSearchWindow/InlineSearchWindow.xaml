@@ -50,7 +50,7 @@
                             Visibility="Collapsed">
                         <TextBlock x:Name="PathPreviewTextBlock"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
-                                   FontSize="12"
+                                   FontSize="14"
                                    TextWrapping="Wrap"
                                    LineHeight="16"/>
                     </Border>

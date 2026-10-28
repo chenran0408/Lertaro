@@ -71,7 +71,7 @@
                                 <Ellipse Grid.Row="2" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
                             </Grid>
                             <TextBlock Grid.Column="1" Text="&#xE71B;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="14" Foreground="{DynamicResource AccentColor}" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="2" Text="{Binding DisplayName}" FontSize="13" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="4,0,8,0"/>
+                            <TextBlock Grid.Column="2" Text="{Binding DisplayName}" FontSize="14" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="4,0,8,0"/>
                             <TextBlock Grid.Column="3" Text="{Binding Path}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
                             <ctrl:HotkeyRecorderControl Grid.Column="4" Value="{Binding Hotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" RequireModifier="True" HorizontalAlignment="Right"/>
                             <StackPanel Grid.Column="6" Orientation="Horizontal" HorizontalAlignment="Right">
@@ -117,7 +117,7 @@
             <Border Style="{StaticResource SettingsCard}">
                 <StackPanel>
                     <TextBlock x:Name="RowAddCardTitle" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_AddCardTitle]}"
-                               FontWeight="SemiBold" FontSize="13" />
+                               FontWeight="SemiBold" FontSize="14" />
                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_AddCardDesc]}"
                                Style="{StaticResource SettingsHintText}" Margin="0,4,0,12"/>
                     
@@ -162,7 +162,7 @@
 
                     <Grid Margin="0,0,0,8">
                         <TextBlock x:Name="RowListTitle" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_ListTitle]}"
-                                   FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center"/>
+                                   FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
                         <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_ClearList]}"
                                 Style="{StaticResource SettingsButton}" HorizontalAlignment="Right"
                                 Visibility="{Binding HasItems, Converter={StaticResource BoolToVis}}"

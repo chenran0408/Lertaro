@@ -9,7 +9,7 @@
             <VisualBrush.Visual>
                 <Label Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_RecorderPlaceholder]}"
                        Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
-                       FontSize="12"/>
+                       FontSize="14"/>
             </VisualBrush.Visual>
         </VisualBrush>
         <Style x:Key="RecorderBoxStyle" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
@@ -17,7 +17,7 @@
             <Setter Property="Padding" Value="6,2,20,2"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontSize" Value="14"/>
             <Style.Triggers>
                 <Trigger Property="Text" Value="">
                     <Setter Property="Background" Value="{StaticResource PlaceholderBrush}"/>
