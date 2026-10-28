@@ -32,9 +32,10 @@ internal sealed class StreamingResultAccumulator
 
     private int _consumed;
     private List<Entry> _ranked = new();
-    private readonly List<AppSearchResult> _rows = new();
-    private readonly List<AppSearchResult> _lastBatchRows = new();
-    private readonly HashSet<string> _seedPaths = new(StringComparer.OrdinalIgnoreCase);
+    private List<AppSearchResult> _rows = new();
+    private List<AppSearchResult> _lastBatchRows = new();
+    private HashSet<string> _seedPaths = new(StringComparer.OrdinalIgnoreCase);
+    private bool _completed;
 
     // Rows a content-style provider contributed, held at the FRONT of _rows. They come from a different
     // source than the index and outrank it by this window's own rule, so they are never entered into
@@ -101,7 +102,7 @@ internal sealed class StreamingResultAccumulator
     /// </remarks>
     public void UsePriorities(IReadOnlyDictionary<string, int> priorities)
     {
-        if (_consumed == 0 && _ranked.Count == 0)
+        if (!_completed && _consumed == 0 && _ranked.Count == 0)
             _rankComparer = new SearchResultRankComparer(priorities);
     }
 
@@ -109,7 +110,7 @@ internal sealed class StreamingResultAccumulator
     public int Consumed => _consumed;
 
     /// <summary>Rows currently held, in rank order.</summary>
-    public int Count => _ranked.Count;
+    public int Count => _completed ? _rows.Count - _prefixCount : _ranked.Count;
 
     /// <summary>Rows created by the most recent arrival batch, before it was merged into rank order.</summary>
     public IReadOnlyList<AppSearchResult> LastBatchRows => _lastBatchRows;
@@ -135,6 +136,25 @@ internal sealed class StreamingResultAccumulator
 
     /// <summary>How many leading rows came from a content provider rather than from the index.</summary>
     public int ContentPrefixCount => _prefixCount;
+
+    /// <summary>Releases ranking state once no more index rows can arrive.</summary>
+    /// <param name="keepRows">False when the caller already owns an independent result snapshot.</param>
+    public void CompleteSearch(bool keepRows = true)
+    {
+        if (_completed)
+            return;
+
+        _completed = true;
+        _ranked = new List<Entry>();
+        _lastBatchRows = new List<AppSearchResult>();
+        _seedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        _rankComparer = new SearchResultRankComparer(new Dictionary<string, int>());
+        if (!keepRows)
+        {
+            _rows = new List<AppSearchResult>();
+            _prefixCount = 0;
+        }
+    }
 
     /// <summary>
     /// Adds rows to the front block, to be taken up by the next <see cref="Absorb"/>. Callable from any
@@ -169,6 +189,11 @@ internal sealed class StreamingResultAccumulator
             queued[i].Index = _prefixCount + i;
         _rows.InsertRange(_prefixCount, queued);
         _prefixCount += queued.Count;
+        if (_completed)
+        {
+            for (var i = _prefixCount; i < _rows.Count; i++)
+                _rows[i].Index = i;
+        }
         return true;
     }
 
@@ -200,6 +225,14 @@ internal sealed class StreamingResultAccumulator
         // Taken up at the start of a paint rather than by the thread that queued it, so one thread ever
         // touches _rows, and so the rewrite below restamps every row's position for the wider prefix.
         var prefixLanded = ApplyQueuedPrefix();
+
+        if (_completed)
+        {
+            if (count != 0)
+                throw new InvalidOperationException("Index results cannot be added after the search is complete.");
+            _firstChanged = prefixLanded ? 0 : _rows.Count;
+            return _rows;
+        }
 
         var firstChanged = _ranked.Count;
 

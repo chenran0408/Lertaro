@@ -32,16 +32,10 @@ public static class SnapshotWriter
     public static void Write(FileRecordStore store, string path)
     {
         var records = store.Records;
-        var order = new List<int>(records.Count);
-        for (var i = 0; i < records.Count; i++)
-            if (!records[i].IsDeleted)
-                order.Add(i);
-        order.Sort((a, b) =>
-        {
-            var c = records[a].Id.CompareTo(records[b].Id);
-            return c != 0 ? c : a.CompareTo(b);
-        });
-        var count = order.Count;
+        using var readLease = records.AcquireReadLease(sortActive: true);
+        var rows = readLease.Rows;
+        var order = readLease.SortedActiveIndexes;
+        var count = order.Length;
 
         var nameIds = new uint[count];
         var flags = new ushort[count];
@@ -52,7 +46,7 @@ public static class SnapshotWriter
         var lastWrite = new uint[count];
         var lastAccess = new uint[count];
 
-        var uidByName = new Dictionary<string, int>(StringComparer.Ordinal);
+        var uidByName = new Dictionary<uint, int>();
         var uniqueNames = new List<string>();
         var nameBlob = new MemoryStream();
         var nameOffsets = new List<uint> { 0 };
@@ -66,24 +60,25 @@ public static class SnapshotWriter
 
         for (var n = 0; n < count; n++)
         {
-            var record = records[order[n]];
-            if (!uidByName.TryGetValue(record.Name, out var uid))
+            var record = rows[order[n]];
+            if (!uidByName.TryGetValue(record.NameId, out var uid))
             {
                 uid = uidByName.Count;
-                uidByName[record.Name] = uid;
-                uniqueNames.Add(record.Name);
-                nameBlob.Write(SnapshotFormat.NameEncoding.GetBytes(record.Name));
+                uidByName[record.NameId] = uid;
+                var name = records.GetNameById(record.NameId);
+                uniqueNames.Add(name);
+                nameBlob.Write(SnapshotFormat.NameEncoding.GetBytes(name));
                 nameOffsets.Add(checked((uint)nameBlob.Length));
             }
 
             nameIds[n] = (uint)uid;
-            flags[n] = (ushort)record.Flags;
-            ids[n] = record.Id;
-            sizes[n] = record.Size;
+            flags[n] = (ushort)record.RecordFlags;
+            ids[n] = record.GetId(readLease.HighPairs);
+            sizes[n] = record.LogicalSize;
             creation[n] = record.CreationTimeUnixSeconds;
             lastWrite[n] = record.LastWriteTimeUnixSeconds;
             lastAccess[n] = record.LastAccessTimeUnixSeconds;
-            if (record.IsDirectory)
+            if ((record.RecordFlags & FileRecordFlags.Directory) != 0)
                 totalDirs++;
             else
                 totalFiles++;
@@ -132,15 +127,17 @@ public static class SnapshotWriter
         Dictionary<ulong, int>? recordIndexMap = null;
         for (var n = 0; n < count; n++)
         {
-            var record = records[order[n]];
+            var record = rows[order[n]];
             var parentIndex = -1;
-            if (record.ParentId != record.Id)
+            var id = record.GetId(readLease.HighPairs);
+            var parentId = record.GetParentId(readLease.HighPairs);
+            if (parentId != id)
             {
-                parentIndex = SnapshotWriterOps.ResolveParentIndexWithRecordIndexFallback(ids, record.ParentId, ref recordIndexMap);
+                parentIndex = SnapshotWriterOps.ResolveParentIndexWithRecordIndexFallback(ids, parentId, ref recordIndexMap);
                 if (parentIndex < 0)
                 {
                     orphanRows.Add(n);
-                    orphanFrns.Add(record.ParentId);
+                    orphanFrns.Add(parentId);
                 }
             }
             parentIndexes[n] = parentIndex;

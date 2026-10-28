@@ -108,7 +108,7 @@ internal sealed class NetworkIndex : IDisposable
         // mid-walk checkpoint -- which serializes this same store, see TreeBuilder.CloneStore -- already
         // carries the right fingerprint too, not just the final save.
         var fingerprint = IndexerHelper.ComputeExclusionFingerprint(options.ExcludedPaths, options.IgnoredPathGlobs, options.IgnoredPathRegexes);
-        var store = new FileRecordStore
+        using var store = new FileRecordStore
         {
             SourceKey = drive,
             SourceKind = FileRecordSourceKind.NetworkMappedDrive,
@@ -140,6 +140,7 @@ internal sealed class NetworkIndex : IDisposable
         // fix and for the same reason as NetworkIndexerPublisher.PublishCheckpoint's own periodic writes.
         beforeFinalWrite?.Invoke();
         var index = FromStore(store, stats);
+        store.Dispose();
         index.RootId = rootId;
         index.ExclusionRulesFingerprint = fingerprint;
         // NetworkIndexStatus.Items has no files/dirs split to preserve -- report the true final total under

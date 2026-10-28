@@ -19,7 +19,8 @@ internal static class TreeBuilderCheckpointExtensions
         try
         {
             builder._onProgress(Volatile.Read(ref builder._indexedFiles), Volatile.Read(ref builder._indexedDirs));
-            builder._onCheckpoint(CloneStore(builder), CurrentStats(builder));
+            using var checkpoint = CloneStore(builder);
+            builder._onCheckpoint(checkpoint, CurrentStats(builder));
         }
         finally
         {
@@ -44,8 +45,16 @@ internal static class TreeBuilderCheckpointExtensions
                 // exclusion rules haven't actually changed since this in-progress scan started.
                 ExclusionRulesFingerprint = builder._store.ExclusionRulesFingerprint
             };
-            clone.Records.AddRange(builder._store.Records);
-            return clone;
+            try
+            {
+                clone.Records.AddRange(builder._store.Records);
+                return clone;
+            }
+            catch
+            {
+                clone.Dispose();
+                throw;
+            }
         }
     }
 

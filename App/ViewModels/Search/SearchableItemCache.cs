@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.Metrics;
 using Lertaro.PluginSdk.Abstractions.Plugins;
 using Lertaro.App.Services;
 
@@ -22,6 +23,14 @@ internal static class SearchableItemCache
     private static readonly ConcurrentDictionary<string, List<CacheEntry>> _cache = new();
     private static readonly ConcurrentDictionary<string, Task> _loadingTasks = new();
     private static readonly ConcurrentDictionary<string, bool> _subscribed = new();
+    private static readonly Meter CacheMeter = new("Lertaro.App.Caches");
+
+    static SearchableItemCache()
+    {
+        CacheMeter.CreateObservableGauge("lertaro.cache.searchable_items.entries", ObserveEntryCount);
+        CacheMeter.CreateObservableGauge("lertaro.cache.searchable_items.bitmap_bytes", ObserveUniqueBitmapBytes);
+        TranslationManager.Instance.PropertyChanged += (_, _) => Clear();
+    }
 
     // A cached CacheEntry bakes each provider's translated Title/Description into a plain string at
     // load time (see EnsureLoaded) -- unlike XAML's indexer bindings, that snapshot has no way to
@@ -34,7 +43,20 @@ internal static class SearchableItemCache
     // ENABLED alias providers at that moment. Turning one off afterwards left those aliases baked in,
     // so a settings item kept being found by a disabled provider's spelling while the highlight -- which
     // is recomputed live and does honour the setting -- came back empty: found but not lit up.
-    static SearchableItemCache() => TranslationManager.Instance.PropertyChanged += (_, _) => Clear();
+    private static long ObserveEntryCount() => _cache.Values.Sum(entries => (long)entries.Count);
+
+    private static long ObserveUniqueBitmapBytes()
+    {
+        var seen = new HashSet<System.Windows.Media.ImageSource>(ReferenceEqualityComparer.Instance);
+        long bytes = 0;
+        foreach (var entries in _cache.Values)
+        foreach (var entry in entries)
+        {
+            if (entry.Icon is not System.Windows.Media.Imaging.BitmapSource bitmap || !seen.Add(entry.Icon)) continue;
+            bytes += (long)bitmap.PixelWidth * bitmap.PixelHeight * bitmap.Format.BitsPerPixel / 8;
+        }
+        return bytes;
+    }
 
     private static int _watchingComponentChanges;
     private static int _generation;

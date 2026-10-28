@@ -83,9 +83,16 @@ public static class UsnIndexerBuildExtensions
             (drive, onProgress, token) =>
             {
                 var previousStore = GetPreviousStore(drive);
-                return LocalDriveWalkBuilder.Build(drive, $"{drive}:\\", previousStore, onProgress ?? ((_, _) => { }), token,
-                    forceFullScan,
-                    onCheckpoint: (checkpointStore, _) => indexer.PublishLocalDriveCheckpoint(cacheDir, drive, checkpointStore, token));
+                try
+                {
+                    return LocalDriveWalkBuilder.Build(drive, $"{drive}:\\", previousStore, onProgress ?? ((_, _) => { }), token,
+                        forceFullScan,
+                        onCheckpoint: (checkpointStore, _) => indexer.PublishLocalDriveCheckpoint(cacheDir, drive, checkpointStore, token));
+                }
+                finally
+                {
+                    previousStore?.Dispose();
+                }
             },
             (drive, result, progress, index) => OnDriveCompleted(indexer, cacheDir, drive, result, progress),
             (drive, result, progress, index) => OnDriveCompleted(indexer, cacheDir, drive, result.Store, progress),
@@ -116,7 +123,7 @@ public static class UsnIndexerBuildExtensions
     }
 
     // Writes the just-scanned store straight to its V2 cache file, THEN frees the in-memory
-    // List<FileRecord> before mapping the file back in -- same "don't hold both the raw scan AND the
+    // Rust-backed FileRecordCollection before mapping the file back in -- same "don't hold both the raw scan AND the
     // loaded index in memory at once" shape the old engine's LoadFromCacheDirect round-trip had, now
     // free (mmap opening is O(1), not a parse) instead of merely cheaper.
     private static void OnDriveCompleted(UsnIndexer indexer, string cacheDir, string drive, FileRecordStore store, int progress)
@@ -126,8 +133,7 @@ public static class UsnIndexerBuildExtensions
         var path = LocalDriveCacheLocator.GetCachePath(cacheDir, drive);
         SnapshotWriter.Write(store, path);
         var metadata = UsnIndexer.CreateMetadata(store);
-        store.Records.Clear();
-        store.Records.TrimExcess();
+        store.Dispose();
 
         GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
         Win32Api.TrimWorkingSet();

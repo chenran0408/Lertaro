@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.Metrics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -15,6 +16,30 @@ public static class ShellIconHelper
 {
     private static readonly ConcurrentDictionary<string, ImageSource> _iconCache = new(StringComparer.OrdinalIgnoreCase);
     private static readonly ConcurrentDictionary<string, ImageSource> _hashToIcon = new();
+    private static readonly Meter CacheMeter = new("Lertaro.App.Caches");
+
+    static ShellIconHelper()
+    {
+        CacheMeter.CreateObservableGauge("lertaro.cache.shell_icons.entries", () => _iconCache.Count);
+        CacheMeter.CreateObservableGauge("lertaro.cache.shell_icons.bitmap_bytes", ObserveUniqueBitmapBytes);
+    }
+
+    private static long ObserveUniqueBitmapBytes()
+    {
+        var seen = new HashSet<ImageSource>(ReferenceEqualityComparer.Instance);
+        long bytes = 0;
+        foreach (var image in _iconCache.Values)
+            AddBitmapBytes(image);
+        foreach (var image in _hashToIcon.Values)
+            AddBitmapBytes(image);
+        return bytes;
+
+        void AddBitmapBytes(ImageSource image)
+        {
+            if (image is not BitmapSource bitmap || !seen.Add(image)) return;
+            bytes += (long)bitmap.PixelWidth * bitmap.PixelHeight * bitmap.Format.BitsPerPixel / 8;
+        }
+    }
 
     public static void ClearCache()
     {

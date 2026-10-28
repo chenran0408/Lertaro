@@ -19,6 +19,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The Core project builds its in-process index store for the current RID.
+      - name: Setup Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          target: aarch64-pc-windows-msvc
+
       # 2. Configure .NET SDK
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v6

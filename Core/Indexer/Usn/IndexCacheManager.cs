@@ -50,24 +50,34 @@ internal static class IndexCacheManager
         ulong journalId)
     {
         var store = CreateEmptyStore(drive, rootFrn, nextUsn, journalId);
-        var namePool = new FileRecordNamePool();
-
-        foreach (var kvp in searchItems)
+        var storeTransferred = false;
+        try
         {
-            var flags = (kvp.Value.IsDir ? FileRecordFlags.Directory : FileRecordFlags.None)
-                | (kvp.Value.Listed ? FileRecordFlags.Listed : FileRecordFlags.None);
-            store.Records.Add(new FileRecord(
-                kvp.Key,
-                kvp.Value.ParentFrn,
-                namePool.Get(kvp.Value.Name),
-                flags,
-                kvp.Value.Size,
-                FileTimeHelper.FileTimeToUnixSeconds(kvp.Value.CreationTimeUtc),
-                FileTimeHelper.FileTimeToUnixSeconds(kvp.Value.LastWriteTimeUtc),
-                FileTimeHelper.FileTimeToUnixSeconds(kvp.Value.LastAccessTimeUtc)));
-        }
+            var namePool = new FileRecordNamePool();
 
-        return store;
+            foreach (var kvp in searchItems)
+            {
+                var flags = (kvp.Value.IsDir ? FileRecordFlags.Directory : FileRecordFlags.None)
+                    | (kvp.Value.Listed ? FileRecordFlags.Listed : FileRecordFlags.None);
+                store.Records.Add(new FileRecord(
+                    kvp.Key,
+                    kvp.Value.ParentFrn,
+                    namePool.Get(kvp.Value.Name),
+                    flags,
+                    kvp.Value.Size,
+                    FileTimeHelper.FileTimeToUnixSeconds(kvp.Value.CreationTimeUtc),
+                    FileTimeHelper.FileTimeToUnixSeconds(kvp.Value.LastWriteTimeUtc),
+                    FileTimeHelper.FileTimeToUnixSeconds(kvp.Value.LastAccessTimeUtc)));
+            }
+
+            storeTransferred = true;
+            return store;
+        }
+        finally
+        {
+            if (!storeTransferred)
+                store.Dispose();
+        }
     }
 
     // force:true throughout -- matches the old engine's SaveDrivesToCache, which always wrote a full

@@ -143,7 +143,7 @@ public readonly struct FileRecord
     public bool IsDeleted => (Flags & FileRecordFlags.Deleted) != 0;
 }
 
-public sealed class FileRecordStore
+public sealed class FileRecordStore : IDisposable
 {
     public string SourceKey { get; set; } = string.Empty;
     public FileRecordSourceKind SourceKind { get; set; }
@@ -164,5 +164,7 @@ public sealed class FileRecordStore
     // without needing any external signal (see TreeDiffBaseline / TreeBuilder's recheckExclusions). Only
     // meaningful for NetworkMappedDrive stores; a local MFT/USN store never sets it.
     public string ExclusionRulesFingerprint { get; set; } = string.Empty;
-    public List<FileRecord> Records { get; } = new();
+    public FileRecordCollection Records { get; } = new();
+
+    public void Dispose() => Records.Dispose();
 }

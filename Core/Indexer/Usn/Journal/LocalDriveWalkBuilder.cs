@@ -56,8 +56,17 @@ internal static class LocalDriveWalkBuilder
             lastWriteTimeUnixSeconds: rootLastWriteTime));
 
         var diffBaseline = forceFullScan ? null : TreeDiffBaseline.From(previousStore);
-        var builder = new TreeBuilder(store, root, root, NoFiltering, token, onProgress, onCheckpoint, diffBaseline, recheckExclusions: false);
-        var stats = builder.Run();
+        NetworkDriveWalkStats stats;
+        try
+        {
+            var builder = new TreeBuilder(store, root, root, NoFiltering, token, onProgress, onCheckpoint, diffBaseline, recheckExclusions: false);
+            stats = builder.Run();
+        }
+        catch
+        {
+            store.Dispose();
+            throw;
+        }
 
         // Reaching here without cancellation only means TreeBuilder.Run() drained its queue -- NOT that
         // every directory's real contents were captured; a directory that failed to enumerate stays

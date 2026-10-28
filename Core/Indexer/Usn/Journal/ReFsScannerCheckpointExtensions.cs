@@ -47,7 +47,14 @@ internal static class ReFsScannerCheckpointExtensions
             // regardless of exactly which in-flight writes did or didn't make it in.
             var snapshot = new Dictionary<UInt128, ReFsItem>(items);
             var store = IndexCacheManager.CreateStoreFromDriveData(state.Drive, state.RootFrn, snapshot, state.NextUsn, state.JournalId);
-            state.OnCheckpoint(store, default);
+            try
+            {
+                state.OnCheckpoint(store, default);
+            }
+            finally
+            {
+                store.Dispose();
+            }
         }
         finally
         {

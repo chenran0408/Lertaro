@@ -410,6 +410,50 @@ public sealed class StreamingResultAccumulatorTests
     }
 
     [TestMethod]
+    public void CompleteSearch_ReleasesAuxiliaryStateAndStillAcceptsLateContentRows()
+    {
+        var accumulator = new StreamingResultAccumulator("a", NoHistory);
+        var rows = accumulator.AbsorbBatch(Arrivals(@"D:\aaa", @"D:\a"));
+        var indexedPaths = Paths(rows);
+        var indexedCount = accumulator.Count;
+
+        accumulator.CompleteSearch();
+
+        Assert.AreSame(rows, accumulator.AbsorbBatch(Array.Empty<SearchResult>()));
+        Assert.AreEqual(indexedCount, accumulator.Count);
+        Assert.IsEmpty(accumulator.LastBatchRows);
+        CollectionAssert.AreEqual(indexedPaths, Paths(rows));
+
+        accumulator.QueueContentPrefix(ContentRows(@"D:\late1.md"));
+        var afterFirst = accumulator.AbsorbBatch(Array.Empty<SearchResult>());
+        accumulator.QueueContentPrefix(ContentRows(@"D:\late2.md"));
+        var afterSecond = accumulator.AbsorbBatch(Array.Empty<SearchResult>());
+
+        Assert.AreSame(rows, afterFirst);
+        Assert.AreSame(rows, afterSecond);
+        CollectionAssert.AreEqual(
+            new[] { @"D:\late1.md", @"D:\late2.md" }.Concat(indexedPaths).ToArray(),
+            Paths(afterSecond));
+        CollectionAssert.AreEqual(Enumerable.Range(0, afterSecond.Count).ToArray(), afterSecond.Select(row => row.Index).ToArray());
+        Assert.AreEqual(indexedCount, accumulator.Count);
+        Assert.AreEqual(0, accumulator.FirstChangedIndex);
+    }
+
+    [TestMethod]
+    public void CompleteSearch_CanReleaseRowsWhenAQueryTokenOwnsItsSnapshot()
+    {
+        var accumulator = new StreamingResultAccumulator("a", NoHistory);
+        var callerOwnedRows = accumulator.AbsorbBatch(Arrivals(@"D:\a", @"D:\aa"));
+
+        accumulator.CompleteSearch(keepRows: false);
+
+        Assert.AreEqual(2, callerOwnedRows.Count);
+        Assert.AreEqual(0, accumulator.Count);
+        Assert.IsEmpty(accumulator.Rows);
+        Assert.IsEmpty(accumulator.AbsorbBatch(Array.Empty<SearchResult>()));
+    }
+
+    [TestMethod]
     public void QueueContentPrefix_SurvivesEveryLaterPaint()
     {
         // The whole point of holding them here rather than merging them in afterwards: a paint that

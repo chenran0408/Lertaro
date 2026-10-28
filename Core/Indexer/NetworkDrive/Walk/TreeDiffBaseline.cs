@@ -13,30 +13,35 @@ namespace Lertaro.Core.Indexer.NetworkDrive.Walk;
 // didn't otherwise need to hold.
 internal sealed class TreeDiffBaseline
 {
-    private readonly IReadOnlyList<FileRecord> _records;
+    private readonly FileRecordCollection _records;
     private readonly Dictionary<UInt128, int> _indexById = new();
     private readonly Dictionary<UInt128, List<int>> _childIndicesByParent = new();
 
-    private TreeDiffBaseline(IReadOnlyList<FileRecord> records) => _records = records;
+    private TreeDiffBaseline(FileRecordCollection records) => _records = records;
 
     public static TreeDiffBaseline? From(FileRecordStore? previousStore)
     {
         if (previousStore == null || previousStore.Records.Count == 0)
             return null;
 
-        var baseline = new TreeDiffBaseline(previousStore.Records);
-        for (var i = 0; i < previousStore.Records.Count; i++)
-            baseline._indexById[previousStore.Records[i].Id] = i;
+        var records = previousStore.Records;
+        var baseline = new TreeDiffBaseline(records);
+        using var read = records.AcquireReadLease();
+        var rows = read.Rows;
+        for (var i = 0; i < rows.Length; i++)
+            baseline._indexById[rows[i].GetId(read.HighPairs)] = i;
 
         // Second pass, gated on _indexById: a store that (through some earlier bug) ended up with more than
         // one row for the same id must only ever contribute ONE entry to its parent's child list here --
         // otherwise the caller enqueues that same directory id more than once, and each duplicate re-walks
         // (or re-copies) its entire subtree again, compounding into unbounded, runaway growth on every
         // subsequent resume instead of just carrying the original duplication forward unchanged.
-        for (var i = 0; i < previousStore.Records.Count; i++)
+        for (var i = 0; i < rows.Length; i++)
         {
-            var record = previousStore.Records[i];
-            if (baseline._indexById[record.Id] != i)
+            var record = rows[i];
+            var id = record.GetId(read.HighPairs);
+            var parentId = record.GetParentId(read.HighPairs);
+            if (baseline._indexById[id] != i)
                 continue;
 
             // The root record is self-parented (ParentId == its own Id -- there is no real parent, see
@@ -45,11 +50,11 @@ internal sealed class TreeDiffBaseline
             // row alongside its real children -- duplicating the root into every resumed store's records.
             // SnapshotWriter.cs already guards the equivalent case (`record.ParentId != record.Id`) when
             // building a Snapshot's own child index; this mirrors that.
-            if (record.Id == record.ParentId)
+            if (id == parentId)
                 continue;
 
-            if (!baseline._childIndicesByParent.TryGetValue(record.ParentId, out var siblings))
-                baseline._childIndicesByParent[record.ParentId] = siblings = new List<int>();
+            if (!baseline._childIndicesByParent.TryGetValue(parentId, out var siblings))
+                baseline._childIndicesByParent[parentId] = siblings = new List<int>();
             siblings.Add(i);
         }
         return baseline;
@@ -77,8 +82,8 @@ internal sealed class TreeDiffBaseline
         if (!_indexById.TryGetValue(directoryId, out var recordIndex))
             return false;
 
-        var record = _records[recordIndex];
-        if (!record.IsDirectory || (record.Flags & FileRecordFlags.Listed) == 0)
+        var record = _records.GetData(recordIndex);
+        if ((record.RecordFlags & FileRecordFlags.Directory) == 0 || (record.RecordFlags & FileRecordFlags.Listed) == 0)
             return false;
 
         if (!_childIndicesByParent.TryGetValue(directoryId, out var indices))
@@ -103,8 +108,8 @@ internal sealed class TreeDiffBaseline
         if (!_indexById.TryGetValue(directoryId, out var recordIndex))
             return false;
 
-        var record = _records[recordIndex];
-        if (!record.IsDirectory || (record.Flags & FileRecordFlags.Listed) == 0)
+        var record = _records.GetData(recordIndex);
+        if ((record.RecordFlags & FileRecordFlags.Directory) == 0 || (record.RecordFlags & FileRecordFlags.Listed) == 0)
             return false;
 
         if (liveMtimeUnixSeconds != record.LastWriteTimeUnixSeconds)

@@ -205,7 +205,8 @@ internal sealed partial class NetworkIndexerPublisher
     private static int CountLiveRecords(FileRecordStore store)
     {
         var count = 0;
-        foreach (var record in store.Records)
+        using var read = store.Records.AcquireReadLease();
+        foreach (var record in read.Rows)
             if (!record.IsDeleted)
                 count++;
         return Math.Max(0, count - 1);

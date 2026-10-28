@@ -7,6 +7,124 @@ namespace Lertaro.App.Tests.ViewModels.Search.Dispatch;
 public sealed class SearchQueryDispatchControllerTests
 {
     [TestMethod]
+    public async Task LatestAsyncWork_CoalescesPendingItemsAndProcessesFinalSnapshot()
+    {
+        var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var finished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var processed = new List<int>();
+        var active = 0;
+        var maximumActive = 0;
+        var work = new LatestAsyncWork<int>(async item =>
+        {
+            var nowActive = Interlocked.Increment(ref active);
+            maximumActive = Math.Max(maximumActive, nowActive);
+            processed.Add(item);
+            if (item == 1)
+            {
+                firstStarted.SetResult();
+                await releaseFirst.Task;
+            }
+            Interlocked.Decrement(ref active);
+            if (item == 4)
+                finished.SetResult();
+        });
+
+        work.Queue(1);
+        await firstStarted.Task;
+        work.Queue(2);
+        work.Queue(3);
+        work.Queue(4);
+        releaseFirst.SetResult();
+        await finished.Task;
+
+        CollectionAssert.AreEqual(new[] { 1, 4 }, processed);
+        Assert.AreEqual(1, maximumActive);
+    }
+
+    [TestMethod]
+    public async Task LatestAsyncWork_ZeroIsAValidValueAndProcessorFailureDoesNotStallNextQueue()
+    {
+        var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var processed = new List<int>();
+        var work = new LatestAsyncWork<int>(item =>
+        {
+            processed.Add(item);
+            if (item == 1)
+                throw new InvalidOperationException("expected test failure");
+            completed.SetResult();
+            return Task.CompletedTask;
+        });
+
+        work.Queue(1);
+        work.Queue(0);
+        await completed.Task;
+
+        CollectionAssert.AreEqual(new[] { 1, 0 }, processed);
+    }
+
+    [TestMethod]
+    public async Task LatestAsyncWork_PendingItemRunsWhenInFlightProcessorFails()
+    {
+        var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var failFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var secondFinished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var processed = new List<int>();
+        var work = new LatestAsyncWork<int>(async item =>
+        {
+            processed.Add(item);
+            if (item == 1)
+            {
+                firstStarted.SetResult();
+                await failFirst.Task;
+                throw new InvalidOperationException("expected test failure");
+            }
+            secondFinished.SetResult();
+        });
+
+        work.Queue(1);
+        await firstStarted.Task;
+        work.Queue(2);
+        failFirst.SetResult();
+        await secondFinished.Task;
+
+        CollectionAssert.AreEqual(new[] { 1, 2 }, processed);
+    }
+
+    [TestMethod]
+    public async Task LatestAsyncWork_ClearPendingDropsOnlyQueuedItem()
+    {
+        var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var firstFinished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var nextFinished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var processed = new List<int>();
+        var work = new LatestAsyncWork<int>(async item =>
+        {
+            processed.Add(item);
+            if (item == 1)
+            {
+                firstStarted.SetResult();
+                await releaseFirst.Task;
+                firstFinished.SetResult();
+            }
+            else if (item == 3)
+                nextFinished.SetResult();
+        });
+
+        work.Queue(1);
+        await firstStarted.Task;
+        work.Queue(2);
+        work.ClearPending();
+        releaseFirst.SetResult();
+        await firstFinished.Task;
+        work.Queue(3);
+        await nextFinished.Task;
+
+        CollectionAssert.AreEqual(new[] { 1, 3 }, processed);
+    }
+
+    [TestMethod]
     public void StreamFullSearchFileRows_CurrentQuery_PreservesBatchesAndProviderIdentity()
     {
         var first = new TestProvider("first", 301);

@@ -65,6 +65,7 @@ internal sealed class SearchStreamRenderer
         // Full-window ranking accepts independent batches, so it never needs the already-copied prefix.
         // Quick and inline mappers still receive their complete snapshot on every render.
         var copiedCount = 0;
+        var responseHead = 0;
         var streamDone = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
         // Scoped searches answer from N per-folder engine queries, so the same file can arrive from two
@@ -101,7 +102,7 @@ internal sealed class SearchStreamRenderer
             }
         }
 
-        async Task RenderSnapshotAsync(bool final, int take)
+        async Task RenderSnapshotAsync(bool final, int take, List<SearchResult>? finalBatch = null)
         {
             if (searchVersion != _getSearchVersion() || token.IsCancellationRequested)
                 return;
@@ -110,8 +111,11 @@ internal sealed class SearchStreamRenderer
             var received = 0;
             lock (responseLock)
             {
-                received = streamedResponse.Count;
-                snapshot = CopySnapshot(streamedResponse, take, resultMapperConsumesBatches, ref copiedCount);
+                received = streamedCount;
+                snapshot = finalBatch
+                    ?? (resultMapperConsumesBatches
+                        ? DrainNewResults(streamedResponse, take, ref responseHead, ref copiedCount)
+                        : CopySnapshot(streamedResponse, take, onlyNew: false, ref copiedCount));
             }
 
             var uiResults = resultMapper(snapshot, contextDirectory);
@@ -254,7 +258,26 @@ internal sealed class SearchStreamRenderer
             }
         }
 
-        await RenderSnapshotAsync(final: true, int.MaxValue).ConfigureAwait(false);
+        if (resultMapperConsumesBatches)
+        {
+            List<SearchResult> finalBatch;
+            lock (responseLock)
+            {
+                finalBatch = TakeFinalBatch(streamedResponse, responseHead);
+                // No producer or progressive renderer is still using the staging list. Transfer ownership
+                // of the remaining rows and let its potentially large backing array become collectible
+                // while the final mapping and UI update run.
+                streamedResponse = new List<SearchResult>();
+                responseHead = 0;
+                copiedCount = streamedCount;
+            }
+
+            await RenderSnapshotAsync(final: true, int.MaxValue, finalBatch).ConfigureAwait(false);
+        }
+        else
+        {
+            await RenderSnapshotAsync(final: true, int.MaxValue).ConfigureAwait(false);
+        }
     }
 
     internal static List<SearchResult> CopySnapshot(
@@ -274,5 +297,43 @@ internal sealed class SearchStreamRenderer
         copiedCount = end;
         return source.GetRange(start, end - start);
     }
+
+    // The full-search mapper consumes independent batches, so retaining every earlier raw SearchResult
+    // serves no later render. Clear consumed slots immediately; compact geometrically instead of shifting
+    // a large producer backlog on every paint. The returned batch owns references until mapping and the
+    // awaited UI update have both completed.
+    internal static List<SearchResult> DrainNewResults(
+        List<SearchResult> pending,
+        int take,
+        ref int head,
+        ref int copiedCount)
+    {
+        var available = (int)Math.Min(int.MaxValue, (long)copiedCount + pending.Count - head);
+        var end = Math.Min(take, available);
+        var count = end - copiedCount;
+        if (count <= 0)
+            return [];
+
+        var batch = new List<SearchResult>(count);
+        var batchEnd = head + count;
+        for (var i = head; i < batchEnd; i++)
+        {
+            batch.Add(pending[i]);
+            pending[i] = null!;
+        }
+        head = batchEnd;
+        copiedCount = end;
+
+        if (head >= 4096 && head >= pending.Count / 2)
+        {
+            pending.RemoveRange(0, head);
+            head = 0;
+        }
+
+        return batch;
+    }
+
+    internal static List<SearchResult> TakeFinalBatch(List<SearchResult> staged, int head)
+        => head == 0 ? staged : staged.GetRange(head, staged.Count - head);
 
 }

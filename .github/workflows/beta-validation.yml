@@ -1,35 +1,51 @@
 name: Beta validation
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - fix/explorer-locate-hang
+      - codex/v5.10.1-input-performance-glass
 
 jobs:
   windows-tests:
     strategy:
       fail-fast: false
       matrix:
-        runner: [windows-latest, windows-11-arm]
+        include:
+          - runner: windows-latest
+            rid: win-x64
+            rust_target: x86_64-pc-windows-msvc
+          - runner: windows-11-arm
+            rid: win-arm64
+            rust_target: aarch64-pc-windows-msvc
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          target: ${{ matrix.rust_target }}
+      - name: Test native index store
+        run: cargo test --locked --target ${{ matrix.rust_target }} --manifest-path Core\NativeIndexStore\Cargo.toml
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
       - name: Test app
-        run: dotnet test Tests/App/App.csproj -c Release --logger "console;verbosity=normal" -v quiet
+        run: dotnet test Tests/App/App.csproj -c Release -r ${{ matrix.rid }} --logger "console;verbosity=normal" -v quiet
       - name: Test update core
         if: success() || failure()
-        run: dotnet test Tests/Core/Core.csproj -c Release --logger "console;verbosity=normal" -v quiet
+        run: dotnet test Tests/Core/Core.csproj -c Release -r ${{ matrix.rid }} --logger "console;verbosity=normal" -v quiet
       - name: Test bundled actions
         if: success() || failure()
-        run: dotnet test Tests/Plugins/CoreExtensions/CoreExtensions.csproj -c Release --logger "console;verbosity=normal" -v quiet
+        run: dotnet test Tests/Plugins/CoreExtensions/CoreExtensions.csproj -c Release -r ${{ matrix.rid }} --logger "console;verbosity=normal" -v quiet
 
   package:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          target: aarch64-pc-windows-msvc
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'

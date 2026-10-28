@@ -110,7 +110,7 @@ public sealed class LiveIndex : IDisposable
             // guarantees the RENAME succeeds -- can make that immediately-following delete fail on some
             // Windows/filesystem combinations (seen reliably on a Windows 10 VM indexing a network share,
             // not on Windows 11), leaving an orphaned .bak file this exact process still holds open.
-            var mergedStore = Compaction.BuildMergedStore(_snapshot!, _delta!, stamp);
+            using var mergedStore = Compaction.BuildMergedStore(_snapshot!, _delta!, stamp);
             _snapshot!.Dispose();
             _snapshot = null;
             _delta = null;

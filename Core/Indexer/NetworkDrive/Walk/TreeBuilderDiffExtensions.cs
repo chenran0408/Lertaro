@@ -9,8 +9,21 @@ internal static class TreeBuilderDiffExtensions
 {
     // Must be called with builder._recordsGate already held (both call sites -- the constructor seeding
     // any pre-existing records, and FlushRecords -- already hold it or run before workers start).
-    public static void RegisterDirectoryIndices(this TreeBuilder builder, int startIndex, List<FileRecord> records)
+    public static void RegisterDirectoryIndices(this TreeBuilder builder, int startIndex, IReadOnlyList<FileRecord> records)
     {
+        if (records is FileRecordCollection native)
+        {
+            using var view = native.AcquireReadLease();
+            var rows = view.Rows;
+            for (var i = 0; i < rows.Length; i++)
+            {
+                var record = rows[i];
+                if ((record.RecordFlags & FileRecordFlags.Directory) != 0)
+                    builder._indexById[record.GetId(view.HighPairs)] = startIndex + i;
+            }
+            return;
+        }
+
         for (var i = 0; i < records.Count; i++)
         {
             if (records[i].IsDirectory)
@@ -25,13 +38,12 @@ internal static class TreeBuilderDiffExtensions
             if (!builder._indexById.TryGetValue(id, out var index))
                 return;
 
-            var r = builder._store.Records[index];
-            if ((r.Flags & FileRecordFlags.Listed) != 0)
+            var r = builder._store.Records.GetData(index);
+            if ((r.RecordFlags & FileRecordFlags.Listed) != 0)
                 return;
 
-            builder._store.Records[index] = new FileRecord(
-                r.Id, r.ParentId, r.Name, r.Flags | FileRecordFlags.Listed,
-                r.Size, r.CreationTimeUnixSeconds, r.LastWriteTimeUnixSeconds, r.LastAccessTimeUnixSeconds);
+            builder._store.Records.UpdateMetadata(index, r.RecordFlags | FileRecordFlags.Listed,
+                r.CreationTimeUnixSeconds, r.LastWriteTimeUnixSeconds, r.LastAccessTimeUnixSeconds);
         }
     }
 

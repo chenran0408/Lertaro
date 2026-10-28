@@ -2,23 +2,9 @@ namespace Lertaro.Core;
 
 internal sealed class FileRecordNamePool
 {
-    private readonly object _lock = new();
-    private readonly Dictionary<string, string> _pool = new(StringComparer.Ordinal);
-
-    public string Get(string value)
-    {
-        if (string.IsNullOrEmpty(value))
-            return string.Empty;
-
-        lock (_lock)
-        {
-            if (_pool.TryGetValue(value, out var pooled))
-                return pooled;
-
-            _pool[value] = value;
-            return value;
-        }
-    }
+    // Name interning now happens in FileRecordCollection's Rust builder; keeping a parallel managed
+    // dictionary here would retain a second copy of every unique name while large drives are scanned.
+    public string Get(string value) => string.IsNullOrEmpty(value) ? string.Empty : value;
 }
 
 public static class FileRecordStoreSerializer

@@ -53,6 +53,12 @@ internal sealed class SearchQueryDispatchController
     // the file search is still running, and the rows it holds are the list every paint hands back.
     private StreamingResultAccumulator? _accumulator;
 
+    // Token providers can be slower than the render pump. Keep the in-flight snapshot and at most
+    // one replacement (the newest render), rather than starting one async dispatch per paint.
+    private readonly LatestAsyncWork<TokenDispatchRequest> _tokenDispatchWork;
+
+    private sealed record TokenDispatchRequest(List<AppSearchResult> Results, IReadOnlyList<string> Tokens, bool Extends);
+
     // The file search's final render has happened, so the render pump is gone and nothing else will pick
     // up a queued content prefix. Only then does the append have to paint for itself.
     private volatile bool _searchSettled;
@@ -83,10 +89,14 @@ internal sealed class SearchQueryDispatchController
         _replaceSidebarCounts = replaceSidebarCounts;
         _applyFiltersAndRender = applyFiltersAndRender;
         _isTypeFilterSelected = isTypeFilterSelected;
+        _tokenDispatchWork = new LatestAsyncWork<TokenDispatchRequest>(work =>
+            RefreshAfterTokenDispatchAsync(work.Results, work.Tokens, work.Extends));
     }
 
     public void OnAdvancedQueryChanged(string query)
     {
+        _tokenDispatchWork.ClearPending();
+        _queryTokens = Array.Empty<string>();
         var globalPrefixChar = GetGlobalTokenPrefixChar();
         var strippedTrailing = SearchQuerySortParser.Strip(query, out var tokens, globalPrefixChar);
         _queryTokens = tokens;
@@ -201,6 +211,10 @@ internal sealed class SearchQueryDispatchController
                 var filteredResults = results.Exists(r => r.IsEmptyResult)
                     ? results.FindAll(r => !r.IsEmptyResult)
                     : results;
+                // The last batch is never read through LastBatchRows on the final render. Release its
+                // duplicate row-reference buffer before sidebar/filter rendering can allocate more state.
+                if (final && _queryTokens.Count == 0)
+                    accumulator.CompleteSearch();
                 var extendsContent = rendersSoFar++ > 0;
                 if (final)
                     _replaceSidebarCounts(filteredResults);
@@ -226,7 +240,9 @@ internal sealed class SearchQueryDispatchController
                     // tokens in this window quietly stopped doing anything at all.
                     var snapshot = new List<AppSearchResult>(filteredResults);
                     _setAllResults(snapshot, false);
-                    _ = RefreshAfterTokenDispatchAsync(snapshot, _queryTokens, extendsContent);
+                    if (final)
+                        accumulator.CompleteSearch(keepRows: false);
+                    QueueTokenDispatch(snapshot, _queryTokens, extendsContent);
                 }
                 else
                 {
@@ -423,6 +439,11 @@ internal sealed class SearchQueryDispatchController
         _applyFiltersAndRender(extendsContent, 0);
     }
 
+    private void QueueTokenDispatch(List<AppSearchResult> resultsSnapshot, IReadOnlyList<string> tokensSnapshot, bool extendsContent)
+    {
+        _tokenDispatchWork.Queue(new TokenDispatchRequest(resultsSnapshot, tokensSnapshot, extendsContent));
+    }
+
     public void PerformSearch(string query)
     {
         if (string.IsNullOrWhiteSpace(query))
@@ -436,13 +457,17 @@ internal sealed class SearchQueryDispatchController
 
     private void ClearResults()
     {
+        _tokenDispatchWork.ClearPending();
+        _queryTokens = Array.Empty<string>();
         // Supersedes any content append still in flight, exactly as a new query does.
         Interlocked.Increment(ref _contentAppendGeneration);
         _searchEngine.CancelPendingSearch();
         _setIsSearching(false);
         _accumulator = null;
         _searchSettled = false;
-        _getAllResults().Clear();
+        // Replace the list so a provider still enumerating an in-flight snapshot is not racing a Clear,
+        // and its reference-identity check cannot pass after the user cleared the query.
+        _setAllResults(new List<AppSearchResult>(), false);
         _applyFiltersAndRender(false, 0);
         _setLoadingPanelVisibility(Visibility.Collapsed);
     }

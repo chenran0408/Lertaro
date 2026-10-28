@@ -10,7 +10,17 @@
     <GenerateDependencyFile>false</GenerateDependencyFile>
     <!-- IndexV2 reads its memory-mapped snapshot through typed spans over a raw view pointer. -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RustIndexStoreTarget Condition="'$(RuntimeIdentifier)' == 'win-arm64'">aarch64-pc-windows-msvc</RustIndexStoreTarget>
+    <RustIndexStoreTarget Condition="'$(RuntimeIdentifier)' != 'win-arm64'">x86_64-pc-windows-msvc</RustIndexStoreTarget>
+    <EnableRustIndexStoreBuild Condition="'$(EnableRustIndexStoreBuild)' == ''">true</EnableRustIndexStoreBuild>
+    <RustIndexStoreTargetDir>$(MSBuildProjectDirectory)\obj\native-index-store\$(RustIndexStoreTarget)</RustIndexStoreTargetDir>
+    <RustIndexStoreDll>$(RustIndexStoreTargetDir)\$(RustIndexStoreTarget)\release\lertaro_index_store.dll</RustIndexStoreDll>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="$(RustIndexStoreDll)" Link="lertaro_index_store.dll" Condition="'$(EnableRustIndexStoreBuild)' != 'false'"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
@@ -25,5 +35,10 @@
     <EmbeddedResource Include="Services\LocalSend\MimeTypes.json" />
     <EmbeddedResource Include="..\release-signing-public-key.pem" LogicalName="Lertaro.UpdateSigningPublicKey" />
   </ItemGroup>
+
+  <Target Name="BuildNativeIndexStore" BeforeTargets="PrepareForBuild;GetCopyToOutputDirectoryItems;GetCopyToPublishDirectoryItems"
+          Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(EnableRustIndexStoreBuild)' != 'false'">
+    <Exec Command="cargo build --locked --release --target $(RustIndexStoreTarget) --target-dir &quot;$(RustIndexStoreTargetDir)&quot; --manifest-path &quot;$(MSBuildProjectDirectory)\NativeIndexStore\Cargo.toml&quot;" />
+  </Target>
 
 </Project>

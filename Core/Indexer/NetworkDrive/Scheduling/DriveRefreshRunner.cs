@@ -37,7 +37,7 @@ internal static class DriveRefreshRunner
         {
             setStatus(drive, "indexing", 0, null);
             var options = WalkOptions.FromUserSettings(UserSettings.Load());
-            var previousStore = getPreviousStore(drive);
+            using var previousStore = getPreviousStore(drive);
             LogResumeProgress(drive, previousStore);
             var index = NetworkIndex.Build(
                 drive,
@@ -145,12 +145,13 @@ internal static class DriveRefreshRunner
 
         var totalDirs = 0;
         var listedDirs = 0;
-        foreach (var record in previousStore.Records)
+        using var read = previousStore.Records.AcquireReadLease();
+        foreach (var record in read.Rows)
         {
-            if (!record.IsDirectory)
+            if ((record.RecordFlags & FileRecordFlags.Directory) == 0)
                 continue;
             totalDirs++;
-            if ((record.Flags & FileRecordFlags.Listed) != 0)
+            if ((record.RecordFlags & FileRecordFlags.Listed) != 0)
                 listedDirs++;
         }
 
