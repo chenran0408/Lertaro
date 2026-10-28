@@ -207,7 +207,7 @@ public sealed class GlassWindowPresentationHelperTests
     }
 
     [StaTestMethod]
-    public void ConcurrentSummons_StaleFirstInvalidatesSharedPreparationBeforeCurrentReveal()
+    public void ConcurrentSummons_CurrentContinuationCanRevealSharedPreparationBeforeStaleContinuation()
     {
         InstallDispatcherContext();
         var surface = new LiquidGlassSurface();
@@ -239,6 +239,11 @@ public sealed class GlassWindowPresentationHelperTests
                 () => { staleShowCount++; window.Show(); },
                 isCurrent: static () => false,
                 prepareFirstDisplay: Prepare);
+            Assert.AreEqual(1, preparationCount, "Both summons must initially share the pending preparation.");
+            // Complete off-dispatcher so the stale continuation is queued. Then invoke the
+            // current summon before pumping that queue; its completed await runs inline and
+            // reveals the shared backing first deterministically.
+            Task.Run(() => firstPreparation.SetResult(new FirstDisplayPreparationResult(true, "shared"))).GetAwaiter().GetResult();
             var currentSummon = GlassWindowPresentationHelper.ShowWhenPreparedAsync(
                 window,
                 () =>
@@ -249,16 +254,81 @@ public sealed class GlassWindowPresentationHelperTests
                 },
                 isCurrent: static () => true,
                 prepareFirstDisplay: Prepare);
-
-            Assert.AreEqual(1, preparationCount, "Both summons must initially share the pending preparation.");
-            window.Dispatcher.BeginInvoke(new Action(() =>
-                firstPreparation.SetResult(new FirstDisplayPreparationResult(true, "shared"))));
             Pump(Task.WhenAll(staleSummon, currentSummon));
 
             Assert.AreEqual(0, staleShowCount, "The superseded summon must not show the window.");
-            Assert.AreEqual(2, preparationCount, "The current summon must prepare fresh backing after the stale summon invalidates the shared result.");
             Assert.IsTrue(currentShowAwake, "The current summon must not reveal a surface put to sleep by the stale summon.");
-            Assert.AreEqual(36L, currentShowBitmapBytes, "The current summon must present its fresh bitmap, not the cleared shared result.");
+            Assert.AreEqual(1, preparationCount, "The current continuation must reuse and reveal the shared preparation.");
+            Assert.AreEqual(16L, currentShowBitmapBytes, "The current summon must present the shared backing.");
+            Assert.IsTrue(window.IsVisible);
+        }
+        finally
+        {
+            if (!firstPreparation.Task.IsCompleted)
+                firstPreparation.SetResult(new FirstDisplayPreparationResult(true, "cleanup"));
+            if (window.IsVisible) window.Close();
+        }
+    }
+
+    [StaTestMethod]
+    public void ConcurrentSummons_StaleContinuationInvalidatesBeforeCurrentSummonPreparesFreshBacking()
+    {
+        InstallDispatcherContext();
+        var surface = new LiquidGlassSurface();
+        var window = CreateOffscreenGlassWindow(surface);
+        var firstPreparation = new TaskCompletionSource<FirstDisplayPreparationResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var preparationCount = 0;
+        var staleShowCount = 0;
+        var currentShowAwake = false;
+        long currentShowBitmapBytes = 0;
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+
+        Task<FirstDisplayPreparationResult> Prepare(GlassWindow candidate)
+        {
+            preparationCount++;
+            candidate.WakeGlassSurfacesForDisplay();
+            typeof(LiquidGlassSurface).GetField("_lastSource", flags)!.SetValue(surface, new byte[23]);
+            var side = preparationCount == 1 ? 2 : 3;
+            typeof(LiquidGlassSurface).GetField("_frame", flags)!.SetValue(surface,
+                new WriteableBitmap(side, side, 96, 96, PixelFormats.Pbgra32, null));
+            return preparationCount == 1
+                ? firstPreparation.Task
+                : Task.FromResult(new FirstDisplayPreparationResult(true, "fresh"));
+        }
+
+        try
+        {
+            var staleSummon = GlassWindowPresentationHelper.ShowWhenPreparedAsync(
+                window,
+                () => { staleShowCount++; window.Show(); },
+                isCurrent: static () => false,
+                prepareFirstDisplay: Prepare);
+            Assert.AreEqual(1, preparationCount);
+
+            // Completing off-dispatcher queues the stale continuation. Pump it to completion
+            // before starting the current summon, so invalidation is guaranteed to win.
+            Task.Run(() => firstPreparation.SetResult(new FirstDisplayPreparationResult(true, "stale"))).GetAwaiter().GetResult();
+            Pump(staleSummon);
+
+            Assert.AreEqual(0, staleShowCount, "The superseded summon must not show the window.");
+            Assert.IsFalse(window.IsVisible);
+            Assert.IsTrue(Read<bool>(surface.InspectPerformance(), "sleeping"),
+                "The stale continuation must sleep the hidden surface before the current summon starts.");
+
+            Pump(GlassWindowPresentationHelper.ShowWhenPreparedAsync(
+                window,
+                () =>
+                {
+                    currentShowAwake = !Read<bool>(surface.InspectPerformance(), "sleeping");
+                    currentShowBitmapBytes = Read<long>(surface.InspectPerformance(), "estimatedManagedBitmapPixelPayloadBytes");
+                    window.Show();
+                },
+                isCurrent: static () => true,
+                prepareFirstDisplay: Prepare));
+
+            Assert.AreEqual(2, preparationCount, "A stale first completion must invalidate shared backing before the current summon prepares.");
+            Assert.IsTrue(currentShowAwake, "The current reveal must wake its freshly prepared surface.");
+            Assert.AreEqual(36L, currentShowBitmapBytes, "The current reveal must use the complete fresh 3x3 backing.");
             Assert.IsTrue(window.IsVisible);
         }
         finally
