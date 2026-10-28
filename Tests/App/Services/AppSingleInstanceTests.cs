@@ -29,6 +29,7 @@ public sealed class AppSingleInstanceTests
         });
         ownerThread.Start();
         ownerThread.Join();
+        var ownerThreadAliveAfterJoin = ownerThread.IsAlive;
 
         try
         {
@@ -37,7 +38,28 @@ public sealed class AppSingleInstanceTests
 
             using var acquiredMutex = AppSingleInstance.AcquireMutex(mutexName, out var createdNew);
 
-            Assert.IsTrue(createdNew, "An abandoned mutex should be treated as owned by this instance.");
+            var ownershipProbe = "not needed";
+            var probeAcquiredOwnership = false;
+            if (!createdNew)
+            {
+                try
+                {
+                    probeAcquiredOwnership = acquiredMutex.WaitOne(0);
+                    ownershipProbe = probeAcquiredOwnership ? "acquired" : "still owned by another thread";
+                }
+                catch (AbandonedMutexException)
+                {
+                    probeAcquiredOwnership = true;
+                    ownershipProbe = "abandoned; probe took ownership";
+                }
+            }
+
+            if (probeAcquiredOwnership)
+                acquiredMutex.ReleaseMutex();
+
+            Assert.IsTrue(createdNew,
+                $"An abandoned mutex should be treated as owned by this instance. " +
+                $"Owner thread alive after Join: {ownerThreadAliveAfterJoin}; follow-up WaitOne(0): {ownershipProbe}.");
             acquiredMutex.ReleaseMutex();
         }
         finally
