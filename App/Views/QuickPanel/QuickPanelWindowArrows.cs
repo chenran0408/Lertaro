@@ -100,16 +100,16 @@ public partial class QuickPanelWindow
     /// </remarks>
     private static int SelectionDeltaFor(System.Windows.Input.KeyEventArgs e)
     {
-        var key = Helpers.WpfUiHelper.GetActualKey(e);
         if (Keyboard.Modifiers == ModifierKeys.None)
         {
+            var key = Helpers.WpfUiHelper.GetActualKey(e);
             if (key == Key.Down) return 1;
             if (key == Key.Up) return -1;
         }
 
         var hotkeys = Core.UserSettings.Load().Hotkeys;
-        if (Helpers.WpfUiHelper.MatchesHotkey(hotkeys.NextItemHotkey, Keyboard.Modifiers, key)) return 1;
-        if (Helpers.WpfUiHelper.MatchesHotkey(hotkeys.PreviousItemHotkey, Keyboard.Modifiers, key)) return -1;
+        if (Helpers.WpfUiHelper.MatchesHotkey(hotkeys.NextItemHotkey, e)) return 1;
+        if (Helpers.WpfUiHelper.MatchesHotkey(hotkeys.PreviousItemHotkey, e)) return -1;
 
         return 0;
     }

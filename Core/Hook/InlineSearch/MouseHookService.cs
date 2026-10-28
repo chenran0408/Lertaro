@@ -4,6 +4,8 @@ namespace Lertaro.Core.Hook.InlineSearch;
 
 public class MouseHookService : IDisposable
 {
+    internal const uint DeferredClickReplayMessage = 0x8003;
+
     private delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
 
     [DllImport("user32.dll", SetLastError = true)]
@@ -19,11 +21,33 @@ public class MouseHookService : IDisposable
     [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
     private static extern IntPtr GetModuleHandle(string? lpModuleName);
 
+    [DllImport("kernel32.dll")]
+    private static extern uint GetCurrentThreadId();
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool PeekMessage(out MSG message, IntPtr hwnd, uint min, uint max, uint remove);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool PostThreadMessage(uint threadId, uint message, IntPtr wParam, IntPtr lParam);
+
     [StructLayout(LayoutKind.Sequential)]
     private struct POINT
     {
         public int x;
         public int y;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MSG
+    {
+        public IntPtr hwnd;
+        public uint message;
+        public IntPtr wParam;
+        public IntPtr lParam;
+        public uint time;
+        public POINT pt;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -52,6 +76,7 @@ public class MouseHookService : IDisposable
 
     private IntPtr _hookId = IntPtr.Zero;
     private LowLevelMouseProc? _proc;
+    private uint _hookThreadId;
 
     private int _lastClickTime;
     private int _lastClickX;
@@ -72,19 +97,39 @@ public class MouseHookService : IDisposable
 
     internal MouseHookService(Func<UserSettings> settings, Func<bool> suspended)
     {
-        _panelGestures = new QuickPanelMouseGestureHook(settings, suspended);
+        _panelGestures = new QuickPanelMouseGestureHook(settings, suspended, deferCompleteClick: DeferCompleteClick);
         _panelGestures.Triggered += (root, rule) => OnQuickPanelMouseGesture?.Invoke(root, rule);
     }
 
     public void Start()
     {
         if (_hookId != IntPtr.Zero) return;
+        _hookThreadId = GetCurrentThreadId();
+        // PostThreadMessage requires a queue before the first message-loop call.
+        PeekMessage(out _, IntPtr.Zero, 0, 0, 0);
         _proc = HookCallback;
         var hMod = GetModuleHandle(null);
         _hookId = SetWindowsHookEx(WH_MOUSE_LL, _proc, hMod, 0);
         if (_hookId == IntPtr.Zero)
         {
             Logger.Log($"[MouseHookService] Failed to install mouse hook! Error={Marshal.GetLastWin32Error()}", LogLevel.Error);
+        }
+    }
+
+    internal bool ProcessThreadMessage(uint message, IntPtr wParam)
+    {
+        if (message != DeferredClickReplayMessage) return false;
+        var button = (QuickPanelWakeButton)wParam.ToInt32();
+        if (Enum.IsDefined(button)) QuickPanelMouseGestureHook.Replay(button, true);
+        return true;
+    }
+
+    private void DeferCompleteClick(QuickPanelWakeButton button)
+    {
+        if (!PostThreadMessage(_hookThreadId, DeferredClickReplayMessage, (IntPtr)(int)button, IntPtr.Zero))
+        {
+            Logger.Log($"[MouseHookService] Failed to queue right-click replay! Error={Marshal.GetLastWin32Error()}", LogLevel.Warn);
+            QuickPanelMouseGestureHook.Replay(button, true);
         }
     }
 

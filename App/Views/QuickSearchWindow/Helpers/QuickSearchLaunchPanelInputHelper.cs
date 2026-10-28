@@ -35,14 +35,14 @@ internal static class QuickSearchLaunchPanelInputHelper
 
         var actualKey = WpfUiHelper.GetActualKey(e);
         var hotkeys = UserSettings.Load().Hotkeys;
-        if (WpfUiHelper.MatchesHotkey(hotkeys.NextItemHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(hotkeys.NextItemHotkey, e))
         {
             window.ViewModel.CycleLaunchSource(1);
             e.Handled = true;
             return true;
         }
 
-        if (WpfUiHelper.MatchesHotkey(hotkeys.PreviousItemHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(hotkeys.PreviousItemHotkey, e))
         {
             window.ViewModel.CycleLaunchSource(-1);
             e.Handled = true;

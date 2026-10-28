@@ -56,6 +56,18 @@ public sealed class FavoriteHotkeyRegistrationsTests
     }
 
     [TestMethod]
+    public void Build_ExplicitDoubleTapFavoriteUsesHookRegistrationWithoutExplorerKeyConflict()
+    {
+        var registration = FavoriteHotkeyRegistrations.Build(
+            [new FavoriteItemSetting { Path = @"C:\One", Hotkey = "DoubleTap:F2" }])[0];
+
+        Assert.AreEqual(FavoriteHotkeySkipReason.None, registration.SkipReason);
+        Assert.AreEqual(0x71u, registration.VirtualKey);
+        Assert.IsTrue(registration.IsDoubleTap);
+        Assert.AreEqual(FavoriteHotkeyNativeMethods.ModNoRepeat, registration.Modifiers);
+    }
+
+    [TestMethod]
     public void Build_RepeatedComboIsKeptByTheFirstFavoriteOnly()
     {
         var favorites = new List<FavoriteItemSetting>

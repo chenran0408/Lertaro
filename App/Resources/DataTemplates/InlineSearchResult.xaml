@@ -134,7 +134,7 @@
                             </Style>
                         </ScrollViewer.Style>
                         <TextBlock 
-                                   Foreground="{DynamicResource TextPrimary}"
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                    local:TextHighlighter.HighlightText="{Binding SearchQuery}"
                                    local:TextHighlighter.HighlightBrush="{DynamicResource AccentBlue}"
                                    helpers:MarqueeBehavior.EnableMarquee="True"
@@ -173,7 +173,7 @@
                         </ScrollViewer.Style>
                         <TextBlock 
                                    FontSize="11"
-                                   Foreground="{DynamicResource TextSecondary}"
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                    VerticalAlignment="Center"
                                    helpers:MarqueeBehavior.EnableMarquee="True"
                                    TextAlignment="Right"
@@ -219,7 +219,7 @@
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
                                     <!-- Separator line (hidden for the first column) -->
-                                    <TextBlock Text="  │  " Foreground="{DynamicResource TextSecondary}" Opacity="0.4" VerticalAlignment="Center" FontSize="13">
+                                    <TextBlock Text="  │  " Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Opacity="0.4" VerticalAlignment="Center" FontSize="13">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Style.Triggers>
@@ -233,7 +233,7 @@
                                     <!-- Column text -->
                                     <TextBlock 
                                                FontSize="14"
-                                               Foreground="{DynamicResource TextPrimary}"
+                                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                                VerticalAlignment="Center"
                                                local:TextHighlighter.Text="{Binding}"
                                                local:TextHighlighter.HighlightText="{Binding DataContext.SearchQuery, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
@@ -246,7 +246,7 @@
 
                 <!-- Empty Result View -->
                 <TextBlock Text="{Binding Name}"
-                           Foreground="{DynamicResource TextPrimary}"
+                           Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                            FontSize="14"
                            TextAlignment="Center"
                            HorizontalAlignment="Stretch">

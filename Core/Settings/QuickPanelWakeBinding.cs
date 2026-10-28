@@ -44,12 +44,13 @@ public static class QuickPanelWakeBindings
             || string.IsNullOrWhiteSpace(binding.Id) || binding.Id.Length > 100) return "Wake_InvalidRule";
         if (binding.Kind == QuickPanelWakeKind.Keyboard)
         {
+            var isDoubleTap = HotkeyStringFormat.IsDoubleTap(binding.Key, out var tappedKey);
             HotkeyStringFormat.ParseCombo(binding.Key ?? "", out var modifier, out var key);
-            if (string.IsNullOrWhiteSpace(modifier) || modifier.Equals("None", StringComparison.OrdinalIgnoreCase)
+            if ((!isDoubleTap && string.IsNullOrWhiteSpace(modifier)) || modifier.Equals("None", StringComparison.OrdinalIgnoreCase)
                 || HotkeyStringFormat.IsBareModifier(binding.Key ?? "", out _)
-                || modifier.Split('+').Any(part => part.ToUpperInvariant() is not ("CONTROL" or "CTRL" or "ALT" or "SHIFT" or "WIN"))
+                || (!isDoubleTap && modifier.Split('+').Any(part => part.ToUpperInvariant() is not ("CONTROL" or "CTRL" or "ALT" or "SHIFT" or "WIN")))
                 || HotkeyStringFormat.IsReservedWindowsShortcut(binding.Key)
-                || Hook.InlineSearch.KeyboardUtils.GetKeyVirtualCode(key) is 0 or 0x7B) return "Wake_InvalidKey";
+                || Hook.InlineSearch.KeyboardUtils.GetKeyVirtualCode(isDoubleTap ? tappedKey : key) is 0 or 0x7B) return "Wake_InvalidKey";
         }
         if (binding.Kind == QuickPanelWakeKind.Click && binding.Button == QuickPanelWakeButton.Right) return "Wake_InvalidClick";
         if (binding.HoldMilliseconds is < 300 or > 2000 || binding.MovementTolerance is < 3 or > 30
@@ -72,9 +73,33 @@ public static class QuickPanelWakeBindings
     public static bool SameKey(string? first, string? second)
     {
         if (string.IsNullOrWhiteSpace(first) || string.IsNullOrWhiteSpace(second)) return false;
+        var firstDoubleTap = HotkeyStringFormat.IsDoubleTap(first, out var firstTapKey);
+        var secondDoubleTap = HotkeyStringFormat.IsDoubleTap(second, out var secondTapKey);
+        if (firstDoubleTap || secondDoubleTap)
+        {
+            var tapKey = firstDoubleTap ? firstTapKey : secondTapKey;
+            var other = firstDoubleTap ? second : first;
+            var tapVirtualKey = Hook.InlineSearch.KeyboardUtils.GetKeyVirtualCode(tapKey);
+            if (firstDoubleTap && secondDoubleTap)
+                return tapVirtualKey == Hook.InlineSearch.KeyboardUtils.GetKeyVirtualCode(secondTapKey);
+
+            HotkeyStringFormat.ParseCombo(other.Replace(" ", ""), out var otherModifiers, out var otherKey);
+            return string.IsNullOrWhiteSpace(otherModifiers)
+                && tapVirtualKey == Hook.InlineSearch.KeyboardUtils.GetKeyVirtualCode(otherKey);
+        }
         HotkeyStringFormat.ParseCombo(first.Replace(" ", ""), out var firstModifiers, out var firstKey);
         HotkeyStringFormat.ParseCombo(second.Replace(" ", ""), out var secondModifiers, out var secondKey);
         return Hook.InlineSearch.KeyboardUtils.GetKeyVirtualCode(firstKey) == Hook.InlineSearch.KeyboardUtils.GetKeyVirtualCode(secondKey)
-            && firstModifiers.Split('+').ToHashSet(StringComparer.OrdinalIgnoreCase).SetEquals(secondModifiers.Split('+'));
+            && NormalizeModifiers(firstModifiers).SetEquals(NormalizeModifiers(secondModifiers));
     }
+
+    private static HashSet<string> NormalizeModifiers(string modifiers) => modifiers.Split('+', StringSplitOptions.RemoveEmptyEntries)
+        .Select(part => part.Trim().ToUpperInvariant() switch
+        {
+            "CTRL" or "CONTROL" => "CTRL",
+            "ALT" => "ALT",
+            "SHIFT" => "SHIFT",
+            "WIN" or "WINDOWS" => "WIN",
+            _ => part.Trim().ToUpperInvariant()
+        }).ToHashSet(StringComparer.OrdinalIgnoreCase);
 }

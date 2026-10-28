@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:glass="clr-namespace:GlassDesk.UI.Controls;assembly=GlassDesk.UI"
                     xmlns:services="clr-namespace:Lertaro.App.Services">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="../Tokens/Colors.xaml"/>
@@ -9,8 +10,8 @@
 
     <!-- ═══════════ Modern ContextMenu Styles ═══════════ -->
     <Style TargetType="{x:Type ContextMenu}">
-        <Setter Property="Background" Value="{DynamicResource MenuBackground}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource MenuBorderBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource LiquidControlPopup}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource LiquidControlEdge}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="6"/>
         <Setter Property="Grid.IsSharedSizeScope" Value="True"/>
@@ -18,10 +19,10 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ContextMenu}">
-                    <Border Background="{TemplateBinding Background}"
+                    <glass:PhoneBorder Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="{StaticResource CornerRadiusPopover}"
+                            CornerRadius="15"
                             Padding="{TemplateBinding Padding}">
                         <ScrollViewer x:Name="SubMenuScrollViewer" Focusable="false"
                                       VerticalScrollBarVisibility="Auto"
@@ -29,7 +30,7 @@
                                       MaxHeight="{x:Static SystemParameters.PrimaryScreenHeight}">
                             <ItemsPresenter KeyboardNavigation.TabNavigation="Cycle"/>
                         </ScrollViewer>
-                    </Border>
+                    </glass:PhoneBorder>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -37,9 +38,9 @@
 
     <Style TargetType="{x:Type MenuItem}">
         <Setter Property="Height" Value="{x:Static services:UiMetrics.MenuItemHeight}"/>
-        <Setter Property="Foreground" Value="{DynamicResource MenuText}"/>
-        
-        <Setter Property="FontSize" Value="12.5"/>
+        <Setter Property="Foreground" Value="{DynamicResource LiquidControlText}"/>
+
+        <Setter Property="FontSize" Value="12"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -47,15 +48,15 @@
                     <Grid>
                         <!-- HighlightOverlay carries the hover background as its own Opacity fade
                              (same reasoning as ResultItemStyle's SelectionOverlay in ListBox.xaml):
-                             Bg's own Background never becomes {DynamicResource HoverBackground} directly,
+                             Bg's own Background never becomes #35FFFFFF directly,
                              since animating that shared brush's Color would mutate it for every other
                              menu item using it too. AccentBar's Fill likewise stays permanently
                              AccentBarColor with only its Opacity toggling. -->
                         <Rectangle x:Name="AccentBar" Width="3" HorizontalAlignment="Left"
                                    RadiusX="1.5" RadiusY="1.5" Fill="{DynamicResource AccentBarColor}" Opacity="0" Margin="0,2"/>
-                        <Border x:Name="HighlightOverlay" CornerRadius="{StaticResource CornerRadiusControl}"
-                                Background="{DynamicResource HoverBackground}" Margin="2,1" Opacity="0"/>
-                        <Border x:Name="Bg" CornerRadius="{StaticResource CornerRadiusControl}" Background="Transparent" Margin="2,1">
+                        <Border x:Name="HighlightOverlay" CornerRadius="9"
+                                Background="#35FFFFFF" Margin="2,1" Opacity="0"/>
+                        <glass:PhoneBorder x:Name="Bg" CornerRadius="9" Background="Transparent" Margin="2,1">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition x:Name="ColIcon" Width="30" SharedSizeGroup="Icon"/>
@@ -79,19 +80,19 @@
                                            Text="&#xE76C;"
                                            FontFamily="{DynamicResource AppIconFontFamily}"
                                            FontSize="10"
-                                           Foreground="{DynamicResource TextSecondary}"
+                                           Foreground="{DynamicResource LiquidControlMuted}"
                                            Margin="8,0,8,0"
                                            VerticalAlignment="Center"
                                            Visibility="Collapsed"/>
                                 <!-- Shortcut text area -->
                                 <TextBlock Grid.Column="3"
                                            Text="{TemplateBinding InputGestureText}"
-                                           Foreground="{DynamicResource TextSecondary}"
+                                           Foreground="{DynamicResource LiquidControlMuted}"
                                            Margin="16,0,12,0"
                                            VerticalAlignment="Center"
                                            FontSize="11.5"/>
                             </Grid>
-                        </Border>
+                        </glass:PhoneBorder>
 
                         <!-- Submenu Popup -->
                         <Popup x:Name="PART_Popup"
@@ -100,10 +101,10 @@
                                Focusable="False"
                                IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
                                PopupAnimation="Fade">
-                            <Border Background="{DynamicResource MenuBackground}"
-                                    BorderBrush="{DynamicResource MenuBorderBrush}"
+                            <glass:PhoneBorder Background="{DynamicResource LiquidControlPopup}"
+                                    BorderBrush="{DynamicResource LiquidControlEdge}"
                                     BorderThickness="1"
-                                    CornerRadius="{StaticResource CornerRadiusPopover}"
+                                    CornerRadius="14"
                                     Padding="4"
                                     SnapsToDevicePixels="True">
                                 <ScrollViewer x:Name="SubMenuScrollViewer" Focusable="false"
@@ -112,7 +113,7 @@
                                               MaxHeight="{x:Static SystemParameters.PrimaryScreenHeight}">
                                     <ItemsPresenter KeyboardNavigation.TabNavigation="Cycle"/>
                                 </ScrollViewer>
-                            </Border>
+                            </glass:PhoneBorder>
                         </Popup>
                     </Grid>
                     <ControlTemplate.Triggers>
@@ -132,7 +133,7 @@
                              surface's HoverBackground): unified so this menu (quick-nav cascader, tray
                              icon menu) highlights the same way as the actions list/flyout. -->
                         <Trigger Property="IsHighlighted" Value="True">
-                            <Setter Property="Foreground" Value="{DynamicResource MenuText}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource LiquidControlText}"/>
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
@@ -155,8 +156,8 @@
                             </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Foreground" Value="{DynamicResource MenuDisabledText}"/>
-                            <Setter Property="Opacity" Value="0.35"/>
+                            <Setter Property="Foreground" Value="{DynamicResource LiquidControlMuted}"/>
+                            <Setter Property="Opacity" Value="0.4"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -166,7 +167,7 @@
 
     <Style TargetType="{x:Type Separator}">
         <Setter Property="Height" Value="1"/>
-        <Setter Property="Background" Value="{DynamicResource SeparatorBrush}"/>
+        <Setter Property="Background" Value="{StaticResource LiquidControlEdge}"/>
         <Setter Property="Margin" Value="6,4"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="UseLayoutRounding" Value="True"/>
@@ -245,7 +246,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBackground}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="#35FFFFFF"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

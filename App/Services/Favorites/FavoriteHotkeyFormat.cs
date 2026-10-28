@@ -35,7 +35,8 @@ public static class FavoriteHotkeyFormat
         modifiers = NoModifier;
         if (string.IsNullOrWhiteSpace(hotkey)) return false;
 
-        var parts = hotkey.Split('+', StringSplitOptions.TrimEntries);
+        var isDoubleTap = HotkeyStringFormat.IsDoubleTap(hotkey, out var tappedKey);
+        var parts = isDoubleTap ? new[] { tappedKey } : hotkey.Split('+', StringSplitOptions.TrimEntries);
         if (parts.Any(string.IsNullOrEmpty)) return false;
 
         var token = parts[^1];
@@ -189,9 +190,8 @@ public static class FavoriteHotkeyFormat
         if (modifiers.HasFlag(ModifierKeys.Shift)) result |= FavoriteHotkeyNativeMethods.ModShift;
         if (modifiers.HasFlag(ModifierKeys.Windows)) result |= FavoriteHotkeyNativeMethods.ModWin;
 
-        // MOD_NOREPEAT: holding the combination down must not navigate the foreground window over and
-        // over. Windows only honours this bit from Windows 7 on, and only when a modifier is present,
-        // which every accepted value here has (see TryBuild).
-        return result == NoModifier ? NoModifier : result | FavoriteHotkeyNativeMethods.ModNoRepeat;
+        // MOD_NOREPEAT keeps held keys from generating repeated WM_HOTKEY messages. This is required
+        // for explicit double-tap bindings, including bindings without modifiers.
+        return result | FavoriteHotkeyNativeMethods.ModNoRepeat;
     }
 }

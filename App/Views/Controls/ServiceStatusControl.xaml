@@ -25,13 +25,13 @@
             <TextBlock x:Name="TxtLoadingTitle" Text="{Binding LoadingTitle}"
                        FontSize="15"  FontWeight="SemiBold"
                        HorizontalAlignment="Center"
-                       Foreground="{DynamicResource TextPrimary}"
+                       Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                        TextAlignment="Center"/>
             
             <!-- Details / Stats -->
             <TextBlock x:Name="TxtLoadingStats" Text="{Binding LoadingStats}"
                        FontSize="13" 
-                       Foreground="{DynamicResource TextSecondary}"
+                       Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                        HorizontalAlignment="Center"
                        Margin="0,8,0,0"
                        TextAlignment="Center"/>

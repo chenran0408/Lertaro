@@ -35,7 +35,10 @@ public class SearchWindowInputHandler
 
     public void HandleWindowPreviewKeyDown(KeyEventArgs e)
     {
-        if (SearchInputHelper.HandleCommonSearchKeys(e, _window, _window.MenuPresenter))
+        var enterBehavior = Keyboard.FocusedElement == _window.TxtSearchBoxControl
+            ? (Action)(() => HandleTxtSearchBoxKeyDown(e))
+            : () => OpenSelectedResult();
+        if (SearchInputHelper.HandleCommonSearchKeys(e, _window, _window.MenuPresenter, enterBehavior))
             return;
 
         if (SearchWindowStayOpenSupport.TryHandle(_window, e))

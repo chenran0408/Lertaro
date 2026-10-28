@@ -36,23 +36,6 @@ public class SearchWindowChromeHandler
     {
         _window.BtnMaximize?.Content = _window.WindowState == WindowState.Maximized ? "\uE923" : "\uE922";
 
-        if (_window.MainBorder != null && _window.ClippingBorder != null)
-        {
-            if (_window.WindowState == WindowState.Maximized)
-            {
-                _window.MainBorder.CornerRadius = new CornerRadius(0);
-                _window.MainBorder.Margin = new Thickness(0);
-                _window.MainBorder.BorderThickness = new Thickness(0);
-                _window.ClippingBorder.CornerRadius = new CornerRadius(0);
-            }
-            else
-            {
-                _window.MainBorder.CornerRadius = new CornerRadius(10);
-                _window.MainBorder.Margin = new Thickness(8);
-                _window.MainBorder.BorderThickness = new Thickness(1);
-                _window.ClippingBorder.CornerRadius = new CornerRadius(10);
-            }
-        }
     }
 
     public void Minimize() => _window.WindowState = WindowState.Minimized;

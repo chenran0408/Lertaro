@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Lertaro.App.Views.SpaceAnalyzer.SpaceAnalyzerView"
+<UserControl x:Class="Lertaro.App.Views.SpaceAnalyzer.SpaceAnalyzerView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:services="clr-namespace:Lertaro.App.Services"
@@ -21,11 +21,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource HoverBackground}"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource HoverBackground}"/>
-                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                                <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdgeActive}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -37,7 +37,7 @@
             <Setter Property="MinWidth" Value="0"/>
             <Setter Property="Padding" Value="7,0"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="Foreground" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -49,8 +49,8 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Background" Property="Background" Value="{DynamicResource HoverBackground}"/>
-                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                                <Setter TargetName="Background" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                                <Setter Property="Foreground" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Background" Property="Opacity" Value="0.72"/>
@@ -61,13 +61,13 @@
             </Setter>
         </Style>
         <Style x:Key="SpaceCurrentBreadcrumbButton" TargetType="Button" BasedOn="{StaticResource SpaceBreadcrumbButton}">
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="Foreground" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Arrow"/>
         </Style>
     </UserControl.Resources>
 
-    <Grid Background="{DynamicResource ContentBg}">
+    <Grid Background="Transparent">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -77,12 +77,12 @@
 
         <StackPanel Grid.Row="0" Margin="20,16,20,12">
             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_Subtitle]}"
-                       FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                       FontSize="22" FontWeight="SemiBold" Style="{StaticResource GlassTextPrimary}"/>
             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_IndexedOnly]}"
-                       Margin="0,5,0,0" FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
+                       Margin="0,5,0,0" FontSize="12" Style="{StaticResource GlassTextSecondary}"/>
         </StackPanel>
 
-        <Border Grid.Row="1" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}"
+        <Border Grid.Row="1" Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}"
                 BorderThickness="1" CornerRadius="9" Padding="6,3" Margin="20,0,20,10">
             <DockPanel>
                 <Button x:Name="BackButton" DockPanel.Dock="Left" Style="{StaticResource SpaceBreadcrumbButton}"
@@ -96,30 +96,30 @@
 
         <Grid Grid.Row="2" Margin="20,0,20,14">
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="330"/></Grid.ColumnDefinitions>
-            <Border Grid.Column="0" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}"
+            <Border Grid.Column="0" Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}"
                     BorderThickness="1" CornerRadius="12" Padding="8" Margin="0,0,12,0">
                 <Grid>
                     <Canvas x:Name="TreemapCanvas" SizeChanged="TreemapCanvas_SizeChanged"
                             MouseLeftButtonUp="TreemapCanvas_MouseLeftButtonUp" ClipToBounds="True"/>
                     <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="&#xE9D5;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="34"
-                                   Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center"/>
+                                   Style="{StaticResource GlassTextSecondary}" HorizontalAlignment="Center"/>
                         <TextBlock x:Name="EmptyText" Margin="0,10,0,0" FontSize="13"
-                                   Foreground="{DynamicResource TextSecondary}" TextAlignment="Center"/>
+                                   Style="{StaticResource GlassTextSecondary}" TextAlignment="Center"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <Border Grid.Column="1" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}"
+            <Border Grid.Column="1" Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}"
                     BorderThickness="1" CornerRadius="12" Padding="8">
                 <Grid>
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                     <Grid Grid.Row="0" Margin="8,5,8,8">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_Name]}"
-                                   FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}"/>
+                                   FontSize="12" FontWeight="SemiBold" Style="{StaticResource GlassTextSecondary}"/>
                         <TextBlock Grid.Column="1" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_Size]}"
-                                   FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}"/>
+                                   FontSize="12" FontWeight="SemiBold" Style="{StaticResource GlassTextSecondary}"/>
                     </Grid>
                     <Button x:Name="ParentListButton" Grid.Row="1" Height="34" Margin="0,0,0,3"
                             Style="{StaticResource SpaceBreadcrumbButton}" HorizontalContentAlignment="Left"
@@ -141,7 +141,7 @@
                                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                     <TextBlock Grid.RowSpan="2" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="14"
-                                               Foreground="{DynamicResource AccentBlue}" Margin="0,0,8,0">
+                                               Foreground="{StaticResource LiquidControlAccent}" Margin="0,0,8,0">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Text" Value="&#xE8A5;"/>
@@ -156,22 +156,22 @@
                                     <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
                                                   Focusable="False" Background="Transparent">
                                         <TextBlock Text="{Binding Name}" FontSize="12.5" VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource TextPrimary}"
+                                                   Style="{StaticResource GlassTextPrimary}"
                                                    helpers:MarqueeBehavior.EnableMarquee="True"/>
                                     </ScrollViewer>
                                     <TextBlock Grid.Column="2" Text="{Binding DisplaySize}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                                               Foreground="{DynamicResource TextSecondary}" FontSize="11.5" Margin="10,0,0,0"/>
+                                               Style="{StaticResource GlassTextSecondary}" FontSize="11.5" Margin="10,0,0,0"/>
                                     <ProgressBar Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Value="{Binding RelativePercentage}"
                                                  Minimum="0" Maximum="100" Height="3" Margin="0,6,0,0" BorderThickness="0"
-                                                 Background="{DynamicResource ControlBorderBrush}" IsHitTestVisible="False"/>
+                                                 Background="{StaticResource LiquidControlEdge}" IsHitTestVisible="False"/>
                                     <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,5,0,0">
                                         <StackPanel.Style><Style TargetType="StackPanel">
                                             <Setter Property="Visibility" Value="Collapsed"/>
                                             <Style.Triggers><DataTrigger Binding="{Binding IsVolume}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
                                         </Style></StackPanel.Style>
-                                        <TextBlock Text="{Binding CapacityText}" TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource TextSecondary}"/>
-                                        <TextBlock Text="{Binding IndexStatusText}" TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource TextSecondary}">
-                                            <TextBlock.Style><Style TargetType="TextBlock">
+                                        <TextBlock Text="{Binding CapacityText}" TextWrapping="Wrap" FontSize="11" Style="{StaticResource GlassTextSecondary}"/>
+                                        <TextBlock Text="{Binding IndexStatusText}" TextWrapping="Wrap" FontSize="11">
+                                            <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource GlassTextSecondary}">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                                 <Style.Triggers><DataTrigger Binding="{Binding IsIndexed}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
                                             </Style></TextBlock.Style>
@@ -185,13 +185,13 @@
             </Border>
         </Grid>
 
-        <Border Grid.Row="3" Background="{DynamicResource HeaderBg}" BorderBrush="{DynamicResource BorderColor}"
+        <Border Grid.Row="3" Background="Transparent" BorderBrush="{StaticResource LiquidControlEdge}"
                 BorderThickness="0,1,0,0" Padding="20,9">
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                <TextBlock x:Name="SummaryText" Foreground="{DynamicResource TextSecondary}" FontSize="11.5"/>
+                <TextBlock x:Name="SummaryText" Style="{StaticResource GlassTextSecondary}" FontSize="11.5"/>
                 <TextBlock Grid.Column="1" Margin="12,0,0,0" TextTrimming="CharacterEllipsis" x:Name="LogicalSizeHint" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_LogicalSize]}"
-                           HorizontalAlignment="Right" Foreground="{DynamicResource TextSecondary}" FontSize="11.5"/>
+                           HorizontalAlignment="Right" Style="{StaticResource GlassTextSecondary}" FontSize="11.5"/>
             </Grid>
         </Border>
     </Grid>

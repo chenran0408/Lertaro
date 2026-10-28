@@ -33,8 +33,11 @@ public sealed class FavoriteHotkeyService : IDisposable
 
     private GlobalHotkeyWindow? _window;
     private readonly Dictionary<int, FavoriteHotkeyRegistration> _byId = new();
+    private readonly HashSet<int> _doubleTapOwners = new();
     private readonly HashSet<string> _unavailableCombos = new(StringComparer.OrdinalIgnoreCase);
     private int _nextId = 1;
+    public event Action<IReadOnlyList<int>>? DoubleTapEligibilityChanged;
+    public IReadOnlyList<int> EligibleDoubleTapOwnerIndices => _doubleTapOwners.Order().ToArray();
 
     internal FavoriteHotkeyService(
         Func<GlobalHotkeyWindow>? windowFactory = null,
@@ -82,6 +85,13 @@ public sealed class FavoriteHotkeyService : IDisposable
             // already won) are not failures -- the Settings row shows a hint for those instead.
             if (request.SkipReason != FavoriteHotkeySkipReason.None) continue;
 
+            if (request.IsDoubleTap)
+            {
+                _doubleTapOwners.Add(request.OwnerIndex);
+                attempted++;
+                continue;
+            }
+
             attempted++;
             var (registered, errorCode) = _register(_nextId, request.Modifiers, request.VirtualKey);
 
@@ -107,11 +117,12 @@ public sealed class FavoriteHotkeyService : IDisposable
         foreach (var combo in unavailable) _unavailableCombos.Add(combo);
 
         onFailure?.Invoke(failures);
+        DoubleTapEligibilityChanged?.Invoke(EligibleDoubleTapOwnerIndices);
 
         // Logged at Info, not Debug: a hotkey that is registered but does nothing is exactly the kind of
         // report the log has to be able to answer ("did it even register?"), and at Debug that answer was
         // missing from the shipped log level entirely.
-        Logger.Log($"[FavoriteHotkeys] Registered {_byId.Count} of {attempted} requested hotkey(s).", LogLevel.Info);
+        Logger.Log($"[FavoriteHotkeys] Activated {_byId.Count + _doubleTapOwners.Count} of {attempted} requested hotkey(s).", LogLevel.Info);
     }
 
     /// <summary>
@@ -129,11 +140,17 @@ public sealed class FavoriteHotkeyService : IDisposable
     internal void HandleHotkeyId(int hotkeyId)
     {
         if (!_byId.TryGetValue(hotkeyId, out var registration)) return;
-
         var favorite = _favoriteAt(registration.OwnerIndex);
         if (favorite == null) return;
 
         _navigate(favorite.Path);
+    }
+
+    internal void HandleDoubleTapFavorite(int ownerIndex)
+    {
+        if (!_doubleTapOwners.Contains(ownerIndex)) return;
+        var favorite = _favoriteAt(ownerIndex);
+        if (favorite != null) _navigate(favorite.Path);
     }
 
     private static FavoriteItemSetting? GetFavoriteFromSettings(int index)
@@ -146,6 +163,7 @@ public sealed class FavoriteHotkeyService : IDisposable
     {
         foreach (var id in _byId.Keys) _unregister(id);
         _byId.Clear();
+        _doubleTapOwners.Clear();
 
         // Ids restart from 1 on each refresh. Every id from the previous list was just unregistered, so
         // a recycled one cannot resolve to a stale entry -- _byId is empty at this point, and only

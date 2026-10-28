@@ -53,4 +53,4 @@ If Lertaro has been useful to you, thank you for considering a donation!
 
 ## License
 
-MIT License.
+Lertaro's original code is licensed under MIT. Vendored GlassDesk and third-party components retain their own licenses and notices; see [Vendor/GlassDesk/LICENSE](Vendor/GlassDesk/LICENSE), [Vendor/GlassDesk/NOTICE](Vendor/GlassDesk/NOTICE), and [Vendor/GlassDesk/docs/LICENSING.md](Vendor/GlassDesk/docs/LICENSING.md).

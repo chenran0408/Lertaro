@@ -31,7 +31,7 @@ public class QuickSearchWindowInputHandler
 
     public void HandleWindowPreviewKeyDown(KeyEventArgs e)
     {
-        if (SearchInputHelper.HandleCommonSearchKeys(e, _window, _window.MenuPresenter))
+        if (SearchInputHelper.HandleCommonSearchKeys(e, _window, _window.MenuPresenter, HandleEnterBehavior))
             return;
 
         if (QuickSearchLaunchPanelInputHelper.Handle(e, _window))
@@ -45,7 +45,7 @@ public class QuickSearchWindowInputHandler
         }
 
         var settings = UserSettings.Load().Hotkeys;
-        if (WpfUiHelper.MatchesHotkey(settings.CompleteFromSelectionHotkey, Keyboard.Modifiers, WpfUiHelper.GetActualKey(e)))
+        if (WpfUiHelper.MatchesHotkey(settings.CompleteFromSelectionHotkey, e))
         {
             CompleteSearchFromSelection();
             e.Handled = true;
@@ -69,25 +69,25 @@ public class QuickSearchWindowInputHandler
             }
         }
         var actualKey = WpfUiHelper.GetActualKey(e);
-        if (WpfUiHelper.MatchesHotkey(settings.KeywordHistoryPreviousHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(settings.KeywordHistoryPreviousHotkey, e))
         {
             _window.KeywordHistoryController.Navigate(previous: true);
             e.Handled = true;
             return;
         }
-        if (WpfUiHelper.MatchesHotkey(settings.KeywordHistoryNextHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(settings.KeywordHistoryNextHotkey, e))
         {
             _window.KeywordHistoryController.Navigate(previous: false);
             e.Handled = true;
             return;
         }
-        if (WpfUiHelper.MatchesHotkey(settings.KeywordHistoryDeleteHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(settings.KeywordHistoryDeleteHotkey, e))
         {
             _window.KeywordHistoryController.DeleteCurrent();
             e.Handled = true;
             return;
         }
-        if (WpfUiHelper.MatchesHotkey(settings.StayOpenHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(settings.StayOpenHotkey, e))
         {
             // Keeps this summon on screen when focus goes elsewhere, so a query can be assembled from
             // text copied out of other windows. See QuickSearchWindowController.ToggleStayOpen.
@@ -95,7 +95,7 @@ public class QuickSearchWindowInputHandler
             e.Handled = true;
             return;
         }
-        if (WpfUiHelper.MatchesHotkey(settings.OpenFullWindowHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(settings.OpenFullWindowHotkey, e))
         {
             // Opens the full SearchWindow directly (bypassing the search box logo's menu detour), carrying
             // over whatever query is currently active (including a saved query while in actions mode) --
@@ -107,7 +107,7 @@ public class QuickSearchWindowInputHandler
             e.Handled = true;
             return;
         }
-        if (UserSettings.Load().LocalSend.Enabled && WpfUiHelper.MatchesHotkey(settings.LocalSendSendWindowHotkey, Keyboard.Modifiers, actualKey))
+        if (UserSettings.Load().LocalSend.Enabled && WpfUiHelper.MatchesHotkey(settings.LocalSendSendWindowHotkey, e))
         {
             Lertaro.App.Helpers.LocalSend.LocalSendAppEventHandler.OpenSendWindow();
             e.Handled = true;
@@ -123,26 +123,8 @@ public class QuickSearchWindowInputHandler
             // WPF's normal IME pipeline commits the composition into the search box, same as it would
             // if this handler didn't exist at all.
             if (e.Key == Key.ImeProcessed)
-            {
                 return;
-            }
-            var result = _window.LstResults.SelectedItem as AppSearchResult;
-            if (result == null && _window.LstResults.Items.Count > 0)
-            {
-                _window.LstResults.SelectedIndex = 0;
-                result = _window.LstResults.SelectedItem as AppSearchResult;
-            }
-            // File/folder results are handled earlier by HotkeyActionTrigger (Ctrl+Enter locate,
-            // Ctrl+Shift+Enter open-as-admin) and never reach here. What reaches here on those chords
-            // is a result with no matching file action — notably an application — so honor
-            // Ctrl+Shift+Enter as "launch as admin" so apps can still be elevated.
-            if (result != null)
-            {
-                var asAdmin = Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift);
-                var current = SearchResultExecutionHelper.ResolveCurrent(result, _window.TxtSearch.Text, isInlineWindow: false);
-                if (current != null)
-                    ExecuteResult(current, asAdmin);
-            }
+            HandleEnterBehavior();
             e.Handled = true;
             return;
         }
@@ -161,19 +143,19 @@ public class QuickSearchWindowInputHandler
             e.Handled = true;
             return;
         }
-        if (WpfUiHelper.MatchesHotkey(settings.NextItemHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(settings.NextItemHotkey, e))
         {
             MoveResultSelection(1);
             e.Handled = true;
             return;
         }
-        if (WpfUiHelper.MatchesHotkey(settings.PreviousItemHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(settings.PreviousItemHotkey, e))
         {
             MoveResultSelection(-1);
             e.Handled = true;
             return;
         }
-        if (WpfUiHelper.MatchesHotkey(settings.ActionsMenuHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(settings.ActionsMenuHotkey, e))
         {
             if (_window.LstResults.SelectedItem is AppSearchResult result && !result.IsEmptyResult && !result.IsSearchSectionHeader)
             {
@@ -211,6 +193,22 @@ public class QuickSearchWindowInputHandler
                     }
                 }
             }
+        }
+    }
+
+    private void HandleEnterBehavior()
+    {
+        var result = _window.LstResults.SelectedItem as AppSearchResult;
+        if (result == null && _window.LstResults.Items.Count > 0)
+        {
+            _window.LstResults.SelectedIndex = 0;
+            result = _window.LstResults.SelectedItem as AppSearchResult;
+        }
+        if (result != null)
+        {
+            var current = SearchResultExecutionHelper.ResolveCurrent(result, _window.TxtSearch.Text, isInlineWindow: false);
+            if (current != null)
+                ExecuteResult(current, asAdmin: false);
         }
     }
 

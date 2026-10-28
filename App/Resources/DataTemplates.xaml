@@ -85,7 +85,7 @@
                 <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Focusable="False"
                               local:ScrollViewerHelper.BubbleMouseWheel="True">
                     <TextBlock 
-                               Foreground="{DynamicResource TextPrimary}"
+                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                local:TextHighlighter.Text="{Binding Name}"
                                local:TextHighlighter.HighlightText="{Binding SearchQuery}"
                                local:TextHighlighter.HighlightBrush="{DynamicResource AccentBlue}"
@@ -130,7 +130,7 @@
                             </Style.Triggers>
                         </Style>
                     </ScrollViewer.Style>
-                    <TextBlock Foreground="{DynamicResource TextSecondary}"
+                    <TextBlock Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                HorizontalAlignment="Left"
                                helpers:MarqueeBehavior.EnableMarquee="True"
                                local:TextHighlighter.Text="{Binding ParentDir}"

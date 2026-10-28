@@ -53,9 +53,9 @@ internal static class PluginContextMenuKeyHandler
         var actualKey = WpfUiHelper.GetActualKey(ev);
         var hotkeys = UserSettings.Load().Hotkeys;
         var effectiveKey = ev.Key;
-        if (WpfUiHelper.MatchesHotkey(hotkeys.NextItemHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(hotkeys.NextItemHotkey, ev))
             effectiveKey = Key.Down;
-        else if (WpfUiHelper.MatchesHotkey(hotkeys.PreviousItemHotkey, Keyboard.Modifiers, actualKey))
+        else if (WpfUiHelper.MatchesHotkey(hotkeys.PreviousItemHotkey, ev))
             effectiveKey = Key.Up;
 
         if (effectiveKey == Key.Down)

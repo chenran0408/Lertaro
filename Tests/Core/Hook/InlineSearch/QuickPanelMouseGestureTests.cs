@@ -17,6 +17,92 @@ public sealed class QuickPanelMouseGestureTests
         Assert.IsTrue(detector.ReturnPressToSystem()); Assert.IsFalse(detector.ReturnPressToSystem());
         Assert.AreEqual(QuickPanelMouseGestureDetector.ReleaseAction.PassThrough, detector.Release());
     }
+
+    [TestMethod]
+    public void MouseMoveWithoutCircleRulesDoesNotPollNativeKeyState()
+    {
+        var calls = 0;
+        var settings = new UserSettings();
+        using var hook = new QuickPanelMouseGestureHook(() => settings, () => false, _ => { calls++; return 0; });
+        for (uint i = 0; i < 10_000; i++)
+            Assert.IsFalse(hook.Process(0x0200, (int)i, 0, i * 16));
+        Assert.AreEqual(0, calls);
+    }
+
+    [TestMethod]
+    public void RightHoldDownDoesNotSynchronouslyQueryWakePolicy()
+    {
+        var policyCalls = 0;
+        var settings = new UserSettings();
+        settings.Hotkeys.QuickPanelWakeBindings =
+        [new QuickPanelWakeBinding { Id = "right-hold", Kind = QuickPanelWakeKind.Hold, Button = QuickPanelWakeButton.Right }];
+        using var hook = new QuickPanelMouseGestureHook(() => settings, () => false,
+            _ => 0, (_, _, _, _) => { policyCalls++; return true; });
+
+        Assert.IsTrue(hook.Process(0x0204, 100, 100, 1000));
+        Assert.AreEqual(0, policyCalls, "The right-button down edge must not perform process/fullscreen policy checks.");
+    }
+
+    [TestMethod]
+    public void ShortRightHoldReplaysOneCompleteClickWithoutWakePolicyChecks()
+    {
+        var policyCalls = 0;
+        var replayed = new List<(QuickPanelWakeButton Button, bool CompleteClick)>();
+        var settings = new UserSettings();
+        settings.Hotkeys.QuickPanelWakeBindings =
+        [new QuickPanelWakeBinding { Id = "right-hold", Kind = QuickPanelWakeKind.Hold, Button = QuickPanelWakeButton.Right, HoldMilliseconds = 2000 }];
+        using var hook = new QuickPanelMouseGestureHook(() => settings, () => false,
+            _ => 0, (_, _, _, _) => { policyCalls++; return true; }, (button, complete) => replayed.Add((button, complete)));
+
+        Assert.IsTrue(hook.Process(0x0204, 100, 100, 1000), "The hook owns the right-button down while checking for a hold gesture.");
+        Assert.IsTrue(hook.Process(0x0205, 100, 100, 1010), "The short press is consumed after replaying the original click.");
+
+        Assert.AreEqual(0, policyCalls, "An ordinary short press must not query process or fullscreen policy.");
+        CollectionAssert.AreEqual(new[] { (QuickPanelWakeButton.Right, true) }, replayed);
+    }
+
+    [TestMethod]
+    public void ShortRightClickQueuesTheCompleteReplayInsteadOfRunningItInline()
+    {
+        var deferred = new List<QuickPanelWakeButton>();
+        var replayed = new List<(QuickPanelWakeButton Button, bool CompleteClick)>();
+        var settings = new UserSettings();
+        settings.Hotkeys.QuickPanelWakeBindings =
+        [new QuickPanelWakeBinding { Id = "right-hold", Kind = QuickPanelWakeKind.Hold, Button = QuickPanelWakeButton.Right, HoldMilliseconds = 2000 }];
+        using var hook = new QuickPanelMouseGestureHook(() => settings, () => false,
+            _ => 0, (_, _, _, _) => true, (button, complete) => replayed.Add((button, complete)), deferred.Add);
+
+        Assert.IsTrue(hook.Process(0x0204, 100, 100, 1000));
+        Assert.IsTrue(hook.Process(0x0205, 100, 100, 1010));
+
+        CollectionAssert.AreEqual(new[] { QuickPanelWakeButton.Right }, deferred);
+        Assert.AreEqual(0, replayed.Count, "SendInput must be scheduled outside the low-level hook callback.");
+    }
+
+    [TestMethod]
+    public void MovingPastHoldToleranceReturnsTheOriginalButtonToTheSystem()
+    {
+        var policyCalls = 0;
+        var replayed = new List<(QuickPanelWakeButton Button, bool CompleteClick)>();
+        var deferred = new List<QuickPanelWakeButton>();
+        var settings = new UserSettings();
+        settings.Hotkeys.QuickPanelWakeBindings =
+        [new QuickPanelWakeBinding { Id = "right-hold", Kind = QuickPanelWakeKind.Hold, Button = QuickPanelWakeButton.Right, HoldMilliseconds = 2000, MovementTolerance = 6 }];
+        using var hook = new QuickPanelMouseGestureHook(() => settings, () => false,
+            _ => 0, (_, _, _, _) => { policyCalls++; return true; },
+            (button, complete) => replayed.Add((button, complete)), deferred.Add);
+
+        Assert.IsTrue(hook.Process(0x0204, 100, 100, 1000));
+        Assert.IsFalse(hook.Process(0x0200, 110, 100, 1010), "The move that cancels the gesture continues to the system.");
+        Assert.IsFalse(hook.Process(0x0205, 110, 100, 1020), "The matching up continues to the system.");
+
+        Assert.AreEqual(0, policyCalls);
+        CollectionAssert.AreEqual(Array.Empty<QuickPanelWakeButton>(), deferred,
+            "The movement-cancel DOWN must be replayed synchronously before the move and matching UP pass through.");
+        CollectionAssert.AreEqual(new[] { (QuickPanelWakeButton.Right, false) }, replayed,
+            "After the hook withheld the original down, it must replay that down once before passing later mouse input through.");
+    }
+
     [TestMethod]
     public void LongHoldFiresOnceAndSuppressesOnlyItsOwnReleaseIncludingTickRollover()
     {
@@ -132,5 +218,25 @@ public sealed class QuickPanelMouseGestureTests
         detector.OnKeyUp(0xA2); detector.OnKeyDown(0xA4);
         Assert.IsTrue(detector.IsQuickPanelComboDown(0x20)); Assert.IsTrue(detector.CheckQuickPanelHotkey(0x20, out consume));
         Assert.IsTrue(consume); Assert.IsFalse(detector.CheckQuickPanelHotkey(0x71, out _));
+    }
+
+    [TestMethod]
+    public void DoubleTapKeyIsValidWakeBindingAndTriggersOnlyAfterTwoReleasedPresses()
+    {
+        var binding = new QuickPanelWakeBinding { Id = "double-f2", Kind = QuickPanelWakeKind.Keyboard, Key = "DoubleTap:F2" };
+        Assert.IsNull(QuickPanelWakeBindings.Validate(binding));
+        Assert.IsTrue(QuickPanelWakeBindings.SameKey("DoubleTap:F2", "DoubleTap:F2"));
+        Assert.IsFalse(QuickPanelWakeBindings.SameKey("DoubleTap:F2", "Ctrl+F2"));
+
+        var settings = new UserSettings();
+        settings.Hotkeys.QuickPanelWakeBindings = [binding];
+        var detector = new GlobalHotkeyDetector(settings, new Core.Hook.ExplorerTracker());
+        detector.OnKeyDown(0x71);
+        Assert.IsFalse(detector.CheckQuickPanelHotkey(0x71, out var consume, 100));
+        Assert.IsFalse(consume);
+        detector.OnKeyUp(0x71);
+        detector.OnKeyDown(0x71);
+        Assert.IsTrue(detector.CheckQuickPanelHotkey(0x71, out consume, 250));
+        Assert.IsTrue(consume);
     }
 }

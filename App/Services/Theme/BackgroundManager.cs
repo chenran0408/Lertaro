@@ -7,7 +7,7 @@ internal static class BackgroundManager
 {
     private static BackgroundSettings? _preview;
     internal static BackgroundSettings Current => (_preview ?? UserSettings.Load().Background ?? new()).Normalize();
-    internal static bool IsCustom => Current.Kind != BackgroundKind.Theme;
+    internal static bool IsCustom => Current.Kind == BackgroundKind.Image;
     internal static event Action? Changed;
 
     internal static void Preview(BackgroundSettings settings)

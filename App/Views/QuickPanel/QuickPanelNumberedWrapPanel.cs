@@ -1,7 +1,10 @@
 using System.Globalization;
 using System.Windows;
+using System.Windows.Media.Animation;
 using System.Windows.Media;
 using Lertaro.App.Converters;
+using GlassDesk.UI.Theming;
+using Point = System.Windows.Point;
 
 namespace Lertaro.App.Views.QuickPanel;
 
@@ -18,13 +21,15 @@ internal sealed class QuickPanelNumberedWrapPanel : System.Windows.Controls.Pane
     public static readonly DependencyProperty UsesGridSlotsProperty = DependencyProperty.Register(
         nameof(UsesGridSlots), typeof(bool), typeof(QuickPanelNumberedWrapPanel),
         new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender));
-    public static readonly DependencyProperty ShowGridLinesProperty = DependencyProperty.Register(
-        nameof(ShowGridLines), typeof(bool), typeof(QuickPanelNumberedWrapPanel),
+    public static readonly DependencyProperty ReserveDropRowProperty = DependencyProperty.Register(
+        nameof(ReserveDropRow), typeof(bool), typeof(QuickPanelNumberedWrapPanel),
         new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender));
-    public bool ShowGridLines { get => (bool)GetValue(ShowGridLinesProperty); set => SetValue(ShowGridLinesProperty, value); }
+    public bool ReserveDropRow { get => (bool)GetValue(ReserveDropRowProperty); set => SetValue(ReserveDropRowProperty, value); }
     public IReadOnlyDictionary<string, int>? GridSlots { get => (IReadOnlyDictionary<string, int>?)GetValue(GridSlotsProperty); set => SetValue(GridSlotsProperty, value); }
     public bool UsesGridSlots { get => (bool)GetValue(UsesGridSlotsProperty); set => SetValue(UsesGridSlotsProperty, value); }
     private int _targetSlot = -1;
+    private IReadOnlyDictionary<string, int>? _previewGridSlots;
+    private readonly Dictionary<UIElement, TranslateTransform> _previewMotions = new();
     internal int TargetSlot { get => _targetSlot; set { _targetSlot = value; InvalidateVisual(); } }
     private double _gutterWidth;
     private double _slotWidth;
@@ -62,16 +67,6 @@ internal sealed class QuickPanelNumberedWrapPanel : System.Windows.Controls.Pane
         var rows = RowCount();
         var height = CellHeight();
         var iconHeight = QuickPanelTileMetrics.IconHeightFor(_slotWidth);
-        if (ShowGridLines || _targetSlot >= 0)
-        {
-            var outline = new System.Windows.Media.Pen(new SolidColorBrush(System.Windows.Media.Color.FromArgb(35, 128, 128, 128)), 1);
-            for (var row = 0; row < rows; row++)
-                for (var column = 0; column < _columns; column++)
-                    context.DrawRoundedRectangle(null, outline, new Rect(_gutterWidth + column * _slotWidth + 2, row * height + 2, Math.Max(0, _slotWidth - 4), Math.Max(0, height - 4)), 5, 5);
-            if (_targetSlot >= 0)
-                context.DrawRoundedRectangle(new SolidColorBrush(System.Windows.Media.Color.FromArgb(65, 60, 140, 230)), outline,
-                    new Rect(_gutterWidth + _targetSlot % _columns * _slotWidth, _targetSlot / _columns * height, _slotWidth, height), 5, 5);
-        }
         for (var row = 0; row < rows; row++)
         {
             var text = NumberText(row + 1, digits);
@@ -85,6 +80,43 @@ internal sealed class QuickPanelNumberedWrapPanel : System.Windows.Controls.Pane
         return (int)(point.Y / CellHeight()) * _columns + Math.Min(_columns - 1, (int)((point.X - _gutterWidth) / _slotWidth));
     }
 
+    internal void PreviewPlacement(IReadOnlyDictionary<string, int>? slots)
+    {
+        var current = InternalChildren.Cast<UIElement>()
+            .ToDictionary(child => child, child => child.TranslatePoint(new Point(), this));
+        foreach (var child in _previewMotions.Keys.Where(child => !current.ContainsKey(child)).ToArray())
+            _previewMotions.Remove(child);
+        foreach (var (child, motion) in _previewMotions)
+        {
+            motion.BeginAnimation(TranslateTransform.XProperty, null);
+            motion.BeginAnimation(TranslateTransform.YProperty, null);
+            motion.X = motion.Y = 0;
+        }
+
+        _previewGridSlots = slots;
+        InvalidateMeasure();
+        UpdateLayout();
+        if (ThemeService.Current?.AnimationsEnabled == false) return;
+
+        var duration = TimeSpan.FromMilliseconds(210);
+        foreach (var child in InternalChildren.Cast<UIElement>())
+        {
+            if (!current.TryGetValue(child, out var previous)) continue;
+            var target = child.TranslatePoint(new Point(), this);
+            var x = previous.X - target.X;
+            var y = previous.Y - target.Y;
+            if (Math.Abs(x) < .5 && Math.Abs(y) < .5) continue;
+
+            var motion = MotionFor(child);
+            if (Math.Abs(x) >= .5)
+                motion.BeginAnimation(TranslateTransform.XProperty,
+                    new DoubleAnimation(x, 0, duration) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }, FillBehavior = FillBehavior.Stop });
+            if (Math.Abs(y) >= .5)
+                motion.BeginAnimation(TranslateTransform.YProperty,
+                    new DoubleAnimation(y, 0, duration) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }, FillBehavior = FillBehavior.Stop });
+        }
+    }
+
     internal static QuickPanelNumberedWrapPanel? Find(DependencyObject root)
     {
         if (root is QuickPanelNumberedWrapPanel panel) return panel;
@@ -94,15 +126,35 @@ internal sealed class QuickPanelNumberedWrapPanel : System.Windows.Controls.Pane
     }
 
     private int SlotFor(int index)
-        => UsesGridSlots && InternalChildren[index] is FrameworkElement { DataContext: AppSearchResult item }
-            && GridSlots?.TryGetValue(item.FullPath, out var slot) == true ? slot : index;
+    {
+        if (InternalChildren[index] is not FrameworkElement { DataContext: AppSearchResult item }) return index;
+        if (_previewGridSlots?.TryGetValue(item.FullPath, out var preview) == true) return preview;
+        return UsesGridSlots && GridSlots?.TryGetValue(item.FullPath, out var slot) == true ? slot : index;
+    }
 
     private int RowCount()
     {
         var count = UsesGridSlots && InternalChildren.Count > 0 ? Enumerable.Range(0, InternalChildren.Count).Max(SlotFor) + 1 : InternalChildren.Count;
         var rows = QuickPanelLineNumberLayout.RowsFor(count, Math.Max(1, _columns));
         // Keep a free row available for placing icons without squeezing existing cells together.
-        return UsesGridSlots || ShowGridLines ? rows + 1 : Math.Max(1, rows);
+        return UsesGridSlots || ReserveDropRow ? rows + 1 : Math.Max(1, rows);
+    }
+
+    private TranslateTransform MotionFor(UIElement child)
+    {
+        if (_previewMotions.TryGetValue(child, out var existing)) return existing;
+        var motion = new TranslateTransform();
+        var current = child.RenderTransform;
+        if (current == Transform.Identity) child.RenderTransform = motion;
+        else
+        {
+            var group = new TransformGroup();
+            group.Children.Add(current);
+            group.Children.Add(motion);
+            child.RenderTransform = group;
+        }
+        _previewMotions[child] = motion;
+        return motion;
     }
 
     private void CalculateLayout(double width)

@@ -40,10 +40,10 @@
                             </Grid>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBackground}"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBackground}"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
                                     <Setter TargetName="AccentBar" Property="Fill" Value="{DynamicResource AccentBlue}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
@@ -239,19 +239,19 @@
                                                 <RowDefinition Height="*"/>
                                                 <RowDefinition Height="*"/>
                                             </Grid.RowDefinitions>
-                                            <Ellipse Grid.Row="0" Grid.Column="0" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                            <Ellipse Grid.Row="0" Grid.Column="1" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                            <Ellipse Grid.Row="1" Grid.Column="0" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                            <Ellipse Grid.Row="1" Grid.Column="1" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                            <Ellipse Grid.Row="2" Grid.Column="0" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                            <Ellipse Grid.Row="2" Grid.Column="1" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
+                                            <Ellipse Grid.Row="0" Grid.Column="0" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                            <Ellipse Grid.Row="0" Grid.Column="1" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                            <Ellipse Grid.Row="1" Grid.Column="0" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                            <Ellipse Grid.Row="1" Grid.Column="1" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                            <Ellipse Grid.Row="2" Grid.Column="0" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                            <Ellipse Grid.Row="2" Grid.Column="1" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
                                         </Grid>
 
                                         <CheckBox Grid.Column="1" IsChecked="{Binding Enabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,8,0"
                                                   ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_WorkspaceEnabledTooltip]}"/>
                                         <TextBlock Grid.Column="2" Text="{Binding EffectiveName}" VerticalAlignment="Center"
                                                    TextTrimming="CharacterEllipsis"
-                                                   Foreground="{DynamicResource TextPrimary2}"/>
+                                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                                         <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
                                             <Button Content="&#xE70E;" Style="{StaticResource RuleIconButton}" Width="22"
                                                     ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_MoveUpTooltip]}"
@@ -286,7 +286,7 @@
                                      called, rather than an empty box the user has to guess at. -->
                                 <TextBlock Text="{Binding SelectedTab.EffectiveName}" IsHitTestVisible="False"
                                            Margin="10,0,0,0" VerticalAlignment="Center"
-                                           Foreground="{DynamicResource TextSecondary}">
+                                           Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -323,7 +323,7 @@
                     <ItemsControl x:Name="QuickPanelPluginTabsList" ItemsSource="{Binding PluginTabs}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderBrush="{DynamicResource SettingsRowBorderBrush}" BorderThickness="0,0,0,1" Padding="0,9">
+                                <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,9">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>

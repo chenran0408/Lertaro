@@ -2,11 +2,15 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Runtime.CompilerServices;
 
 namespace Lertaro.App.Helpers;
 
 public static class WpfUiHelper
 {
+    private sealed class TapState { public int Key; public uint Time; }
+    private static readonly Dictionary<string, TapState> DoubleTapStates = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConditionalWeakTable<System.Windows.Input.KeyEventArgs, Dictionary<string, bool>> EventMatches = new();
     public static ModifierKeys GetWpfModifier(string modifierStr)
     {
         if (string.IsNullOrEmpty(modifierStr)) return ModifierKeys.Control;
@@ -40,6 +44,12 @@ public static class WpfUiHelper
         key = Key.None;
         modifiers = ModifierKeys.None;
         if (string.IsNullOrWhiteSpace(hotkey)) return false;
+        if (Core.HotkeyStringFormat.IsDoubleTap(hotkey, out var tappedKey))
+        {
+            if (Enum.TryParse(tappedKey, true, out key)) return true;
+            key = Key.None;
+            return false;
+        }
 
         foreach (var part in hotkey.Split('+', StringSplitOptions.RemoveEmptyEntries))
         {
@@ -72,7 +82,40 @@ public static class WpfUiHelper
 
     /// <summary>Whether the currently-held modifiers + key match a stored recorder-style combo string.</summary>
     public static bool MatchesHotkey(string? hotkey, ModifierKeys currentModifiers, Key currentKey) =>
-        TryParseHotkey(hotkey, out var key, out var modifiers) && key == currentKey && modifiers == currentModifiers;
+        !Core.HotkeyStringFormat.IsDoubleTap(hotkey, out _)
+        && TryParseHotkey(hotkey, out var key, out var modifiers) && key == currentKey && modifiers == currentModifiers;
+
+    /// <summary>Matches a recorder binding against a WPF key event, including explicit double taps.</summary>
+    public static bool MatchesHotkey(string? hotkey, System.Windows.Input.KeyEventArgs e)
+    {
+        var key = GetActualKey(e);
+        foreach (var (configuredHotkey, existingState) in DoubleTapStates.ToArray())
+        {
+            if (existingState.Key != (int)key || Keyboard.Modifiers != ModifierKeys.None)
+                DoubleTapStates.Remove(configuredHotkey);
+        }
+        if (!Core.HotkeyStringFormat.IsDoubleTap(hotkey, out var tappedKey))
+            return MatchesHotkey(hotkey, Keyboard.Modifiers, key);
+        if (Keyboard.Modifiers != ModifierKeys.None
+            || !Enum.TryParse<Key>(tappedKey, true, out var expected) || key != expected) return false;
+
+        var eventResults = EventMatches.GetOrCreateValue(e);
+        if (eventResults.TryGetValue(hotkey!, out var cached)) return cached;
+        if (e.IsRepeat) { eventResults[hotkey!] = false; return false; }
+
+        var now = unchecked((uint)Environment.TickCount);
+        var triggered = false;
+        if (DoubleTapStates.TryGetValue(hotkey!, out var state)
+            && state.Key == (int)key && unchecked(now - state.Time) <= 320)
+        {
+            DoubleTapStates.Remove(hotkey!);
+            triggered = true;
+        }
+        else DoubleTapStates[hotkey!] = new TapState { Key = (int)key, Time = now };
+
+        eventResults[hotkey!] = triggered;
+        return triggered;
+    }
 
 
     public static ScrollViewer? GetScrollViewer(DependencyObject depObj)

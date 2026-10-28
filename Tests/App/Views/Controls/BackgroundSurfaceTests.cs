@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Lertaro.App.Services.Theme;
@@ -37,12 +38,66 @@ public sealed class BackgroundSurfaceTests
             Assert.AreSame(brush, paint.Background); Assert.AreEqual(.8, brush.Opacity);
             Assert.AreEqual(Stretch.Uniform, brush.Stretch);
             Assert.AreEqual(204, Red(surface), 1);
+            BackgroundManager.Preview(settings with { Opacity = .8, FitImage = true, Blur = 3.5 });
+            Assert.AreSame(brush, paint.Background);
+            Assert.AreEqual(3.5, Assert.IsInstanceOfType<BlurEffect>(paint.Effect).Radius);
+            BackgroundManager.Preview(settings with { Opacity = .8, FitImage = true, Blur = 0 });
+            Assert.IsNull(paint.Effect);
             BackgroundManager.Preview(settings with { ImagePath = path + ".missing" });
             PumpUntil(() => paint.Background == null);
             Assert.AreEqual(0, Red(surface));
             Assert.AreSame(Brushes.Black, surface.Background);
         }
         finally { window.Close(); BackgroundManager.EndPreview(); File.Delete(path); }
+    }
+
+    [StaTestMethod]
+    public void TransparentBaseCanBeToggledAfterTheControlIsCreated()
+    {
+        var surface = new BackgroundSurface();
+        surface.Resources["ContentBg"] = Brushes.Black;
+        var window = new Window { Content = surface, ShowActivated = false };
+        try
+        {
+            surface.UseTransparentBase = true;
+            Assert.IsNull(surface.Background);
+            surface.UseTransparentBase = false;
+            Assert.AreSame(Brushes.Black, surface.Background);
+            surface.UseTransparentBase = true;
+            Assert.IsNull(surface.Background);
+        }
+        finally { window.Close(); }
+    }
+
+    [StaTestMethod]
+    public void LegacySolidAndGradientPresetsNoLongerPaintOverTheGlassSurface()
+    {
+        var surface = new BackgroundSurface();
+        surface.Resources["ContentBg"] = Brushes.Black;
+        var window = new Window { Content = surface, Width = 150, Height = 150, ShowActivated = false };
+        try
+        {
+            var solid = new BackgroundSettings
+            {
+                Kind = BackgroundKind.Solid, FirstColor = "#123456", Tint = .4
+            }.Normalize();
+            Assert.AreEqual(BackgroundKind.Theme, solid.Kind);
+            BackgroundManager.Preview(solid);
+            window.Show();
+            var background = (Border)surface.Children[0];
+            Assert.IsNull(background.Background);
+            Assert.IsFalse(BackgroundManager.IsCustom);
+
+            var gradient = new BackgroundSettings
+            {
+                Kind = BackgroundKind.Gradient, FirstColor = "#112233", SecondColor = "#445566", Angle = 90, Tint = 0
+            }.Normalize();
+            Assert.AreEqual(BackgroundKind.Theme, gradient.Kind);
+            BackgroundManager.Preview(gradient);
+            Assert.IsNull(background.Background);
+            Assert.IsFalse(BackgroundManager.IsCustom);
+        }
+        finally { window.Close(); BackgroundManager.EndPreview(); }
     }
 
     private static byte Red(FrameworkElement surface)

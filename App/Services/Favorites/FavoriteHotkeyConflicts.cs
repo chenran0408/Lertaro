@@ -59,6 +59,12 @@ internal static class FavoriteHotkeyConflicts
             yield return HotkeyActionTrigger.ResolveEffectiveHotkey(registration.Action, registration.Plugin,
                 settings.Hotkeys.PluginActionHotkeys);
 
+        foreach (var hotkey in DynamicPluginHotkeys(settings))
+            yield return hotkey;
+    }
+
+    internal static IEnumerable<string> DynamicPluginHotkeys(UserSettings settings)
+    {
         // Dynamic custom actions expose their hotkeys only for a concrete search selection. Read their
         // saved configuration without executing providers or fabricating a selected file.
         if (settings.DisabledPluginAssemblies.Contains("Lertaro.Plugins.CustomActions.dll", StringComparer.OrdinalIgnoreCase)

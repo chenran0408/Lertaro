@@ -1,8 +1,9 @@
-<Window x:Class="Lertaro.App.Views.QuickPanel.QuickPanelWindow"
+<glass:GlassWindow x:Class="Lertaro.App.Views.QuickPanel.QuickPanelWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ctrl="clr-namespace:Lertaro.App.Views.Controls"
+        xmlns:glass="clr-namespace:GlassDesk.UI.Controls;assembly=GlassDesk.UI"
         xmlns:services="clr-namespace:Lertaro.App.Services"
         xmlns:helpers="clr-namespace:Lertaro.App.Helpers.Visuals"
         xmlns:local="clr-namespace:Lertaro.App.Views.QuickPanel"
@@ -13,14 +14,14 @@
         ResizeMode="CanResizeWithGrip"
         AllowsTransparency="True"
         Background="Transparent"
-        TextElement.Foreground="{DynamicResource TextPrimary}"
+        TextElement.Foreground="{Binding RelativeSource={RelativeSource Self}, Path=ForegroundBrush}"
         ShowInTaskbar="False"
         Topmost="True"
         WindowStartupLocation="Manual"
         Focusable="True"
         PreviewKeyDown="Window_PreviewKeyDown"
         ShowActivated="False">
-    <Window.Resources>
+    <glass:GlassWindow.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml"/>
@@ -39,20 +40,20 @@
                 <ResourceDictionary Source="QuickPanelGroupResources.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </Window.Resources>
+    </glass:GlassWindow.Resources>
 
-    <Border CornerRadius="10" Background="{DynamicResource CardBackground}" helpers:BackgroundReveal.Resource="CardBackground"
-            BorderBrush="{DynamicResource WindowBorderBrush}" BorderThickness="1" Margin="8">
-        <Border CornerRadius="10" helpers:RoundedClip.IsEnabled="True">
+    <Border Background="Transparent" BorderThickness="0">
+        <Border Background="Transparent">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <surface:BackgroundSurface Grid.RowSpan="99" Grid.ColumnSpan="99"/>
+                <glass:LiquidGlassSurface x:Name="GlassSurface" Grid.RowSpan="99" Grid.ColumnSpan="99" UseLauncherTransparency="True" />
+                <surface:BackgroundSurface Grid.RowSpan="99" Grid.ColumnSpan="99" UseTransparentBase="True" />
 
-                <Border Grid.Row="0" Background="{DynamicResource HeaderBg}" helpers:BackgroundReveal.Resource="HeaderBg"
-                        BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1"
+                <Border Grid.Row="0" Background="Transparent"
+                        BorderThickness="0"
                         VerticalAlignment="Top" Panel.ZIndex="1">
                     <Border.Style>
                         <Style TargetType="Border">
@@ -77,7 +78,7 @@
                                 <ColumnDefinition Width="35*"/>
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="1" Height="6" CornerRadius="3"
-                                    Background="{DynamicResource WindowChromeText}" Opacity="0.45"/>
+                                    Background="{DynamicResource LiquidControlMuted}" Opacity="0.45"/>
                         </Grid>
 
                     </Grid>
@@ -109,7 +110,7 @@
                 <!-- The whole content area listens for the click, not each group's list: the blank space
                      that should drop the selection is as much the gap between two groups and the run
                      below the last one as it is the end of a row of tiles. -->
-                <Border Grid.Row="1" Background="{DynamicResource ContentBg}" helpers:BackgroundReveal.Resource="ContentBg"
+                <Border Grid.Row="1" Background="Transparent"
                         PreviewMouseLeftButtonDown="Content_PreviewMouseLeftButtonDown">
                     <Grid>
                         <!-- One block per source, each with its own header and its own list.
@@ -152,7 +153,7 @@
                                                  that folder, the same as its order. -->
                                             <Grid>
                                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_DropHint]}"
-                                                       TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary2}"
+                                                       TextWrapping="Wrap" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                                        Margin="16,12" MinHeight="50" VerticalAlignment="Center">
                                                 <TextBlock.Style><Style TargetType="TextBlock">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -199,7 +200,7 @@
                                                                     <Setter.Value>
                                                                         <ItemsPanelTemplate>
                                                                             <local:QuickPanelNumberedWrapPanel
-                                                                                GridSlots="{Binding GridSlots}" UsesGridSlots="{Binding UsesGridSlots}" ShowGridLines="{Binding IsReordering}"
+                                                                                GridSlots="{Binding GridSlots}" UsesGridSlots="{Binding UsesGridSlots}" ReserveDropRow="{Binding IsReordering}"
                                                                                 MaximumItemCount="{Binding DataContext.LargestVisibleGroupItemCount, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                                                         </ItemsPanelTemplate>
                                                                     </Setter.Value>
@@ -220,8 +221,8 @@
                                         ContentTemplate="{StaticResource QuickPanelGroupHeaderTemplate}">
                             <ContentControl.Template>
                                 <ControlTemplate TargetType="ContentControl">
-                                    <Border Background="{DynamicResource ContentBg}"
-                                            BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="0,0,0,1">
+                                    <Border Background="Transparent"
+                                            BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1">
                                         <ContentPresenter Content="{TemplateBinding Content}"
                                                           ContentTemplate="{TemplateBinding ContentTemplate}"/>
                                     </Border>
@@ -233,7 +234,7 @@
                              covers the case where nothing anywhere has anything; this covers the one
                              where it opened for another tab's sake and this one is bare. -->
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_Empty]}"
-                                   Foreground="{DynamicResource TextSecondary2}" FontSize="12"
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" FontSize="12"
                                    HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -249,7 +250,9 @@
 
                     </Grid>
                 </Border>
+                <Canvas x:Name="DragOverlay" Grid.RowSpan="2" Panel.ZIndex="100"
+                        IsHitTestVisible="False" ClipToBounds="False"/>
             </Grid>
         </Border>
     </Border>
-</Window>
+</glass:GlassWindow>

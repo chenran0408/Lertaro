@@ -10,7 +10,6 @@
          section lists): do not repoint this at a different TargetType; see SidebarFilterItemStyle
          below for the ToggleButton-based equivalent used by the search sidebar's filter items. -->
     <Style x:Key="SidebarItemStyle" TargetType="ListBoxItem">
-        <Setter Property="Foreground" Value="{DynamicResource SidebarText}"/>
         <!-- The value the template actually uses, rather than the 0 that sat here while the template
              hardcoded its own: a list that wants tighter rows can now override this instead of having
              to restate the whole template. -->
@@ -28,18 +27,16 @@
                                    RadiusX="1.5" RadiusY="1.5" Fill="Transparent" Margin="0,4"/>
                         <Border x:Name="ItemBorder" CornerRadius="7"
                                 Background="Transparent" Padding="{TemplateBinding Padding}" Margin="8,2,8,2">
-                            <ContentPresenter/>
+                            <ContentPresenter TextElement.Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                         </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SidebarHover}"/>
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SidebarHover}"/>
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
                             <Setter TargetName="AccentBar" Property="Fill" Value="{DynamicResource AccentBarColor}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource SidebarTextActive}"/>
-                            <Setter Property="TextElement.Foreground" Value="{DynamicResource SidebarTextActive}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -52,7 +49,6 @@
          select group enforces exclusivity itself in the view model), so there's no ListBox/SelectedItem
          to key a selection style off of: IsChecked stands in for what SidebarItemStyle's IsSelected does. -->
     <Style x:Key="SidebarFilterItemStyle" TargetType="ToggleButton">
-        <Setter Property="Foreground" Value="{DynamicResource SidebarText}"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Margin" Value="0"/>
@@ -68,18 +64,16 @@
                                    RadiusX="1.5" RadiusY="1.5" Fill="Transparent" Margin="0,4"/>
                         <Border x:Name="ItemBorder" CornerRadius="7"
                                 Background="Transparent" Padding="16,11" Margin="8,2,8,2">
-                            <ContentPresenter/>
+                            <ContentPresenter TextElement.Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                         </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SidebarHover}"/>
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SidebarHover}"/>
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
                             <Setter TargetName="AccentBar" Property="Fill" Value="{DynamicResource AccentBarColor}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource SidebarTextActive}"/>
-                            <Setter Property="TextElement.Foreground" Value="{DynamicResource SidebarTextActive}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -88,14 +82,13 @@
     </Style>
 
     <!-- ═══════════ Sidebar Group Clear Button (small "x", shown only while the group has a selection) ═══════════ -->
-    <Style x:Key="SidebarClearButtonStyle" TargetType="Button">
+    <Style x:Key="SidebarClearButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="FontFamily" Value="{DynamicResource AppIconFontFamily}"/>
         <Setter Property="FontSize" Value="10"/>
         <Setter Property="Width" Value="18"/>
         <Setter Property="Height" Value="18"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -112,8 +105,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SidebarHover}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource SidebarTextActive}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -143,10 +135,10 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ItemHover}"/>
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ItemHover}"/>
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
                             <Setter TargetName="AccentBar" Property="Fill" Value="{DynamicResource AccentBarColor}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -157,14 +149,13 @@
 
     <!-- ═══════════ Modern GridView Header Style ═══════════ -->
     <Style TargetType="GridViewColumnHeader">
-        <Setter Property="Background" Value="{DynamicResource HeaderColumnBg}"/>
-        <Setter Property="Foreground" Value="{DynamicResource HeaderColumnText}"/>
+        <Setter Property="Background" Value="Transparent"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         
         <Setter Property="Padding" Value="16,10,16,10"/>
         <Setter Property="BorderThickness" Value="0,0,0,1"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource SeparatorBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdge}"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -174,7 +165,7 @@
                                 BorderBrush="{TemplateBinding BorderBrush}" 
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            <ContentPresenter TextElement.Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                         </Border>
                         <!-- Resize Gripper -->
@@ -186,7 +177,7 @@
                             <Thumb.Template>
                                 <ControlTemplate TargetType="Thumb">
                                     <Border Background="Transparent" Width="18">
-                                        <Rectangle Width="2" Fill="{DynamicResource SeparatorBrush}" HorizontalAlignment="Center" Margin="0,4,0,4"/>
+                                        <Rectangle Width="2" Fill="{StaticResource LiquidControlEdge}" HorizontalAlignment="Center" Margin="0,4,0,4"/>
                                     </Border>
                                 </ControlTemplate>
                             </Thumb.Template>
@@ -212,7 +203,7 @@
         <Setter Property="Width" Value="36"/>
         <Setter Property="Height" Value="28"/>
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{DynamicResource WindowChromeText}"/>
+        <Setter Property="Foreground" Value="{DynamicResource LiquidControlMuted}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FontSize" Value="13"/>
@@ -225,7 +216,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bg" Property="Background" Value="{DynamicResource WindowControlHover}"/>
+                            <Setter TargetName="Bg" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -242,8 +233,8 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bg" Property="Background" Value="{DynamicResource CloseButtonHoverBg}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource PrimaryButtonText}"/>
+                            <Setter TargetName="Bg" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource LiquidControlText}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

@@ -17,7 +17,7 @@
                 <Setter Property="Margin" Value="4,0,0,0"/>
             </Style>
             <DataTemplate x:Key="QuickLaunchItemTemplate">
-                <Border BorderBrush="{DynamicResource SettingsRowBorderBrush}" BorderThickness="0,0,0,1" Padding="0,8">
+                <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,8">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="28"/><ColumnDefinition Width="24"/><ColumnDefinition Width="2*"/><ColumnDefinition Width="3*"/><ColumnDefinition Width="Auto"/>
@@ -30,13 +30,13 @@
                             <Grid Grid.Column="0" Width="18" Height="24" Background="Transparent" Cursor="SizeAll" helpers:DragReorder.IsHandle="True">
                                 <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
-                                <Ellipse Grid.Row="0" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/><Ellipse Grid.Row="0" Grid.Column="1" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                <Ellipse Grid.Row="1" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/><Ellipse Grid.Row="1" Grid.Column="1" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                <Ellipse Grid.Row="2" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/><Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
+                                <Ellipse Grid.Row="0" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="0" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                <Ellipse Grid.Row="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="1" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                <Ellipse Grid.Row="2" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
                             </Grid>
                             <TextBlock Grid.Column="1" Text="&#xE71B;" FontFamily="{DynamicResource AppIconFontFamily}" Foreground="{DynamicResource AccentColor}" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="2" Text="{Binding DisplayName}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary2}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="4,0,8,0"/>
-                            <TextBlock Grid.Column="3" Text="{Binding Path}" Foreground="{DynamicResource TextSecondary2}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="{Binding DisplayName}" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="4,0,8,0"/>
+                            <TextBlock Grid.Column="3" Text="{Binding Path}" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                             <StackPanel Grid.Column="4" Orientation="Horizontal">
                                 <Button Content="&#xE74A;" Style="{StaticResource QuickLaunchIconButton}" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_MoveUpTooltip]}" Command="{Binding DataContext.MoveUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
                                 <Button Content="&#xE74B;" Style="{StaticResource QuickLaunchIconButton}" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_MoveDownTooltip]}" Command="{Binding DataContext.MoveDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
@@ -149,7 +149,7 @@
                             <settings:PathEntryEditor Grid.Column="0" Grid.ColumnSpan="3" EntryName="{Binding NewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" EntryPath="{Binding NewPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" BrowseFolderCommand="{Binding BrowseFolderCommand}" BrowseFileCommand="{Binding BrowseFileCommand}"/>
                             <Button Grid.Column="3" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_Add]}" Style="{StaticResource PrimarySettingsButton}" Command="{Binding AddCommand}" Height="34" MinWidth="56" Padding="12,0" Margin="8,0,0,0"/>
                         </Grid>
-                        <Separator Background="{DynamicResource SettingsRowBorderBrush}" Height="1" Margin="0,0,0,12"/>
+                        <Separator Background="{StaticResource LiquidControlEdge}" Height="1" Margin="0,0,0,12"/>
                         <Grid Margin="0,0,0,8">
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ListTitle]}"
                                        FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center"/>
@@ -190,9 +190,9 @@
                                               Cursor="SizeAll" helpers:DragReorder.IsHandle="True">
                                             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
                                             <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
-                                            <Ellipse Grid.Row="0" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/><Ellipse Grid.Row="0" Grid.Column="1" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                            <Ellipse Grid.Row="1" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/><Ellipse Grid.Row="1" Grid.Column="1" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                            <Ellipse Grid.Row="2" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/><Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
+                                            <Ellipse Grid.Row="0" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="0" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                            <Ellipse Grid.Row="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="1" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                            <Ellipse Grid.Row="2" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
                                         </Grid>
                                         <CheckBox Grid.Column="1" Content="{Binding Name}" IsChecked="{Binding IsEnabled}"
                                                   ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_SourceEnabledTooltip]}"/>

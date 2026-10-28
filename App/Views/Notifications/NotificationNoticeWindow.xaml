@@ -1,9 +1,9 @@
-<Window x:Class="Lertaro.App.Views.Notifications.NotificationNoticeWindow"
+<glass:GlassWindow x:Class="Lertaro.App.Views.Notifications.NotificationNoticeWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:glass="clr-namespace:GlassDesk.UI.Controls;assembly=GlassDesk.UI" xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
         Title="Notification"
         SizeToContent="WidthAndHeight"
-        Background="{DynamicResource ContentBg}"
+        Background="Transparent"
         WindowStyle="None"
         ResizeMode="NoResize"
         ShowActivated="False"
@@ -11,27 +11,29 @@
         Topmost="True"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
+        TextElement.Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type glass:GlassWindow}}, Path=ForegroundBrush}"
         TextOptions.TextFormattingMode="Display">
 
-    <Window.Resources>
+    <glass:GlassWindow.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </Window.Resources>
+    </glass:GlassWindow.Resources>
+    <Grid>
+        <glass:LiquidGlassSurface x:Name="GlassSurface" />
+        <surface:BackgroundSurface UseTransparentBase="True" />
 
-    <!-- One line, nothing to click: this window exists to say something briefly, and every control on it
-         would be a place the user's pointer has to be aimed at. ContentBg is the surface this project keeps
-         for a window floating over someone else's content. It is opaque now, and the corners are the window
-         manager's rounding rather than a painted radius: a see-through notification would have to be a
-         layered window again, which is the one thing that cost both ClearType and every animation frame. -->
-    <Border x:Name="Surface" Height="36" Padding="12,0" Background="{DynamicResource ContentBg}"
-            BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1">
+
+    <!-- The material, edge, shadow, and corner clip are painted by GlassDesk; the text stays clear so the
+         optical backdrop remains visible. -->
+    <Border x:Name="Surface" Height="36" Padding="12,0" Background="Transparent"
+            BorderThickness="0">
         <TextBlock x:Name="Line"
                    FontSize="12"
                    VerticalAlignment="Center"
-                   TextTrimming="CharacterEllipsis"
-                   Foreground="{DynamicResource TextPrimary}"/>
+                   TextTrimming="CharacterEllipsis"/>
     </Border>
-</Window>
+    </Grid>
+</glass:GlassWindow>

@@ -13,12 +13,12 @@
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <TextBlock x:Name="Chevron" Grid.Column="0" Text="&#xE70D;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="9"
-                                       Foreground="{DynamicResource TextSecondary2}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                       Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <ContentPresenter Grid.Column="1" VerticalAlignment="Center"/>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bar" Property="Background" Value="{DynamicResource ItemHover}"/></Trigger>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bar" Property="Background" Value="{DynamicResource LiquidControlHover}"/></Trigger>
                         <Trigger Property="IsChecked" Value="True"><Setter TargetName="Chevron" Property="Text" Value="&#xE70E;"/></Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -50,20 +50,21 @@
                         <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AccentBlue}"
                                    VerticalAlignment="Center" Text="{Binding Title}"
                                    Visibility="{Binding ShowsHeading, Converter={StaticResource BoolToVis}}"/>
-                        <TextBlock FontSize="11" Margin="6,0,0,0" Foreground="{DynamicResource TextSecondary2}"
+                        <TextBlock FontSize="11" Margin="6,0,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                    VerticalAlignment="Center" Text="{Binding Count, StringFormat=({0})}"
                                    Visibility="{Binding ShowsHeading, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
                     <TextBlock Grid.Column="1" FontSize="11" Margin="10,0,0,0"
-                               Foreground="{DynamicResource TextSecondary2}" VerticalAlignment="Center"
+                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center"
                                TextTrimming="CharacterEllipsis" Text="{Binding FolderPath}"/>
                     <Border Grid.Column="2" Height="1" Margin="10,0,10,0" VerticalAlignment="Center"
-                            Background="{DynamicResource SeparatorBrush}"/>
+                            Background="{StaticResource LiquidControlEdge}"/>
                 </Grid>
             </ToggleButton>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <ComboBox ItemsSource="{Binding SortOptions}" DisplayMemberPath="Label" SelectedValuePath="Value"
                           SelectedValue="{Binding SortMode, Mode=TwoWay}" MinWidth="90" MaxWidth="150"
+                          Style="{DynamicResource SettingsComboBox}"
                           ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_FileOrder]}"/>
                 <Button Command="{Binding ToggleViewCommand}" Margin="2,0,0,0"
                         Style="{DynamicResource QuickPanelViewToggleStyle}"/>

@@ -73,8 +73,8 @@ public class UserSettings
     public string Theme { get; set; } = "Light";
     public BackgroundSettings Background { get; set; } = new();
     public bool ThemeFollowSystem { get; set; } = false;
-    // Empty means "unset"; ThemeManager.ResolveLightDarkThemeId falls back to the first available theme,
-    // including the host's Light/Dark resources when the theme plugins are disabled.
+    // Empty means "unset". The selected palette is now limited to GlassDesk Light/Dark modes;
+    // retired custom preset IDs are migrated during ThemeManager initialization.
     public string LightThemeId { get; set; } = string.Empty;
     public string DarkThemeId { get; set; } = string.Empty;
     public HotkeyPageSettings Hotkeys { get; set; } = new();

@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using Lertaro.App.Helpers.Visuals;
+using Lertaro.App.Services.Theme;
 using Lertaro.PluginSdk.Abstractions;
 
 namespace Lertaro.App.Views.Notifications;
@@ -13,7 +14,7 @@ namespace Lertaro.App.Views.Notifications;
 /// Position 1: one card in the bottom-right stack. The window is the card; the stack's layout is the
 /// service's business, not this window's.
 /// </summary>
-public partial class NotificationCardWindow : Window
+public partial class NotificationCardWindow : GlassDesk.UI.Controls.GlassWindow
 {
     // Long enough to be noticed as "the new one", short enough that a card still on screen for twenty seconds is
     // not wearing it. Not tuned against anything: it is a legibility choice, not a measurement.
@@ -33,8 +34,8 @@ public partial class NotificationCardWindow : Window
     public NotificationCardWindow()
     {
         InitializeComponent();
-        // Chosen here because the theme decides the window kind and that choice is frozen with the handle.
-        LayeredSurface.Apply(this, Surface);
+        if (ThemeManager.Instance.ActiveTheme is { } theme)
+            WindowEffectHelper.ApplyThemeEffects(this, theme);
     }
 
     public void SetContent(NotificationRequest request, string sourceName)

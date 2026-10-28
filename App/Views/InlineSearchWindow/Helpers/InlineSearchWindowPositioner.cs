@@ -333,10 +333,9 @@ public class InlineSearchWindowPositioner
         _cachedIsResultsVisible = isResultsVisible;
     }
 
-    // The card's internal order follows the direction it grows in: a drop-down puts the search box on top
-    // and the list below it, an upward card from the anchored window's bottom edge the other way round. The
-    // corner radii and the path banner's border follow the same split, so this is the one place that knows
-    // which edge the card is attached by.
+    // The content order follows the direction it grows in: a drop-down puts the search box on top and the
+    // list below it, an upward panel from the anchored window's bottom edge the other way round. The
+    // GlassWindow supplies one outer contour; only the attached inner controls change their edge treatment.
     private void ApplyLayoutMode(bool dropDown, bool isResultsVisible)
     {
         if (dropDown)
@@ -349,8 +348,6 @@ public class InlineSearchWindowPositioner
             Grid.SetRow(_window.PathPreviewBorder, 3);
             _window.PathPreviewBorder.BorderThickness = new Thickness(0, 1, 0, 0);
             _window.PathPreviewBorder.CornerRadius = new CornerRadius(0, 0, 7, 7);
-            _window.MainBorder.CornerRadius = new CornerRadius(0, 0, 8, 8);
-            _window.ClippingBorder.CornerRadius = new CornerRadius(0, 0, 8, 8);
             _window.SearchBoxBorder.CornerRadius = isResultsVisible ? new CornerRadius(0) : new CornerRadius(0, 0, 7, 7);
         }
         else
@@ -363,8 +360,6 @@ public class InlineSearchWindowPositioner
             Grid.SetRow(_window.SearchBoxBorder, 3);
             _window.PathPreviewBorder.BorderThickness = new Thickness(0, 0, 0, 1);
             _window.PathPreviewBorder.CornerRadius = new CornerRadius(7, 7, 0, 0);
-            _window.MainBorder.CornerRadius = new CornerRadius(8);
-            _window.ClippingBorder.CornerRadius = new CornerRadius(8);
             _window.SearchBoxBorder.CornerRadius = isResultsVisible ? new CornerRadius(0, 0, 7, 7) : new CornerRadius(7);
         }
     }

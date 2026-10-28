@@ -1,18 +1,40 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
+using System.Runtime.CompilerServices;
 using Lertaro.Core;
 using Lertaro.App.Services;
 using Lertaro.App.Services.AppWindow;
+using Lertaro.App.Services.Favorites;
 using Lertaro.App.Services.ShellMenu.ActionFlyout;
 using Lertaro.App.Services.ShellMenu.Presenter;
 namespace Lertaro.App.Helpers;
 
 public static class SearchInputHelper
 {
+    private sealed class PendingDoubleTapAction
+    {
+        internal Key Key;
+        internal uint Time;
+        internal string SearchText = string.Empty;
+        internal int SelectionStart;
+        internal int SelectionLength;
+        internal AppSearchResult[] Results = [];
+        internal Action? DeferredBehavior;
+        internal DispatcherTimer? Timer;
+    }
+
+    private sealed class PendingDoubleTapActionState
+    {
+        internal PendingDoubleTapAction? Value;
+    }
+
+    private static readonly ConditionalWeakTable<ISearchWindow, PendingDoubleTapActionState> PendingDoubleTapActions = new();
+    private const uint DoubleTapWindowMilliseconds = 320;
+
     public static bool IsQuickLookKey(System.Windows.Input.KeyEventArgs e)
     {
-        var checkKey = e.Key == Key.System ? e.SystemKey : e.Key;
-        return WpfUiHelper.MatchesHotkey(UserSettings.Load().Hotkeys.QuickLookHotkey, Keyboard.Modifiers, checkKey);
+        return WpfUiHelper.MatchesHotkey(UserSettings.Load().Hotkeys.QuickLookHotkey, e);
     }
 
     // Shared by SearchWindow/QuickSearchWindow/InlineSearchWindow's own Right-arrow-opens-Actions check,
@@ -40,8 +62,8 @@ public static class SearchInputHelper
         // binding would silently be swallowed by "Tab enters submenu" and never reach the match further down.
         var actualKey = WpfUiHelper.GetActualKey(e);
         var settings = UserSettings.Load().Hotkeys;
-        var isNextItemHotkey = WpfUiHelper.MatchesHotkey(settings.NextItemHotkey, Keyboard.Modifiers, actualKey);
-        var isPreviousItemHotkey = WpfUiHelper.MatchesHotkey(settings.PreviousItemHotkey, Keyboard.Modifiers, actualKey);
+        var isNextItemHotkey = WpfUiHelper.MatchesHotkey(settings.NextItemHotkey, e);
+        var isPreviousItemHotkey = WpfUiHelper.MatchesHotkey(settings.PreviousItemHotkey, e);
 
         // Every bare key check below (including Escape) requires no modifiers -- otherwise it would
         // shadow a user-configurable combo hotkey that happens to share the same base key (e.g. the
@@ -182,12 +204,15 @@ public static class SearchInputHelper
         if (window.SearchTextBox.IsKeyboardFocusWithin && window.SearchTextBox.SelectionLength > 0)
             return false;
 
-        var bareKeyBound = Keyboard.Modifiers == ModifierKeys.None && IsSearchCaretAtEnd(window) && HotkeyActionTrigger.HasBareKeyActionHotkey(e.Key);
+        var hotkeys = Keyboard.Modifiers == ModifierKeys.None && IsSearchCaretAtEnd(window) ? UserSettings.Load() : null;
+        var bareKeyBound = hotkeys != null
+            && HotkeyActionTrigger.HasBareKeyActionHotkey(WpfUiHelper.GetActualKey(e), hotkeys);
         if ((Keyboard.Modifiers != ModifierKeys.None || bareKeyBound)
             && window.LstResults.SelectedItem is AppSearchResult selectedResult
             && menuPresenter != null
             && menuPresenter.CanShowActionsMenu(new[] { selectedResult }))
         {
+            if (hotkeys != null) RememberDoubleTapActionInput(e, window, selectedResult, hotkeys);
             if (HotkeyActionTrigger.TryExecute(e, selectedResult, window))
             {
                 e.Handled = true;
@@ -197,8 +222,17 @@ public static class SearchInputHelper
         return false;
     }
 
-    public static bool HandleCommonSearchKeys(System.Windows.Input.KeyEventArgs e, ISearchWindow window, ShellMenuPresenter? menuPresenter)
+    public static bool HandleCommonSearchKeys(System.Windows.Input.KeyEventArgs e, ISearchWindow window, ShellMenuPresenter? menuPresenter,
+        Action? deferredEnterBehavior = null)
     {
+        // Let the first printable tap behave as text. If the second tap completes a plugin action,
+        // restore the original query and selection immediately before dispatching against that result.
+        if (TryExecutePendingDoubleTapAction(e, window, menuPresenter))
+            return true;
+
+        if (TryDeferDoubleTapEnter(e, window, menuPresenter, deferredEnterBehavior))
+            return true;
+
         // 1. Actions Mode keys
         if (HandleActionsModeKeys(e, window, menuPresenter))
             return true;
@@ -219,6 +253,165 @@ public static class SearchInputHelper
         }
 
         return false;
+    }
+
+    private static void RememberDoubleTapActionInput(System.Windows.Input.KeyEventArgs e, ISearchWindow window,
+        AppSearchResult selectedResult, UserSettings settings)
+    {
+        var state = PendingDoubleTapActions.GetValue(window, static _ => new PendingDoubleTapActionState());
+        var key = WpfUiHelper.GetActualKey(e);
+        if (e.IsRepeat) return;
+        if (Keyboard.Modifiers != ModifierKeys.None
+            || !HotkeyActionTrigger.HasDoubleTapBareKeyActionHotkey(key, settings))
+        {
+            state.Value = null;
+            return;
+        }
+
+        var results = window.LstResults.SelectedItems.OfType<AppSearchResult>().ToArray();
+        if (results.Length == 0) results = [selectedResult];
+        state.Value = new PendingDoubleTapAction
+        {
+            Key = key,
+            Time = unchecked((uint)Environment.TickCount),
+            SearchText = window.SearchTextBox.Text,
+            SelectionStart = window.SearchTextBox.SelectionStart,
+            SelectionLength = window.SearchTextBox.SelectionLength,
+            Results = results
+        };
+    }
+
+    private static bool TryExecutePendingDoubleTapAction(System.Windows.Input.KeyEventArgs e, ISearchWindow window,
+        ShellMenuPresenter? menuPresenter)
+    {
+        if (!PendingDoubleTapActions.TryGetValue(window, out var state) || state.Value is not { } pending)
+            return false;
+
+        var key = WpfUiHelper.GetActualKey(e);
+        if (e.IsRepeat && key == pending.Key && Keyboard.Modifiers == ModifierKeys.None)
+        {
+            if (pending.DeferredBehavior != null)
+            {
+                e.Handled = true;
+                return true;
+            }
+            return false;
+        }
+        var isSecondTap = IsSecondTap(key, e.IsRepeat, Keyboard.Modifiers, unchecked((uint)Environment.TickCount),
+            pending.Key, pending.Time);
+        if (!isSecondTap)
+        {
+            ClearPending(state, runDeferredBehavior: true);
+            return false;
+        }
+
+        ClearPending(state, runDeferredBehavior: false);
+
+        var executed = ExecuteDeferredAction(
+            () => HotkeyActionTrigger.TryExecute(e, pending.Results, window, () => RestoreSearchInput(window, pending)),
+            pending.DeferredBehavior);
+        if (executed && window.KeepWindowOpenAfterActionsHotkey && menuPresenter?.IsInActionsMode == true)
+            menuPresenter.ExitActionsMode();
+
+        // Do not let a cached hotkey match fall through to a second route using a filtered selection.
+        e.Handled = true;
+        return true;
+    }
+
+    private static bool TryDeferDoubleTapEnter(System.Windows.Input.KeyEventArgs e, ISearchWindow window,
+        ShellMenuPresenter? menuPresenter, Action? deferredBehavior)
+    {
+        if (deferredBehavior == null || e.Key == Key.ImeProcessed || e.IsRepeat || WpfUiHelper.GetActualKey(e) != Key.Enter
+            || Keyboard.Modifiers != ModifierKeys.None)
+            return false;
+
+        var settings = UserSettings.Load();
+        if (!HotkeyActionTrigger.HasDoubleTapBareKeyActionHotkey(Key.Enter, settings))
+            return false;
+
+        var selected = window.LstResults.SelectedItem as AppSearchResult;
+        if (selected == null || menuPresenter?.CanShowActionsMenu(new[] { selected }) != true)
+            return false;
+
+        var state = PendingDoubleTapActions.GetValue(window, static _ => new PendingDoubleTapActionState());
+        ClearPending(state, runDeferredBehavior: false);
+        var results = window.LstResults.SelectedItems.OfType<AppSearchResult>().ToArray();
+        if (results.Length == 0) results = [selected];
+        var pending = new PendingDoubleTapAction
+        {
+            Key = Key.Enter,
+            Time = unchecked((uint)Environment.TickCount),
+            SearchText = window.SearchTextBox.Text,
+            SelectionStart = window.SearchTextBox.SelectionStart,
+            SelectionLength = window.SearchTextBox.SelectionLength,
+            Results = results,
+            DeferredBehavior = deferredBehavior
+        };
+        state.Value = pending;
+        ArmDoubleTapActionMatchers(e, FavoriteHotkeyConflicts.PluginHotkeys(settings));
+        var timer = new DispatcherTimer(DispatcherPriority.Input, window.SearchTextBox.Dispatcher)
+        {
+            Interval = TimeSpan.FromMilliseconds(DoubleTapWindowMilliseconds)
+        };
+        pending.Timer = timer;
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            if (ReferenceEquals(state.Value, pending))
+                ClearPending(state, runDeferredBehavior: true);
+        };
+        timer.Start();
+        e.Handled = true;
+        return true;
+    }
+
+    private static void ClearPending(PendingDoubleTapActionState state, bool runDeferredBehavior)
+    {
+        var pending = state.Value;
+        state.Value = null;
+        pending?.Timer?.Stop();
+        if (runDeferredBehavior)
+            pending?.DeferredBehavior?.Invoke();
+    }
+
+    internal static bool IsSecondTap(Key key, bool isRepeat, ModifierKeys modifiers, uint now, Key pendingKey, uint pendingTime) =>
+        !isRepeat && modifiers == ModifierKeys.None && key == pendingKey
+        && unchecked(now - pendingTime) <= DoubleTapWindowMilliseconds;
+
+    internal static void ArmDoubleTapActionMatchers(System.Windows.Input.KeyEventArgs e, IEnumerable<string> hotkeys)
+    {
+        var key = WpfUiHelper.GetActualKey(e);
+        foreach (var hotkey in hotkeys)
+        {
+            if (!HotkeyStringFormat.IsDoubleTap(hotkey, out var tapKey)
+                || !Enum.TryParse<Key>(tapKey, true, out var configuredKey)
+                || configuredKey != key)
+                continue;
+
+            WpfUiHelper.MatchesHotkey(hotkey, e);
+        }
+    }
+
+    internal static bool ExecuteDeferredAction(Func<bool> executeAction, Action? deferredBehavior)
+    {
+        if (executeAction()) return true;
+        deferredBehavior?.Invoke();
+        return false;
+    }
+
+    private static void RestoreSearchInput(ISearchWindow window, PendingDoubleTapAction pending)
+    {
+        var textBox = window.SearchTextBox;
+        if (textBox.Text != pending.SearchText) textBox.Text = pending.SearchText;
+        var selectionStart = Math.Clamp(pending.SelectionStart, 0, textBox.Text.Length);
+        var selectionLength = Math.Clamp(pending.SelectionLength, 0, textBox.Text.Length - selectionStart);
+        textBox.Select(selectionStart, selectionLength);
+
+        var list = window.LstResults;
+        foreach (var item in list.SelectedItems.Cast<object>().ToArray())
+            list.SelectedItems.Remove(item);
+        foreach (var result in pending.Results)
+            if (list.Items.Contains(result)) list.SelectedItems.Add(result);
     }
 
     /// <summary>

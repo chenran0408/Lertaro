@@ -6,7 +6,7 @@ using Lertaro.App.Services.Theme;
 using Lertaro.App.Helpers.Visuals;
 namespace Lertaro.App.Views.Controls.Dialogs;
 
-public partial class CustomMessageBoxWindow : Window
+public partial class CustomMessageBoxWindow : GlassDesk.UI.Controls.GlassWindow
 {
     public MessageBoxResult Result { get; private set; } = MessageBoxResult.None;
 

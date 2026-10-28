@@ -16,7 +16,7 @@ namespace Lertaro.App;
 // SettingsWindowSearchExtensions.cs (extension methods, kept separate to stay under the file-length
 // convention) -- the three XAML-wired event handlers below stay here since XAML event wiring resolves
 // by reflection and can't target an extension method.
-public partial class SettingsWindow : Window
+public partial class SettingsWindow : GlassDesk.UI.Controls.GlassWindow
 {
     private int _validationErrorCount;
 
@@ -230,20 +230,12 @@ public partial class SettingsWindow : Window
     private void ToggleMaximize() =>
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
 
-    // Custom chrome draws its own rounded frame with a margin for the drop shadow. Maximized, both are
-    // wrong: the rounding leaves cut corners against the screen edge and the margin leaves a gap round
-    // the whole window, so they are flattened while maximized and restored afterwards. Mirrors the full
-    // search window's SearchWindowChromeHandler.HandleStateChanged.
+    // The GlassWindow owns the outer shape and shadow; the settings content border tracks that shape.
     private void Window_StateChanged(object sender, EventArgs e)
     {
         var maximized = WindowState == WindowState.Maximized;
 
         BtnMaximize.Content = maximized ? "" : "";
-
-        MainBorder.CornerRadius = maximized ? new CornerRadius(0) : new CornerRadius(10);
-        MainBorder.Margin = maximized ? new Thickness(0) : new Thickness(8);
-        MainBorder.BorderThickness = new Thickness(maximized ? 0 : 1);
-        ClippingBorder.CornerRadius = maximized ? new CornerRadius(0) : new CornerRadius(10);
     }
 
     private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();

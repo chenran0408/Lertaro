@@ -200,9 +200,9 @@ public static class ActionFlyout
         var actualKey = WpfUiHelper.GetActualKey(e);
         var hotkeys = UserSettings.Load().Hotkeys;
         var effectiveKey = e.Key;
-        if (WpfUiHelper.MatchesHotkey(hotkeys.NextItemHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(hotkeys.NextItemHotkey, e))
             effectiveKey = Key.Down;
-        else if (WpfUiHelper.MatchesHotkey(hotkeys.PreviousItemHotkey, Keyboard.Modifiers, actualKey))
+        else if (WpfUiHelper.MatchesHotkey(hotkeys.PreviousItemHotkey, e))
             effectiveKey = Key.Up;
 
         switch (effectiveKey)

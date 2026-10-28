@@ -912,6 +912,7 @@
   "Wake_InvalidClick": "右键仅支持长按，以保留正常右键菜单。",
   "Wake_InvalidRange": "参数范围不正确；最小圈半径必须小于最大圈半径。",
   "Wake_Duplicate": "与另一条已启用的操作重复，请调整或关闭其中一条。",
+  "Hotkey_Conflict": "此快捷键与其他操作冲突，请更换按键。",
   "Wake_Reserved": "与搜索、快速导航或收藏夹的快捷键重复，请换一个按键。",
   "Wake_KeyTaken": "这组按键已被系统或其他软件占用，请换一个。",
   "Wake_RowError": "第 {0} 条：{1}",

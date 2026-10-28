@@ -18,7 +18,7 @@ using Lertaro.App.Services.Theme;
 using Lertaro.App.Services.ShellMenu.Presenter;
 using Lertaro.App.Helpers.Visuals;
 namespace Lertaro.App;
-public partial class QuickSearchWindow : Window, ISearchWindow, IHasVisibleContentInset
+public partial class QuickSearchWindow : GlassDesk.UI.Controls.GlassWindow, ISearchWindow, IHasVisibleContentInset
 {
     private readonly QuickSearchViewModel _viewModel;
     private TrayIconService? _trayService;
@@ -32,8 +32,9 @@ public partial class QuickSearchWindow : Window, ISearchWindow, IHasVisibleConte
     private bool _isInActionsMode;
     private Action? _scaleChangedHandler;
     internal QuickSearchKeywordHistoryController KeywordHistoryController { get; }
-    // Must match QuickSearchWindow.xaml's root Border Margin ("24,40,24,24").
-    public Thickness VisibleContentInset => new(24, 40, 24, 24);
+    // GlassDesk draws the visible surface to the top-level window boundary; the content layout inset
+    // does not reduce the visible material bounds used by Quick Look positioning.
+    public Thickness VisibleContentInset => new(0);
     public QuickSearchWindow()
     {
         InitializeComponent();

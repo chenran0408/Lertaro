@@ -22,9 +22,9 @@
                 <Setter Property="Height" Value="32"/>
                 <Setter Property="Margin" Value="6,0,0,0"/>
                 <Setter Property="Padding" Value="0"/>
-                <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
-                <Setter Property="Foreground" Value="{DynamicResource TextSecondary2}"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+                <Setter Property="Background" Value="{StaticResource LiquidControlFill}"/>
+                <Setter Property="Foreground"><Setter.Value><Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlMuted}"/></Setter.Value></Setter>
+                <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdge}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="FontFamily" Value="{DynamicResource AppIconFontFamily}"/>
@@ -38,7 +38,7 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBackground}"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
                                     <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
                                     <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
                                 </Trigger>
@@ -49,7 +49,7 @@
             </Style>
 
             <DataTemplate x:Key="FavItemTemplate">
-                <Border BorderBrush="{DynamicResource SettingsRowBorderBrush}" BorderThickness="0,0,0,1" Padding="0,9">
+                <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,9">
                     <Grid>
                         <!-- Row 1 is the hotkey feedback; row 0 keeps its own 7-column grid so the edit
                              row below can still span every column. Column 4 is the recorder, which is
@@ -66,13 +66,13 @@
                             <Grid Grid.Column="0" Width="18" Height="24" Margin="0,0,10,0" Background="Transparent" VerticalAlignment="Center" Cursor="SizeAll" helpers:DragReorder.IsHandle="True">
                                 <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
-                                <Ellipse Grid.Row="0" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/><Ellipse Grid.Row="0" Grid.Column="1" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                <Ellipse Grid.Row="1" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/><Ellipse Grid.Row="1" Grid.Column="1" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                <Ellipse Grid.Row="2" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/><Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
+                                <Ellipse Grid.Row="0" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="0" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                <Ellipse Grid.Row="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="1" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                <Ellipse Grid.Row="2" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
                             </Grid>
                             <TextBlock Grid.Column="1" Text="&#xE71B;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="14" Foreground="{DynamicResource AccentColor}" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="2" Text="{Binding DisplayName}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary2}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="4,0,8,0"/>
-                            <TextBlock Grid.Column="3" Text="{Binding Path}" FontSize="12" Foreground="{DynamicResource TextSecondary2}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
+                            <TextBlock Grid.Column="2" Text="{Binding DisplayName}" FontSize="13" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="4,0,8,0"/>
+                            <TextBlock Grid.Column="3" Text="{Binding Path}" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
                             <ctrl:HotkeyRecorderControl Grid.Column="4" Value="{Binding Hotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" RequireModifier="True" HorizontalAlignment="Right"/>
                             <StackPanel Grid.Column="6" Orientation="Horizontal" HorizontalAlignment="Right">
                                 <Button Content="&#xE74A;" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_MoveUpTooltip]}" Style="{StaticResource FavIconButton}" Command="{Binding DataContext.MoveUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
@@ -134,12 +134,12 @@
                         </Grid.RowDefinitions>
 
                         <!-- Headers -->
-                        <TextBlock x:Name="RowFieldName" Grid.Row="0" Grid.Column="0" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_FieldName]}" FontSize="12" Foreground="{DynamicResource TextSecondary2}" Margin="0,0,0,4"/>
-                        <TextBlock x:Name="RowFieldPath" Grid.Row="0" Grid.Column="1" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_FieldPath]}" FontSize="12" Foreground="{DynamicResource TextSecondary2}" Margin="8,0,0,4"/>
+                        <TextBlock x:Name="RowFieldName" Grid.Row="0" Grid.Column="0" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_FieldName]}" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,0,0,4"/>
+                        <TextBlock x:Name="RowFieldPath" Grid.Row="0" Grid.Column="1" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_FieldPath]}" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="8,0,0,4"/>
                         <!-- The hotkey itself is assigned per row, next to that favorite, rather than
                              here: a new favorite does not exist yet, so there is nothing to bind it to. -->
                         <TextBlock x:Name="RowFieldHotkey" Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_FieldHotkey]}"
-                                   FontSize="12" Foreground="{DynamicResource TextSecondary2}" HorizontalAlignment="Right" Margin="8,0,0,4"/>
+                                   FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" HorizontalAlignment="Right" Margin="8,0,0,4"/>
 
                         <settings:PathEntryEditor Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" EntryName="{Binding NewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" EntryPath="{Binding NewPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" BrowseFolderCommand="{Binding BrowseFolderCommand}" BrowseFileCommand="{Binding BrowseFileCommand}"/>
 
@@ -158,7 +158,7 @@
                         </StackPanel>
                     </Grid>
 
-                    <Separator Background="{DynamicResource SettingsRowBorderBrush}" Height="1" Margin="0,0,0,12"/>
+                    <Separator Background="{StaticResource LiquidControlEdge}" Height="1" Margin="0,0,0,12"/>
 
                     <Grid Margin="0,0,0,8">
                         <TextBlock x:Name="RowListTitle" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_ListTitle]}"

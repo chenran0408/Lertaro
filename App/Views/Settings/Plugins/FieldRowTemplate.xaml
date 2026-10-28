@@ -41,8 +41,8 @@
                 <!-- Label & Description for simple inputs -->
                 <StackPanel Grid.Column="0" Grid.Row="0" VerticalAlignment="Center" Margin="0,0,12,0"
                             Visibility="{Binding IsSimpleField, Converter={StaticResource BoolToVis}}">
-                    <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="{Binding Label, Converter={StaticResource StringToVis}}"/>
-                    <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,2,0,0" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+                    <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="{Binding Label, Converter={StaticResource StringToVis}}"/>
+                    <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,2,0,0" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
                     <!-- Two features answering to one trigger word: both answer to it and the file search
                          strips the word once, so nothing here is silently wrong, it is just ambiguous. Named
                          at the field where the collision is being created, and never enforced. -->
@@ -52,7 +52,7 @@
                 <!-- Custom Control layout for embedded plugin host panels -->
                 <ContentControl Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0"
                                 Content="{Binding CustomControl}" HorizontalAlignment="Stretch" Margin="0,4"
-                                TextElement.Foreground="{DynamicResource TextPrimary}"
+                                TextElement.Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                 Visibility="{Binding IsCustomControl, Converter={StaticResource BoolToVis}}"/>
 
                 <!-- Field Controls for simple inputs -->
@@ -63,11 +63,11 @@
                 <StackPanel Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Margin="4,4,4,4"
                             Visibility="{Binding IsObject, Converter={StaticResource BoolToVis}}">
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                        <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="Bold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+                    <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
 
-                    <Border BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0">
+                    <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0">
                         <!-- Collapsed layouts still create children. Only the matching layout may
                              host them: a plugin's CustomControl can have only one visual parent. -->
                         <ItemsControl>
@@ -90,9 +90,9 @@
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                         <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource AccentBlue}"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+                    <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
 
-                    <Border BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0">
+                    <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0">
                         <ItemsControl>
                             <ItemsControl.Style>
                                 <Style TargetType="ItemsControl">
@@ -111,8 +111,8 @@
                      scalar-array list below it. -->
                 <StackPanel Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Margin="4,4,4,4"
                             Visibility="{Binding IsArray, Converter={StaticResource BoolToVis}}">
-                    <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,6"/>
-                    <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+                    <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="Bold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" Margin="0,0,0,6"/>
+                    <TextBlock Text="{Binding Description}" FontSize="10" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
 
                     <!-- Object-array master/detail: a compact selectable list on the left,
                          the selected item's full editable fields on the right.
@@ -210,22 +210,22 @@
                                                     <RowDefinition Height="*"/>
                                                     <RowDefinition Height="*"/>
                                                 </Grid.RowDefinitions>
-                                                <Ellipse Grid.Row="0" Grid.Column="0" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                                <Ellipse Grid.Row="0" Grid.Column="1" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                                <Ellipse Grid.Row="1" Grid.Column="0" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                                <Ellipse Grid.Row="1" Grid.Column="1" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                                <Ellipse Grid.Row="2" Grid.Column="0" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                                <Ellipse Grid.Row="2" Grid.Column="1" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
+                                                <Ellipse Grid.Row="0" Grid.Column="0" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                                <Ellipse Grid.Row="0" Grid.Column="1" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                                <Ellipse Grid.Row="1" Grid.Column="0" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                                <Ellipse Grid.Row="1" Grid.Column="1" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                                <Ellipse Grid.Row="2" Grid.Column="0" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                                <Ellipse Grid.Row="2" Grid.Column="1" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
                                             </Grid>
 
                                             <Border Grid.Column="1" Width="22" Height="22" Margin="0,0,8,0" CornerRadius="4"
-                                                    Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1"
+                                                    Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1"
                                                     Visibility="{Binding IconField, Converter={StaticResource NullToVis}}">
                                                 <Path Data="{Binding IconField.Value}" Fill="{DynamicResource DefaultPluginIconColor}" Width="11" Height="11" Stretch="Uniform"/>
                                             </Border>
                                             <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding DisplayTitle, Converter={StaticResource EmptyOrPlaceholder}}" FontSize="12" Foreground="{DynamicResource TextPrimary}" TextTrimming="CharacterEllipsis"/>
-                                                <Border Background="{DynamicResource BadgeBackground}" BorderBrush="{DynamicResource BadgeBorderBrush}" BorderThickness="1"
+                                                <TextBlock Text="{Binding DisplayTitle, Converter={StaticResource EmptyOrPlaceholder}}" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" TextTrimming="CharacterEllipsis"/>
+                                                <Border Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1"
                                                         CornerRadius="4" Padding="5,0,5,1" Margin="0,3,0,0" HorizontalAlignment="Left"
                                                         Visibility="{Binding BadgeField, Converter={StaticResource BadgeFieldToVis}}">
                                                     <TextBlock Text="{Binding BadgeField.Value}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource BadgeText}"/>
@@ -251,7 +251,7 @@
                              then mirrors onto ArrayMasterListGrid: a pure Grid-Auto-row approach
                              here creates a feedback loop where a tall item list on the left drags
                              this panel's height up with it instead of staying at its own size. -->
-                        <Border Grid.Column="2" VerticalAlignment="Top" BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="1,0,0,0" Padding="12,0,0,0"
+                        <Border Grid.Column="2" VerticalAlignment="Top" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1,0,0,0" Padding="12,0,0,0"
                                 Visibility="{Binding SelectedArrayItem, Converter={StaticResource NullToVis}}"
                                 Loaded="ArrayDetailPanel_Loaded" SizeChanged="ArrayDetailPanel_SizeChanged">
                             <StackPanel DataContext="{Binding SelectedArrayItem}">
@@ -262,13 +262,13 @@
                     </ScrollViewer>
 
                     <!-- Scalar-array list: a single value column, no header needed -->
-                    <Border BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0"
+                    <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0"
                             Visibility="{Binding IsScalarArray, Converter={StaticResource BoolToVis}}">
                         <StackPanel>
                             <ItemsControl ItemsSource="{Binding ArrayItems}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="0,0,0,1" Padding="0,4" Margin="0,0,0,4">
+                                        <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,4" Margin="0,0,0,4">
                                             <StackPanel Orientation="Horizontal">
                                                 <ContentControl Content="{Binding SimpleValueViewModel}" VerticalAlignment="Center" Focusable="False"
                                                                  Style="{StaticResource FieldValueEditorStyle}"/>

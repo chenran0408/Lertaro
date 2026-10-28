@@ -216,6 +216,10 @@ public sealed class HookCommandHandler
                 case IpcMessageId.SetHotkeyRecorderFocused:
                     _process.IsHotkeyRecorderFocused = msg.BoolVal;
                     break;
+                case IpcMessageId.SetFavoriteDoubleTapOwners:
+                    _process.KeyboardHook?.SetEligibleFavoriteDoubleTapOwners(
+                        (msg.StringList ?? []).Select(value => int.Parse(value, System.Globalization.CultureInfo.InvariantCulture)));
+                    break;
                 case IpcMessageId.ExecuteInlineItem:
                 case IpcMessageId.LocateInlineItem:
                 case IpcMessageId.InlineSelectionChanged:

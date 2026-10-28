@@ -6,6 +6,7 @@ using Lertaro.PluginSdk.Abstractions.Plugins;
 using Lertaro.App.Services.AppWindow;
 
 using Lertaro.App.Services.Plugin;
+using Lertaro.App.Services.Favorites;
 namespace Lertaro.App.Helpers;
 
 public static class HotkeyActionTrigger
@@ -37,12 +38,18 @@ public static class HotkeyActionTrigger
     /// Runs the action whose registered hotkey matches the key event, on the given selection/view. Used
     /// both by the search windows and by the action flyout (quick-nav) so hotkeys work the same anywhere.
     /// </summary>
-    public static bool TryExecute(System.Windows.Input.KeyEventArgs e, IReadOnlyList<AppSearchResult> selection, IPluginSearchWindow view, SearchWindowType windowType, bool hideOnRun)
+    public static bool TryExecute(System.Windows.Input.KeyEventArgs e, IReadOnlyList<AppSearchResult> selection, ISearchWindow window,
+        Action beforeExecute)
+    {
+        var windowType = GetWindowType(window);
+        return TryExecute(e, selection, window, windowType, hideOnRun: windowType != SearchWindowType.Main,
+            beforeExecute: beforeExecute);
+    }
+
+    public static bool TryExecute(System.Windows.Input.KeyEventArgs e, IReadOnlyList<AppSearchResult> selection, IPluginSearchWindow view,
+        SearchWindowType windowType, bool hideOnRun, Action? beforeExecute = null)
     {
         if (selection == null || selection.Count == 0 || view == null) return false;
-
-        var key = WpfUiHelper.GetActualKey(e);
-        var modifiers = Keyboard.Modifiers;
 
         var pluginActionHotkeys = UserSettings.Load().Hotkeys.PluginActionHotkeys;
 
@@ -54,17 +61,15 @@ public static class HotkeyActionTrigger
             if (string.IsNullOrWhiteSpace(effectiveHotkey))
                 continue;
 
-            if (ParseHotkey(effectiveHotkey, out var hotkeyKey, out var hotkeyMods))
+            if (WpfUiHelper.MatchesHotkey(effectiveHotkey, e))
             {
-                if (key == hotkeyKey && modifiers == hotkeyMods)
+                if (PluginPerformanceMonitor.Measure(action, () => action.IsVisibleInMenu(selection, windowType))
+                    && PluginPerformanceMonitor.Measure(action, () => action.CanExecute(selection)))
                 {
-                    if (PluginPerformanceMonitor.Measure(action, () => action.IsVisibleInMenu(selection, windowType))
-                        && PluginPerformanceMonitor.Measure(action, () => action.CanExecute(selection)))
-                    {
-                        if (hideOnRun) view.HideWindow();
-                        PluginPerformanceMonitor.Measure(action, () => action.Execute(selection, view));
-                        return true;
-                    }
+                    beforeExecute?.Invoke();
+                    if (hideOnRun) view.HideWindow();
+                    PluginPerformanceMonitor.Measure(action, () => action.Execute(selection, view));
+                    return true;
                 }
             }
         }
@@ -75,9 +80,9 @@ public static class HotkeyActionTrigger
             foreach (var (hotkey, execute) in PluginPerformanceMonitor.Measure(provider,
                          () => provider.GetHotkeyActions(selection)?.ToList() ?? new List<(string Hotkey, Action Execute)>()))
             {
-                if (ParseHotkey(hotkey, out var hotkeyKey, out var hotkeyMods)
-                    && key == hotkeyKey && modifiers == hotkeyMods)
+                if (WpfUiHelper.MatchesHotkey(hotkey, e))
                 {
+                    beforeExecute?.Invoke();
                     if (hideOnRun) view.HideWindow();
                     execute();
                     return true;
@@ -98,18 +103,45 @@ public static class HotkeyActionTrigger
     /// </summary>
     public static bool HasBareKeyActionHotkey(Key key)
     {
-        var pluginActionHotkeys = UserSettings.Load().Hotkeys.PluginActionHotkeys;
+        return HasBareKeyActionHotkey(key, UserSettings.Load());
+    }
+
+    internal static bool HasBareKeyActionHotkey(Key key, UserSettings settings)
+    {
+        var pluginActionHotkeys = settings.Hotkeys.PluginActionHotkeys;
         foreach (var registration in PluginManager.Instance.Actions)
         {
             var effectiveHotkey = ResolveEffectiveHotkey(registration.Action, registration.Plugin, pluginActionHotkeys);
             if (string.IsNullOrWhiteSpace(effectiveHotkey))
                 continue;
 
-            if (ParseHotkey(effectiveHotkey, out var hotkeyKey, out var hotkeyMods) && hotkeyMods == ModifierKeys.None && hotkeyKey == key)
+            if (MatchesBareKey(effectiveHotkey, key))
                 return true;
         }
-        return false;
+
+        return FavoriteHotkeyConflicts.DynamicPluginHotkeys(settings).Any(hotkey => MatchesBareKey(hotkey, key));
     }
+
+    internal static bool HasDoubleTapBareKeyActionHotkey(Key key, UserSettings settings)
+    {
+        var pluginActionHotkeys = settings.Hotkeys.PluginActionHotkeys;
+        foreach (var registration in PluginManager.Instance.Actions)
+        {
+            var effectiveHotkey = ResolveEffectiveHotkey(registration.Action, registration.Plugin, pluginActionHotkeys);
+            if (MatchesDoubleTapBareKey(effectiveHotkey, key))
+                return true;
+        }
+
+        return FavoriteHotkeyConflicts.DynamicPluginHotkeys(settings).Any(hotkey => MatchesDoubleTapBareKey(hotkey, key));
+    }
+
+    private static bool MatchesBareKey(string? hotkey, Key key) =>
+        ParseHotkey(hotkey ?? string.Empty, out var hotkeyKey, out var hotkeyMods)
+        && hotkeyMods == ModifierKeys.None && hotkeyKey == key;
+
+    private static bool MatchesDoubleTapBareKey(string? hotkey, Key key) =>
+        HotkeyStringFormat.IsDoubleTap(hotkey, out var tappedKey)
+        && Enum.TryParse<Key>(tappedKey, true, out var parsedKey) && parsedKey == key;
 
     internal static string ResolveEffectiveHotkey(ISearchResultAction action, IPlugin plugin, Dictionary<string, Dictionary<string, string>> pluginActionHotkeys)
     {
@@ -141,6 +173,9 @@ public static class HotkeyActionTrigger
 
         if (string.IsNullOrWhiteSpace(hotkey))
             return false;
+
+        if (HotkeyStringFormat.IsDoubleTap(hotkey, out var tappedKey))
+            return Enum.TryParse(tappedKey, true, out key);
 
         var parts = hotkey.Split('+', StringSplitOptions.RemoveEmptyEntries);
         foreach (var part in parts)

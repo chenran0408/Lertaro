@@ -74,7 +74,9 @@ public enum IpcMessageId : byte
     QuickPanelWakeTestResult = 52,
     SetHotkeyRecorderFocused = 53,
     CompleteInlineInput = 54,
-    InlineInputStarted = 55
+    InlineInputStarted = 55,
+    FavoriteDoubleTapHotkey = 56,
+    SetFavoriteDoubleTapOwners = 57
 }
 
 public struct IpcMessage

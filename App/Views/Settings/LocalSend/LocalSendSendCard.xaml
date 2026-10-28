@@ -24,7 +24,7 @@
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
                         <Setter Property="Visibility" Value="Collapsed"/>
-                        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+                        <Setter Property="Foreground"><Setter.Value><Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlMuted}"/></Setter.Value></Setter>
                         <Setter Property="FontSize" Value="11"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsServiceRunning}" Value="False">

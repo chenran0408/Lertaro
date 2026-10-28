@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Lertaro.App.Helpers;
 
 namespace Lertaro.App.Views.Controls;
@@ -79,11 +80,15 @@ public partial class HotkeyRecorderControl : System.Windows.Controls.UserControl
     // is deferred to release -- if nothing else was pressed in between, the modifier alone is the value.
     private bool _realKeyPressedDuringModifierHold;
     private ModifierKeys _trackedModifiers;
+    private readonly DispatcherTimer _singleKeyTimer;
+    private Key? _pendingSingleKey;
 
     private static HotkeyRecorderControl? _focusedRecorder;
     public HotkeyRecorderControl()
     {
         InitializeComponent();
+        _singleKeyTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(320) };
+        _singleKeyTimer.Tick += (_, _) => CommitPendingSingleKey();
         IsKeyboardFocusWithinChanged += (_, _) => UpdateRecordingFocus(IsKeyboardFocusWithin);
         Unloaded += (_, _) => UpdateRecordingFocus(false);
         IsVisibleChanged += (_, e) => { if (e.NewValue is false) UpdateRecordingFocus(false); };
@@ -99,9 +104,9 @@ public partial class HotkeyRecorderControl : System.Windows.Controls.UserControl
         { Id = Core.Wire.IpcMessageId.SetHotkeyRecorderFocused, BoolVal = _focusedRecorder != null });
     }
 
-    private void ClearButton_Click(object sender, RoutedEventArgs e) => Value = string.Empty;
+    private void ClearButton_Click(object sender, RoutedEventArgs e) { CancelPendingSingleKey(); Value = string.Empty; }
 
-    private void RestoreButton_Click(object sender, RoutedEventArgs e) => Value = DefaultValue;
+    private void RestoreButton_Click(object sender, RoutedEventArgs e) { CancelPendingSingleKey(); Value = DefaultValue; }
 
     private static string? ModifierName(Key key) => HotkeyRecorderModifierState.FromKey(key) switch
     {
@@ -122,11 +127,12 @@ public partial class HotkeyRecorderControl : System.Windows.Controls.UserControl
         e.Handled = true;
         var key = WpfUiHelper.GetActualKey(e);
 
-        if (key == Key.Escape) { Value = string.Empty; return; }
+        if (key == Key.Escape) { CancelPendingSingleKey(); Value = string.Empty; return; }
         if (key is Key.Clear or Key.OemClear) return;
 
         if (HotkeyRecorderModifierState.FromKey(key) != ModifierKeys.None)
         {
+            CommitPendingSingleKey();
             _trackedModifiers = HotkeyRecorderModifierState.Add(_trackedModifiers, key);
             // Wait for KeyUp to decide: if nothing else is pressed before it's released, the bare
             // modifier itself is the recorded value (see HotkeyBox_PreviewKeyUp).
@@ -137,6 +143,27 @@ public partial class HotkeyRecorderControl : System.Windows.Controls.UserControl
 
         var modifiers = HotkeyRecorderModifierState.Combine(Keyboard.Modifiers, _trackedModifiers);
         if (e.Key == Key.System) modifiers |= ModifierKeys.Alt;
+
+        if (modifiers == ModifierKeys.None && !ModifierOnly)
+        {
+            if (_pendingSingleKey == key && _singleKeyTimer.IsEnabled)
+            {
+                if (!e.IsRepeat)
+                {
+                    CancelPendingSingleKey();
+                    Value = Core.HotkeyStringFormat.AsDoubleTap(KeyDisplayName(key));
+                }
+                return;
+            }
+            CommitPendingSingleKey();
+            if (!e.IsRepeat)
+            {
+                _pendingSingleKey = key;
+                _singleKeyTimer.Start();
+            }
+            return;
+        }
+        CommitPendingSingleKey();
 
         if (ModifierOnly)
         {
@@ -185,5 +212,19 @@ public partial class HotkeyRecorderControl : System.Windows.Controls.UserControl
         _trackedModifiers = HotkeyRecorderModifierState.Remove(_trackedModifiers, key);
         if (_trackedModifiers == ModifierKeys.None)
             _realKeyPressedDuringModifierHold = false;
+    }
+
+    private void CommitPendingSingleKey()
+    {
+        if (_pendingSingleKey is not { } key) return;
+        CancelPendingSingleKey();
+        if (!RequireModifier && !ModifierOnly)
+            Value = KeyDisplayName(key);
+    }
+
+    private void CancelPendingSingleKey()
+    {
+        _singleKeyTimer.Stop();
+        _pendingSingleKey = null;
     }
 }

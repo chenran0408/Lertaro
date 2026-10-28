@@ -10,6 +10,7 @@ namespace Lertaro.App.ViewModels.Settings;
 public class HotkeySettingsViewModel : ViewModelBase
 {
     private readonly System.ComponentModel.PropertyChangedEventHandler _translationHandler;
+    private readonly System.ComponentModel.PropertyChangedEventHandler _settingsPropertyHandler;
 
     private readonly UserSettings _userSettings;
     private readonly Func<uint, uint, bool> _combinationTaken;
@@ -51,9 +52,19 @@ public class HotkeySettingsViewModel : ViewModelBase
         MouseWakeWhitelist = new ProcessBlacklistEditorViewModel(hotkeys.QuickPanelMouseAllowedProcesses ?? []);
 
         _quickNavigationHotkey = hotkeys.QuickNavigationHotkey;
+        PluginActionGroups = HotkeyPluginActionGroupBuilder.Build(hotkeys.PluginActionHotkeys);
         QuickPanelWake = new QuickPanelWakeSettingsViewModel(this, userSettings, _combinationTaken);
 
-        PluginActionGroups = HotkeyPluginActionGroupBuilder.Build(hotkeys.PluginActionHotkeys);
+        foreach (var item in PluginActionGroups.SelectMany(group => group.Items))
+            item.PropertyChanged += PluginActionItemChanged;
+        QuickPanelWake.BindingsChanged += RefreshConfiguredHotkeyConflictWarnings;
+        _settingsPropertyHandler = (_, e) =>
+        {
+            if (e.PropertyName == null || HostHotkeyProperties.Contains(e.PropertyName)
+                || e.PropertyName == nameof(SelectJumpModifier))
+                RefreshConfiguredHotkeyConflictWarnings();
+        };
+        PropertyChanged += _settingsPropertyHandler;
 
         // Plugin action DisplayName/plugin Name are read live off the action/plugin objects, so they
         // need an explicit refresh on a runtime language switch (nothing else re-raises them).
@@ -64,8 +75,10 @@ public class HotkeySettingsViewModel : ViewModelBase
                 group.RefreshPluginName();
                 foreach (var item in group.Items) item.RefreshDisplayName();
             }
+            RefreshConfiguredHotkeyConflictWarnings();
         };
         TranslationManager.Instance.PropertyChanged += _translationHandler;
+        RefreshConfiguredHotkeyConflictWarnings();
 
     }
 
@@ -84,6 +97,101 @@ public class HotkeySettingsViewModel : ViewModelBase
     public BlacklistSettingsViewModel Blacklist { get; }
 
     public List<PluginActionGroupViewModel> PluginActionGroups { get; }
+
+    private void PluginActionItemChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(PluginActionHotkeyItemViewModel.HotkeyValue))
+            RefreshConfiguredHotkeyConflictWarnings();
+    }
+
+    private static readonly string[] HostHotkeyProperties =
+    [
+        nameof(ToggleHotkeyValue), nameof(QuickSwitchComboHotkey), nameof(QuickNavigationHotkey),
+        nameof(NextItemHotkey), nameof(PreviousItemHotkey), nameof(ActionsMenuHotkey),
+        nameof(CompleteFromSelectionHotkey), nameof(QuickLookHotkey), nameof(KeywordHistoryPreviousHotkey),
+        nameof(KeywordHistoryNextHotkey), nameof(KeywordHistoryDeleteHotkey), nameof(OpenFullWindowHotkey),
+        nameof(LocalSendSendWindowHotkey), nameof(StayOpenHotkey)
+    ];
+
+    private (string Property, string Value)[] GetHostHotkeyValues() =>
+    [
+        (nameof(ToggleHotkeyValue), ToggleHotkeyValue),
+        (nameof(QuickSwitchComboHotkey), QuickSwitchComboHotkey),
+        (nameof(QuickNavigationHotkey), QuickNavigationHotkey),
+        (nameof(NextItemHotkey), NextItemHotkey),
+        (nameof(PreviousItemHotkey), PreviousItemHotkey),
+        (nameof(ActionsMenuHotkey), ActionsMenuHotkey),
+        (nameof(CompleteFromSelectionHotkey), CompleteFromSelectionHotkey),
+        (nameof(QuickLookHotkey), QuickLookHotkey),
+        (nameof(KeywordHistoryPreviousHotkey), KeywordHistoryPreviousHotkey),
+        (nameof(KeywordHistoryNextHotkey), KeywordHistoryNextHotkey),
+        (nameof(KeywordHistoryDeleteHotkey), KeywordHistoryDeleteHotkey),
+        (nameof(OpenFullWindowHotkey), OpenFullWindowHotkey),
+        (nameof(LocalSendSendWindowHotkey), LocalSendSendWindowHotkey),
+        (nameof(StayOpenHotkey), StayOpenHotkey)
+    ];
+
+    private string GetHostHotkeyConflictWarning(string propertyName)
+    {
+        var current = GetHostHotkeyValues().FirstOrDefault(hotkey => hotkey.Property == propertyName).Value;
+        if (string.IsNullOrWhiteSpace(current))
+            return string.Empty;
+
+        var hostConflicts = GetHostHotkeyValues()
+            .Where(hotkey => hotkey.Property != propertyName)
+            .Select(hotkey => hotkey.Value);
+        var externalConflicts = _userSettings.Favorites.Select(favorite => favorite.Hotkey)
+            .Concat(QuickPanelWake.Export().Where(binding => binding.Enabled && binding.Kind == QuickPanelWakeKind.Keyboard)
+                .Select(binding => binding.Key))
+            .Concat(string.IsNullOrWhiteSpace(SelectJumpModifier) ? Enumerable.Empty<string>()
+                : Enumerable.Range(1, 9).SelectMany(number => new[]
+                {
+                    $"{SelectJumpModifier}+D{number}", $"{SelectJumpModifier}+NumPad{number}"
+                }))
+            .Concat(FavoriteHotkeyConflicts.DynamicPluginHotkeys(_userSettings))
+            .Concat(PluginActionGroups.SelectMany(group => group.Items).Select(item => item.HotkeyValue));
+
+        return HasConfiguredHotkeyConflict(current, hostConflicts.Concat(externalConflicts))
+            ? TranslationManager.Instance["Hotkey_Conflict"]
+            : string.Empty;
+    }
+
+    private void RefreshConfiguredHotkeyConflictWarnings()
+    {
+        var items = PluginActionGroups.SelectMany(group => group.Items).ToArray();
+        var hostHotkeys = new[]
+            {
+                ToggleHotkeyValue, QuickSwitchComboHotkey, QuickNavigationHotkey,
+                NextItemHotkey, PreviousItemHotkey, ActionsMenuHotkey, CompleteFromSelectionHotkey,
+                QuickLookHotkey, KeywordHistoryPreviousHotkey, KeywordHistoryNextHotkey,
+                KeywordHistoryDeleteHotkey, OpenFullWindowHotkey, LocalSendSendWindowHotkey, StayOpenHotkey
+            }
+            .Concat(_userSettings.Favorites.Select(favorite => favorite.Hotkey))
+            .Concat(QuickPanelWake.Export().Where(binding => binding.Enabled && binding.Kind == QuickPanelWakeKind.Keyboard)
+                .Select(binding => binding.Key))
+            .Concat(string.IsNullOrWhiteSpace(SelectJumpModifier) ? Enumerable.Empty<string>()
+                : Enumerable.Range(1, 9).SelectMany(number => new[]
+                {
+                    $"{SelectJumpModifier}+D{number}", $"{SelectJumpModifier}+NumPad{number}"
+                }))
+            .ToArray();
+        var dynamicPluginHotkeys = FavoriteHotkeyConflicts.DynamicPluginHotkeys(_userSettings).ToArray();
+
+        foreach (var item in items)
+        {
+            var conflicts = HasConfiguredHotkeyConflict(item.HotkeyValue,
+                    items.Where(other => !ReferenceEquals(item, other)).Select(other => other.HotkeyValue))
+                || HasConfiguredHotkeyConflict(item.HotkeyValue, hostHotkeys)
+                || HasConfiguredHotkeyConflict(item.HotkeyValue, dynamicPluginHotkeys);
+            item.SetConflictWarning(conflicts ? TranslationManager.Instance["Hotkey_Conflict"] : string.Empty);
+        }
+
+        foreach (var property in HostHotkeyProperties)
+            OnPropertyChanged($"{property}ConflictWarning");
+    }
+
+    internal static bool HasConfiguredHotkeyConflict(string hotkey, IEnumerable<string> otherHotkeys) =>
+        otherHotkeys.Any(other => QuickPanelWakeBindings.SameKey(hotkey, other));
 
     // Quick Navigation properties
     private bool _quickNavTriggerOnDoubleClick;
@@ -113,6 +221,7 @@ public class HotkeySettingsViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsToggleModifierClick));
         }
     }
+    public string ToggleHotkeyValueConflictWarning => GetHostHotkeyConflictWarning(nameof(ToggleHotkeyValue));
 
     // Whether the toggle hotkey is currently a bare modifier (double-tap mode) -- drives the
     // "(Double Tap)" hint shown next to the recorder.
@@ -142,6 +251,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         get => _quickSwitchHotkeyValue;
         set => SetProperty(ref _quickSwitchHotkeyValue, value);
     }
+    public string QuickSwitchComboHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(QuickSwitchComboHotkey));
 
     // Function key shortcuts, each stored directly in HotkeyRecorderControl's own combo format
     private string _selectJumpModifier;
@@ -157,6 +267,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         get => _nextItemHotkey;
         set => SetProperty(ref _nextItemHotkey, value);
     }
+    public string NextItemHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(NextItemHotkey));
 
     private string _previousItemHotkey;
     public string PreviousItemHotkey
@@ -164,6 +275,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         get => _previousItemHotkey;
         set => SetProperty(ref _previousItemHotkey, value);
     }
+    public string PreviousItemHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(PreviousItemHotkey));
 
     private string _actionsMenuHotkey;
     public string ActionsMenuHotkey
@@ -171,6 +283,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         get => _actionsMenuHotkey;
         set => SetProperty(ref _actionsMenuHotkey, value);
     }
+    public string ActionsMenuHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(ActionsMenuHotkey));
 
     private string _completeFromSelectionHotkey;
     public string CompleteFromSelectionHotkey
@@ -178,6 +291,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         get => _completeFromSelectionHotkey;
         set => SetProperty(ref _completeFromSelectionHotkey, value);
     }
+    public string CompleteFromSelectionHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(CompleteFromSelectionHotkey));
 
     private string _quickLookHotkey;
     public string QuickLookHotkey
@@ -185,6 +299,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         get => _quickLookHotkey;
         set => SetProperty(ref _quickLookHotkey, value);
     }
+    public string QuickLookHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(QuickLookHotkey));
 
     private string _keywordHistoryPreviousHotkey;
     public string KeywordHistoryPreviousHotkey
@@ -192,6 +307,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         get => _keywordHistoryPreviousHotkey;
         set => SetProperty(ref _keywordHistoryPreviousHotkey, value);
     }
+    public string KeywordHistoryPreviousHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(KeywordHistoryPreviousHotkey));
 
     private string _keywordHistoryNextHotkey;
     public string KeywordHistoryNextHotkey
@@ -199,6 +315,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         get => _keywordHistoryNextHotkey;
         set => SetProperty(ref _keywordHistoryNextHotkey, value);
     }
+    public string KeywordHistoryNextHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(KeywordHistoryNextHotkey));
 
     private string _keywordHistoryDeleteHotkey;
     public string KeywordHistoryDeleteHotkey
@@ -206,6 +323,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         get => _keywordHistoryDeleteHotkey;
         set => SetProperty(ref _keywordHistoryDeleteHotkey, value);
     }
+    public string KeywordHistoryDeleteHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(KeywordHistoryDeleteHotkey));
 
     private string _openFullWindowHotkey;
     public string OpenFullWindowHotkey
@@ -213,6 +331,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         get => _openFullWindowHotkey;
         set => SetProperty(ref _openFullWindowHotkey, value);
     }
+    public string OpenFullWindowHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(OpenFullWindowHotkey));
 
     private string _quickPanelHotkey;
 
@@ -244,6 +363,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         get => _quickNavigationHotkey;
         set => SetProperty(ref _quickNavigationHotkey, value);
     }
+    public string QuickNavigationHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(QuickNavigationHotkey));
 
     private string _stayOpenHotkey;
     public string StayOpenHotkey
@@ -251,6 +371,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         get => _stayOpenHotkey;
         set => SetProperty(ref _stayOpenHotkey, value);
     }
+    public string StayOpenHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(StayOpenHotkey));
 
     private string _localSendSendWindowHotkey;
     public string LocalSendSendWindowHotkey
@@ -258,6 +379,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         get => _localSendSendWindowHotkey;
         set => SetProperty(ref _localSendSendWindowHotkey, value);
     }
+    public string LocalSendSendWindowHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(LocalSendSendWindowHotkey));
 
     public void Apply()
     {
@@ -356,8 +478,9 @@ public class HotkeySettingsViewModel : ViewModelBase
     /// returning the display text of the refused combinations.
     /// </summary>
     /// <remarks>
-    /// A bare modifier (the double-tap form) registers nothing with the OS, so it cannot be taken; an
-    /// unparsable value is left alone, for the same reason the recorder would not have produced one.
+    /// A bare modifier or explicit double-tap gesture registers nothing with the OS, so it cannot be
+    /// taken; an unparsable value is left alone, for the same reason the recorder would not have
+    /// produced one.
     /// </remarks>
     internal List<string> ProbeGlobalCombinations()
     {
@@ -377,7 +500,9 @@ public class HotkeySettingsViewModel : ViewModelBase
 
     private string ProbeGlobalCombination(string value, string defaultValue, List<string> taken)
     {
-        if (string.IsNullOrWhiteSpace(value) || HotkeyStringFormat.IsBareModifier(value, out _))
+        if (string.IsNullOrWhiteSpace(value)
+            || HotkeyStringFormat.IsBareModifier(value, out _)
+            || HotkeyStringFormat.IsDoubleTap(value, out _))
             return value;
 
         // The favorites' own builder: the recorder's flat format is shared with them, and this one
@@ -396,6 +521,10 @@ public class HotkeySettingsViewModel : ViewModelBase
     public void Cleanup()
     {
         QuickPanelWake.Dispose();
+        QuickPanelWake.BindingsChanged -= RefreshConfiguredHotkeyConflictWarnings;
+        PropertyChanged -= _settingsPropertyHandler;
+        foreach (var item in PluginActionGroups.SelectMany(group => group.Items))
+            item.PropertyChanged -= PluginActionItemChanged;
         TranslationManager.Instance.PropertyChanged -= _translationHandler;
     }
 }

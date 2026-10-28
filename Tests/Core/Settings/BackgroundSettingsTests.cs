@@ -8,12 +8,41 @@ public sealed class BackgroundSettingsTests
     [TestMethod]
     [DataRow(1)]
     [DataRow(2)]
-    [DataRow(4)]
     [DataRow(999)]
     public void RetiredBackgroundModesFallBackToTheme(int kind)
     {
         var old = JsonSerializer.Deserialize<BackgroundSettings>($"{{\"Kind\":{kind},\"Blur\":20,\"Material\":2,\"GlassLevel\":2}}")!.Normalize();
         Assert.AreEqual(BackgroundKind.Theme, old.Kind);
+    }
+
+    [TestMethod]
+    [DataRow(1)]
+    [DataRow(2)]
+    public void LegacyColorPresetsMapToThemeWithoutErasingTheirValues(int kind)
+    {
+        var old = JsonSerializer.Deserialize<BackgroundSettings>($"{{\"Kind\":{kind},\"FirstColor\":\"#112233\",\"SecondColor\":\"#445566\",\"Angle\":37,\"Tint\":0.4}}")!.Normalize();
+        Assert.AreEqual(BackgroundKind.Theme, old.Kind);
+        Assert.AreEqual("#112233", old.FirstColor);
+        Assert.AreEqual("#445566", old.SecondColor);
+        Assert.AreEqual(37, old.Angle);
+        Assert.AreEqual(.4, old.Tint);
+    }
+
+    [TestMethod]
+    public void LegacyPresetSettingsSurviveLoadAndSave()
+    {
+        const string json = "{\"Kind\":4,\"FirstColor\":\"#112233\",\"SecondColor\":\"#445566\",\"Angle\":37,\"Blur\":20,\"Tint\":0.4,\"Material\":2,\"GlassLevel\":2}";
+        var loaded = JsonSerializer.Deserialize<BackgroundSettings>(json)!.Normalize();
+        var saved = JsonSerializer.Deserialize<BackgroundSettings>(JsonSerializer.Serialize(loaded))!.Normalize();
+
+        Assert.AreEqual(BackgroundKind.Material, saved.Kind);
+        Assert.AreEqual("#112233", saved.FirstColor);
+        Assert.AreEqual("#445566", saved.SecondColor);
+        Assert.AreEqual(37, saved.Angle);
+        Assert.AreEqual(20, saved.Blur);
+        Assert.AreEqual(.4, saved.Tint);
+        Assert.AreEqual(WindowMaterial.LiquidGlass, saved.Material);
+        Assert.AreEqual(GlassLevel.StrongRefraction, saved.GlassLevel);
     }
 
     [TestMethod]

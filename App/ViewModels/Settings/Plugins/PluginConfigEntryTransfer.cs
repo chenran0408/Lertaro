@@ -137,6 +137,19 @@ internal static class PluginConfigEntryTransfer
 
     private static bool IsValidHotkey(string text, bool requireModifier)
     {
+        if (HotkeyStringFormat.IsDoubleTap(text, out var tappedKey))
+        {
+            // Double-tap is an explicit recorder format; it has no modifier by design, so
+            // RequireModifier applies only to ordinary single-press combinations.
+            return Enum.GetNames<Key>().Contains(tappedKey, StringComparer.OrdinalIgnoreCase)
+                && WpfUiHelper.TryParseHotkey(text, out var doubleTapKey, out var doubleTapModifiers)
+                && doubleTapKey is not (Key.None or Key.System or Key.ImeProcessed or Key.DeadCharProcessed
+                    or Key.Escape or Key.Clear or Key.OemClear)
+                && HotkeyRecorderModifierState.FromKey(doubleTapKey) == ModifierKeys.None
+                && doubleTapModifiers == ModifierKeys.None
+                && !HotkeyStringFormat.IsReservedWindowsShortcut(text);
+        }
+
         var parts = text.Split('+');
         var modifiers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var part in parts[..^1])

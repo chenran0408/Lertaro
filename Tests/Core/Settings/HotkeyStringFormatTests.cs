@@ -1,5 +1,7 @@
 namespace Lertaro.Core.Tests.Settings;
 
+using System.Text.Json;
+
 [TestClass]
 public sealed class HotkeyStringFormatTests
 {
@@ -72,6 +74,58 @@ public sealed class HotkeyStringFormatTests
 
         Assert.AreEqual(string.Empty, modifier);
         Assert.AreEqual(string.Empty, key);
+    }
+
+    [TestMethod]
+    public void IsDoubleTap_ReadsExplicitSingleKeyGesture()
+    {
+        Assert.IsTrue(HotkeyStringFormat.IsDoubleTap("DoubleTap:F2", out var key));
+        Assert.AreEqual("F2", key);
+        HotkeyStringFormat.ParseCombo("DoubleTap:F2", out var modifier, out var comboKey);
+        Assert.AreEqual(string.Empty, modifier);
+        Assert.AreEqual(string.Empty, comboKey);
+    }
+
+    [TestMethod]
+    public void IsDoubleTap_RejectsMissingKeyAndChord()
+    {
+        Assert.IsFalse(HotkeyStringFormat.IsDoubleTap("DoubleTap:", out _));
+        Assert.IsFalse(HotkeyStringFormat.IsDoubleTap("DoubleTap:Ctrl+F2", out _));
+    }
+
+    [TestMethod]
+    public void ToDisplayText_DoubleTapShowsGesture()
+    {
+        Assert.AreEqual("Double-tap F2", HotkeyStringFormat.ToDisplayText("DoubleTap:F2"));
+        Assert.AreEqual("Double-tap ;", HotkeyStringFormat.ToDisplayText("DoubleTap:Oem1"));
+        Assert.AreEqual("Double-tap Enter", HotkeyStringFormat.ToDisplayText("DoubleTap:Enter"));
+    }
+
+    [TestMethod]
+    public void DoubleTapEnter_UsesCanonicalKeyName()
+    {
+        Assert.IsTrue(HotkeyStringFormat.IsDoubleTap("DoubleTap:Enter", out var key));
+        Assert.AreEqual("Return", key);
+    }
+
+    [TestMethod]
+    public void UserSettingsJsonRoundTrip_PreservesDoubleTapBindingsAcrossScopes()
+    {
+        var settings = new UserSettings();
+        settings.Hotkeys.ToggleWindowHotkey = "DoubleTap:Enter";
+        settings.Hotkeys.QuickNavigationHotkey = "DoubleTap:F3";
+        settings.Hotkeys.QuickPanelWakeBindings =
+        [new() { Id = "panel-double-tap", Kind = QuickPanelWakeKind.Keyboard, Key = "DoubleTap:Oem3" }];
+        settings.Favorites = [new() { Hotkey = "DoubleTap:F4" }];
+        settings.Hotkeys.PluginActionHotkeys["plugin"] = new() { ["action"] = "DoubleTap:F5" };
+
+        var restored = JsonSerializer.Deserialize<UserSettings>(JsonSerializer.Serialize(settings))!;
+
+        Assert.AreEqual("DoubleTap:Enter", restored.Hotkeys.ToggleWindowHotkey);
+        Assert.AreEqual("DoubleTap:F3", restored.Hotkeys.QuickNavigationHotkey);
+        Assert.AreEqual("DoubleTap:Oem3", restored.Hotkeys.QuickPanelWakeBindings![0].Key);
+        Assert.AreEqual("DoubleTap:F4", restored.Favorites[0].Hotkey);
+        Assert.AreEqual("DoubleTap:F5", restored.Hotkeys.PluginActionHotkeys["plugin"]["action"]);
     }
 
     [TestMethod]

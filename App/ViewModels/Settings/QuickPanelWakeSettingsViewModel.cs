@@ -61,6 +61,7 @@ public sealed class QuickPanelWakeSettingsViewModel : ViewModelBase, IDisposable
     }
 
     public ObservableCollection<QuickPanelWakeBindingViewModel> Rows { get; } = new();
+    internal event Action? BindingsChanged;
     public ProcessBlacklistEditorViewModel MouseWhitelist => _parent.MouseWakeWhitelist;
     public bool AllowDesktop { get => _parent.QuickPanelMouseAllowDesktop; set { if (value == AllowDesktop) return; _parent.QuickPanelMouseAllowDesktop = value; OnPropertyChanged(); Changed(); } }
     public bool ExtraProgramsExpanded { get => _parent.MouseWakeExtraProgramsExpanded; set { _parent.MouseWakeExtraProgramsExpanded = value; OnPropertyChanged(); } }
@@ -127,6 +128,7 @@ public sealed class QuickPanelWakeSettingsViewModel : ViewModelBase, IDisposable
         if (_restoring) return;
         StopTest(); Validate();
         OnPropertyChanged(nameof(IsDirty)); OnPropertyChanged(nameof(HasRows)); OnPropertyChanged(nameof(ScopeSummary));
+        BindingsChanged?.Invoke();
         CommandManager.InvalidateRequerySuggested();
     }
     public bool Validate(bool probeSystem = false)
@@ -136,7 +138,11 @@ public sealed class QuickPanelWakeSettingsViewModel : ViewModelBase, IDisposable
             _parent.OpenFullWindowHotkey, _parent.LocalSendSendWindowHotkey, _parent.StayOpenHotkey,
             _parent.NextItemHotkey, _parent.PreviousItemHotkey, _parent.ActionsMenuHotkey, _parent.CompleteFromSelectionHotkey,
             _parent.QuickLookHotkey, _parent.KeywordHistoryPreviousHotkey, _parent.KeywordHistoryNextHotkey, _parent.KeywordHistoryDeleteHotkey }
-            .Concat(_settings.Favorites.Select(f => f.Hotkey)).ToArray();
+            .Concat(_settings.Favorites.Select(f => f.Hotkey))
+            .Concat(_settings.Hotkeys.PluginActionHotkeys.Values.SelectMany(actions => actions.Values))
+            .Concat(_parent.PluginActionGroups.SelectMany(group => group.Items.Select(item => item.HotkeyValue)))
+            .Concat(FavoriteHotkeyConflicts.DynamicPluginHotkeys(_settings))
+            .ToArray();
         for (var i = 0; i < rules.Count; i++)
         {
             var rule = rules[i];

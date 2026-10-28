@@ -13,14 +13,15 @@
     <RetainVM>false</RetainVM>
     <AssemblyName>Lertaro.App</AssemblyName>
     <RootNamespace>Lertaro.App</RootNamespace>
-    <Version>5.10.1</Version>
-    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <Version>5.10.2-beta.1</Version>
+    <GenerateDependencyFile>true</GenerateDependencyFile>
   </PropertyGroup>
 
 
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
     <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
+    <ProjectReference Include="..\Vendor\GlassDesk\src\GlassDesk.UI\GlassDesk.UI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

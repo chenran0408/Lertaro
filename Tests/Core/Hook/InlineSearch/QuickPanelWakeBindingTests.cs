@@ -42,6 +42,11 @@ public sealed class QuickPanelWakeBindingTests
     public void ConflictsCoverHoldVersusClickAndOppositeCircleDirectionsCanCoexist()
     {
         Assert.IsTrue(QuickPanelWakeBindings.SameKey("Alt+Ctrl+Return", "ctrl+alt+Enter"));
+        Assert.IsTrue(QuickPanelWakeBindings.SameKey("DoubleTap:F2", "F2"));
+        Assert.IsTrue(QuickPanelWakeBindings.SameKey("F2", "DoubleTap:F2"));
+        Assert.IsFalse(QuickPanelWakeBindings.SameKey("DoubleTap:F2", "Ctrl+F2"));
+        Assert.IsTrue(QuickPanelWakeBindings.SameKey("Ctrl+F2", "CONTROL+F2"));
+        Assert.IsTrue(QuickPanelWakeBindings.SameKey("Win+F2", "Windows+F2"));
         var click = new QuickPanelWakeBinding { Kind = QuickPanelWakeKind.Click, Button = QuickPanelWakeButton.Middle };
         var hold = new QuickPanelWakeBinding { Kind = QuickPanelWakeKind.Hold, Button = QuickPanelWakeButton.Middle };
         Assert.IsTrue(QuickPanelWakeBindings.Conflicts(click, hold));

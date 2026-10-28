@@ -13,73 +13,14 @@
                 <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml"/>
                 <ResourceDictionary Source="../../Resources/Styles/Windows/SearchWindow.xaml"/>
                 <ResourceDictionary Source="../../Resources/Styles/Windows/SettingsWindow.xaml"/>
-                <ResourceDictionary Source="AppearanceThemeCardTemplate.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-
-            <!-- Card container: no ListBoxItem chrome of its own. Every selection cue (border,
-                 checkmark) is drawn inside ThemeCardTemplate below, keyed off IsSelected via a
-                 RelativeSource binding, so it can use the theme's own accent color instead of one
-                 fixed highlight color for every card. -->
-            <Style x:Key="ThemeCardContainerStyle" TargetType="ListBoxItem">
-                <Setter Property="Padding" Value="0"/>
-                <Setter Property="Margin" Value="0"/>
-                <!-- Not Focusable="False": ListBoxItem's own click-to-select handling ties into focus
-                     acquisition, so disabling it silently breaks mouse selection. Suppressing just the
-                     focus visual (the dotted rectangle) is enough to get the "no chrome" look. -->
-                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                <!-- Selecting a ListBoxItem (by click, or programmatically when a mode card switches
-                     SelectedThemeId) raises RequestBringIntoView. This ListBox has no ScrollViewer of
-                     its own (see ThemeCardListBox's Template below), so that request bubbles straight up
-                     to the page's own ScrollViewer and yanks the whole page to wherever the card sits:
-                     jarring on its own, and disruptive mid-click since the layout shifts under the
-                     cursor before the click even finishes. The grid is small enough to not need
-                     scroll-to-reveal in the first place, so this just swallows the request outright. -->
-                <EventSetter Event="RequestBringIntoView" Handler="ThemeCard_RequestBringIntoView"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="ListBoxItem">
-                            <ContentPresenter/>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <Style x:Key="ThemeCardListBox" TargetType="ListBox">
-                <Setter Property="BorderThickness" Value="0"/>
+            <!-- Shared chrome for the retained Light/Dark/Follow System mode preview cards. -->
+            <Style x:Key="PreviewCardShadowWrapperStyle" TargetType="Border">
                 <Setter Property="Background" Value="Transparent"/>
-                <!-- The card grid is static while the page scrolls (it only changes when the user picks
-                     a theme), so caching the whole list to a bitmap makes the outer ScrollViewer pan one
-                     pre-rendered surface instead of re-laying out about twenty nested drop-shadow cards
-                     every frame: the difference between smooth and visibly stuttering scroll. WPF
-                     invalidates the cache on the rare content change (selection, mode switch). -->
-                <Setter Property="CacheMode" Value="BitmapCache"/>
-                <Setter Property="ItemContainerStyle" Value="{StaticResource ThemeCardContainerStyle}"/>
-                <Setter Property="ItemTemplate" Value="{StaticResource ThemeCardTemplate}"/>
-                <Setter Property="SelectedValuePath" Value="Id"/>
-                <!-- Belt-and-suspenders alongside ThemeCardContainerStyle's own EventSetter: when
-                     SelectedThemeId changes programmatically (a mode-card switch) right after this
-                     ListBox's ItemsSource just swapped to a freshly filtered list, the newly selected
-                     item's container can raise RequestBringIntoView before its own ItemContainerStyle
-                     has fully applied. Attaching here too, on the ListBox itself, is live from the
-                     moment the ListBox exists rather than per-item, so it can't miss that race. -->
-                <EventSetter Event="RequestBringIntoView" Handler="ThemeCard_RequestBringIntoView"/>
-                <Setter Property="ItemsPanel">
+                <Setter Property="Effect">
                     <Setter.Value>
-                        <ItemsPanelTemplate>
-                            <WrapPanel/>
-                        </ItemsPanelTemplate>
-                    </Setter.Value>
-                </Setter>
-                <!-- The default ListBox template wraps items in its own ScrollViewer, which swallows
-                     mouse-wheel input even with nothing to scroll: hovering the blank space inside
-                     the card grid blocked the page's outer ScrollViewer from scrolling. This grid never
-                     needs to scroll internally (it just wraps and lets the page grow), so the template
-                     drops the ScrollViewer entirely instead of only hiding its scrollbar. -->
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="ListBox">
-                            <ItemsPresenter/>
-                        </ControlTemplate>
+                        <DropShadowEffect BlurRadius="10" ShadowDepth="1.5" Opacity="0.18"
+                                          Color="{DynamicResource ShadowColor}"/>
                     </Setter.Value>
                 </Setter>
             </Style>
@@ -109,7 +50,7 @@
                                     Background="#FFFFFF" BorderThickness="2" ClipToBounds="True">
                                 <Border.Style>
                                     <Style TargetType="Border">
-                                        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+                                        <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdge}"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding Appearance.ThemeModeTag}" Value="Light">
                                                 <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
@@ -122,7 +63,7 @@
                             </Border>
                         </Border>
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeLight]}"
-                                   FontSize="12" Margin="2,6,0,0" Foreground="{DynamicResource TextSecondary}"/>
+                                   FontSize="12" Margin="2,6,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
                     </StackPanel>
 
                     <!-- Dark -->
@@ -135,7 +76,7 @@
                                     Background="#1E1E1E" BorderThickness="2" ClipToBounds="True">
                                 <Border.Style>
                                     <Style TargetType="Border">
-                                        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+                                        <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdge}"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding Appearance.ThemeModeTag}" Value="Dark">
                                                 <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
@@ -148,7 +89,7 @@
                             </Border>
                         </Border>
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeDark]}"
-                                   FontSize="12" Margin="2,6,0,0" Foreground="{DynamicResource TextSecondary}"/>
+                                   FontSize="12" Margin="2,6,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
                     </StackPanel>
 
                     <!-- Follow System: half-light, half-dark, so the split itself explains the mode. -->
@@ -161,7 +102,7 @@
                                     BorderThickness="2" ClipToBounds="True">
                                 <Border.Style>
                                     <Style TargetType="Border">
-                                        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+                                        <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdge}"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding Appearance.ThemeModeTag}" Value="FollowSystem">
                                                 <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
@@ -193,7 +134,7 @@
                             </Border>
                         </Border>
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeFollowSystem]}"
-                                   FontSize="12" Margin="2,6,0,0" Foreground="{DynamicResource TextSecondary}"/>
+                                   FontSize="12" Margin="2,6,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -201,35 +142,7 @@
             <local:BackgroundSettingsSection x:Name="BackgroundSection" DataContext="{Binding Appearance.Background}"/>
             <local:TaskbarSettingsSection x:Name="RowTaskbarSettings"/>
 
-            <!-- Manual mode: one grid, filtered to whichever flavor (light/dark) is currently active. -->
-            <StackPanel x:Name="GroupManualTheme" Visibility="{Binding Appearance.IsManualThemeEnabled, Converter={StaticResource BoolToVis}}">
-                <TextBlock Style="{StaticResource SettingsGroupTitle}"
-                            Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ThemeSelect]}"/>
-                <Border Style="{StaticResource SettingsCard}">
-                    <ListBox x:Name="RowThemeCards" Style="{StaticResource ThemeCardListBox}"
-                             ItemsSource="{Binding Appearance.ManualThemeCards}"
-                             SelectedValue="{Binding Appearance.SelectedThemeId, Mode=TwoWay}"/>
-                </Border>
-            </StackPanel>
 
-            <!-- Follow-system mode: separate light/dark grids, each filtered to its own flavor. -->
-            <StackPanel x:Name="GroupFollowSystemTheme" Visibility="{Binding Appearance.FollowSystem, Converter={StaticResource BoolToVis}}">
-                <TextBlock Style="{StaticResource SettingsGroupTitle}"
-                            Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ThemeLightSelect]}"/>
-                <Border Style="{StaticResource SettingsCard}">
-                    <ListBox x:Name="RowThemeLightCards" Style="{StaticResource ThemeCardListBox}"
-                             ItemsSource="{Binding Appearance.LightThemeCards}"
-                             SelectedValue="{Binding Appearance.SelectedLightThemeId, Mode=TwoWay}"/>
-                </Border>
-
-                <TextBlock Style="{StaticResource SettingsGroupTitle}"
-                            Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ThemeDarkSelect]}"/>
-                <Border Style="{StaticResource SettingsCard}">
-                    <ListBox x:Name="RowThemeDarkCards" Style="{StaticResource ThemeCardListBox}"
-                             ItemsSource="{Binding Appearance.DarkThemeCards}"
-                             SelectedValue="{Binding Appearance.SelectedDarkThemeId, Mode=TwoWay}"/>
-                </Border>
-            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

@@ -19,14 +19,14 @@ using Lertaro.App.Services.Theme;
 using Lertaro.App.Services.ShellMenu.Presenter;
 using Lertaro.App.Helpers.Visuals;
 namespace Lertaro.App;
-public partial class SearchWindow : Window, ISearchWindow, IHasVisibleContentInset
+public partial class SearchWindow : GlassDesk.UI.Controls.GlassWindow, ISearchWindow, IHasVisibleContentInset
 {
     private readonly SearchViewModel _viewModel;
     private readonly SearchWindowChromeHandler _chromeHandler;
     private readonly SearchWindowInputHandler _inputHandler;
     private readonly ShellMenuPresenter _menuPresenter;
-    // Must match SearchWindow.xaml's MainBorder Margin.
-    public Thickness VisibleContentInset => new(8);
+    // GlassDesk's visible glass surface fills the top-level window, so Quick Look docks to the full bounds.
+    public Thickness VisibleContentInset => new(0);
 
     // Whether to reopen the preview once this window has a first result to show it for. Applied then
     // rather than now because there is nothing to preview yet, and because the quick window this is

@@ -14,16 +14,17 @@ public enum FavoriteHotkeySkipReason
 }
 
 /// <summary>
-/// One favorite's hotkey, ready to hand to <c>RegisterHotKey</c>. <see cref="OwnerIndex"/> is the
-/// favorite's position in the list the request was built from, which is how a registration failure
-/// finds its way back to the row that caused it.
+/// One favorite's hotkey request. Modified combinations use <c>RegisterHotKey</c>; double-tap keys use
+/// the low-level keyboard hook so the first tap remains ordinary input. <see cref="OwnerIndex"/> maps
+/// either route back to the favorite row.
 /// </summary>
 public sealed record FavoriteHotkeyRegistration(
     int OwnerIndex,
     string Hotkey,
     uint VirtualKey,
     uint Modifiers,
-    FavoriteHotkeySkipReason SkipReason);
+    FavoriteHotkeySkipReason SkipReason,
+    bool IsDoubleTap = false);
 
 /// <summary>
 /// Builds the registration list from the user's favorites: this is the whole "which favorites get a
@@ -74,8 +75,9 @@ public static class FavoriteHotkeyRegistrations
         if (!FavoriteHotkeyFormat.TryBuild(hotkey, out var virtualKey, out var modifiers))
             return new FavoriteHotkeyRegistration(index, hotkey, 0, 0, FavoriteHotkeySkipReason.Invalid);
 
+        var isDoubleTap = HotkeyStringFormat.IsDoubleTap(hotkey, out _);
         if (HotkeyStringFormat.IsReservedWindowsShortcut(hotkey)
-            || FavoriteHotkeyConflicts.IsExplorerShortcut(virtualKey, modifiers))
+            || (!isDoubleTap && FavoriteHotkeyConflicts.IsExplorerShortcut(virtualKey, modifiers)))
             return new FavoriteHotkeyRegistration(index, hotkey, virtualKey, modifiers, FavoriteHotkeySkipReason.Reserved);
 
         if (applicationKeys.Contains((virtualKey, modifiers)))
@@ -85,6 +87,7 @@ public static class FavoriteHotkeyRegistrations
         if (!claimed.Add((virtualKey, modifiers)))
             return new FavoriteHotkeyRegistration(index, hotkey, virtualKey, modifiers, FavoriteHotkeySkipReason.Duplicate);
 
-        return new FavoriteHotkeyRegistration(index, hotkey, virtualKey, modifiers, FavoriteHotkeySkipReason.None);
+        return new FavoriteHotkeyRegistration(index, hotkey, virtualKey, modifiers, FavoriteHotkeySkipReason.None,
+            isDoubleTap);
     }
 }

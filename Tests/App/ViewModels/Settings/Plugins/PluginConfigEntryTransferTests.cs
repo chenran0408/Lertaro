@@ -173,6 +173,8 @@ public sealed class PluginConfigEntryTransferTests
     [DataRow("Hotkey", "\"Ctrl+Control+A\"")]
     [DataRow("Hotkey", "\"Ctrl+LeftShift\"")]
     [DataRow("Hotkey", "\"Win+R\"")]
+    [DataRow("Hotkey", "\"DoubleTap:Win\"")]
+    [DataRow("Hotkey", "\"DoubleTap:999\"")]
     public void Import_InvalidItem_RejectsWithoutDirtyingList(string key, string json)
     {
         var field = Field(actions: true);
@@ -185,6 +187,8 @@ public sealed class PluginConfigEntryTransferTests
     [DataRow("Ctrl+Alt+F9")]
     [DataRow("Control+Shift+Enter")]
     [DataRow("Ctrl+D1")]
+    [DataRow("DoubleTap:F9")]
+    [DataRow("DoubleTap:Enter")]
     public void Import_RecorderHotkey_Accepts(string hotkey)
     {
         var field = Field(actions: true);

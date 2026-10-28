@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:glass="clr-namespace:GlassDesk.UI.Controls;assembly=GlassDesk.UI">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="../Tokens/Colors.xaml"/>
         <ResourceDictionary Source="../Tokens/Spacing.xaml"/>
@@ -22,7 +23,7 @@
                         <!-- Background track -->
                         <Ellipse Stroke="{DynamicResource SpinnerTrackBrush}" StrokeThickness="2" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}"/>
                         <!-- Spinning accent arc (StrokeDashArray is extremely smooth and looks high-end) -->
-                        <Ellipse Stroke="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" StrokeThickness="2" 
+                        <Ellipse Stroke="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" StrokeThickness="2"
                                  StrokeDashArray="3 1"
                                  Width="{TemplateBinding Width}" Height="{TemplateBinding Height}"/>
                     </Grid>
@@ -53,10 +54,10 @@
 
     <!-- ═══════════ Themed ProgressBar (determinate only, the only current usage) ═══════════ -->
     <Style TargetType="{x:Type ProgressBar}">
-        <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource LiquidControlFill}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource LiquidControlEdge}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Foreground" Value="{DynamicResource AccentBlue}"/>
+        <Setter Property="Foreground" Value="{DynamicResource LiquidControlAccent}"/>
         <Setter Property="Height" Value="8"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -84,7 +85,12 @@
                 <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=CheckBox}}"/>
             </Style>
         </Style.Resources>
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="Foreground">
+            <Setter.Value>
+                <Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}"
+                         FallbackValue="{StaticResource LiquidControlText}"/>
+            </Setter.Value>
+        </Setter>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -97,19 +103,19 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Grid Grid.Column="0" Width="16" Height="16" VerticalAlignment="Center">
-                            <Border x:Name="Border" 
-                                    Width="16" Height="16"
-                                    CornerRadius="3" 
-                                    Background="{DynamicResource ControlBackground}" 
-                                    BorderBrush="{DynamicResource ControlBorderBrush}" 
+                        <Grid Grid.Column="0" Width="20" Height="20" VerticalAlignment="Center">
+                            <glass:PhoneBorder x:Name="Border"
+                                    Width="20" Height="20"
+                                    CornerRadius="7"
+                                    Background="{DynamicResource LiquidControlFill}"
+                                    BorderBrush="{DynamicResource LiquidControlEdge}"
                                     BorderThickness="1"/>
                             <TextBlock x:Name="CheckMark"
-                                       Text="&#xE73E;"
+                                       Text="✓"
                                        FontFamily="{DynamicResource AppIconFontFamily}"
-                                       FontSize="10"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource PrimaryButtonText}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource LiquidControlText}"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
                                        Visibility="Collapsed"/>
@@ -122,18 +128,17 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource AccentBlue}"/>
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
+                            <Setter TargetName="Border" Property="Background" Value="#CC1684FF"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#CC91CAFF"/>
                             <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#CC91CAFF"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource ControlDisabledBackground}"/>
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource ControlDisabledBorderBrush}"/>
-                            <Setter TargetName="CheckMark" Property="Foreground" Value="{DynamicResource ControlDisabledForeground}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource ControlDisabledForeground}"/>
+
+
+                            <Setter Property="Opacity" Value="0.45"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -150,7 +155,12 @@
                 <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
             </Style>
         </Style.Resources>
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="Foreground">
+            <Setter.Value>
+                <Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}"
+                         FallbackValue="{StaticResource LiquidControlText}"/>
+            </Setter.Value>
+        </Setter>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -163,16 +173,16 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Grid Grid.Column="0" Width="16" Height="16" VerticalAlignment="Center">
-                            <Border x:Name="OuterBorder" 
-                                    Width="16" Height="16"
-                                    CornerRadius="8" 
-                                    Background="{DynamicResource ControlBackground}" 
-                                    BorderBrush="{DynamicResource ControlBorderBrush}" 
+                        <Grid Grid.Column="0" Width="20" Height="20" VerticalAlignment="Center">
+                            <glass:PhoneBorder x:Name="OuterBorder"
+                                    Width="20" Height="20"
+                                    CornerRadius="8"
+                                    Background="{DynamicResource LiquidControlFill}"
+                                    BorderBrush="{DynamicResource LiquidControlEdge}"
                                     BorderThickness="1"/>
                             <Ellipse x:Name="CheckDot"
                                      Width="8" Height="8"
-                                     Fill="{DynamicResource PrimaryButtonText}"
+                                     Fill="{DynamicResource LiquidControlText}"
                                      HorizontalAlignment="Center"
                                      VerticalAlignment="Center"
                                      Visibility="Collapsed"/>
@@ -185,18 +195,15 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="OuterBorder" Property="Background" Value="{DynamicResource AccentBlue}"/>
-                            <Setter TargetName="OuterBorder" Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
+                            <Setter TargetName="OuterBorder" Property="Background" Value="{DynamicResource LiquidControlAccent}"/>
+                            <Setter TargetName="OuterBorder" Property="BorderBrush" Value="{DynamicResource LiquidControlAccent}"/>
                             <Setter TargetName="CheckDot" Property="Visibility" Value="Visible"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="OuterBorder" Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
+                            <Setter TargetName="OuterBorder" Property="BorderBrush" Value="{DynamicResource LiquidControlAccent}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="OuterBorder" Property="Background" Value="{DynamicResource ControlDisabledBackground}"/>
-                            <Setter TargetName="OuterBorder" Property="BorderBrush" Value="{DynamicResource ControlDisabledBorderBrush}"/>
-                            <Setter TargetName="CheckDot" Property="Fill" Value="{DynamicResource ControlDisabledForeground}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource ControlDisabledForeground}"/>
+                            <Setter Property="Opacity" Value="0.45"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -208,28 +215,27 @@
 
     <!-- ═══════════ Themed ToolTip ═══════════ -->
     <Style TargetType="{x:Type ToolTip}">
-        <Setter Property="Background" Value="{DynamicResource MenuBackground}"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource MenuBorderBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource LiquidControlPopup}"/>
+        <Setter Property="Foreground" Value="{DynamicResource LiquidControlText}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource LiquidControlEdge}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        
+
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="Padding" Value="9,6"/>
         <Setter Property="HasDropShadow" Value="True"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ToolTip}">
-                    <Border Background="{TemplateBinding Background}"
+                    <glass:PhoneBorder Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="{StaticResource CornerRadiusControl}"
+                            CornerRadius="10"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter/>
-                    </Border>
+                    </glass:PhoneBorder>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
 
 </ResourceDictionary>
-

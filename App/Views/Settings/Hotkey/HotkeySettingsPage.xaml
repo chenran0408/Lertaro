@@ -113,7 +113,7 @@
                     </StackPanel>
                 </StackPanel>
             </ctrl:TabStripScrollView>
-            <Border Height="1" Background="{DynamicResource SettingsRowBorderBrush}" Margin="0,0,0,15"/>
+            <Border Height="1" Background="{StaticResource LiquidControlEdge}" Margin="0,0,0,15"/>
         </StackPanel>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -159,6 +159,10 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Grid Margin="0,8,0,0">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
                                                         <ColumnDefinition Width="200"/>
@@ -167,6 +171,9 @@
                                                     <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
                                                         Value="{Binding HotkeyValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                         DefaultValue="{Binding DefaultHotkey}"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ConflictWarning}"
+                                                        FontSize="10" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
+                                                        Margin="0,2,0,0" Visibility="{Binding ConflictWarning, Converter={StaticResource StringToVis}}"/>
                                                 </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>

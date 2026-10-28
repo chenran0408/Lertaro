@@ -23,6 +23,13 @@ public class PluginActionHotkeyItemViewModel : ViewModelBase
         set => SetProperty(ref _hotkeyValue, value);
     }
 
+    private string _conflictWarning = string.Empty;
+    public string ConflictWarning
+    {
+        get => _conflictWarning;
+        private set => SetProperty(ref _conflictWarning, value);
+    }
+
     public PluginActionHotkeyItemViewModel(string pluginId, ISearchResultAction action, string currentValue)
     {
         PluginId = pluginId;
@@ -33,6 +40,8 @@ public class PluginActionHotkeyItemViewModel : ViewModelBase
     }
 
     public void RefreshDisplayName() => OnPropertyChanged(nameof(DisplayName));
+
+    internal void SetConflictWarning(string warning) => ConflictWarning = warning;
 }
 
 /// <summary>Groups the rebindable actions belonging to one plugin, for the divider-separated list.</summary>

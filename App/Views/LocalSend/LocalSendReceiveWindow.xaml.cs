@@ -10,7 +10,7 @@ using Lertaro.Core.Services.LocalSend.Models;
 using Lertaro.PluginSdk.Helpers;
 using System.Windows.Threading;
 namespace Lertaro.App.Views.LocalSend;
-public partial class LocalSendReceiveWindow : Window
+public partial class LocalSendReceiveWindow : GlassDesk.UI.Controls.GlassWindow
 {
     private readonly LocalSendUploadRequestArgs _requestArgs;
     private readonly Stopwatch _stopwatch = new();

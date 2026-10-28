@@ -26,14 +26,14 @@
                 <Setter Property="VerticalAlignment" Value="Center"/>
                 <Setter Property="HorizontalAlignment" Value="Right"/>
                 <Setter Property="Margin" Value="0,0,10,0"/>
-                <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+                <Setter Property="Foreground"><Setter.Value><Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlMuted}"/></Setter.Value></Setter>
             </Style>
 
             <!-- One row per source, which is one group in the panel. Name, path and the row's own
                  buttons share ONE line so a workspace with eight folders is eight lines, not sixteen;
                  anything that needs a decision rather than a glance is behind the chevron. -->
             <DataTemplate x:Key="SourceRowTemplate">
-                <Border BorderBrush="{DynamicResource SettingsRowBorderBrush}" BorderThickness="0,0,0,1" Padding="0,5">
+                <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,5">
                     <StackPanel>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -60,12 +60,12 @@
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <Ellipse Grid.Row="0" Grid.Column="0" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                <Ellipse Grid.Row="0" Grid.Column="1" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                <Ellipse Grid.Row="1" Grid.Column="0" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                <Ellipse Grid.Row="1" Grid.Column="1" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                <Ellipse Grid.Row="2" Grid.Column="0" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
-                                <Ellipse Grid.Row="2" Grid.Column="1" Width="2" Height="2" Fill="{DynamicResource TextSecondary2}" Margin="1"/>
+                                <Ellipse Grid.Row="0" Grid.Column="0" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                <Ellipse Grid.Row="0" Grid.Column="1" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                <Ellipse Grid.Row="1" Grid.Column="0" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                <Ellipse Grid.Row="1" Grid.Column="1" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                <Ellipse Grid.Row="2" Grid.Column="0" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
+                                <Ellipse Grid.Row="2" Grid.Column="1" Width="2" Height="2" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
                             </Grid>
 
                             <CheckBox Grid.Column="1" IsChecked="{Binding IsVisible, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0"
@@ -81,7 +81,7 @@
                                 <TextBlock Text="{Binding DefaultName}" IsHitTestVisible="False"
                                            Margin="10,0,6,0" VerticalAlignment="Center"
                                            TextTrimming="CharacterEllipsis"
-                                           Foreground="{DynamicResource TextSecondary}">
+                                           Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -98,7 +98,7 @@
                             <TextBlock Grid.Column="3" Text="{Binding Path}" Margin="10,0,8,0"
                                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                        ToolTip="{Binding Path}"
-                                       Foreground="{DynamicResource TextSecondary}"
+                                       Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
 />
 
                             <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
@@ -243,7 +243,7 @@
                                     <TextBox Width="64" Style="{StaticResource RuleTextBox}"
                                              Text="{Binding MaxItems, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=True, ValidatesOnExceptions=True}"/>
                                     <TextBlock Margin="14,0,10,0" VerticalAlignment="Center"
-                                               Foreground="{DynamicResource TextSecondary}"
+                                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                                Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_MaxAge]}"
                                                Visibility="{Binding IsRecentFiles, Converter={StaticResource BoolToVis}}"/>
                                     <TextBox Width="64" Style="{StaticResource RuleTextBox}"

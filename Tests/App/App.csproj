@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\App\App.csproj" />
+    <ProjectReference Include="..\..\Vendor\GlassDesk\src\GlassDesk.UI\GlassDesk.UI.csproj" />
     <ProjectReference Include="..\..\Plugins\SystemSettings\SystemSettings.csproj" />
     <ProjectReference Include="..\..\Plugins\CustomActions\CustomActions.csproj" />
     <ProjectReference Include="..\..\Plugins\CustomCommands\CustomCommands.csproj" />

@@ -11,11 +11,11 @@ using Lertaro.App.Views.Controls.Results;
 using Lertaro.PluginSdk.Abstractions.Plugins.Preview;
 namespace Lertaro.App.Views.QuickLook;
 
-public partial class QuickLookWindow : Window
+public partial class QuickLookWindow : GlassDesk.UI.Controls.GlassWindow
 {
-    // Must match QuickLookWindow.xaml's WindowBorder Margin -- the invisible gap between the window's
-    // outer (transparent, drop-shadow) bounds and the actual visible card, on every side.
-    public const double ContentMargin = 12;
+    // GlassDesk's visible glass surface fills the top-level window, so preview positioning uses its
+    // complete bounds without adding or subtracting a second card margin.
+    public const double ContentMargin = 0;
 
     private string? _currentFilePath;
     private readonly PreviewOverlay _overlay;

@@ -25,18 +25,16 @@ namespace Lertaro.App.Services.ShellMenu.QuickNav;
 // and CreateMenuItem, since QuickNavigationSubMenuLoader calls those two directly by that name.
 internal static class QuickNavigationMenuContentExtensions
 {
-    // Explicit SeparatorBrush reference (SetResourceReference, not a plain Style lookup) rather than a
+    // Explicit GlassDesk edge reference (SetResourceReference, not a plain Style lookup) rather than a
     // bare `new Separator()`: this popup's items are built entirely in code with no local Style set, so
     // it was left depending on Menu.xaml's implicit TargetType="Separator" style resolving correctly for
     // an ad-hoc ContextMenu -- it visually came out a noticeably different, more saturated color than
-    // the actions menu's own separator, which uses SeparatorBrush directly rather than through implicit
-    // style matching. Forcing the same resource here, the same way ActionFlyout.cs already does for its
-    // own code-built popup chrome (SetResourceReference, so it still follows live theme switching),
-    // guarantees the two actually match instead of relying on two different resolution paths agreeing.
+    // the actions menu's own separator. Using GlassDesk's LiquidControlEdge here keeps both code-built
+    // popups on the same material token and continues to follow live theme updates.
     internal static Separator CreateSeparator()
     {
         var separator = new Separator();
-        separator.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, "SeparatorBrush");
+        separator.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, "LiquidControlEdge");
         return separator;
     }
 

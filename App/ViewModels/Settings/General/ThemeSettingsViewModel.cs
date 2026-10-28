@@ -21,7 +21,6 @@ public class ThemeSettingsViewModel : ViewModelBase
     private IReadOnlyList<ThemeOption>? _themeOptions;
     private IReadOnlyList<ThemeOption>? _lightThemeOptions;
     private IReadOnlyList<ThemeOption>? _darkThemeOptions;
-    private IReadOnlyList<ThemeCardOption>? _themeCards;
     private ICommand? _selectThemeModeCommand;
 
     public ThemeSettingsViewModel(UserSettings userSettings)
@@ -47,16 +46,9 @@ public class ThemeSettingsViewModel : ViewModelBase
             _themeOptions = null;
             _lightThemeOptions = null;
             _darkThemeOptions = null;
-            // ThemeCardOption.DisplayName is also a TranslationService lookup, so the card grid needs
-            // the same invalidate-and-rebuild treatment as the combobox option lists above.
-            _themeCards = null;
             OnPropertyChanged(nameof(ThemeOptions));
             OnPropertyChanged(nameof(LightThemeOptions));
             OnPropertyChanged(nameof(DarkThemeOptions));
-            OnPropertyChanged(nameof(ThemeCards));
-            OnPropertyChanged(nameof(LightThemeCards));
-            OnPropertyChanged(nameof(DarkThemeCards));
-            OnPropertyChanged(nameof(ManualThemeCards));
 
             System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
             {
@@ -81,32 +73,15 @@ public class ThemeSettingsViewModel : ViewModelBase
     public IReadOnlyList<ThemeOption> LightThemeOptions => _lightThemeOptions ??= SettingsOptionGenerator.GetThemeOptions(isDark: false);
     public IReadOnlyList<ThemeOption> DarkThemeOptions => _darkThemeOptions ??= SettingsOptionGenerator.GetThemeOptions(isDark: true);
 
-    // Card-preview equivalents of the three option lists above, for the Appearance page's card grid.
-    public IReadOnlyList<ThemeCardOption> ThemeCards => _themeCards ??= ThemeManager.Instance.GetAvailableThemes()
-        .Select(t => new ThemeCardOption(t)).OrderBy(c => c.Id).ToList();
-    public IReadOnlyList<ThemeCardOption> LightThemeCards => ThemeCards.Where(c => !c.IsDark).ToList();
-    public IReadOnlyList<ThemeCardOption> DarkThemeCards => ThemeCards.Where(c => c.IsDark).ToList();
-
     // ThemeOption itself doesn't carry an IsDark flag (it's just Value/Label), so this checks
     // membership in DarkThemeOptions -- record value-equality (by Value) makes Contains reliable here.
     private bool IsSelectedThemeDark => _selectedTheme != null && DarkThemeOptions.Contains(_selectedTheme);
 
-    // What the single manual-mode grid shows: whichever flavor the currently active theme is, so
-    // picking "Light"/"Dark" mode (see SelectThemeModeCommand) narrows the grid instead of mixing
-    // both flavors into one long scroll like the very first version of this page did.
-    public IReadOnlyList<ThemeCardOption> ManualThemeCards => IsSelectedThemeDark ? DarkThemeCards : LightThemeCards;
-
-    public string PreferredTheme => _userSettings.Theme;
-
     // Drives which of the three Theme Mode cards (Light / Dark / Follow System) shows as selected.
     public string ThemeModeTag => FollowSystem ? "FollowSystem" : IsSelectedThemeDark ? "Dark" : "Light";
 
-    // Backs the three Theme Mode cards. "Light"/"Dark" turn Follow System off and jump the active
-    // theme to whichever light/dark theme was last picked -- SelectedLightTheme/SelectedDarkTheme are
-    // kept in sync with every SelectedTheme change (see that setter), so this always reflects the most
-    // recent pick for that flavor, whether it came from the manual grid, this command, or the Follow
-    // System light/dark grids, and falls back to LightThemeOptions/DarkThemeOptions' own
-    // FirstOrDefault() when nothing was ever picked (see the constructor).
+    // Backs the three Theme Mode cards. Light/Dark select the GlassDesk palette directly; Follow
+    // System tracks the OS light/dark mode.
     public ICommand SelectThemeModeCommand => _selectThemeModeCommand ??= new RelayCommand<string>(mode =>
     {
         switch (mode)
@@ -124,45 +99,7 @@ public class ThemeSettingsViewModel : ViewModelBase
                 break;
         }
 
-        // The grid(s) this mode switch just revealed may have gone from Collapsed to Visible in this
-        // same operation (via IsManualThemeEnabled/FollowSystem's own Visibility bindings), so their
-        // ListBoxes haven't necessarily generated item containers yet at the moment the SelectedThemeId/
-        // SelectedLightThemeId/SelectedDarkThemeId notifications above fired -- WPF silently drops a
-        // SelectedValue that doesn't match any container yet and never retries once containers do show
-        // up. Re-raising once layout has settled (the same DispatcherPriority.Loaded pattern the
-        // language-change handler in the constructor uses) makes the highlight catch up.
-        System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
-        {
-            OnPropertyChanged(nameof(SelectedThemeId));
-            OnPropertyChanged(nameof(SelectedLightThemeId));
-            OnPropertyChanged(nameof(SelectedDarkThemeId));
-        }), System.Windows.Threading.DispatcherPriority.Loaded);
     });
-
-    // String-keyed mirrors of SelectedTheme/SelectedLightTheme/SelectedDarkTheme so the card grid's
-    // ListBox can two-way bind via SelectedValue/SelectedValuePath (ThemeOption is an immutable record
-    // with no settable Value, so binding straight into ".Value" isn't an option).
-    public string? SelectedThemeId
-    {
-        get => SelectedTheme?.Value;
-        set => SelectedTheme = ThemeOptions.FirstOrDefault(o => o.Value == value) ?? SelectedTheme;
-    }
-
-    public string? SelectedLightThemeId
-    {
-        get => SelectedLightTheme?.Value;
-        set => SelectedLightTheme = LightThemeOptions.FirstOrDefault(o => o.Value == value) ?? SelectedLightTheme;
-    }
-
-    public string? SelectedDarkThemeId
-    {
-        get => SelectedDarkTheme?.Value;
-        set => SelectedDarkTheme = DarkThemeOptions.FirstOrDefault(o => o.Value == value) ?? SelectedDarkTheme;
-    }
-
-    // The manual theme picker only makes sense when "follow system" is off -- hidden (not just
-    // greyed out) the rest of the time, since the light/dark pair takes over that role.
-    public bool IsManualThemeEnabled => !_followSystem;
 
     public ThemeOption? SelectedTheme
     {
@@ -181,16 +118,10 @@ public class ThemeSettingsViewModel : ViewModelBase
                     ThemeManager.Instance.ApplyTheme(value.Value, saveSettings: false);
                 }
 
-                // Keep the per-flavor memory in sync with whatever theme just became active, no matter
-                // which path picked it (the manual filtered grid, a Light/Dark mode-card switch, or the
-                // Follow System light/dark grids) -- otherwise switching Light -> Dark -> Light again
-                // would revert to a stale remembered pick instead of the one just chosen manually.
+                // Keep the per-flavor slots in sync with the active built-in mode.
                 if (IsSelectedThemeDark) SelectedDarkTheme = value; else SelectedLightTheme = value;
 
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(PreferredTheme));
-                OnPropertyChanged(nameof(SelectedThemeId));
-                OnPropertyChanged(nameof(ManualThemeCards));
                 OnPropertyChanged(nameof(ThemeModeTag));
             }
         }
@@ -212,17 +143,7 @@ public class ThemeSettingsViewModel : ViewModelBase
                 _userSettings.ThemeFollowSystem = value;
                 _userSettings.Save();
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(IsManualThemeEnabled));
                 OnPropertyChanged(nameof(ThemeModeTag));
-                // SelectedTheme's own setter only fires nameof(ManualThemeCards)/nameof(SelectedThemeId)
-                // when the underlying theme actually changes -- but switching Follow System off often
-                // lands on a theme that's already active (whatever Follow System had already resolved),
-                // so SelectedTheme's guard skips those notifications entirely. Re-raise them here,
-                // unconditionally, so the manual grid's ItemsSource and its selected-card highlight both
-                // stay in sync with the mode cards instead of showing stale content from before the switch.
-                OnPropertyChanged(nameof(ManualThemeCards));
-                OnPropertyChanged(nameof(SelectedThemeId));
-
                 var targetThemeId = value
                     ? ThemeManager.Instance.ResolveLightDarkThemeId(SystemThemeWatcher.IsSystemLight, _userSettings)
                     : _userSettings.Theme;
@@ -250,7 +171,6 @@ public class ThemeSettingsViewModel : ViewModelBase
                 _userSettings.LightThemeId = value.Value;
                 _userSettings.Save();
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(SelectedLightThemeId));
                 if (isThemeIdChanged && _followSystem && SystemThemeWatcher.IsSystemLight)
                 {
                     ThemeManager.Instance.ApplyTheme(value.Value, saveSettings: false);
@@ -272,7 +192,6 @@ public class ThemeSettingsViewModel : ViewModelBase
                 _userSettings.DarkThemeId = value.Value;
                 _userSettings.Save();
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(SelectedDarkThemeId));
                 if (isThemeIdChanged && _followSystem && !SystemThemeWatcher.IsSystemLight)
                 {
                     ThemeManager.Instance.ApplyTheme(value.Value, saveSettings: false);

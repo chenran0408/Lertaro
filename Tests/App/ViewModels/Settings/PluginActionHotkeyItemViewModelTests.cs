@@ -1,5 +1,8 @@
+using System.Text.Json;
+using Lertaro.App.Helpers;
 using Lertaro.PluginSdk.Abstractions;
 using Lertaro.PluginSdk.Abstractions.Plugins;
+using Lertaro.Core;
 using Lertaro.App.ViewModels.Settings;
 
 namespace Lertaro.App.Tests.ViewModels.Settings;
@@ -65,6 +68,31 @@ public sealed class PluginActionHotkeyItemViewModelTests
 
         Assert.IsTrue(raised);
         Assert.AreEqual("Ctrl+D", vm.HotkeyValue);
+    }
+
+    [TestMethod]
+    public void ConfiguredHotkeyConflictMatcherTreatsSingleAndDoubleTapAsTheSamePhysicalKey()
+    {
+        Assert.IsTrue(HotkeySettingsViewModel.HasConfiguredHotkeyConflict("DoubleTap:F2", ["F2"]));
+        Assert.IsTrue(HotkeySettingsViewModel.HasConfiguredHotkeyConflict("F2", ["DoubleTap:F2"]));
+        Assert.IsFalse(HotkeySettingsViewModel.HasConfiguredHotkeyConflict("DoubleTap:F2", ["Ctrl+F2"]));
+    }
+
+    [TestMethod]
+    public void BareKeyActionGateRecognizesConfiguredDoubleTapOnDynamicPluginActions()
+    {
+        var settings = new UserSettings();
+        settings.PluginSettings["Lertaro.Plugins.CustomActions"] = new()
+        {
+            ["Actions"] = JsonSerializer.SerializeToElement(new[]
+            {
+                new { Enabled = true, Hotkey = "DoubleTap:Oem102" }
+            })
+        };
+
+        Assert.IsTrue(HotkeyActionTrigger.HasBareKeyActionHotkey(System.Windows.Input.Key.Oem102, settings));
+        Assert.IsTrue(HotkeyActionTrigger.HasDoubleTapBareKeyActionHotkey(System.Windows.Input.Key.Oem102, settings));
+        Assert.IsFalse(HotkeyActionTrigger.HasDoubleTapBareKeyActionHotkey(System.Windows.Input.Key.A, settings));
     }
 
     [TestMethod]

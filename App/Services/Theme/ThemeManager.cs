@@ -8,6 +8,11 @@ namespace Lertaro.App.Services.Theme;
 public class ThemeManager
 {
     private static readonly Lazy<ThemeManager> _instance = new(() => new ThemeManager());
+    private static readonly PluginSdk.Abstractions.ITheme[] GlassDeskThemes =
+    [
+        new BuiltInTheme("Light", false),
+        new BuiltInTheme("Dark", true)
+    ];
     public static ThemeManager Instance => _instance.Value;
 
     private ResourceDictionary? _activeThemeDictionary;
@@ -22,13 +27,62 @@ public class ThemeManager
 
     private ThemeManager() => PluginSdk.Services.ThemeService.IsDarkThemeFunc = () => _activeTheme?.IsDark ?? false;
 
-    public IEnumerable<PluginSdk.Abstractions.ITheme> GetAvailableThemes() => PluginManager.Instance.ThemeProviders
-            .SelectMany(p => PluginPerformanceMonitor.Measure(p, () => p.GetThemes()?.ToList() ?? new List<PluginSdk.Abstractions.ITheme>()))
-            .Concat([new BuiltInTheme("Light", false), new BuiltInTheme("Dark", true)])
-            .GroupBy(t => t.Id)
-            .Select(g => g.First()); // Avoid duplicates
+    // Color preset packs paint over the sampled GlassDesk surface, so the host now exposes only
+    // GlassDesk's two palette modes. Installed theme-pack files are not removed; their colors are
+    // no longer selectable or applied.
+    public IEnumerable<PluginSdk.Abstractions.ITheme> GetAvailableThemes() => GlassDeskThemes;
 
-    public void Initialize(string preferredThemeId) => ApplyTheme(preferredThemeId, saveSettings: false);
+    public void Initialize(string preferredThemeId)
+    {
+        var settings = UserSettings.Load();
+        var themeIds = new[] { preferredThemeId, settings.Theme, settings.LightThemeId, settings.DarkThemeId };
+        List<PluginSdk.Abstractions.ITheme> legacyThemes = themeIds.Any(NeedsLegacyThemeLookup)
+            ? GetLegacyThemes().ToList() : [];
+        var activeMode = ResolveGlassDeskMode(preferredThemeId, SystemThemeWatcher.IsSystemLight ? "Light" : "Dark", legacyThemes);
+        var storedMode = ResolveGlassDeskMode(settings.Theme, "Light", legacyThemes);
+        var lightMode = ResolveGlassDeskMode(settings.LightThemeId, "Light", legacyThemes);
+        var darkMode = ResolveGlassDeskMode(settings.DarkThemeId, "Dark", legacyThemes);
+
+        // The per-system slots are semantic slots: a legacy dark preset cannot remain assigned to
+        // the light slot (or vice versa) after its colors are removed.
+        if (lightMode != "Light") lightMode = "Light";
+        if (darkMode != "Dark") darkMode = "Dark";
+
+        if (settings.Theme != storedMode || settings.LightThemeId != lightMode || settings.DarkThemeId != darkMode)
+        {
+            settings.Theme = storedMode;
+            settings.LightThemeId = lightMode;
+            settings.DarkThemeId = darkMode;
+            settings.Save();
+        }
+
+        ApplyTheme(activeMode, saveSettings: false);
+    }
+
+    private static IEnumerable<PluginSdk.Abstractions.ITheme> GetLegacyThemes() => PluginManager.Instance.ThemeProviders
+        .SelectMany(provider => PluginPerformanceMonitor.Measure(provider,
+            () => provider.GetThemes()?.ToList() ?? new List<PluginSdk.Abstractions.ITheme>()));
+
+    private static bool NeedsLegacyThemeLookup(string? themeId) =>
+        !string.Equals(themeId, "Light", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(themeId, "Dark", StringComparison.OrdinalIgnoreCase)
+        && themeId?.EndsWith("Light", StringComparison.OrdinalIgnoreCase) != true
+        && themeId?.EndsWith("Dark", StringComparison.OrdinalIgnoreCase) != true;
+
+    internal static string ResolveGlassDeskMode(string? themeId, string fallback,
+        IEnumerable<PluginSdk.Abstractions.ITheme> legacyThemes)
+    {
+        if (string.Equals(themeId, "Light", StringComparison.OrdinalIgnoreCase)) return "Light";
+        if (string.Equals(themeId, "Dark", StringComparison.OrdinalIgnoreCase)) return "Dark";
+
+        var legacy = legacyThemes.FirstOrDefault(theme =>
+            string.Equals(theme.Id, themeId, StringComparison.OrdinalIgnoreCase));
+        if (legacy != null) return legacy.IsDark ? "Dark" : "Light";
+
+        if (themeId?.EndsWith("Dark", StringComparison.OrdinalIgnoreCase) == true) return "Dark";
+        if (themeId?.EndsWith("Light", StringComparison.OrdinalIgnoreCase) == true) return "Light";
+        return string.Equals(fallback, "Dark", StringComparison.OrdinalIgnoreCase) ? "Dark" : "Light";
+    }
 
     /// <summary>Starts watching the OS light/dark setting and re-applies the user's configured
     /// light/dark theme pair whenever it flips, but only while ThemeFollowSystem is actually on --
@@ -54,10 +108,8 @@ public class ThemeManager
     }
 
     /// <summary>Resolves the "follow system" light/dark theme pair's configured Id to one that
-    /// actually exists (and is still the right light/dark flavor) among currently loaded theme
-    /// providers or the host's built-in themes. If the configured Id is unset, its provider got
-    /// uninstalled/disabled, or it no longer matches the requested flavor, fall back to whatever
-    /// theme of that flavor happens to be first in the available list instead.</summary>
+    /// actually exists among the GlassDesk palette modes. Retired preset IDs, missing IDs, or IDs
+    /// with the wrong light/dark flavor resolve to the matching GlassDesk mode.</summary>
     public string ResolveLightDarkThemeId(bool wantLight, UserSettings? settings = null)
     {
         settings ??= UserSettings.Load();

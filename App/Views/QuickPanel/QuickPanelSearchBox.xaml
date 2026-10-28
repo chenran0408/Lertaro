@@ -24,8 +24,8 @@
     </UserControl.Resources>
 
     <Border Height="26" CornerRadius="{StaticResource CornerRadiusControl}"
-            Background="{DynamicResource ControlBackground}"
-            BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1">
+            Background="{StaticResource LiquidControlFill}"
+            BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -34,17 +34,17 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="11"
-                       Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                       Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center" Margin="8,0,4,0"/>
 
             <Grid Grid.Column="1">
                 <TextBox x:Name="TxtFilter" Background="Transparent" BorderThickness="0" FontSize="12"
-                         Foreground="{DynamicResource TextPrimary}"
-                         CaretBrush="{DynamicResource TextPrimary}"
+                         Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
+                         CaretBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                          Padding="0,0,4,0" VerticalContentAlignment="Center"
                          Text="{Binding SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                 <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_SearchPlaceholder]}"
                            IsHitTestVisible="False" FontSize="12" VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextSecondary}">
+                           Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Collapsed"/>

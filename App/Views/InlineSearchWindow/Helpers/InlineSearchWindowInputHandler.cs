@@ -23,7 +23,7 @@ public class InlineSearchWindowInputHandler
 
     public void HandlePreviewKeyDown(System.Windows.Input.KeyEventArgs e)
     {
-        if (SearchInputHelper.HandleCommonSearchKeys(e, _window, _window.MenuPresenter))
+        if (SearchInputHelper.HandleCommonSearchKeys(e, _window, _window.MenuPresenter, HandleEnterBehavior))
             return;
 
         // Every bare key check below (including Escape) requires no modifiers -- otherwise it would
@@ -62,34 +62,11 @@ public class InlineSearchWindowInputHandler
         var actualKey = e.Key == Key.System ? e.SystemKey : e.Key;
         if (actualKey == Key.Enter)
         {
+            if (e.Key == Key.ImeProcessed)
+                return;
             e.Handled = true;
 
-            // An empty box shows the current folder's contents as a browsing list, not search results,
-            // so there is no top match for Enter to "open" -- running whichever child happens to be
-            // selected is not what pressing Enter on nothing means. Exit the search instead, exactly as
-            // Escape does. Same emptiness test as SearchDispatchController's, so whitespace-only counts
-            // as empty here just like it does when deciding whether to run a search at all.
-            if (string.IsNullOrWhiteSpace(_window.SearchTextBox.Text))
-            {
-                ExitSearch();
-                return;
-            }
-
-            var result = InlineResultTargetResolver.ResolveEnterTarget(
-                _window.LstResults.Items.OfType<AppSearchResult>().ToList(),
-                _window.LstResults.SelectedIndex);
-
-            // File/folder results are handled earlier by HotkeyActionTrigger (Ctrl+Enter locate,
-            // Ctrl+Shift+Enter open-as-admin) and never reach here. What reaches here on those chords
-            // is a result with no matching file action — notably an application — so honor
-            // Ctrl+Shift+Enter as "launch as admin" so apps can still be elevated.
-            if (result != null)
-            {
-                var asAdmin = Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift);
-                var current = SearchResultExecutionHelper.ResolveCurrent(result, _window.SearchTextBox.Text, isInlineWindow: true);
-                if (current != null)
-                    ExecuteResult(current, asAdmin);
-            }
+            HandleEnterBehavior();
             return;
         }
 
@@ -124,19 +101,19 @@ public class InlineSearchWindowInputHandler
         // Next/previous item + actions menu + jump-to-item shortcuts
 
         var settings = UserSettings.Load().Hotkeys;
-        if (WpfUiHelper.MatchesHotkey(settings.NextItemHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(settings.NextItemHotkey, e))
         {
             e.Handled = true;
             MoveResultSelection(1);
             return;
         }
-        if (WpfUiHelper.MatchesHotkey(settings.PreviousItemHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(settings.PreviousItemHotkey, e))
         {
             e.Handled = true;
             MoveResultSelection(-1);
             return;
         }
-        if (WpfUiHelper.MatchesHotkey(settings.ActionsMenuHotkey, Keyboard.Modifiers, actualKey))
+        if (WpfUiHelper.MatchesHotkey(settings.ActionsMenuHotkey, e))
         {
             if (_window.LstResults.SelectedItem is AppSearchResult result && !result.IsEmptyResult && !result.IsSearchSectionHeader)
             {
@@ -162,6 +139,24 @@ public class InlineSearchWindowInputHandler
         }
     }
 
+    private void HandleEnterBehavior()
+    {
+        if (string.IsNullOrWhiteSpace(_window.SearchTextBox.Text))
+        {
+            ExitSearch();
+            return;
+        }
+
+        var result = InlineResultTargetResolver.ResolveEnterTarget(
+            _window.LstResults.Items.OfType<AppSearchResult>().ToList(),
+            _window.LstResults.SelectedIndex);
+        if (result == null)
+            return;
+
+        var current = SearchResultExecutionHelper.ResolveCurrent(result, _window.SearchTextBox.Text, isInlineWindow: true);
+        if (current != null)
+            ExecuteResult(current, asAdmin: false);
+    }
     public void QueueResultsLayoutUpdate() => _layoutManager.QueueResultsLayoutUpdate();
     public void UpdateActionsLayout() => _layoutManager.UpdateActionsLayout();
 

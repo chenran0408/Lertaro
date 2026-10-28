@@ -41,18 +41,18 @@
                 </Grid.ColumnDefinitions>
                 <!-- Plugin icon -->
                 <Border Grid.Column="0" Width="36" Height="36" CornerRadius="8" VerticalAlignment="Top"
-                        Background="{DynamicResource HoverBackground}" Margin="0,0,12,0">
+                        Background="{DynamicResource LiquidControlHover}" Margin="0,0,12,0">
                     <TextBlock Text="&#xEA86;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="16"
                                Foreground="{DynamicResource AccentBlue}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <!-- Name + meta -->
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                    <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                     <CheckBox IsChecked="{Binding IsPluginEnabled}" Margin="0,8,0,0"
                               Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_EnableAssembly]}"/>
                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_AssemblyRestartHint]}"
-                               TextWrapping="Wrap" FontSize="12" FontWeight="Bold" Margin="0,4,0,0" Foreground="{DynamicResource TextSecondary2}"/>
-                    <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{DynamicResource TextSecondary2}" FontSize="12">
+                               TextWrapping="Wrap" FontSize="12" FontWeight="Bold" Margin="0,4,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
+                    <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" FontSize="12">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Visible"/>
@@ -144,7 +144,7 @@
                 </StackPanel>
             </Grid>
             <!-- Fixed hairline divider line below the tab header row -->
-            <Border Grid.Row="2" Height="1" Background="{DynamicResource SettingsRowBorderBrush}" Margin="0,12,0,0"
+            <Border Grid.Row="2" Height="1" Background="{StaticResource LiquidControlEdge}" Margin="0,12,0,0"
                     Visibility="{Binding HasConfigFields, Converter={StaticResource BoolToVis}}"/>
             <!-- Content area below the tab header bar and divider line -->
             <Grid Grid.Row="3" Margin="0,4,0,0">
@@ -186,7 +186,7 @@
                             <TextBlock Grid.Column="0"
                                        Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_ComponentsTitle]}"
                                        FontSize="11" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextSecondary2}" VerticalAlignment="Center"/>
+                                       Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center"/>
                             <Button Grid.Column="1" Content="{Binding SelectAllToggleLabel}" Command="{Binding ToggleAllComponentsCommand}"
                                     Style="{StaticResource LinkButton}" FontSize="11"
                                     HorizontalAlignment="Right" VerticalAlignment="Center"
@@ -195,7 +195,7 @@
 
                         <!-- No components placeholder -->
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_NoComponents]}"
-                                   Foreground="{DynamicResource TextSecondary2}" FontSize="12"
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" FontSize="12"
                                    Visibility="{Binding HasNoComponents, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
                     <!-- Component list: virtualized ListBox over the flat ComponentRows list. -->
@@ -266,13 +266,13 @@
                                                    Text="{Binding DisplayName}"
                                                    FontSize="12"
                                                    TextWrapping="Wrap"
-                                                   Foreground="{DynamicResource TextPrimary}"
+                                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                                    VerticalAlignment="Center"/>
 
                                         <!-- Info button (!) -->
                                         <Border Grid.Column="1" Width="14" Height="14" CornerRadius="7"
-                                                Background="{DynamicResource HoverBackground}"
-                                                BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="1"
+                                                Background="{DynamicResource LiquidControlHover}"
+                                                BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1"
                                                 HorizontalAlignment="Center" VerticalAlignment="Center" Cursor="Help">
                                             <Border.ToolTip>
                                                 <ToolTip MaxWidth="300">
@@ -293,7 +293,7 @@
                                                 </Style>
                                             </Border.Style>
                                             <TextBlock Text="!" FontSize="9" FontWeight="Bold"
-                                                       Foreground="{DynamicResource TextSecondary2}"
+                                                       Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                                        HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0"/>
                                         </Border>
 
@@ -304,7 +304,7 @@
 
                                         <!-- Lock icon shown for read-only components (e.g. TranslationProvider) -->
                                         <TextBlock Grid.Column="2" Text="&#xE72E;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="13"
-                                                   Foreground="{DynamicResource SeparatorBrush}"
+                                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                                    ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_ReadOnlyTooltip]}"
                                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                                    Visibility="{Binding IsToggleable, Converter={StaticResource InvertBoolToVis}}"/>

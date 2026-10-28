@@ -181,6 +181,22 @@ public sealed class FavoriteHotkeyServiceTests
     }
 
     [TestMethod]
+    public void Refresh_DoubleTapFavoriteUsesHookAndDoesNotRegisterSingleKeyGlobally()
+    {
+        var window = new FakeHotkeyWindow();
+        var navigated = new List<string>();
+        var favorites = new List<FavoriteItemSetting> { new() { Path = @"C:\One" } };
+        using var service = CreateService(window, navigated, favorites);
+        service.Refresh([new FavoriteHotkeyRegistration(0, "DoubleTap:F2", 0x71,
+            FavoriteHotkeyNativeMethods.ModNoRepeat, FavoriteHotkeySkipReason.None, IsDoubleTap: true)]);
+
+        Assert.AreEqual(0, window.RegisterAttempts.Count);
+        service.HandleDoubleTapFavorite(0);
+
+        CollectionAssert.AreEqual(new[] { @"C:\One" }, navigated);
+    }
+
+    [TestMethod]
     public void HandleHotkeyId_IgnoresAnIdThatBelongsToNoFavorite()
     {
         var window = new FakeHotkeyWindow();

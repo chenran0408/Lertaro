@@ -73,6 +73,42 @@ public sealed class QuickPanelWakeManagementTests
         finally { vm.Cleanup(); }
     }
     [TestMethod]
+    public void DoubleTapWakeConflictsWithAnUnmodifiedPluginActionKey()
+    {
+        var settings = new UserSettings();
+        settings.Hotkeys.PluginActionHotkeys["test-plugin"] = new() { ["TestAction"] = "F2" };
+        var vm = new HotkeySettingsViewModel(settings, new(settings), (_, _) => false);
+        try
+        {
+            var row = vm.QuickPanelWake.Rows[0];
+            row.Key = "DoubleTap:F2";
+            row.Enabled = true;
+            Assert.IsFalse(vm.QuickPanelWake.IsValid);
+        }
+        finally { vm.Cleanup(); }
+    }
+    [TestMethod]
+    public void DoubleTapWakeConflictsWithAnEnabledDynamicPluginAction()
+    {
+        var settings = new UserSettings();
+        settings.PluginSettings["Lertaro.Plugins.CustomActions"] = new()
+        {
+            ["Actions"] = JsonSerializer.SerializeToElement(new[]
+            {
+                new { Enabled = true, Hotkey = "DoubleTap:F2" }
+            })
+        };
+        var vm = new HotkeySettingsViewModel(settings, new(settings), (_, _) => false);
+        try
+        {
+            var row = vm.QuickPanelWake.Rows[0];
+            row.Key = "DoubleTap:F2";
+            row.Enabled = true;
+            Assert.IsFalse(vm.QuickPanelWake.IsValid);
+        }
+        finally { vm.Cleanup(); }
+    }
+    [TestMethod]
     public void OperatingSystemConflictKeepsTheStagedKeyAndDoesNotOverwriteSavedRules()
     {
         var settings = new UserSettings(); var vm = new HotkeySettingsViewModel(settings, new(settings), (_, _) => true);

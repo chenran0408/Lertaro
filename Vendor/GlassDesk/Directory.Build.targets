@@ -1,0 +1,8 @@
+<Project>
+  <!-- Lertaro modification: match the platform baseline when projects use the broad -windows TFM. -->
+  <!-- Keep the SDK projection for newer optional APIs while accepting every Win11 build. -->
+  <PropertyGroup Condition="$([System.String]::Copy('$(TargetFramework)').Contains('-windows10.0.26100'))">
+    <SupportedOSPlatformVersion>10.0.22000.0</SupportedOSPlatformVersion>
+    <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>
+  </PropertyGroup>
+</Project>

@@ -17,7 +17,7 @@
             <StackPanel>
                 <TextBlock Style="{DynamicResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Hint]}"/>
                 <CheckBox x:Name="RowBackgroundImage" Margin="0,10" IsChecked="{Binding UseImage}"
-                          Foreground="{DynamicResource TextPrimary}"
+                          Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                           Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_EnableImage]}"/>
                 <DockPanel Margin="0,0,0,10">
                     <Button DockPanel.Dock="Right" Style="{StaticResource SettingsButton}" Command="{Binding BrowseCommand}"
@@ -28,22 +28,22 @@
                 <TextBlock Style="{DynamicResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_VideoHint]}"/>
                 <StackPanel IsEnabled="{Binding UseImage}">
                     <DockPanel>
-                        <TextBlock DockPanel.Dock="Right" Foreground="{DynamicResource TextPrimary}" Text="{Binding Opacity, StringFormat={}{0:0}%}"/>
-                        <TextBlock Foreground="{DynamicResource TextPrimary}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Opacity]}"/>
+                        <TextBlock DockPanel.Dock="Right" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" Text="{Binding Opacity, StringFormat={}{0:0}%}"/>
+                        <TextBlock Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Opacity]}"/>
                     </DockPanel>
                     <Slider x:Name="RowBackgroundOpacity" Margin="0,6" Minimum="0" Maximum="100" Value="{Binding Opacity}"
                             SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True" AutoToolTipPlacement="TopLeft"
                             ToolTip="{Binding Opacity, StringFormat={}{0:0}%}"/>
                     <TextBlock Style="{DynamicResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_OpacityHint]}"/>
-                    <CheckBox Margin="0,8" Foreground="{DynamicResource TextPrimary}" IsChecked="{Binding FitImage}"
+                    <CheckBox Margin="0,8" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" IsChecked="{Binding FitImage}"
                               Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Fit]}"/>
                 </StackPanel>
-                <Border CornerRadius="8" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" Margin="0,10" ClipToBounds="True">
-                    <Grid Height="130" Background="{DynamicResource ContentBg}">
-                        <controls:BackgroundSurface/>
-                        <Border Background="{DynamicResource CardBackground}" CornerRadius="6" Padding="12,8"
+                <Border CornerRadius="8" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1" Margin="0,10" ClipToBounds="True">
+                    <Grid Height="130" Background="Transparent">
+                        <controls:BackgroundSurface UseTransparentBase="True"/>
+                        <Border Background="{StaticResource LiquidControlFill}" CornerRadius="6" Padding="12,8"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Foreground="{DynamicResource TextPrimary}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Preview]}"/>
+                            <TextBlock Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Preview]}"/>
                         </Border>
                     </Grid>
                 </Border>

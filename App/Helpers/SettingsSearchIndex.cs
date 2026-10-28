@@ -124,13 +124,6 @@ public static class SettingsSearchIndex
         new("Appearance_ModeLight", "Appearance", TargetElementName: "RowThemeModeCards", TabLabelKey: "Appearance_ModeGroupTitle"),
         new("Appearance_ModeDark", "Appearance", TargetElementName: "RowThemeModeCards", TabLabelKey: "Appearance_ModeGroupTitle"),
         new("Appearance_ModeFollowSystem", "Appearance", TargetElementName: "RowThemeModeCards", TabLabelKey: "Appearance_ModeGroupTitle"),
-        new("General_ThemeSelect", "Appearance", TargetElementName: "RowThemeCards",
-            IsVisible: vm => vm.Appearance.IsManualThemeEnabled),
-        new("General_ThemeLightSelect", "Appearance", TargetElementName: "RowThemeLightCards",
-            IsVisible: vm => vm.Appearance.FollowSystem),
-        new("General_ThemeDarkSelect", "Appearance", TargetElementName: "RowThemeDarkCards",
-            IsVisible: vm => vm.Appearance.FollowSystem),
-
         // Hotkeys
         new("Settings_Hotkeys", "Hotkeys"),
         new("Hotkeys_Tab_Global", "Hotkeys", vm => vm.Hotkeys.SelectedTab = "Global", "TabGlobal"),

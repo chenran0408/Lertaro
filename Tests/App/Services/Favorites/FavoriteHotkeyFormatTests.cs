@@ -106,6 +106,14 @@ public sealed class FavoriteHotkeyFormatTests
     }
 
     [TestMethod]
+    public void TryBuild_AcceptsDoubleTapWithoutModifiersAndSuppressesKeyRepeat()
+    {
+        Assert.IsTrue(FavoriteHotkeyFormat.TryBuild("DoubleTap:F2", out var vk, out var modifiers));
+        Assert.AreEqual(0x71u, vk);
+        Assert.AreEqual(FavoriteHotkeyNativeMethods.ModNoRepeat, modifiers);
+    }
+
+    [TestMethod]
     public void ToRegisterModifiers_MapsEachModifierFlag()
     {
         Assert.AreEqual(FavoriteHotkeyNativeMethods.ModControl | FavoriteHotkeyNativeMethods.ModNoRepeat,
@@ -128,8 +136,6 @@ public sealed class FavoriteHotkeyFormatTests
     }
 
     [TestMethod]
-    public void ToRegisterModifiers_NoModifierAddsNoNoRepeatBit() =>
-        // MOD_NOREPEAT is only meaningful alongside a real modifier, so asking for none must stay none
-        // rather than producing the flag on its own.
-        Assert.AreEqual(FavoriteHotkeyFormat.NoModifier, FavoriteHotkeyFormat.ToRegisterModifiers(ModifierKeys.None));
+    public void ToRegisterModifiers_NoModifierStillSuppressesRepeat() =>
+        Assert.AreEqual(FavoriteHotkeyNativeMethods.ModNoRepeat, FavoriteHotkeyFormat.ToRegisterModifiers(ModifierKeys.None));
 }

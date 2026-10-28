@@ -27,7 +27,7 @@
                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_IndexStatus]}"
                                FontWeight="SemiBold" FontSize="13" />
                     <TextBlock Text="{Binding NetworkDrive.FolderIndexSummary}"
-                               Foreground="{DynamicResource TextSecondary2}" Margin="0,5,0,0"/>
+                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,5,0,0"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Style="{StaticResource PrimarySettingsButton}" Margin="0,0,8,0"
@@ -56,25 +56,25 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="1"
                                Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Folder_HeaderPath]}"
-                               Foreground="{DynamicResource TextSecondary2}"/>
+                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
                     <TextBlock Grid.Column="2"
                                Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_HeaderStatus]}"
-                               Foreground="{DynamicResource TextSecondary2}"/>
+                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
                     <TextBlock Grid.Column="3"
                                Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_HeaderItems]}"
-                               Foreground="{DynamicResource TextSecondary2}"/>
+                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
                     <TextBlock Grid.Column="4"
                                Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_HeaderMode]}"
-                               Foreground="{DynamicResource TextSecondary2}"/>
+                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
                 </Grid>
-                <Border Background="{DynamicResource EmptyPlaceholderBackground}" BorderBrush="{DynamicResource EmptyPlaceholderBorderBrush}" BorderThickness="1" CornerRadius="6"
+                <Border Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1" CornerRadius="6"
                         Padding="24,32" Margin="0,8,0,0"
                         Visibility="{Binding NetworkDrive.IsFolderIndexesEmpty, Converter={StaticResource BoolToVis}}">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="&#xE8B7;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="36"
-                                   Foreground="{DynamicResource EmptyPlaceholderIcon}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Folder_Placeholder]}" FontSize="13"
-                                   Foreground="{DynamicResource TextSecondary2}" HorizontalAlignment="Center"/>
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 

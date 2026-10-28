@@ -17,7 +17,7 @@
             <StackPanel>
                 <TextBlock Style="{DynamicResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_TaskbarHint]}"/>
                 <Expander x:Name="TaskbarOptions" Margin="0,8,0,0" Expanded="OptionsExpanded"
-                          Foreground="{DynamicResource TextPrimary}"
+                          Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                           Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_TaskbarOptions]}">
                 <StackPanel>
                 <TextBlock x:Name="Unavailable" Style="{DynamicResource SettingsHintText}" Margin="0,8,0,0" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_TaskbarUnavailable]}"/>
@@ -27,7 +27,7 @@
                         <Button x:Name="PreviewButton" Click="Preview" Style="{StaticResource SettingsButton}" Margin="0,0,8,0" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_TaskbarPreview]}"/>
                         <Button Click="UndoPreview" Style="{StaticResource SettingsButton}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Undo]}"/>
                     </WrapPanel>
-                    <TextBlock Margin="0,8,0,0" Foreground="{DynamicResource TextPrimary}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_TaskbarOpacity]}"/>
+                    <TextBlock Margin="0,8,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_TaskbarOpacity]}"/>
                     <Slider x:Name="OpacitySlider" Minimum="0" Maximum="100" IsSnapToTickEnabled="True" TickFrequency="1" AutoToolTipPlacement="TopLeft"/>
                     <TextBlock x:Name="PreviewStatus" Style="{DynamicResource SettingsHintText}" TextWrapping="Wrap"/>
                 </StackPanel>

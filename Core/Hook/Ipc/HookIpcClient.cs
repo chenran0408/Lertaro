@@ -57,6 +57,7 @@ public sealed class HookIpcClient : IDisposable
     public event Action<nint, string, bool>? OnQuickPanelWakeRule;
     public event Action<string, string>? OnQuickPanelWakeTestResult;
     public event Action? OnQuickNavigationHotkey;
+    public event Action<int>? OnFavoriteDoubleTapHotkey;
     public event Action<char>? OnCharacterTyped;
     public event Action<int, nint>? OnInlineInputStarted;
     public event Action? OnBackspacePressed;
@@ -110,6 +111,12 @@ public sealed class HookIpcClient : IDisposable
     }
     public void SendMessage(IpcMessage msg) => _ = SendMessageAsync(msg);
 
+    public void SetEligibleFavoriteDoubleTapOwners(IEnumerable<int> ownerIndices) => SendMessage(new IpcMessage
+    {
+        Id = IpcMessageId.SetFavoriteDoubleTapOwners,
+        StringList = ownerIndices.Select(index => index.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToArray()
+    });
+
     /// <summary>
     /// Sends a command and reports whether the write actually reached the hook. That is all either side can
     /// know of a fire-and-forget command -- there is no reply channel -- but it is enough to tell "the hook
@@ -133,6 +140,7 @@ public sealed class HookIpcClient : IDisposable
         IpcMessageId.SetQuickSearchVisible,
         IpcMessageId.SetInlineSearchVisible,
         IpcMessageId.SetInlineWindowOnScreen,
+        IpcMessageId.SetFavoriteDoubleTapOwners,
     ];
 
     private readonly Dictionary<IpcMessageId, IpcMessage> _pendingState = new();
@@ -344,6 +352,7 @@ public sealed class HookIpcClient : IDisposable
                 case IpcMessageId.QuickPanelWakeRule: OnQuickPanelWakeRule?.Invoke((nint)msg.Hwnd, msg.StringVal1 ?? "", msg.BoolVal); break;
                 case IpcMessageId.QuickPanelWakeTestResult: OnQuickPanelWakeTestResult?.Invoke(msg.StringVal1 ?? "", msg.StringVal2 ?? ""); break;
                 case IpcMessageId.QuickNavigationHotkey: OnQuickNavigationHotkey?.Invoke(); break;
+                case IpcMessageId.FavoriteDoubleTapHotkey: OnFavoriteDoubleTapHotkey?.Invoke(msg.IntVal); break;
                 case IpcMessageId.KeyBackspace: OnBackspacePressed?.Invoke(); break;
                 case IpcMessageId.KeyEscape: OnEscapePressed?.Invoke(); break;
                 case IpcMessageId.KeyEnter: OnEnterPressed?.Invoke(); break;

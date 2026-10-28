@@ -7,6 +7,10 @@ internal sealed class QuickPanelMouseGestureHook : IDisposable
 {
     private readonly Func<UserSettings> _settings;
     private readonly Func<bool> _suspended;
+    private readonly Func<int, short> _getAsyncKeyState;
+    private readonly Func<nint, UserSettings, QuickPanelWakeTestSession?, uint, bool> _allowed;
+    private readonly Action<QuickPanelWakeButton, bool> _replay;
+    private readonly Action<QuickPanelWakeButton>? _deferCompleteClick;
     private readonly QuickPanelMouseGestureDetector _press = new();
     private readonly Dictionary<string, QuickPanelMouseGestureDetector> _circles = new();
     private readonly TimerProc _timerProc;
@@ -14,6 +18,7 @@ internal sealed class QuickPanelMouseGestureHook : IDisposable
     private QuickPanelWakeTestSession? _cachedTest, _pressTest;
     private QuickPanelWakeBinding[] _rules = [];
     private QuickPanelWakeBinding? _pressRule;
+    private bool _hasCircleRules;
     private nuint _timer;
     private nint _pressWindow, _circleWindow;
     private uint _lastMove, _lastReport;
@@ -22,8 +27,11 @@ internal sealed class QuickPanelMouseGestureHook : IDisposable
     internal const nuint ReplayMarker = 0x4C525450;
     internal event Action<nint, string>? Triggered;
 
-    internal QuickPanelMouseGestureHook(Func<UserSettings> settings, Func<bool> suspended)
-    { _settings = settings; _suspended = suspended; _timerProc = TimerTick; }
+    internal QuickPanelMouseGestureHook(Func<UserSettings> settings, Func<bool> suspended, Func<int, short>? getAsyncKeyState = null,
+        Func<nint, UserSettings, QuickPanelWakeTestSession?, uint, bool>? allowed = null,
+        Action<QuickPanelWakeButton, bool>? replay = null,
+        Action<QuickPanelWakeButton>? deferCompleteClick = null)
+    { _settings = settings; _suspended = suspended; _getAsyncKeyState = getAsyncKeyState ?? GetAsyncKeyState; _allowed = allowed ?? Allowed; _replay = replay ?? Replay; _deferCompleteClick = deferCompleteClick; _timerProc = TimerTick; }
 
     internal bool Process(int message, int x, int y, uint time, uint mouseData = 0)
     {
@@ -40,7 +48,7 @@ internal sealed class QuickPanelMouseGestureHook : IDisposable
             if (released.Kind == QuickPanelWakeKind.Click && _press.HasPendingHold)
             {
                 if (ReferenceEquals(test, _pressTest) && RootAt(x, y) == _pressWindow
-                    && Allowed(_pressWindow, settings, test, time) && !Modified() && _press.TryFireClick())
+                    && _allowed(_pressWindow, settings, test, time) && !Modified() && _press.TryFireClick())
                     Fire(_pressWindow, released, test);
             }
             var action = _press.Release();
@@ -48,7 +56,11 @@ internal sealed class QuickPanelMouseGestureHook : IDisposable
             if (testing && released.Kind == QuickPanelWakeKind.Hold && action == QuickPanelMouseGestureDetector.ReleaseAction.ReplayClick)
                 Report(_pressTest, "Wake_TestTooShort", time);
             _pressRule = null; _pressTest = null;
-            if (!testing && action == QuickPanelMouseGestureDetector.ReleaseAction.ReplayClick) Replay(released.Button, true);
+            if (!testing && action == QuickPanelMouseGestureDetector.ReleaseAction.ReplayClick)
+            {
+                if (_deferCompleteClick != null) _deferCompleteClick(released.Button);
+                else _replay(released.Button, true);
+            }
             return !testing && action != QuickPanelMouseGestureDetector.ReleaseAction.PassThrough;
         }
         if (isDown && button is { } pressed)
@@ -57,7 +69,9 @@ internal sealed class QuickPanelMouseGestureHook : IDisposable
             var rule = _rules.FirstOrDefault(r => (r.Kind is QuickPanelWakeKind.Hold or QuickPanelWakeKind.Click) && r.Button == pressed);
             if (rule == null || _press.OwnsPress) return false;
             var root = RootAt(x, y);
-            if (!Allowed(root, settings, test, time)) return false;
+            // Do not query target/foreground process names or fullscreen state on the down edge.
+            // A short hold is replayed as a normal click on release; policy is needed only when a
+            // gesture is about to fire (on the hold timer or click release).
             if (Modified()) { Report(test, "Wake_TestModifier", time); return false; }
             _pressWindow = root; _pressRule = rule; _pressTest = test;
             _scale = Math.Max(1, GetDpiForWindow(root) / 96d);
@@ -77,11 +91,12 @@ internal sealed class QuickPanelMouseGestureHook : IDisposable
             var pending = _press.HasPendingHold;
             _press.Move(x, y);
             if (pending && !_press.HasPendingHold) Report(_pressTest, "Wake_TestMoved", time);
-            if (!_press.HasPendingHold) ReturnPressToSystem();
+            if (_press.HasPendingHold) return false;
+            if (pending) ReturnPressToSystem();
+            if (!_hasCircleRules) return false;
             if (unchecked(time - _lastMove) < 16) return false;
             _lastMove = time;
             if (_press.OwnsPress || Modified() || AnyButtonDown()) { ResetCircles(); return false; }
-            if (!_rules.Any(r => r.Kind == QuickPanelWakeKind.Circle)) return false;
             var root = RootAt(x, y);
             if (!Allowed(root, settings, test, time)) { ResetCircles(); return false; }
             if (root != _circleWindow) { ResetCircles(); _circleWindow = root; _scale = Math.Max(1, GetDpiForWindow(root) / 96d); }
@@ -104,6 +119,7 @@ internal sealed class QuickPanelMouseGestureHook : IDisposable
         _rules = (test != null ? new[] { test.Request.Binding } : QuickPanelWakeBindings.Get(settings.Hotkeys))
             .Where(r => r != null && r.Enabled && QuickPanelWakeBindings.Validate(r) == null && r.Kind != QuickPanelWakeKind.Keyboard)
             .DistinctBy(r => r.Id).ToArray();
+        _hasCircleRules = _rules.Any(r => r.Kind == QuickPanelWakeKind.Circle);
         _circles.Clear();
         foreach (var rule in _rules.Where(r => r.Kind == QuickPanelWakeKind.Circle)) _circles[rule.Id] = new();
         _circleWindow = 0;
@@ -121,7 +137,7 @@ internal sealed class QuickPanelMouseGestureHook : IDisposable
             if (_pressRule is not { } rule || !ReferenceEquals(test, _pressTest)
                 || !ReferenceEquals(settings, _cachedSettings) || Modified()
                 || !GetCursorPos(out var point) || RootAt(point.X, point.Y) != _pressWindow
-                || !Allowed(_pressWindow, settings, test, time))
+                || !_allowed(_pressWindow, settings, test, time))
             { _press.CancelPendingHold(); return; }
             _press.Move(point.X, point.Y);
             if (_press.TryFireHold(time)) Fire(_pressWindow, rule, test);
@@ -137,7 +153,7 @@ internal sealed class QuickPanelMouseGestureHook : IDisposable
     private void ReturnPressToSystem()
     {
         StopTimer();
-        if (_press.ReturnPressToSystem() && _pressTest == null && _pressRule is { } rule) Replay(rule.Button, false);
+        if (_press.ReturnPressToSystem() && _pressTest == null && _pressRule is { } rule) _replay(rule.Button, false);
     }
     private void ResetCircles() { foreach (var detector in _circles.Values) detector.ResetCircle(); _circleWindow = 0; }
     private void Report(QuickPanelWakeTestSession? test, string reason, uint time)
@@ -165,10 +181,10 @@ internal sealed class QuickPanelMouseGestureHook : IDisposable
         0x020B or 0x020C => (data >> 16) switch { 1 => QuickPanelWakeButton.Back, 2 => QuickPanelWakeButton.Forward, _ => null },
         _ => null
     };
-    private static bool Down(int key) => (GetAsyncKeyState(key) & 0x8000) != 0;
-    private static bool Modified() => Down(0x10) || Down(0x11) || Down(0x12) || Down(0x5B) || Down(0x5C);
-    private static bool AnyButtonDown() => Down(1) || Down(2) || Down(4) || Down(5) || Down(6);
-    private static void Replay(QuickPanelWakeButton button, bool completeClick)
+    private bool Down(int key) => (_getAsyncKeyState(key) & 0x8000) != 0;
+    private bool Modified() => Down(0x10) || Down(0x11) || Down(0x12) || Down(0x5B) || Down(0x5C);
+    private bool AnyButtonDown() => Down(1) || Down(2) || Down(4) || Down(5) || Down(6);
+    internal static void Replay(QuickPanelWakeButton button, bool completeClick)
     {
         var down = button switch { QuickPanelWakeButton.Right => 0x8u, QuickPanelWakeButton.Middle => 0x20u, _ => 0x80u };
         var data = button switch { QuickPanelWakeButton.Back => 1u, QuickPanelWakeButton.Forward => 2u, _ => 0u };

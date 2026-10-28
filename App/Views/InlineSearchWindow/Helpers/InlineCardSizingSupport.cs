@@ -14,7 +14,7 @@ namespace Lertaro.App.Views.InlineSearchWindow.Helpers;
 // the pulse animation and always operates on the one window it is given.
 internal sealed class InlineCardSizingSupport
 {
-    // The window's own transparent margin around the card (MainBorder's Margin in the XAML).
+    // Content inset retained inside the full-window GlassDesk surface (MainBorder's Margin in the XAML).
     private const double CardMargin = 12;
 
     private readonly Lertaro.App.InlineSearchWindow _window;

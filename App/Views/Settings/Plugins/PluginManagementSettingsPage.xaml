@@ -114,7 +114,7 @@
                     <TextBlock Style="{StaticResource SettingsSectionTitle}"
                                Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_Title]}"
                                VerticalAlignment="Center"/>
-                    <Border CornerRadius="4" Background="{DynamicResource BadgeBackground}" BorderBrush="{DynamicResource BadgeBorderBrush}" BorderThickness="1" Margin="8,0,0,0" Padding="5,1,5,2" VerticalAlignment="Center"
+                    <Border CornerRadius="4" Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1" Margin="8,0,0,0" Padding="5,1,5,2" VerticalAlignment="Center"
                             Cursor="Hand" MouseLeftButtonUp="SdkBadge_MouseLeftButtonUp"
                             ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_DevGuideTooltip]}">
                         <TextBlock Text="{Binding HostSdkVersion, StringFormat='SDK v{0}'}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource BadgeText}" />
@@ -131,7 +131,7 @@
             <Border Style="{StaticResource SettingsCard}"
                     Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
                 <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_NoPlugins]}"
-                           Foreground="{DynamicResource TextSecondary2}"
+                           Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                            HorizontalAlignment="Center" Padding="0,8"/>
             </Border>
 
@@ -172,9 +172,9 @@
                       Cursor="Hand" MouseLeftButtonUp="PluginColumnHeader_Click">
                     <StackPanel Orientation="Horizontal" IsHitTestVisible="False">
                         <TextBlock Text="↑↓" FontSize="10"
-                                   Foreground="{DynamicResource TextSecondary2}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
                         <TextBlock Text="{Binding PluginSortLabel}"
-                                   FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary2}"
+                                   FontSize="11" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
                 </Grid>
@@ -218,7 +218,7 @@
                             <!-- Icon tile at 80% of its former height so the rows sit tighter. -->
                             <Grid Grid.Column="0" Width="34" Height="34" Margin="0,0,8,0" VerticalAlignment="Center">
                                 <Border CornerRadius="8" IsHitTestVisible="False"
-                                        Background="{DynamicResource HoverBackground}" Opacity="0.5"/>
+                                        Background="{DynamicResource LiquidControlHover}" Opacity="0.5"/>
                                 <Border CornerRadius="8" IsHitTestVisible="False">
                                     <Border.Style>
                                         <Style TargetType="Border">
@@ -243,7 +243,7 @@
                                         Margin="0,3,0,0" HorizontalAlignment="Left">
                                     <Grid>
                                         <Border CornerRadius="4" IsHitTestVisible="False"
-                                                Background="{DynamicResource HoverBackground}" Opacity="0.5"/>
+                                                Background="{DynamicResource LiquidControlHover}" Opacity="0.5"/>
                                         <Border CornerRadius="4" IsHitTestVisible="False">
                                             <Border.Style>
                                                 <Style TargetType="Border">
@@ -268,7 +268,7 @@
             </ListBox>
             </Grid>
 
-            <Border Grid.Column="1" Width="1" Background="{DynamicResource BorderColor}"/>
+            <Border Grid.Column="1" Width="1" Background="{StaticResource LiquidControlEdge}"/>
 
             <!-- The detail pane (PluginCard) handles header fixing and internal content scrolling on its own.
                  One card instance whose DataContext is swapped, rather than a ContentControl with a

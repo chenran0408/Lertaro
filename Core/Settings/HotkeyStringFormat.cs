@@ -8,7 +8,24 @@ namespace Lertaro.Core;
 /// </summary>
 public static class HotkeyStringFormat
 {
+    public const string DoubleTapPrefix = "DoubleTap:";
     private static readonly string[] ModifierTokens = { "Ctrl", "Alt", "Shift", "Win" };
+
+    /// <summary>Reads the explicit double-tap form used by any recorder-backed hotkey.</summary>
+    public static bool IsDoubleTap(string? value, out string key)
+    {
+        key = string.Empty;
+        if (string.IsNullOrWhiteSpace(value) || !value.StartsWith(DoubleTapPrefix, StringComparison.OrdinalIgnoreCase))
+            return false;
+        var candidate = value[DoubleTapPrefix.Length..].Trim();
+        if (candidate.Length == 0 || candidate.Contains('+')) return false;
+        // The recorder spells WPF's Key.Return as "Enter" to match existing chord strings.
+        // Return the canonical enum name so every consumer resolves this key consistently.
+        key = candidate.Equals("Enter", StringComparison.OrdinalIgnoreCase) ? "Return" : candidate;
+        return true;
+    }
+
+    public static string AsDoubleTap(string key) => DoubleTapPrefix + key;
 
     /// <summary>
     /// Returns whether a recorder-format hotkey is assigned to Windows itself. These combinations are
@@ -30,6 +47,9 @@ public static class HotkeyStringFormat
     public static bool IsReservedWindowsShortcut(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return false;
+        if (IsDoubleTap(value, out var doubleTapKey))
+            return doubleTapKey.Equals("Win", StringComparison.OrdinalIgnoreCase)
+                || doubleTapKey.Equals("Windows", StringComparison.OrdinalIgnoreCase);
 
         var parts = value.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (!parts.Contains("Win", StringComparer.OrdinalIgnoreCase) &&
@@ -96,6 +116,8 @@ public static class HotkeyStringFormat
 
     public static void ParseCombo(string? value, out string modifier, out string key)
     {
+        if (IsDoubleTap(value, out _) || (value?.StartsWith(DoubleTapPrefix, StringComparison.OrdinalIgnoreCase) ?? false))
+        { modifier = string.Empty; key = string.Empty; return; }
         if (string.IsNullOrWhiteSpace(value)) { modifier = string.Empty; key = string.Empty; return; }
 
         var parts = value.Split('+');
@@ -139,6 +161,12 @@ public static class HotkeyStringFormat
     public static string ToDisplayText(string value)
     {
         if (string.IsNullOrEmpty(value)) return value;
+        if (IsDoubleTap(value, out var doubleTapKey))
+        {
+            if (doubleTapKey.Equals("Return", StringComparison.OrdinalIgnoreCase)) doubleTapKey = "Enter";
+            if (OemDisplaySymbols.TryGetValue(doubleTapKey, out var doubleTapSymbol)) doubleTapKey = doubleTapSymbol;
+            return $"Double-tap {doubleTapKey}";
+        }
         var parts = value.Split('+');
         if (OemDisplaySymbols.TryGetValue(parts[^1], out var symbol))
             parts[^1] = symbol;

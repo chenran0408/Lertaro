@@ -379,6 +379,8 @@ public sealed class HookProcess : IDisposable
                     Hwnd = ExplorerNativeHooks.GetForegroundWindow().ToInt64(), StringVal1 = id, BoolVal = true });
             };
             _keyboardHook.OnQuickNavigationHotkey += () => _ipcServer.SendQuickNavigationHotkey();
+            _keyboardHook.OnFavoriteDoubleTapHotkey += index => _ipcServer.SendMessage(new IpcMessage
+            { Id = IpcMessageId.FavoriteDoubleTapHotkey, IntVal = index });
             _keyboardHook.OnQuickSwitchRequested += dialogHwnd =>
             {
                 Volatile.Write(ref _quickSwitchDialog, dialogHwnd);
@@ -439,6 +441,7 @@ public sealed class HookProcess : IDisposable
             {
                 var result = GetMessage(out var msg, IntPtr.Zero, 0, 0);
                 if (result <= 0) break;
+                if (_mouseHook?.ProcessThreadMessage(msg.message, msg.wParam) == true) continue;
                 TranslateMessage(ref msg);
                 DispatchMessage(ref msg);
             }

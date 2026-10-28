@@ -10,10 +10,8 @@
         <Setter Property="Height" Value="26"/>
         <Setter Property="Padding" Value="6,0"/>
         <Setter Property="FontSize" Value="11.5"/>
-        <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-        <Setter Property="CaretBrush" Value="{DynamicResource TextPrimary}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+        <Setter Property="Background" Value="{StaticResource LiquidControlFill}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdge}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="Template">
@@ -22,7 +20,7 @@
                     <Border x:Name="border" CornerRadius="4" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
                         <Grid>
                             <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
-                            <TextBlock x:Name="PlaceholderText" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_TargetPin]}" Margin="6,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" Foreground="{DynamicResource TextSecondary}" Opacity="0.55" FontSize="11" Visibility="Collapsed"/>
+                            <TextBlock x:Name="PlaceholderText" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_TargetPin]}" Margin="6,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Opacity="0.55" FontSize="11" Visibility="Collapsed"/>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -40,10 +38,8 @@
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
         <Setter Property="VerticalContentAlignment" Value="Top"/>
         <Setter Property="FontSize" Value="11.5"/>
-        <Setter Property="Background" Value="{DynamicResource FieldBackground}"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-        <Setter Property="CaretBrush" Value="{DynamicResource TextPrimary}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+        <Setter Property="Background" Value="{StaticResource LiquidControlFill}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdge}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -65,12 +61,11 @@
         </Setter>
     </Style>
 
-    <Style x:Key="RemoveItemButtonStyle" TargetType="Button">
+    <Style x:Key="RemoveItemButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Width" Value="24"/>
         <Setter Property="Height" Value="24"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FontFamily" Value="{DynamicResource AppIconFontFamily}"/>
@@ -108,8 +103,8 @@
             <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding DisplayName}" ToolTip="{Binding DisplayName}" FontSize="12" Foreground="{DynamicResource TextPrimary2}" TextTrimming="CharacterEllipsis" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                <TextBlock Grid.Column="1" FontSize="11.5" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center">
+                <TextBlock Grid.Column="0" Text="{Binding DisplayName}" ToolTip="{Binding DisplayName}" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" TextTrimming="CharacterEllipsis" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <TextBlock Grid.Column="1" FontSize="11.5" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Text" Value="{Binding SizeText}"/>
@@ -118,7 +113,7 @@
                     </TextBlock.Style>
                 </TextBlock>
             </Grid>
-            <ProgressBar Grid.Row="1" Value="{Binding ProgressPercentage}" Minimum="0" Maximum="100" Height="4" Margin="0,5,0,1" Foreground="{DynamicResource AccentBlue}" Background="{DynamicResource ControlBorderBrush}" BorderThickness="0">
+            <ProgressBar Grid.Row="1" Value="{Binding ProgressPercentage}" Minimum="0" Maximum="100" Height="4" Margin="0,5,0,1" Foreground="{DynamicResource AccentBlue}" Background="{DynamicResource LiquidControlEdge}" BorderThickness="0">
                 <ProgressBar.Style><Style TargetType="ProgressBar"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowProgress}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></ProgressBar.Style>
             </ProgressBar>
         </Grid>
@@ -128,16 +123,15 @@
         <Setter Property="Padding" Value="14,4"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="FontWeight" Value="Medium"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="Bd" CornerRadius="4" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                    <Border x:Name="Bd" CornerRadius="4" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}"><ContentPresenter TextElement.Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsChecked" Value="True"><Setter TargetName="Bd" Property="Background" Value="{DynamicResource ContentBg}"/><Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/></Trigger>
-                        <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/></Trigger>
+                        <Trigger Property="IsChecked" Value="True"><Setter TargetName="Bd" Property="Background" Value="{DynamicResource LiquidControlHover}"/></Trigger>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="Background" Value="{DynamicResource LiquidControlHover}"/></Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

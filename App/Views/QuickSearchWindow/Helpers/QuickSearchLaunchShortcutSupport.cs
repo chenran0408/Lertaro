@@ -88,7 +88,9 @@ internal sealed class QuickSearchLaunchShortcutSupport
             || (modifiers == (ModifierKeys.Control | ModifierKeys.Shift) && key == Key.Z)
             || FavoriteHotkeyConflicts.HostHotkeys(settings, includeSelectJump: false)
                 .Concat(settings.PluginActionHotkeys.Values.SelectMany(overrides => overrides.Values))
-                .Any(hotkey => WpfUiHelper.MatchesHotkey(hotkey, modifiers, key));
+                .Any(hotkey => HotkeyStringFormat.IsDoubleTap(hotkey, out var tapKey)
+                    ? modifiers == ModifierKeys.None && Enum.TryParse<Key>(tapKey, true, out var parsedKey) && parsedKey == key
+                    : WpfUiHelper.MatchesHotkey(hotkey, modifiers, key));
 
     private static Key GetShortcutKey(int index) => index switch
     {

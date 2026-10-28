@@ -17,7 +17,7 @@ internal static class SearchWindowStayOpenSupport
     internal static bool TryHandle(Lertaro.App.SearchWindow window, System.Windows.Input.KeyEventArgs e)
     {
         var hotkeys = UserSettings.Load().Hotkeys;
-        if (!WpfUiHelper.MatchesHotkey(hotkeys.StayOpenHotkey, Keyboard.Modifiers, WpfUiHelper.GetActualKey(e)))
+        if (!WpfUiHelper.MatchesHotkey(hotkeys.StayOpenHotkey, e))
             return false;
 
         Toggle(window);

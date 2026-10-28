@@ -50,7 +50,9 @@ AppUpdatesURL={#AppURL}
 DefaultDirName={commonpf64}\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
-LicenseFile=..\LICENSE
+; The app's own MIT terms are shipped separately as {app}\LICENSE. Display the vendored component's
+; scoped terms here so the installer does not imply the MIT file covers GlassDesk as well.
+LicenseFile={#PublishDir}\ThirdPartyLicenses\GlassDesk\LICENSE
 OutputDir=..\dist
 OutputBaseFilename=Lertaro-Setup{#ArchSuffix}
 SetupIconFile=..\App\logo.ico

@@ -161,6 +161,27 @@ copy "%ROOT%portable-cleanup.bat" "%OUT%\" >nul
 if errorlevel 1 (
     echo [Warning] Failed to copy portable-cleanup.bat.
 )
+
+:: Preserve the independent license scope and third-party notices in both the installer and portable ZIP.
+set "GLASS_LICENSES=%OUT%\ThirdPartyLicenses\GlassDesk"
+mkdir "%GLASS_LICENSES%\docs\licensing"
+mkdir "%GLASS_LICENSES%\docs\third-party"
+copy "%ROOT%LICENSE" "%OUT%\LICENSE" >nul
+if errorlevel 1 exit /b 1
+copy "%ROOT%Vendor\GlassDesk\LICENSE" "%GLASS_LICENSES%\LICENSE" >nul
+if errorlevel 1 exit /b 1
+copy "%ROOT%Vendor\GlassDesk\NOTICE" "%GLASS_LICENSES%\NOTICE" >nul
+if errorlevel 1 exit /b 1
+copy "%ROOT%Vendor\GlassDesk\SOURCE-PROVENANCE.json" "%GLASS_LICENSES%\SOURCE-PROVENANCE.json" >nul
+if errorlevel 1 exit /b 1
+copy "%ROOT%Vendor\GlassDesk\LERTARO-ADAPTATION.md" "%GLASS_LICENSES%\LERTARO-ADAPTATION.md" >nul
+if errorlevel 1 exit /b 1
+copy "%ROOT%Vendor\GlassDesk\docs\LICENSING.md" "%GLASS_LICENSES%\docs\LICENSING.md" >nul
+if errorlevel 1 exit /b 1
+copy "%ROOT%Vendor\GlassDesk\docs\licensing\FILE-LICENSES.json" "%GLASS_LICENSES%\docs\licensing\FILE-LICENSES.json" >nul
+if errorlevel 1 exit /b 1
+xcopy "%ROOT%Vendor\GlassDesk\docs\third-party" "%GLASS_LICENSES%\docs\third-party" /E /I /Y >nul
+if errorlevel 1 exit /b 1
 del /s /q "%OUT%\*.pdb" >nul 2>&1
 
 :: Compile Inno Setup Installer

@@ -35,6 +35,10 @@ public static class InlineSearchShortcutHelper
                 var qsClickMod = string.Equals(clickModifier, "Control", StringComparison.OrdinalIgnoreCase) ? "Ctrl" : clickModifier;
                 quickSwitchHint = $"{qsClickMod} x2";
             }
+            else if (HotkeyStringFormat.IsDoubleTap(quickSwitch, out _))
+            {
+                quickSwitchHint = HotkeyStringFormat.ToDisplayText(quickSwitch);
+            }
             else if (!string.IsNullOrEmpty(quickSwitch))
             {
                 HotkeyStringFormat.ParseCombo(quickSwitch, out var qsMod, out var qsKey);

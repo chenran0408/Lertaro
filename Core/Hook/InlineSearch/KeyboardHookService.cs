@@ -25,6 +25,7 @@ public class KeyboardHookService : IDisposable
     public event Action? OnQuickPanelHotkey;
     internal event Action<string>? OnQuickPanelWakeRule;
     public event Action? OnQuickNavigationHotkey;
+    public event Action<int>? OnFavoriteDoubleTapHotkey;
     /// <summary>A recognized Quick Switch, carrying the dialog it was aimed at. The subscriber must not do the
     /// navigation on this thread: see <see cref="QuickSwitchNavigator"/>.</summary>
     public event Action<IntPtr>? OnQuickSwitchRequested;
@@ -101,6 +102,9 @@ public class KeyboardHookService : IDisposable
         _hotkeyDetector = new GlobalHotkeyDetector(_settings, _explorerTracker, RequestQuickSwitch);
         Logger.Log("[KeyboardHookService] Hotkey settings reloaded.", LogLevel.Info);
     }
+
+    internal void SetEligibleFavoriteDoubleTapOwners(IEnumerable<int> ownerIndices) =>
+        _hotkeyDetector.SetEligibleFavoriteDoubleTapOwners(ownerIndices);
     // Wired from MouseHookService.OnRightButtonDown, and also called directly below for the VK_APPS
     // (Menu) key. Windows needs real, non-zero time to build a context menu (shell extension
     // IContextMenu handlers, etc.), so either trigger immediately followed by a menu mnemonic keypress
@@ -169,9 +173,15 @@ public class KeyboardHookService : IDisposable
                     return KeyboardNativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
             }
 
+            if (_hotkeyDetector.CheckFavoriteDoubleTap(vkCode, time, out var favoriteIndex))
+            {
+                OnFavoriteDoubleTapHotkey?.Invoke(favoriteIndex);
+                return (IntPtr)1;
+            }
+
             var wakeTest = QuickPanelWakeTestSession.Current;
             if (wakeTest?.Request.Binding is { Kind: QuickPanelWakeKind.Keyboard } testRule
-                && _hotkeyDetector.MatchesWakeTest(testRule.Key, vkCode))
+                && _hotkeyDetector.MatchesWakeTest(testRule.Key, vkCode, time))
             {
                 if (!_hotkeyDetector.QuickPanelKeyRepeated)
                 {
@@ -254,7 +264,7 @@ public class KeyboardHookService : IDisposable
             if (wakeTest == null && !shouldDisableAllHooks && !inlineCardOwnsThisChord
                 && !ForegroundProcessGate.IsForegroundProcessBlacklisted(_settings.BlacklistedProcesses)
                 && !ForegroundProcessGate.IsForegroundProcessBlacklisted(_settings.QuickPanel.BlacklistedProcesses)
-                && _hotkeyDetector.CheckQuickPanelHotkey(vkCode, out var consumeQuickPanel))
+                && _hotkeyDetector.CheckQuickPanelHotkey(vkCode, out var consumeQuickPanel, time))
             {
                 if (!_hotkeyDetector.QuickPanelKeyRepeated)
                 {
@@ -320,7 +330,7 @@ public class KeyboardHookService : IDisposable
             // File dialogs and recognized file managers remain eligible even when their process is on the
             // blacklist or the window is fullscreen. Other foreground processes honor both protections.
             var shouldDisableQuickNavigation = QuickNavigationHotkeyGate.ShouldSuppress(_explorerTracker, _settings, IsHotkeysDisabledTemporarily, isFullscreenBlocking);
-            if (!shouldDisableQuickNavigation && _hotkeyDetector.CheckQuickNavigationHotkey(vkCode, out var consumeQuickNavigation))
+            if (!shouldDisableQuickNavigation && _hotkeyDetector.CheckQuickNavigationHotkey(vkCode, out var consumeQuickNavigation, time))
             {
                 OnQuickNavigationHotkey?.Invoke();
                 if (consumeQuickNavigation) return (IntPtr)1;

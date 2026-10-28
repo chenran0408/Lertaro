@@ -912,6 +912,7 @@
   "Wake_InvalidClick": "Use a hold for the right button to keep the normal context menu.",
   "Wake_InvalidRange": "A parameter is out of range. Minimum radius must be smaller than maximum radius.",
   "Wake_Duplicate": "This overlaps another enabled shortcut. Change or disable one of them.",
+  "Hotkey_Conflict": "This shortcut conflicts with another action. Choose a different key.",
   "Wake_Reserved": "This key is already used by Search, Quick Navigation, or a favorite. Choose another key.",
   "Wake_KeyTaken": "This key combination is used by Windows or another app. Choose another one.",
   "Wake_RowError": "Shortcut {0}: {1}",

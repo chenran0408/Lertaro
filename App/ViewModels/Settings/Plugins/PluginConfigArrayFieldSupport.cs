@@ -134,7 +134,8 @@ internal sealed class PluginConfigArrayFieldSupport
                 return TriggerWord.Normalize(imported).Equals(TriggerWord.Normalize(existing), StringComparison.OrdinalIgnoreCase);
             return child.FieldType == ConfigFieldType.Hotkey
                 && WpfUiHelper.TryParseHotkey(imported, out var key, out var modifiers)
-                && WpfUiHelper.MatchesHotkey(existing, modifiers, key);
+                && WpfUiHelper.TryParseHotkey(existing, out var existingKey, out var existingModifiers)
+                && key == existingKey && modifiers == existingModifiers;
         }));
         AddArrayItemViewModel(value);
         _field.SelectedArrayItem = _field.ArrayItems[^1];

@@ -54,10 +54,8 @@ public partial class QuickLookManager
         catch { }
     }
 
-    // A real top-level window (no invisible shadow-margin border like our own _window has) sits a bit
-    // further out/wider than where our own panel's outer bounds would land -- these are on top of
-    // whatever gap TryComputeTargetRect already used, tuned by eye against an actual docked QuickLook
-    // window rather than derived from anything measurable.
+    // Externally-rendered previews own their own window and content geometry. Keep the established extra
+    // docking room for those providers; GlassDesk-managed QuickLook uses its complete visible window bounds.
     private const double ExternalDockExtraGap = 0;
     private const double ExternalDockExtraWidth = 80;
 
@@ -74,9 +72,8 @@ public partial class QuickLookManager
         if (computed == null) return;
         var rect = computed.Value;
 
-        // DIP = physical * dpiScale (see TryComputeTargetRect), so invert it back to physical pixels. No
-        // outer/visible distinction here -- an externally-managed window has no invisible margin to
-        // compensate for, so it's positioned at the true visible rectangle directly.
+        // DIP = physical * dpiScale (see TryComputeTargetRect), so invert it back to physical pixels. The
+        // external provider receives the bounds it owns; it applies any of its own content insets.
         var left = (int)Math.Round(rect.VisibleLeft / rect.DpiScale);
         var top = (int)Math.Round(rect.VisibleTop / rect.DpiScale);
         var width = (int)Math.Round(rect.VisibleWidth / rect.DpiScale);
@@ -86,11 +83,9 @@ public partial class QuickLookManager
         catch { }
     }
 
-    // "Visible" = the actual rounded-corner card a user sees. Our own _window pads an extra
-    // ContentMargin on every side around that for its invisible drop-shadow border, so its outer WPF
-    // Window bounds (Outer*) differ from the visible rectangle -- Outer* exists so PositionWindow can
-    // recover exactly the same outer bounds the pre-refactor code computed directly, while
-    // NotifyExternalBounds uses Visible* as-is, since an external window has no such margin to add back.
+    // Visible* describes the GlassDesk window's full glass surface. ContentMargin is zero for this window,
+    // so its outer WPF bounds currently match Visible*; the explicit Outer* values keep positioning math
+    // clear while NotifyExternalBounds passes the chosen panel bounds to a separate provider.
     private readonly struct TargetRect
     {
         public double VisibleLeft { get; init; }

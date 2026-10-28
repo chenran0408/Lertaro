@@ -99,8 +99,8 @@
                     
                     <!-- Title & description -->
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Service.LoadingTitle}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary2}" Margin="0,0,0,6"/>
-                        <TextBlock Text="{Binding Service.LoadingStats}" FontSize="12" Foreground="{DynamicResource TextSecondary2}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding Service.LoadingTitle}" FontSize="15" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" Margin="0,0,0,6"/>
+                        <TextBlock Text="{Binding Service.LoadingStats}" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap"/>
                     </StackPanel>
                     
                     <!-- Action Button -->
@@ -210,17 +210,17 @@
                 </ctrl:TabStripScrollView>
 
                 <Border Grid.Column="1" Height="34" CornerRadius="6" Margin="16,0,8,0" VerticalAlignment="Top"
-                        Background="{DynamicResource ControlBackground}"
-                        BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1">
+                        Background="{StaticResource LiquidControlFill}"
+                        BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1">
                     <Grid>
                         <TextBox Background="Transparent" BorderThickness="0" FontSize="12"
-                                 Foreground="{DynamicResource TextPrimary}"
-                                 CaretBrush="{DynamicResource TextPrimary}"
+                                 Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
+                                 CaretBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                  Padding="10,0" VerticalContentAlignment="Center"
                                  Text="{Binding Log.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Service_LogSearchPlaceholder]}"
                                    IsHitTestVisible="False" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center"
-                                   Foreground="{DynamicResource TextSecondary}">
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -244,7 +244,7 @@
                         Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Service_ClearLog]}"
                         Command="{Binding Log.ClearCommand}"/>
         </Grid>
-        <Border Grid.Row="3" Height="1" Background="{DynamicResource SettingsRowBorderBrush}" Margin="0,0,0,10"/>
+        <Border Grid.Row="3" Height="1" Background="{StaticResource LiquidControlEdge}" Margin="0,0,0,10"/>
 
         <Border Grid.Row="4" Style="{StaticResource SettingsCard}" Padding="0">
             <!-- RichTextBox instead of an ItemsControl/ListBox: read-only but still a real text-editing
@@ -254,7 +254,7 @@
                  code-behind whenever Log.Lines changes (RichTextBox has no ItemsSource to bind to). -->
             <RichTextBox x:Name="LogTextBox" IsReadOnly="True" IsReadOnlyCaretVisible="True"
                          Background="Transparent" BorderThickness="0" Padding="12,10"
-                         CaretBrush="{DynamicResource TextPrimary}"
+                         CaretBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                          FontFamily="{DynamicResource AppMonospaceFontFamily}" FontSize="11"
                          HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                          PreviewMouseWheel="LogTextBox_PreviewMouseWheel">

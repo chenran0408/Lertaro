@@ -110,6 +110,7 @@ public static class PipeRequestBinarySerializer
                 break;
 
             case IpcMessageId.KeyCtrlNumber:
+            case IpcMessageId.FavoriteDoubleTapHotkey:
                 writer.Write(msg.IntVal);
                 break;
 
@@ -161,6 +162,7 @@ public static class PipeRequestBinarySerializer
                 break;
 
             case IpcMessageId.OpenedFoldersCaptured:
+            case IpcMessageId.SetFavoriteDoubleTapOwners:
                 var paths = msg.StringList ?? Array.Empty<string>();
                 writer.Write(paths.Count);
                 foreach (var path in paths)
@@ -249,6 +251,7 @@ public static class PipeRequestBinarySerializer
                 break;
 
             case IpcMessageId.KeyCtrlNumber:
+            case IpcMessageId.FavoriteDoubleTapHotkey:
                 msg.IntVal = reader.ReadInt32();
                 break;
 
@@ -300,6 +303,7 @@ public static class PipeRequestBinarySerializer
                 break;
 
             case IpcMessageId.OpenedFoldersCaptured:
+            case IpcMessageId.SetFavoriteDoubleTapOwners:
                 var count = reader.ReadInt32();
                 if (count < 0 || count > 10_000)
                     throw new InvalidDataException("Opened-folder snapshot exceeds the IPC limit.");

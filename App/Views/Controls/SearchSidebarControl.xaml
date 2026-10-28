@@ -10,7 +10,7 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
-    <Border Background="{DynamicResource SidebarBg}" helpers:BackgroundReveal.Resource="SidebarBg" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
+    <Border Background="Transparent" BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=PanelBorderBrush}" BorderThickness="0,0,1,0">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="0,12,0,12">
                 <!-- Dynamic Plugins Sections (Fully Plugin-ized Sidebar) -->
@@ -18,7 +18,7 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <StackPanel>
-                                <Rectangle Height="1" Fill="{DynamicResource SeparatorBrush}" Margin="18,12,18,12">
+                                <Rectangle Height="1" Fill="{DynamicResource LiquidControlEdge}" Margin="18,12,18,12">
                                     <Rectangle.Style>
                                         <Style TargetType="Rectangle">
                                             <Style.Triggers>
@@ -50,7 +50,7 @@
                                         </Button.Style>
                                     </Button>
                                     <TextBlock Text="{Binding Header}" FontSize="11" FontWeight="Bold"
-                                               Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center"/>
                                 </DockPanel>
                                 <!-- ItemsControl (not ListBox): each item toggles its own IsSelected
                                      independently: a single-select group enforces "only one at a time"
@@ -72,7 +72,7 @@
                                                     </Grid>
                                                     <TextBlock DockPanel.Dock="Right" Text="{Binding CountText}"
                                                                Width="48" Margin="10,0,0,0" FontSize="11"
-                                                               Foreground="{DynamicResource TextSecondary}"
+                                                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                                                TextAlignment="Right"
                                                                VerticalAlignment="Center"/>
                                                     <TextBlock Text="{Binding DisplayName}" helpers:TrimmedTextToolTip.Text="{Binding DisplayName}" FontSize="13"
