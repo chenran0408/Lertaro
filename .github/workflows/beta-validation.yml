@@ -31,13 +31,13 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - name: Test app
-        run: dotnet test Tests/App/App.csproj -c Release -r ${{ matrix.rid }} --logger "console;verbosity=normal" -v quiet
+        run: dotnet test Tests/App/App.csproj -c Release -r ${{ matrix.rid }} -p:RustIndexStoreTarget=${{ matrix.rust_target }} --logger "console;verbosity=normal" -v quiet
       - name: Test update core
         if: success() || failure()
-        run: dotnet test Tests/Core/Core.csproj -c Release -r ${{ matrix.rid }} --logger "console;verbosity=normal" -v quiet
+        run: dotnet test Tests/Core/Core.csproj -c Release -r ${{ matrix.rid }} -p:RustIndexStoreTarget=${{ matrix.rust_target }} --logger "console;verbosity=normal" -v quiet
       - name: Test bundled actions
         if: success() || failure()
-        run: dotnet test Tests/Plugins/CoreExtensions/CoreExtensions.csproj -c Release -r ${{ matrix.rid }} --logger "console;verbosity=normal" -v quiet
+        run: dotnet test Tests/Plugins/CoreExtensions/CoreExtensions.csproj -c Release -r ${{ matrix.rid }} -p:RustIndexStoreTarget=${{ matrix.rust_target }} --logger "console;verbosity=normal" -v quiet
 
   package:
     runs-on: windows-latest
@@ -53,6 +53,37 @@ jobs:
         run: winget install JRSoftware.InnoSetup.7 --force --silent --no-upgrade --accept-source-agreements
       - name: Build both installers
         run: .\make.bat
+      - name: Verify packaged index store architectures
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          foreach ($check in @(
+            @{ Path = 'dist/Lertaro-Portable.zip'; Machine = 0x8664; Name = 'x64' },
+            @{ Path = 'dist/Lertaro-Portable-arm64.zip'; Machine = 0xAA64; Name = 'ARM64' }
+          )) {
+            $archive = [IO.Compression.ZipFile]::OpenRead($check.Path)
+            try {
+              $entry = $archive.Entries | Where-Object { $_.Name -eq 'lertaro_index_store.dll' } | Select-Object -First 1
+              if (-not $entry) { throw "$($check.Name) ZIP is missing lertaro_index_store.dll." }
+              $stream = $entry.Open()
+              $image = [IO.MemoryStream]::new()
+              try {
+                $stream.CopyTo($image)
+                $reader = [IO.BinaryReader]::new($image)
+                $image.Position = 0x3c
+                $peOffset = $reader.ReadInt32()
+                $image.Position = $peOffset + 4
+                $machine = $reader.ReadUInt16()
+              } finally {
+                $image.Dispose()
+                $stream.Dispose()
+              }
+              if ($machine -ne $check.Machine) {
+                throw "$($check.Name) ZIP contains PE Machine 0x$('{0:X4}' -f $machine); expected 0x$('{0:X4}' -f $check.Machine)."
+              }
+              Write-Host "$($check.Name) index store PE Machine verified."
+            } finally { $archive.Dispose() }
+          }
       - name: Sign candidate updates
         shell: pwsh
         env:

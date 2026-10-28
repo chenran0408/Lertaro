@@ -30,6 +30,8 @@ public sealed class BackgroundContinuityTests
         var card = new Border { Width = 30, Height = 30, HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top };
         card.Resources.MergedDictionaries.Add(new ResourceDictionary
+        { Source = new Uri("pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml") });
+        card.Resources.MergedDictionaries.Add(new ResourceDictionary
         { Source = new Uri("pack://application:,,,/Lertaro.App;component/Resources/Styles/Windows/SettingsWindow.xaml") });
         card.Style = (Style)card.FindResource("SettingsCard");
         root.Children.Add(card);
@@ -38,16 +40,18 @@ public sealed class BackgroundContinuityTests
         {
             BackgroundManager.Preview(new BackgroundSettings());
             window.Show(); Pump();
-            Assert.AreNotEqual(Colors.Lime, Pixel(root, 200, 40));
+            Assert.AreEqual(Colors.Lime, Pixel(root, 200, 40), "The header must expose GlassDesk's sampled material surface.");
+            Assert.AreEqual(Colors.Lime, Pixel(root, 200, 150), "The launch grid must expose the same sampled surface.");
             BackgroundManager.Preview(new BackgroundSettings { Kind = BackgroundKind.Image }); Pump();
             Assert.AreEqual(Colors.Lime, Pixel(root, 200, 40), "The search header must expose the shared backdrop.");
             Assert.AreEqual(Colors.Lime, Pixel(root, 200, 150), "The launch grid must not cover the same backdrop.");
-            Assert.AreEqual((byte)0, Assert.IsInstanceOfType<SolidColorBrush>(card.Background).Color.A,
-                "Settings cards must also reveal the backdrop.");
+            var cardFill = Assert.IsInstanceOfType<LinearGradientBrush>(card.Background,
+                "Settings cards should keep the GlassDesk glass fill.");
+            Assert.IsTrue(cardFill.GradientStops.All(stop => stop.Color.A < byte.MaxValue));
             BackgroundManager.Preview(new BackgroundSettings()); Pump();
-            Assert.AreNotEqual(Colors.Lime, Pixel(root, 200, 40));
-            Assert.AreNotEqual(Colors.Lime, Pixel(root, 200, 150));
-            Assert.AreNotEqual((byte)0, Assert.IsInstanceOfType<SolidColorBrush>(card.Background).Color.A);
+            Assert.AreEqual(Colors.Lime, Pixel(root, 200, 40));
+            Assert.AreEqual(Colors.Lime, Pixel(root, 200, 150));
+            Assert.IsTrue(cardFill.GradientStops.All(stop => stop.Color.A < byte.MaxValue));
         }
         finally { window.Close(); BackgroundManager.EndPreview(); }
     }

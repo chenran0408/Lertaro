@@ -5,6 +5,7 @@ using System.Windows.Threading;
 using Lertaro.App.ViewModels.Settings;
 using Lertaro.App.Views.Settings.Hotkey;
 using Lertaro.Core;
+using GlassDesk.UI.Controls;
 using Window = System.Windows.Window;
 using Button = System.Windows.Controls.Button;
 using TabControl = System.Windows.Controls.TabControl;
@@ -66,7 +67,7 @@ public sealed class HotkeyBlacklistTabSectionTests
         var vm = new BlacklistSettingsViewModel(new UserSettings());
         vm.Global.SetRunningProcesses([new Lertaro.App.Services.RunningProcessInfo("editor.exe", "Document", true)]);
         var section = new HotkeyBlacklistTabSection { DataContext = new { Blacklist = vm } };
-        var window = new Window { Content = section, Width = 780, Height = 700 };
+        var window = new ThemeWindow { Content = section, Width = 780, Height = 700 };
         try
         {
             window.Show();
@@ -80,9 +81,10 @@ public sealed class HotkeyBlacklistTabSectionTests
                 window.Resources.MergedDictionaries.Add(new Lertaro.App.Services.Theme.BuiltInTheme(dark ? "Dark" : "Light", dark).GetResources());
                 Drain(window);
                 var list = Find<ListBox>(section)!;
-                var expectedBackground = (SolidColorBrush)window.FindResource("ControlBackground");
                 var expectedText = (SolidColorBrush)window.FindResource("TextPrimary");
-                Assert.AreEqual(expectedBackground.Color, ((SolidColorBrush)list.Background).Color);
+                window.SetValue(GlassWindow.ForegroundBrushProperty, expectedText);
+                var listBackground = Assert.IsInstanceOfType<LinearGradientBrush>(list.Background);
+                Assert.IsNotEmpty(listBackground.GradientStops, "The list should retain GlassDesk's glass surface brush.");
                 Assert.AreEqual(expectedText.Color, ((SolidColorBrush)list.Foreground).Color);
                 var check = Find<CheckBox>(list)!;
                 Assert.IsNotNull(check.Template.FindName("CheckMark", check), "Per-row selection must retain the themed checkbox template.");
@@ -112,4 +114,7 @@ public sealed class HotkeyBlacklistTabSectionTests
         if (root is T match) items.Add(match);
         for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++) Collect(VisualTreeHelper.GetChild(root, i), items);
     }
+
+    private sealed class ThemeWindow : GlassWindow { }
+
 }

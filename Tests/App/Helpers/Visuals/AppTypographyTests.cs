@@ -23,7 +23,7 @@ public sealed class AppTypographyTests
     [DataRow("zh-TW")]
     [DataRow("zh-HK")]
     [DataRow("zh")]
-    public void ChineseUiUsesNormalInsteadOfTheSystemDefaultWeight(string culture)
+    public void ChineseUiUsesMediumWeight(string culture)
     {
         var root = new Window();
         AppTypography.Initialize(root.Resources, culture);
@@ -37,14 +37,14 @@ public sealed class AppTypographyTests
         try
         {
             root.RaiseEvent(new RoutedEventArgs(FrameworkElement.LoadedEvent));
-            Assert.AreEqual(400, body.FontWeight.ToOpenTypeWeight());
-            Assert.AreEqual(400, run.FontWeight.ToOpenTypeWeight());
+            Assert.AreEqual(500, body.FontWeight.ToOpenTypeWeight());
+            Assert.AreEqual(500, run.FontWeight.ToOpenTypeWeight());
             Assert.AreEqual(FontWeights.Bold, heading.FontWeight);
 
             AppTypography.UpdateLanguage(root.Resources, "en-US");
-            Assert.AreEqual(SystemFonts.MessageFontWeight, body.FontWeight);
+            Assert.AreEqual(FontWeights.Medium, body.FontWeight);
             AppTypography.UpdateLanguage(root.Resources, culture);
-            Assert.AreEqual(FontWeights.Normal, body.FontWeight);
+            Assert.AreEqual(FontWeights.Medium, body.FontWeight);
         }
         finally
         {
@@ -72,8 +72,8 @@ public sealed class AppTypographyTests
                 root.RaiseEvent(new RoutedEventArgs(FrameworkElement.LoadedEvent));
 
                 Assert.AreEqual(AppTypography.UiFont, text.FontFamily, root.GetType().Name);
-                Assert.AreEqual(FontWeights.Normal, text.FontWeight, root.GetType().Name);
-                Assert.AreEqual(FontWeights.Normal, run.FontWeight, root.GetType().Name);
+                Assert.AreEqual(FontWeights.Medium, text.FontWeight, root.GetType().Name);
+                Assert.AreEqual(FontWeights.Medium, run.FontWeight, root.GetType().Name);
                 Assert.AreEqual("zh-cn", text.Language.IetfLanguageTag);
                 AppTypography.UpdateLanguage(root.Resources, "ja-JP");
                 Assert.AreEqual("ja-jp", text.Language.IetfLanguageTag);
@@ -117,16 +117,16 @@ public sealed class AppTypographyTests
 
         var header = Assert.ContainsSingle(TextBlocks(item).Where(text => text.Text == "关于"));
         Assert.AreEqual(AppTypography.UiFont, header.FontFamily);
-        Assert.AreEqual(FontWeights.Normal, header.FontWeight);
+        Assert.AreEqual(FontWeights.Medium, header.FontWeight);
         Assert.AreEqual("zh-cn", header.Language.IetfLanguageTag);
-        Assert.AreEqual(12.5, header.FontSize);
+        Assert.AreEqual(12, header.FontSize);
         Assert.AreEqual(AppTypography.IconFont, icon.FontFamily);
         var arrow = Assert.ContainsSingle(TextBlocks(item).Where(text => text.Name == "Arrow"));
         Assert.AreEqual(AppTypography.IconFont, arrow.FontFamily);
 
         AppTypography.UpdateLanguage(menu.Resources, "zh-TW");
         Assert.AreEqual("zh-tw", header.Language.IetfLanguageTag);
-        Assert.AreEqual(FontWeights.Normal, header.FontWeight);
+        Assert.AreEqual(FontWeights.Medium, header.FontWeight);
     }
 
     [StaTestMethod]
@@ -195,7 +195,7 @@ public sealed class AppTypographyTests
             page.RebuildLogDocument([new LogLineViewModel(message, LogLevel.Info)]);
             var document = page.LogTextBox.Document;
             Assert.AreEqual(AppTypography.MonospaceFont, document.FontFamily);
-            Assert.AreEqual(FontWeights.Normal, document.FontWeight);
+            Assert.AreEqual(FontWeights.Medium, document.FontWeight);
             Assert.AreEqual("zh-tw", document.Language.IetfLanguageTag);
             Assert.AreEqual(message, new TextRange(document.ContentStart, document.ContentEnd).Text.TrimEnd('\r', '\n'));
 

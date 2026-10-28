@@ -24,7 +24,15 @@
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
                         <Setter Property="Visibility" Value="Collapsed"/>
-                        <Setter Property="Foreground"><Setter.Value><Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlMuted}"/></Setter.Value></Setter>
+                        <Setter Property="Foreground">
+                            <Setter.Value>
+                                <Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}">
+                                    <Binding.FallbackValue>
+                                        <SolidColorBrush Color="#BFC4CC"/>
+                                    </Binding.FallbackValue>
+                                </Binding>
+                            </Setter.Value>
+                        </Setter>
                         <Setter Property="FontSize" Value="11"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsServiceRunning}" Value="False">

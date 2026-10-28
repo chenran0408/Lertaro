@@ -10,8 +10,13 @@
     <GenerateDependencyFile>false</GenerateDependencyFile>
     <!-- IndexV2 reads its memory-mapped snapshot through typed spans over a raw view pointer. -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <RustIndexStoreTarget Condition="'$(RuntimeIdentifier)' == 'win-arm64'">aarch64-pc-windows-msvc</RustIndexStoreTarget>
-    <RustIndexStoreTarget Condition="'$(RuntimeIdentifier)' != 'win-arm64'">x86_64-pc-windows-msvc</RustIndexStoreTarget>
+    <!-- Project-reference copy-item queries can evaluate Core without the caller's RID. On a
+         native ARM64 runner, retain the host SDK RID as the fallback; explicit cross-publish RIDs
+         still take precedence. -->
+    <RustIndexStoreRid Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)</RustIndexStoreRid>
+    <RustIndexStoreRid Condition="'$(RustIndexStoreRid)' == ''">$(NETCoreSdkRuntimeIdentifier)</RustIndexStoreRid>
+    <RustIndexStoreTarget Condition="'$(RustIndexStoreRid)' == 'win-arm64'">aarch64-pc-windows-msvc</RustIndexStoreTarget>
+    <RustIndexStoreTarget Condition="'$(RustIndexStoreRid)' != 'win-arm64'">x86_64-pc-windows-msvc</RustIndexStoreTarget>
     <EnableRustIndexStoreBuild Condition="'$(EnableRustIndexStoreBuild)' == ''">true</EnableRustIndexStoreBuild>
     <RustIndexStoreTargetDir>$(MSBuildProjectDirectory)\obj\native-index-store\$(RustIndexStoreTarget)</RustIndexStoreTargetDir>
     <RustIndexStoreDll>$(RustIndexStoreTargetDir)\$(RustIndexStoreTarget)\release\lertaro_index_store.dll</RustIndexStoreDll>

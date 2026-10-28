@@ -85,19 +85,20 @@ public sealed class TreeBuilderCheckpointExtensionsTests
     public void MaybeCheckpoint_ClonedStore_IsIndependentOfLaterMutations()
     {
         using var dir = new TempDirectory();
-        FileRecordStore? captured = null;
-        var builder = CreateBuilder(dir.Path, onCheckpoint: (store, _) => captured = store);
+        var capturedRecordCount = 0;
+        TreeBuilder? builder = null;
+        builder = CreateBuilder(dir.Path, onCheckpoint: (store, _) =>
+        {
+            capturedRecordCount = store.Records.Count;
+            builder!._store.Records.Add(new FileRecord(2, 1, "extra.txt", FileRecordFlags.None));
+            Assert.HasCount(1, store.Records); // the callback's checkpoint is a copy of the store before the later mutation
+        });
         builder._store.Records.Add(new FileRecord(1, 1, "", FileRecordFlags.Directory | FileRecordFlags.SourceRoot));
 
         for (var i = 0; i < TreeBuilder.CheckpointBatchSize; i++)
             builder.MaybeCheckpoint(i);
 
-        Assert.IsNotNull(captured);
-        Assert.HasCount(1, captured.Records);
-
-        builder._store.Records.Add(new FileRecord(2, 1, "extra.txt", FileRecordFlags.None));
-
-        Assert.HasCount(1, captured.Records); // the clone must not see the mutation made after checkpointing
+        Assert.AreEqual(1, capturedRecordCount);
     }
 
     [TestMethod]

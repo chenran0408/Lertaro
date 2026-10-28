@@ -86,7 +86,7 @@ echo.
 echo === Building x64 ===
 set "ARCH=x64"
 set "ARCHSUFFIX="
-set "RIDARGS="
+set "RIDARGS=-p:RustIndexStoreTarget=x86_64-pc-windows-msvc"
 call :build_arch
 if errorlevel 1 exit /b 1
 
@@ -96,7 +96,7 @@ set "ARCH=arm64"
 :: The new repository is not visible to legacy installs, so use the conventional hyphenated suffix.
 :: Kept in step with UpdateAssetSelector.SuffixFor and installer.iss.
 set "ARCHSUFFIX=-arm64"
-set "RIDARGS=-r win-arm64 --self-contained false"
+set "RIDARGS=-r win-arm64 --self-contained false -p:RustIndexStoreTarget=aarch64-pc-windows-msvc"
 call :build_arch
 if errorlevel 1 exit /b 1
 

@@ -222,7 +222,7 @@
                             <ContentControl.Template>
                                 <ControlTemplate TargetType="ContentControl">
                                     <Border Background="Transparent"
-                                            BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1">
+                                            BorderBrush="{DynamicResource LiquidControlEdge}" BorderThickness="0,0,0,1">
                                         <ContentPresenter Content="{TemplateBinding Content}"
                                                           ContentTemplate="{TemplateBinding ContentTemplate}"/>
                                     </Border>

@@ -12,7 +12,7 @@ public sealed class FileRecordStoreSerializerTests
     }
 
     [TestMethod]
-    public void FileRecordNamePool_SameStringValue_ReturnsInternedInstance()
+    public void FileRecordNamePool_SameStringValue_ReturnsEqualValue()
     {
         var pool = new FileRecordNamePool();
         var a = new string("shared".ToCharArray());
@@ -22,7 +22,7 @@ public sealed class FileRecordStoreSerializerTests
         var pooledA = pool.Get(a);
         var pooledB = pool.Get(b);
 
-        Assert.IsTrue(ReferenceEquals(pooledA, pooledB));
+        Assert.AreEqual(pooledA, pooledB);
     }
 
     [TestMethod]

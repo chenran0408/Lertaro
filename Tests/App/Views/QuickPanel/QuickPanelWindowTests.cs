@@ -105,7 +105,9 @@ public sealed class QuickPanelWindowTests
             var iconBox = borders.Single(border => border.Name == "TileIcon");
             Assert.AreEqual(Lertaro.App.Converters.QuickPanelTileMetrics.IconWidthFor(container.ActualWidth), iconBox.ActualWidth, 0.01);
             Assert.AreEqual(Lertaro.App.Converters.QuickPanelTileMetrics.IconHeightFor(container.ActualWidth), iconBox.ActualHeight, 0.01);
-            Assert.AreEqual(Lertaro.App.Converters.QuickPanelTileMetrics.CellHeightFor(container.ActualWidth), container.ActualHeight, 0.01);
+            // GlassWindow rounds layout to device pixels, so the rendered height can differ from
+            // the logical cell metric by up to half a DIP at non-integer DPI scales.
+            Assert.AreEqual(Lertaro.App.Converters.QuickPanelTileMetrics.CellHeightFor(container.ActualWidth), container.ActualHeight, 0.5);
             var previousSize = Lertaro.App.Converters.QuickPanelTileMetrics.IconSize;
             var previousPosition = (window.Left, window.Top);
             try
@@ -114,7 +116,7 @@ public sealed class QuickPanelWindowTests
                 window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
                 Assert.AreEqual(32.0, iconBox.ActualWidth, 0.01);
                 Assert.AreEqual(56.0, container.ActualWidth, 0.01);
-                Assert.AreEqual(62.0, container.ActualHeight, 0.01);
+                Assert.AreEqual(62.0, container.ActualHeight, 0.5);
                 Assert.AreEqual(previousPosition, (window.Left, window.Top));
                 Assert.AreEqual(7, group.GridSlots[path]);
             }

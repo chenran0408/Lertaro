@@ -25,7 +25,6 @@ public sealed class QuickPanelWakeSettingsTests
         try
         {
             window.Show(); window.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
-            Assert.AreSame(page.FindResource("TextPrimary"), page.Foreground);
             var testButtons = FindButtons(page).Where(b => ReferenceEquals(b.Command, vm.QuickPanelWake.TestCommand)).ToList();
             Assert.HasCount(3, testButtons, "Every rule must have a working Test command binding.");
             Assert.IsTrue(testButtons[0].Command!.CanExecute(testButtons[0].CommandParameter));

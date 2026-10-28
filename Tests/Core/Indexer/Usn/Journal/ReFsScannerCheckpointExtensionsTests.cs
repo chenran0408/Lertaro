@@ -83,22 +83,22 @@ public sealed class ReFsScannerCheckpointExtensionsTests
     [TestMethod]
     public void MaybeCheckpoint_SnapshotIsIndependentOfLaterMutations()
     {
-        FileRecordStore? captured = null;
-        var state = CreateState(onCheckpoint: (store, _) => captured = store);
         var items = new ConcurrentDictionary<UInt128, ReFsItem>();
         items.TryAdd(10, new ReFsItem("file.txt", 1, false, 0, 0, 0, 0));
+        var capturedRecordCount = 0;
+        var state = CreateState(onCheckpoint: (store, _) =>
+        {
+            capturedRecordCount = store.Records.Count;
+            items.TryAdd(11, new ReFsItem("added-after-checkpoint.txt", 1, false, 0, 0, 0, 0));
+            Assert.HasCount(2, store.Records); // the callback's checkpoint is a copy of the state before the later addition
+        });
 
         for (var i = 0; i < TreeBuilder.CheckpointBatchSize; i++)
             state.MaybeCheckpoint(items);
 
-        Assert.IsNotNull(captured);
         // 2 = the synthesized root record (CreateEmptyStore/CreateStoreFromDriveData always add it) + the
         // one item present in `items` at checkpoint time.
-        Assert.HasCount(2, captured.Records);
-
-        items.TryAdd(11, new ReFsItem("added-after-checkpoint.txt", 1, false, 0, 0, 0, 0));
-
-        Assert.HasCount(2, captured.Records); // the checkpoint's own copy must not see the later addition
+        Assert.AreEqual(2, capturedRecordCount);
     }
 
     [TestMethod]
