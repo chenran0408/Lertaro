@@ -10,7 +10,6 @@ using Lertaro.App.Services.Theme;
 using Lertaro.App.Services.Update;
 using Lertaro.App.Services.UrlProtocol;
 using Lertaro.App.ViewModels.Search;
-using Lertaro.App.ViewModels.Search.Mapping;
 using Lertaro.App.ViewModels.Settings.General;
 using Lertaro.Core;
 using Lertaro.Core.Hook.Ipc;
@@ -373,8 +372,7 @@ public partial class App : Application
                 TranslationManager.Instance.ReloadTranslations();
             Logger.Log("[App] TranslationManager initialized.");
 
-            // Preload app searchable items now that translations are fully loaded and settled
-            SearchableItemMapper.Preload();
+            // Searchable items load on the first query, off the UI thread; ProviderLoaded refreshes it once ready.
 
             var startupThemeId = settings.ThemeFollowSystem
                 ? ThemeManager.Instance.ResolveLightDarkThemeId(SystemThemeWatcher.IsSystemLight, settings)
@@ -410,8 +408,10 @@ public partial class App : Application
         base.OnStartup(e);
         _startupInitialized = true;
         MainWindow = new QuickSearchWindow();
-        // The first-load lifecycle hides this seed window inside its Loaded handler, before WPF
-        // presents a frame. It exists to initialize startup services, not as a user-visible summon.
+        // This seed initializes startup services but is not a user-visible summon. Keep it
+        // transparent while Show creates its HWND; the first-load lifecycle hides it and restores
+        // opacity before any later user summon.
+        Views.QuickSearchWindow.Helpers.QuickSearchWindowLifecycle.PrepareHiddenStartup(MainWindow);
         MainWindow.Show();
 
         _ = Dispatcher.BeginInvoke(new Action(() =>

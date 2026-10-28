@@ -23,6 +23,14 @@ public class QuickSearchWindowLifecycle
         _handleTaskbarCreated = handleTaskbarCreated;
     }
 
+    internal static void PrepareHiddenStartup(Window window) => window.Opacity = 0;
+
+    internal static void CompleteHiddenStartup(Window window)
+    {
+        window.Hide();
+        window.Opacity = 1;
+    }
+
     // Fires as soon as the Win32 HWND exists, before WPF's first layout/render pass -- the earliest
     // point CompositionTarget.RenderMode can be set. This window is created once at startup and only
     // ever Hidden, never Closed -- its DirectX composition surface stays alive for the whole process
@@ -84,7 +92,7 @@ public class QuickSearchWindowLifecycle
         if (_isFirstLoad)
         {
             _isFirstLoad = false;
-            _window.Hide();
+            CompleteHiddenStartup(_window);
         }
 
         else
