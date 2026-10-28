@@ -1,4 +1,5 @@
 using System.IO;
+using System.Windows.Media.Imaging;
 using Lertaro.Plugins.BrowserData.Readers;
 using Lertaro.PluginSdk.Helpers;
 using Lertaro.PluginSdk.Services;
@@ -272,6 +273,9 @@ internal static class BrowserDataCache
             return result;
 
         var normalizedBlacklist = BrowserEntryFilter.NormalizeBlacklist(blacklist);
+        // Keep decoded images shared across all entries and profiles in this load. The dictionary is
+        // local so encoded favicon bytes are released when the load completes.
+        var decodedFavicons = new Dictionary<byte[], BitmapSource?>(ByteArrayContentComparer.Instance);
 
         foreach (var profile in ExpandProfiles(profiles))
         {
@@ -288,7 +292,7 @@ internal static class BrowserDataCache
                         entries.Bookmarks.AddRange(bookmarks);
                     if (indexHistory)
                         entries.History.AddRange(history);
-                    AttachFavicons(entries, FirefoxFaviconReader.Read(profile.Path));
+                    AttachFavicons(entries, FirefoxFaviconReader.Read(profile.Path), decodedFavicons);
                 }
                 else
                 {
@@ -299,7 +303,7 @@ internal static class BrowserDataCache
                         entries.Bookmarks.AddRange(ChromiumBookmarksReader.Read(profile.Path));
                     if (indexHistory)
                         entries.History.AddRange(ChromiumHistoryReader.Read(profile.Path));
-                    AttachChromiumFavicons(entries, profile.Path);
+                    AttachChromiumFavicons(entries, profile.Path, decodedFavicons);
                 }
 
                 entries.Bookmarks.RemoveAll(entry => BrowserEntryFilter.IsBlacklisted(entry, normalizedBlacklist));
@@ -314,14 +318,45 @@ internal static class BrowserDataCache
         return result;
     }
 
-    private static void AttachChromiumFavicons(ProfileEntries entries, string profileDir) => AttachFavicons(entries, ChromiumFaviconReader.Read(profileDir));
+    private static void AttachChromiumFavicons(
+        ProfileEntries entries,
+        string profileDir,
+        Dictionary<byte[], BitmapSource?> decodedFavicons) =>
+        AttachFavicons(entries, ChromiumFaviconReader.Read(profileDir), decodedFavicons);
 
-    private static void AttachFavicons(ProfileEntries entries, IReadOnlyDictionary<string, byte[]> icons)
+    internal static void AttachFavicons(
+        ProfileEntries entries,
+        IReadOnlyDictionary<string, byte[]> icons,
+        Dictionary<byte[], BitmapSource?> decodedFavicons)
     {
         foreach (var entry in entries.Bookmarks.Concat(entries.History))
         {
-            if (icons.TryGetValue(entry.Url, out var imageData))
-                entry.Favicon = BrowserFaviconIconLoader.Decode(imageData);
+            if (!icons.TryGetValue(entry.Url, out var imageData))
+                continue;
+
+            if (!decodedFavicons.TryGetValue(imageData, out var bitmap))
+            {
+                bitmap = BrowserFaviconIconLoader.Decode(imageData);
+                decodedFavicons.Add(imageData, bitmap);
+            }
+            entry.Favicon = bitmap;
+        }
+    }
+
+    internal sealed class ByteArrayContentComparer : IEqualityComparer<byte[]>
+    {
+        public static ByteArrayContentComparer Instance { get; } = new();
+
+        public bool Equals(byte[]? left, byte[]? right) =>
+            ReferenceEquals(left, right) ||
+            (left != null && right != null && left.AsSpan().SequenceEqual(right));
+
+        public int GetHashCode(byte[] bytes)
+        {
+            var hash = 17;
+            foreach (var value in bytes)
+                hash = unchecked(hash * 31 + value);
+            return hash;
         }
     }
 }

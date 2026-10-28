@@ -29,6 +29,7 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
     private DispatcherOperation? _renderFrameOperation;
     private DispatcherOperation? _refreshOperation;
     private bool _performanceSleeping;
+    private bool _opticsCacheClearPending;
     private long _lastRenderTicks, _renderCount;
     private bool? _firstVisibleRenderMaterialReady;
     private bool? _firstVisibleOpticalMaterialReady;
@@ -208,7 +209,7 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
                 _revealCaptureUntil = 0;
                 // Keep material and suspend readback; the compatible session stays warm
                 // while live geometry decides whether the previous mask fits.
-                _worker.Invalidate(); _worker.ClearCachedBuffers(); _lastSource = null; _background.Suspend();
+                _worker.Invalidate(); _worker.ClearCachedBuffers(); ClearOpticsCachedBuffers(); _lastSource = null; _background.Suspend();
                 _timer.Stop(); StopRenderClock(); CancelQueuedRefresh();
             }
             else RequestBackdropRefresh(revealing: true);
@@ -238,7 +239,7 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
     {
         RecordMaterialRetirement("Concealed", expected: true);
         ++_lifecycleGeneration;
-        _worker.Invalidate(); _worker.ClearCachedBuffers();
+        _worker.Invalidate(); _worker.ClearCachedBuffers(); ClearOpticsCachedBuffers();
         _lastSource = null; _lastCaptureSequence = _lastCaptureGeneration = _lastCaptureSourceTicks = 0;
         _frame = null; _frameScene = null; _materialStamp = null;
         _transitionBackdrop = null; _transitionBackdropScene = null;
@@ -261,7 +262,7 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
         _performanceSleeping = sleeping;
         _revealCaptureUntil = 0;
         ++_lifecycleGeneration;
-        _worker.Invalidate(); _worker.ClearCachedBuffers();
+        _worker.Invalidate(); _worker.ClearCachedBuffers(); ClearOpticsCachedBuffers();
         _lastSource = null;
         _lastCaptureSequence = _lastCaptureGeneration = _lastCaptureSourceTicks = 0;
         _background.SetPerformanceSleeping(sleeping);
@@ -314,12 +315,30 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
         _refreshOperation?.Abort(); _refreshOperation = null; _refreshPending = false;
     }
 
+    private void ClearOpticsCachedBuffers()
+    {
+        if (_worker.IsBusy)
+        {
+            _opticsCacheClearPending = true;
+            return;
+        }
+        _optics.ClearCachedBuffers();
+    }
+
+    private void CompleteDeferredOpticsClear(LiquidGlassOptics frameOptics)
+    {
+        if (!_opticsCacheClearPending || _worker.IsBusy) return;
+        _opticsCacheClearPending = false;
+        frameOptics.ClearCachedBuffers();
+        if (!ReferenceEquals(frameOptics, _optics)) _optics.ClearCachedBuffers();
+    }
+
     public void Dispose()
     {
         if (_theme is not null) _theme.Changed -= OnAppearanceChanged;
         _theme = null;
         _worker.Invalidate();
-        _worker.ClearCachedBuffers();
+        _worker.ClearCachedBuffers(); ClearOpticsCachedBuffers();
         StopRenderClock();
         CancelQueuedRefresh(); ++_lifecycleGeneration;
         _revealCaptureUntil = 0;
@@ -365,7 +384,7 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
             || ActualWidth < 1 || ActualHeight < 1 || IsBackdropActive?.Invoke() == false)
         {
             _worker.Invalidate();
-            _worker.ClearCachedBuffers();
+            _worker.ClearCachedBuffers(); ClearOpticsCachedBuffers();
             SetTimerInterval(TimeSpan.FromMilliseconds(200));
             _lastSource = null;
             // Reveal preparation starts acquisition before the first slide pixel.
@@ -386,7 +405,7 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
         if (owner.PrimaryDisplaySession is { IsAvailable: false })
         {
             _worker.Invalidate();
-            _worker.ClearCachedBuffers();
+            _worker.ClearCachedBuffers(); ClearOpticsCachedBuffers();
             SetTimerInterval(TimeSpan.FromMilliseconds(200));
             _background.Dispose(); _frame = null; _transitionBackdrop = null; _lastSource = null;
             UpdateTransitionLayer();
@@ -395,7 +414,7 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
         if (ThemeService.Current?.UseOpaquePanels == true)
         {
             _worker.Invalidate();
-            _worker.ClearCachedBuffers();
+            _worker.ClearCachedBuffers(); ClearOpticsCachedBuffers();
             BackdropSource = GlassBackdropSource.Opaque;
             _frame = null; _lastSource = null; _background.Dispose();
             SetTimerInterval(TimeSpan.FromMilliseconds(200)); InvalidateVisual(); return;
@@ -552,62 +571,71 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
             // Queued composition must retain its original renderer. Deep sleep replaces
             // those cache owners; an old task must not rebuild the new sleeping caches.
             var optics = _optics; var androidGlass = _androidGlass;
-            using var result = transitionBackdrop
-                ? await _worker.RenderBufferedAsync(source.Length, (pixels, scratch) =>
-                    RenderMaterialBackdropInto(material, source, pixels, scratch, width, height, sampleSizeDip, dark, strength,
-                        backgroundClarity, launchpadOptics))
-                : await _worker.RenderAsync(() => LiquidGlassFrameComposer.Compose(optics, source, width, height,
-                sampleSizeDip, radius, squircle, strength, _transitionBlurRadius, debugView,
-                samplingParameters, weightParameters, glassBoundsDip, lodParameters,
-                finishingParameters, brdfParameters, dispersionParameters,
-                wallpaperWeights is not null
-                    ? pixels => ApplyWallpaperShoulder(pixels, wallpaperWeights)
-                : null, material, dark, androidGlass, backgroundClarity: backgroundClarity, launchpadOptics: launchpadOptics));
-            EnsureBackdropScene();
-            if (result is null || !_worker.IsCurrent(result) || _performanceSleeping || lifecycleGeneration != _lifecycleGeneration
-                || !owner.IsVisible || !IsVisible || IsBackdropActive?.Invoke() == false
-                || owner.PrimaryDisplaySession is { IsAvailable: false }
-                || ThemeService.Current?.UseOpaquePanels == true
-                || backgroundClarity != BackgroundClarity || capturedScene is null
-                || !CanCommitCapturedScene(capturedScene, capturedStamp, capturedSourceTicks)) return;
-            var refracted = result.Pixels;
-            if (_compatibilityBackdrop is not null && _handoffStarted == 0) _handoffStarted = Stopwatch.GetTimestamp();
-            if (transitionBackdrop)
+            GlassFrameResult? result = null;
+            try
             {
-                if (!capturedScene.Equals(_frameScene)) { _frame = null; _frameScene = null; }
-                if (!TryUpdateBackdropBitmap(_transitionBackdrop, refracted, width, height, out var submitted)) return;
-                _transitionBackdrop = submitted;
-                _transitionBackdropScene = capturedScene;
-                if (_transitionBackdropBounds != sampledFrameBounds) InvalidateArrange();
-                _transitionBackdropBounds = sampledFrameBounds;
+                result = transitionBackdrop
+                    ? await _worker.RenderBufferedAsync(source.Length, (pixels, scratch) =>
+                        RenderMaterialBackdropInto(material, source, pixels, scratch, width, height, sampleSizeDip, dark, strength,
+                            backgroundClarity, launchpadOptics))
+                    : await _worker.RenderAsync(() => LiquidGlassFrameComposer.Compose(optics, source, width, height,
+                        sampleSizeDip, radius, squircle, strength, _transitionBlurRadius, debugView,
+                        samplingParameters, weightParameters, glassBoundsDip, lodParameters,
+                        finishingParameters, brdfParameters, dispersionParameters,
+                        wallpaperWeights is not null
+                            ? pixels => ApplyWallpaperShoulder(pixels, wallpaperWeights)
+                            : null, material, dark, androidGlass, backgroundClarity: backgroundClarity, launchpadOptics: launchpadOptics));
+                EnsureBackdropScene();
+                if (result is null || !_worker.IsCurrent(result) || _performanceSleeping || lifecycleGeneration != _lifecycleGeneration
+                    || !owner.IsVisible || !IsVisible || IsBackdropActive?.Invoke() == false
+                    || owner.PrimaryDisplaySession is { IsAvailable: false }
+                    || ThemeService.Current?.UseOpaquePanels == true
+                    || backgroundClarity != BackgroundClarity || capturedScene is null
+                    || !CanCommitCapturedScene(capturedScene, capturedStamp, capturedSourceTicks)) return;
+                var refracted = result.Pixels;
+                if (_compatibilityBackdrop is not null && _handoffStarted == 0) _handoffStarted = Stopwatch.GetTimestamp();
+                if (transitionBackdrop)
+                {
+                    if (!capturedScene.Equals(_frameScene)) { _frame = null; _frameScene = null; }
+                    if (!TryUpdateBackdropBitmap(_transitionBackdrop, refracted, width, height, out var submitted)) return;
+                    _transitionBackdrop = submitted;
+                    _transitionBackdropScene = capturedScene;
+                    if (_transitionBackdropBounds != sampledFrameBounds) InvalidateArrange();
+                    _transitionBackdropBounds = sampledFrameBounds;
+                }
+                else
+                {
+                    if (!capturedScene.Equals(_transitionBackdropScene)) { _transitionBackdrop = null; _transitionBackdropScene = null; }
+                    if (!TryUpdateBackdropBitmap(_frame, refracted, width, height, out var submitted)) return;
+                    _frame = submitted;
+                    _frameScene = capturedScene;
+                    _sampledGlassPanelBounds = panelRect;
+                    _sampledGlassPanelRadius = radius;
+                    _sampledPanelBounds = sampledFrameBounds;
+                }
+                // A freshly committed scene replaces an older reveal snapshot in the
+                // same bitmap transaction. Do not restart a fade that would extend
+                // the snapshot's already bounded cross-scene retention deadline.
+                if (_compatibilityIsDesktopSnapshot && !capturedScene.Equals(_compatibilityScene))
+                {
+                    _compatibilityBackdrop = null; _compatibilityStamp = null;
+                    _compatibilityIsDesktopSnapshot = false; _compatibilityScene = null; _handoffStarted = 0;
+                }
+                _lastOpticsMilliseconds = result.Milliseconds;
+                if (!_compatibilityIsDesktopSnapshot || _compatibilityScene?.Equals(_backdropScene) == true)
+                    _materialRetentionUntil = 0;
+                _frameUsesAndroidGlass = useAndroidGlass;
+                _materialStamp = ReadMaterialStamp();
+                _opticalFrameTimestamps.Enqueue(Stopwatch.GetTimestamp());
+                _lastSource = background!.IsCaptured ? null : source; _frameKey = key;
+                _lastCaptureSequence = background.Sequence; _lastCaptureGeneration = background.CaptureGeneration;
+                _lastCaptureSourceTicks = capturedSourceTicks;
             }
-            else
+            finally
             {
-                if (!capturedScene.Equals(_transitionBackdropScene)) { _transitionBackdrop = null; _transitionBackdropScene = null; }
-                if (!TryUpdateBackdropBitmap(_frame, refracted, width, height, out var submitted)) return;
-                _frame = submitted;
-                _frameScene = capturedScene;
-                _sampledGlassPanelBounds = panelRect;
-                _sampledGlassPanelRadius = radius;
-                _sampledPanelBounds = sampledFrameBounds;
+                result?.Dispose();
+                CompleteDeferredOpticsClear(optics);
             }
-            // A freshly committed scene replaces an older reveal snapshot in the
-            // same bitmap transaction. Do not restart a fade that would extend
-            // the snapshot's already bounded cross-scene retention deadline.
-            if (_compatibilityIsDesktopSnapshot && !capturedScene.Equals(_compatibilityScene))
-            {
-                _compatibilityBackdrop = null; _compatibilityStamp = null;
-                _compatibilityIsDesktopSnapshot = false; _compatibilityScene = null; _handoffStarted = 0;
-            }
-            _lastOpticsMilliseconds = result.Milliseconds;
-            if (!_compatibilityIsDesktopSnapshot || _compatibilityScene?.Equals(_backdropScene) == true)
-                _materialRetentionUntil = 0;
-            _frameUsesAndroidGlass = useAndroidGlass;
-            _materialStamp = ReadMaterialStamp();
-            _opticalFrameTimestamps.Enqueue(Stopwatch.GetTimestamp());
-            _lastSource = background!.IsCaptured ? null : source; _frameKey = key;
-            _lastCaptureSequence = background.Sequence; _lastCaptureGeneration = background.CaptureGeneration;
-            _lastCaptureSourceTicks = capturedSourceTicks;
         }
         else if (background!.IsCaptured && capturedSourceTicks > _lastCaptureSourceTicks
             && CanCommitCapturedScene(capturedScene, capturedStamp, capturedSourceTicks))

@@ -1,4 +1,6 @@
 using System.IO;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Microsoft.Data.Sqlite;
 using Lertaro.PluginSdk.Services;
 
@@ -97,6 +99,71 @@ public sealed class BrowserDataCacheTests
         var entries = result.Single();
         Assert.HasCount(1, entries.Bookmarks);
         Assert.HasCount(1, entries.History);
+    }
+
+    [TestMethod]
+    public void AttachFavicons_SharesBitmapForIdenticalBytesButNotDifferentBytes()
+    {
+        var firstBytes = CreatePng(0x10);
+        var sameBytes = firstBytes.ToArray();
+        var differentBytes = CreatePng(0x20);
+        var entries = new ProfileEntries
+        {
+            Profile = new BrowserProfileConfig { Name = "Test", Path = "unused" },
+            Bookmarks =
+            {
+                new BrowserEntry("First", "https://first.example", true, 0),
+                new BrowserEntry("Second", "https://second.example", true, 0),
+                new BrowserEntry("Third", "https://third.example", true, 0),
+            }
+        };
+        var decoded = new Dictionary<byte[], BitmapSource?>(BrowserDataCache.ByteArrayContentComparer.Instance);
+
+        BrowserDataCache.AttachFavicons(entries, new Dictionary<string, byte[]>
+        {
+            ["https://first.example"] = firstBytes,
+            ["https://second.example"] = sameBytes,
+            ["https://third.example"] = differentBytes,
+        }, decoded);
+
+        Assert.IsNotNull(entries.Bookmarks[0].Favicon);
+        Assert.AreSame(entries.Bookmarks[0].Favicon, entries.Bookmarks[1].Favicon);
+        Assert.IsNotNull(entries.Bookmarks[2].Favicon);
+        Assert.AreNotSame(entries.Bookmarks[0].Favicon, entries.Bookmarks[2].Favicon);
+    }
+
+    [TestMethod]
+    public void AttachFavicons_InvalidPayload_RemainsNullAndDoesNotPreventOtherIcons()
+    {
+        var entries = new ProfileEntries
+        {
+            Profile = new BrowserProfileConfig { Name = "Test", Path = "unused" },
+            Bookmarks =
+            {
+                new BrowserEntry("Invalid", "https://invalid.example", true, 0),
+                new BrowserEntry("Valid", "https://valid.example", true, 0),
+            }
+        };
+        var decoded = new Dictionary<byte[], BitmapSource?>(BrowserDataCache.ByteArrayContentComparer.Instance);
+
+        BrowserDataCache.AttachFavicons(entries, new Dictionary<string, byte[]>
+        {
+            ["https://invalid.example"] = [0x01, 0x02, 0x03],
+            ["https://valid.example"] = CreatePng(0x20),
+        }, decoded);
+
+        Assert.IsNull(entries.Bookmarks[0].Favicon);
+        Assert.IsNotNull(entries.Bookmarks[1].Favicon);
+    }
+
+    private static byte[] CreatePng(byte blue)
+    {
+        var bitmap = BitmapSource.Create(1, 1, 96, 96, PixelFormats.Bgra32, null, new byte[] { blue, 0, 0, 0xFF }, 4);
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using var stream = new MemoryStream();
+        encoder.Save(stream);
+        return stream.ToArray();
     }
 
     [TestMethod]

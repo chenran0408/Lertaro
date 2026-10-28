@@ -19,6 +19,8 @@ directory.
 
 Typography legibility adjustment (2026-10-28): GlassDesk palette secondary text opacity is raised from 70% to 94% for legibility over live wallpaper. The app-level UI supplies a 14 DIP medium-weight baseline and a restrained text shadow on glass surfaces.
 
+Performance adjustment (2026-10-29): `src/GlassDesk.UI/Controls/LiquidGlassOptics.cs` reuses instance-local frame scratch buffers while returning a separate result frame. `src/GlassDesk.UI/Controls/LiquidGlassSurface.cs` clears those buffers on hide, sleep, unavailable-display, opaque, and dispose paths; an active render defers clearing until its result is released. The original `LICENSE`, `NOTICE`, and per-file scopes in `docs/licensing/FILE-LICENSES.json` remain in force.
+
 ## License scope
 
 The upstream `docs/licensing/FILE-LICENSES.json` marks `GlassWindow.cs`,

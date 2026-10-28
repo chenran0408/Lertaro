@@ -10,11 +10,32 @@ public sealed class LiquidGlassOptics
         Vector3 SurfaceNormal, float SurfaceCurvature);
     private Sample[]? _map;
     private byte[]? _debugFrame;
+    private byte[]? _fineBuffer;
+    private byte[]? _broadBuffer;
+    private byte[]? _filterScratch;
+    private byte[]? _faceBuffer;
+    private byte[]? _innerBuffer;
+    private byte[]? _outerBuffer;
     private LiquidGlassDebugView _debugFrameView;
     private (int Width, int Height, Size Size, Rect GlassBounds, double Radius, bool Squircle, double Strength,
         double Ior, double Thickness, double Transition, double BackgroundDistance) _key;
 
     public const double DefaultIndexOfRefraction = 1.46;
+
+    // The owning surface calls this when it is hidden or disposed. These buffers are
+    // instance-local and bounded to one frame size; returned frame arrays stay owned
+    // by their caller and are never reused here.
+    internal void ClearCachedBuffers()
+    {
+        _fineBuffer = null;
+        _broadBuffer = null;
+        _filterScratch = null;
+        _faceBuffer = null;
+        _innerBuffer = null;
+        _outerBuffer = null;
+        _map = null;
+        _debugFrame = null;
+    }
 
     public byte[] Render(byte[] sourceBgra, int pixelWidth, int pixelHeight, Size sizeDip,
         double cornerRadiusDip, bool squircle = false, double refractionStrength = 1, double detailSoftnessDip = 0,
@@ -159,12 +180,17 @@ public sealed class LiquidGlassOptics
         if (refractionStrength > 0)
         {
             detailSoftnessDip = double.IsFinite(detailSoftnessDip) ? Math.Clamp(detailSoftnessDip, 0, 6) : 0;
-            var fine = Filter(sourceBgra, pixelWidth, pixelHeight,
+            var fine = GetBuffer(ref _fineBuffer, sourceBgra.Length);
+            var broad = GetBuffer(ref _broadBuffer, sourceBgra.Length);
+            var filterScratch = GetBuffer(ref _filterScratch, sourceBgra.Length);
+            Filter(sourceBgra, pixelWidth, pixelHeight,
                 Math.Max(1, (int)Math.Round((4.2 + detailSoftnessDip) * pixelWidth / sizeDip.Width)),
-                Math.Max(1, (int)Math.Round((4.2 + detailSoftnessDip) * pixelHeight / sizeDip.Height)));
-            var broad = Filter(fine, pixelWidth, pixelHeight,
+                Math.Max(1, (int)Math.Round((4.2 + detailSoftnessDip) * pixelHeight / sizeDip.Height)),
+                filterScratch, fine);
+            Filter(fine, pixelWidth, pixelHeight,
                 Math.Max(1, (int)Math.Round(9.0 * pixelWidth / sizeDip.Width)),
-                Math.Max(1, (int)Math.Round(9.0 * pixelHeight / sizeDip.Height)));
+                Math.Max(1, (int)Math.Round(9.0 * pixelHeight / sizeDip.Height)),
+                filterScratch, broad);
             for (var i = 0; i < fine.Length; i++)
             {
                 var coarseWeight = .18 + .30 * _map[i / 4].Edge;
@@ -302,12 +328,15 @@ public sealed class LiquidGlassOptics
             ? lodTuning.InnerFootprintDip : 0;
         var outerFootprintDip = allLod || debugView == LiquidGlassDebugView.OuterLodOnly
             ? lodTuning.OuterFootprintDip : 0;
-        var face = RenderSampledColor(sourceBgra, pixelWidth, pixelHeight, sampleSizeDip,
-            glassBoundsDip, normalTransitionDip, sampling, LiquidGlassDebugView.FaceOnly, faceFootprintDip);
-        var inner = RenderSampledColor(sourceBgra, pixelWidth, pixelHeight, sampleSizeDip,
-            glassBoundsDip, normalTransitionDip, sampling, LiquidGlassDebugView.InnerOnly, innerFootprintDip);
-        var outer = RenderSampledColor(sourceBgra, pixelWidth, pixelHeight, sampleSizeDip,
-            glassBoundsDip, normalTransitionDip, sampling, LiquidGlassDebugView.OuterOnly, outerFootprintDip);
+        var face = GetBuffer(ref _faceBuffer, sourceBgra.Length);
+        var inner = GetBuffer(ref _innerBuffer, sourceBgra.Length);
+        var outer = GetBuffer(ref _outerBuffer, sourceBgra.Length);
+        RenderSampledColor(sourceBgra, pixelWidth, pixelHeight, sampleSizeDip,
+            glassBoundsDip, normalTransitionDip, sampling, LiquidGlassDebugView.FaceOnly, faceFootprintDip, face);
+        RenderSampledColor(sourceBgra, pixelWidth, pixelHeight, sampleSizeDip,
+            glassBoundsDip, normalTransitionDip, sampling, LiquidGlassDebugView.InnerOnly, innerFootprintDip, inner);
+        RenderSampledColor(sourceBgra, pixelWidth, pixelHeight, sampleSizeDip,
+            glassBoundsDip, normalTransitionDip, sampling, LiquidGlassDebugView.OuterOnly, outerFootprintDip, outer);
         var result = new byte[sourceBgra.Length];
         var pixelDipX = sampleSizeDip.Width / pixelWidth;
         var pixelDipY = sampleSizeDip.Height / pixelHeight;
@@ -335,9 +364,11 @@ public sealed class LiquidGlassOptics
 
     private byte[] RenderSampledColor(byte[] sourceBgra, int pixelWidth, int pixelHeight,
         Size sampleSizeDip, Rect glassBoundsDip, double normalTransitionDip,
-        LiquidGlassSamplingParameters tuning, LiquidGlassDebugView debugView, double lodFootprintDip)
+        LiquidGlassSamplingParameters tuning, LiquidGlassDebugView debugView, double lodFootprintDip,
+        byte[]? outputBuffer = null)
     {
-        var output = new byte[sourceBgra.Length];
+        var output = outputBuffer ?? new byte[sourceBgra.Length];
+        if (outputBuffer is not null) Array.Clear(outputBuffer);
         lodFootprintDip = double.IsFinite(lodFootprintDip)
             ? Math.Clamp(lodFootprintDip, 0, LiquidGlassLodParameters.MaximumFootprintDip) : 0;
         var lodOffsetX = (float)(lodFootprintDip * pixelWidth / sampleSizeDip.Width);
@@ -520,12 +551,11 @@ public sealed class LiquidGlassOptics
     }
 
     // Separable sliding windows are O(pixels), independent of the filter radius.
-    private static byte[] Filter(byte[] source, int width, int height, int radiusX, int radiusY)
+    private static void Filter(byte[] source, int width, int height, int radiusX, int radiusY,
+        byte[] horizontal, byte[] result)
     {
         radiusX = Math.Clamp(radiusX, 1, Math.Min(width, 64));
         radiusY = Math.Clamp(radiusY, 1, Math.Min(height, 64));
-        var horizontal = new byte[source.Length];
-        var result = new byte[source.Length];
         for (var y = 0; y < height; y++)
         for (var c = 0; c < 4; c++)
         {
@@ -550,6 +580,11 @@ public sealed class LiquidGlassOptics
                     - horizontal[(Math.Max(y - radiusY, 0) * width + x) * 4 + c];
             }
         }
-        return result;
+    }
+
+    private static byte[] GetBuffer(ref byte[]? buffer, int length)
+    {
+        if (buffer?.Length != length) buffer = new byte[length];
+        return buffer;
     }
 }

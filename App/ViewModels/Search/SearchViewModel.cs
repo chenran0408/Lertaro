@@ -42,6 +42,7 @@ public class SearchViewModel : ViewModelBase, IDisposable
     private string _resultCountText = "";
     private bool _isSearching;
     private bool _isResultsListEnabled = true;
+    private bool _disposed;
     private SearchSidebarCountHelper? _sidebarCountHelper;
     // Deliberately does not toggle IsResultsListEnabled while searching -- that used to disable the
     // list mid-search, which caused a Win32 disabled-theme flash and blocked immediate navigation.
@@ -336,9 +337,24 @@ public class SearchViewModel : ViewModelBase, IDisposable
 
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
+
         TranslationManager.Instance.PropertyChanged -= OnTranslationsChanged;
+
+        // Reuse the dispatcher's clear path before dropping the view's lists. It invalidates queued
+        // content-provider appends and token snapshots, detaches the query accumulator, and cancels the
+        // active stream. The window closes on the UI thread, so already-queued render callbacks cannot
+        // interleave with this clear; later callbacks see their cancelled token or stale generation.
+        _dispatcher.OnAdvancedQueryChanged(string.Empty);
         _searchEngine.Dispose();
         _serviceStatus.Dispose();
         _searchService.Dispose();
+
+        _sidebarCountHelper?.Reset();
+        FilteredResults.Clear();
+        _allResults = new List<AppSearchResult>();
+        _filterSource = null;
+        _allResultsHoldContentRows = false;
     }
 }
