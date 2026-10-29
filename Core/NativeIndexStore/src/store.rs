@@ -67,6 +67,7 @@ struct RecordStore {
     records: Vec<Record>,
     name_arena: Vec<u16>,
     names: Vec<NameSpan>,
+    name_hashes: Vec<u64>,
     name_slots: Vec<u32>,
     high_pairs: Vec<HighPair>,
     sorted_indices: Vec<i32>,
@@ -78,6 +79,7 @@ impl RecordStore {
             records: Vec::new(),
             name_arena: Vec::new(),
             names: Vec::new(),
+            name_hashes: Vec::new(),
             name_slots: Vec::new(),
             high_pairs: Vec::new(),
             sorted_indices: Vec::new(),
@@ -105,11 +107,8 @@ impl RecordStore {
         let size = required.saturating_mul(2).max(16).next_power_of_two();
         let mut slots = vec![0; size];
         let mask = size - 1;
-        for (id, name) in self.names.iter().enumerate() {
-            let offset = name.offset as usize;
-            let length = name.length as usize;
-            let mut slot =
-                Self::name_hash(&self.name_arena[offset..offset + length]) as usize & mask;
+        for (id, _) in self.names.iter().enumerate() {
+            let mut slot = self.name_hashes[id] as usize & mask;
             while slots[slot] != 0 {
                 slot = (slot + 1) & mask;
             }
@@ -119,9 +118,10 @@ impl RecordStore {
     }
 
     fn intern_name(&mut self, name: &[u16]) -> u32 {
+        let hash = Self::name_hash(name);
         self.ensure_name_slots(1);
         let mask = self.name_slots.len() - 1;
-        let mut slot = Self::name_hash(name) as usize & mask;
+        let mut slot = hash as usize & mask;
         loop {
             let stored = self.name_slots[slot];
             if stored == 0 {
@@ -132,6 +132,7 @@ impl RecordStore {
                     offset: offset as u64,
                     length: name.len() as u32,
                 });
+                self.name_hashes.push(hash);
                 self.name_slots[slot] = id + 1;
                 return id;
             }
@@ -223,20 +224,19 @@ impl RecordStore {
             let right_index = *right as usize;
             let left_row = records[left_index];
             let right_row = records[right_index];
-            high_pair_for(high_pairs, left_row.high_pair_index)
-                .id_high
-                .cmp(&high_pair_for(high_pairs, right_row.high_pair_index).id_high)
+            high_id_for(high_pairs, left_row.high_pair_index)
+                .cmp(&high_id_for(high_pairs, right_row.high_pair_index))
                 .then_with(|| left_row.id_low.cmp(&right_row.id_low))
                 .then_with(|| left_index.cmp(&right_index))
         });
     }
 }
 
-fn high_pair_for(pairs: &[HighPair], index: u32) -> HighPair {
+fn high_id_for(pairs: &[HighPair], index: u32) -> u64 {
     if index == u32::MAX {
-        HighPair::default()
+        0
     } else {
-        pairs[index as usize]
+        pairs[index as usize].id_high
     }
 }
 

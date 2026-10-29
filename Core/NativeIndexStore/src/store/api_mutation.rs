@@ -163,6 +163,12 @@ pub extern "system" fn lertaro_record_store_extend(
             return 1;
         }
         dst_guard.records.reserve(count as usize);
+        if count != 0 {
+            dst_guard.names.reserve(count as usize);
+            dst_guard.name_hashes.reserve(count as usize);
+            dst_guard.high_pairs.reserve(count as usize);
+            dst_guard.ensure_name_slots(count as usize);
+        }
         for row in &src_guard.records[begin..end] {
             let span = src_guard.names[row.name_id as usize];
             let name_start = span.offset as usize;

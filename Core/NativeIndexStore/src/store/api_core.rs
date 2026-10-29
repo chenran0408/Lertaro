@@ -74,6 +74,7 @@ pub extern "system" fn lertaro_record_store_clear(handle: *mut Handle) -> i32 {
             store.records.clear();
             store.name_arena.clear();
             store.names.clear();
+            store.name_hashes.clear();
             store.name_slots.clear();
             store.high_pairs.clear();
             store.sorted_indices.clear();
@@ -90,6 +91,7 @@ pub extern "system" fn lertaro_record_store_trim(handle: *mut Handle) -> i32 {
             store.records.shrink_to_fit();
             store.name_arena.shrink_to_fit();
             store.names.shrink_to_fit();
+            store.name_hashes.shrink_to_fit();
             store.name_slots.shrink_to_fit();
             store.high_pairs.shrink_to_fit();
             0

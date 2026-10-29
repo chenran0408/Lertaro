@@ -65,6 +65,13 @@ pub extern "system" fn lertaro_record_store_add_batch(
         }
         with_store(handle, |store| {
             store.records.reserve(inputs.len());
+            if !inputs.is_empty() {
+                store.names.reserve(inputs.len());
+                store.name_hashes.reserve(inputs.len());
+                store.high_pairs.reserve(inputs.len());
+                store.name_arena.reserve(names.len());
+                store.ensure_name_slots(inputs.len());
+            }
             for input in inputs {
                 let start = input.name_offset as usize;
                 let end = start + input.name_length as usize;

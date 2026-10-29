@@ -24,6 +24,26 @@ fn interning_keeps_unicode_and_duplicate_names() {
 }
 
 #[test]
+fn interning_remains_correct_after_name_table_rebuilds() {
+    let mut store = RecordStore::new();
+    let names = (0..128)
+        .map(|index| {
+            format!("directory-{index}")
+                .encode_utf16()
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+
+    for name in &names {
+        store.intern_name(name);
+    }
+
+    assert_eq!(store.intern_name(&names[73]), 73);
+    assert_eq!(store.names.len(), names.len());
+    assert_eq!(store.name_hashes.len(), names.len());
+}
+
+#[test]
 fn active_sort_matches_uint128_and_stable_tie_order() {
     let mut store = RecordStore::new();
     let mut row = |id_low, id_high, flags| {
