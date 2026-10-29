@@ -27,9 +27,14 @@ internal static class OwnedDialog
     /// another message box.
     /// </param>
     public static Window? ResolveOwner(Window dialog, Func<Window, bool>? skip = null)
-        => Application.Current == null
-            ? null
-            : Pick(Application.Current.Windows.Cast<Window>(), Application.Current.MainWindow, dialog, skip);
+    {
+        var application = Application.Current;
+        if (application == null || !application.Dispatcher.CheckAccess())
+            return null;
+
+        return
+            Pick(application.Windows.Cast<Window>(), application.MainWindow, dialog, skip);
+    }
 
     /// <summary>The chain itself, over a given set of windows rather than the live application's.</summary>
     internal static Window? Pick(IEnumerable<Window> windows, Window? main, Window dialog, Func<Window, bool>? skip)

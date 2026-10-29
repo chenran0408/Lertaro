@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Windows;
 
 using Lertaro.App.ViewModels.Settings.QuickPanel;
+using Lertaro.App.Tests.Views.Settings;
 using Lertaro.Core;
 
 namespace Lertaro.App.Tests.Views.Settings.QuickPanel;
@@ -21,6 +22,7 @@ public sealed class QuickPanelSettingsPageTests
     [StaTestMethod]
     public void Page_BuildsWithEveryResourceItReferences()
     {
+        using var theme = SettingsThemeFixture.Use();
         var page = new Lertaro.App.Views.Settings.QuickPanel.QuickPanelSettingsPage
         {
             DataContext = new QuickPanelSettingsViewModel(new UserSettings())
@@ -35,6 +37,7 @@ public sealed class QuickPanelSettingsPageTests
     [StaTestMethod]
     public void Page_LaysOutWithNoBrokenBindings()
     {
+        using var theme = SettingsThemeFixture.Use();
         var errors = new BindingErrorListener();
         var previousLevel = PresentationTraceSources.DataBindingSource.Switch.Level;
         PresentationTraceSources.Refresh();

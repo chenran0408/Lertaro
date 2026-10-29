@@ -16,6 +16,7 @@ public sealed class PluginCustomPanelTests
     [DataRow(ConfigFieldType.Object)]
     public void CustomPanel_InContainer_RemainsInVisibleLayout(ConfigFieldType containerType)
     {
+        using var theme = SettingsThemeFixture.Use();
         var editor = new TextBox { Text = "dictionary.mdx" };
         var panel = new UserControl { Content = editor };
         var container = new PluginConfigField

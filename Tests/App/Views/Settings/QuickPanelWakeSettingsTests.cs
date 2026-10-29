@@ -1,7 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
-using Lertaro.App.Services.Theme;
 using Lertaro.App.ViewModels.Settings;
 using Lertaro.App.Views.Settings.Hotkey;
 using Lertaro.Core;
@@ -16,11 +15,11 @@ public sealed class QuickPanelWakeSettingsTests
     [DataRow("Dark", true)]
     public void MigratedRulesAndSharedMouseScopeAreStagedAndSaveTogether(string theme, bool dark)
     {
+        using var themeFixture = SettingsThemeFixture.Use(theme, dark);
         var settings = new UserSettings();
         var blacklist = new BlacklistSettingsViewModel(settings);
         var vm = new HotkeySettingsViewModel(settings, blacklist, (_, _) => false);
         var page = new HotkeyQuickPanelWakeSection { DataContext = vm };
-        page.Resources.MergedDictionaries.Add(new BuiltInTheme(theme, dark).GetResources());
         var window = new Window { Content = new ScrollViewer { Content = page }, Width = 850, Height = 700, ShowActivated = false };
         try
         {

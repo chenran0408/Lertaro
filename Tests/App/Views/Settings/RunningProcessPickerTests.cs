@@ -15,6 +15,7 @@ public sealed class RunningProcessPickerTests
     [StaTestMethod]
     public void Picker_LaysOutExpandedWithNoBrokenBindings()
     {
+        using var theme = SettingsThemeFixture.Use();
         var errors = new BindingErrorListener();
         var previousLevel = PresentationTraceSources.DataBindingSource.Switch.Level;
         PresentationTraceSources.Refresh();

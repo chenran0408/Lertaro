@@ -80,8 +80,23 @@ internal static class AppTypography
             or BaseValueSource.DefaultStyle or BaseValueSource.DefaultStyleTrigger)
             root.SetResourceReference(TextElement.FontSizeProperty, UiFontSizeKey);
         var weightSource = DependencyPropertyHelper.GetValueSource(root, TextElement.FontWeightProperty).BaseValueSource;
-        if (weightSource is BaseValueSource.Default or BaseValueSource.Inherited
-            or BaseValueSource.DefaultStyle or BaseValueSource.DefaultStyleTrigger)
+        var hasExplicitStyle = root.ReadLocalValue(FrameworkElement.StyleProperty) != DependencyProperty.UnsetValue;
+        var explicitStyleWeight = FindStyleWeight(root.Style);
+        if (explicitStyleWeight is FontWeight styleWeight)
+            root.Resources[UiFontWeightKey] = styleWeight;
+        else if (!hasExplicitStyle && weightSource is (BaseValueSource.Default or BaseValueSource.Inherited
+            or BaseValueSource.DefaultStyle or BaseValueSource.DefaultStyleTrigger))
             root.SetResourceReference(TextElement.FontWeightProperty, UiFontWeightKey);
+    }
+
+    private static FontWeight? FindStyleWeight(Style? style)
+    {
+        for (var current = style; current != null; current = current.BasedOn)
+        for (var i = 0; i < current.Setters.Count; i++)
+            if (current.Setters[i] is Setter setter
+                && setter.Property == TextElement.FontWeightProperty
+                && setter.Value is FontWeight weight)
+                return weight;
+        return null;
     }
 }

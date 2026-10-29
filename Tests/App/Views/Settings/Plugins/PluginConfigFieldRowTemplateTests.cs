@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using Lertaro.App.ViewModels.Settings.Plugins;
 using Lertaro.App.Views.Settings.Plugins;
+using Lertaro.App.Tests.Views.Settings;
 using Lertaro.Core;
 using Lertaro.PluginSdk.Abstractions;
 namespace Lertaro.App.Tests.Views.Settings.Plugins;
@@ -13,6 +14,7 @@ public sealed class PluginConfigFieldRowTemplateTests
     [StaTestMethod]
     public void ProgramAndFolderRowsRenderAndReflectAStagedNameChange()
     {
+        using var theme = SettingsThemeFixture.Use();
         var settings = new UserSettings();
         settings.SetPluginSetting("fixture", "programs", new List<Dictionary<string, object>> { new Dictionary<string, object> { ["Name"] = "", ["Path"] = @"D:\Portable\Editor.exe" } });
         var field = new PluginConfigFieldViewModel("fixture", new PluginConfigField

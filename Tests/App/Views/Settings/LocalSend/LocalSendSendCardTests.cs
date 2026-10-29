@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Lertaro.App.ViewModels.Settings.LocalSend;
 using Lertaro.App.Views.Settings.LocalSend;
+using Lertaro.App.Tests.Views.Settings;
 using Lertaro.Core;
 
 namespace Lertaro.App.Tests.Views.Settings.LocalSend;
@@ -14,6 +15,7 @@ public sealed class LocalSendSendCardTests
     [DataRow(true)]
     public void Card_EnablesSendingOnlyForAnEnabledService(bool enabled)
     {
+        using var theme = SettingsThemeFixture.Use();
         var card = Create(enabled);
         card.Measure(new Size(700, 400));
         card.Arrange(new Rect(0, 0, 700, 400));
@@ -31,6 +33,7 @@ public sealed class LocalSendSendCardTests
     [StaTestMethod]
     public void SettingsPage_BuildsAndContainsTheSendingEntry()
     {
+        using var theme = SettingsThemeFixture.Use();
         var page = new LocalSendSettingsPage { DataContext = new LocalSendSettingsViewModel(new UserSettings()) };
         page.Measure(new Size(700, 900));
         page.Arrange(new Rect(0, 0, 700, 900));
