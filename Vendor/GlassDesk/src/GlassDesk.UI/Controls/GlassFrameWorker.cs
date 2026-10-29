@@ -60,15 +60,21 @@ internal sealed class GlassFrameWorker
     {
         if (Interlocked.CompareExchange(ref _busy, 1, 0) != 0) return null;
         var generation = Interlocked.Read(ref _generation);
+        var leased = false;
         try
         {
-            var result = await Task.Run(() =>
+            var frame = await Task.Run(() =>
             {
                 var started = Stopwatch.GetTimestamp();
-                return new GlassFrameResult(render(), Stopwatch.GetElapsedTime(started).TotalMilliseconds, generation);
+                var pixels = render();
+                return (Pixels: pixels, Milliseconds: Stopwatch.GetElapsedTime(started).TotalMilliseconds);
             }).ConfigureAwait(false);
-            return generation == Interlocked.Read(ref _generation) ? result : null;
+            if (generation != Interlocked.Read(ref _generation)) return null;
+            var result = new GlassFrameResult(frame.Pixels, frame.Milliseconds, generation,
+                () => Volatile.Write(ref _busy, 0));
+            leased = true;
+            return result;
         }
-        finally { Volatile.Write(ref _busy, 0); }
+        finally { if (!leased) Volatile.Write(ref _busy, 0); }
     }
 }

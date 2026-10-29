@@ -17,12 +17,20 @@ internal sealed class AndroidLiquidGlassRenderer
     private readonly record struct Sample(float X, float Y, float Coverage, float Highlight, float Shade,
         float DispersionX, float DispersionY, float OuterBlend);
     private Sample[]? _map;
+    private byte[]? _filtered;
+    private byte[]? _result;
     private (int Width, int Height, Size Size, Rect Bounds, double Radius, bool Squircle, double Strength, bool Launchpad) _key;
 
     // Lertaro modification (2026-10-29): expose lifecycle clearing for hidden surfaces.
-    internal void ClearCachedBuffers() => _map = null;
+    internal void ClearCachedBuffers()
+    {
+        _map = null;
+        _filtered = null;
+        _result = null;
+    }
 
-    internal long InspectOwnedArrayBytes() => _map is null ? 0 : MemoryMarshal.AsBytes(_map.AsSpan()).Length;
+    internal long InspectOwnedArrayBytes() => (_map is null ? 0 : MemoryMarshal.AsBytes(_map.AsSpan()).Length)
+        + (_filtered?.LongLength ?? 0) + (_result?.LongLength ?? 0);
 
     internal static double LensOffset(double depth, double height, double amount)
     {
@@ -127,8 +135,15 @@ internal sealed class AndroidLiquidGlassRenderer
             }
         }
 
-        var filtered = FilterBackdrop(source, width, height, size, strength, backgroundClarity);
-        var result = new byte[source.Length];
+        var filtered = source;
+        if (strength > 0)
+        {
+            if (_filtered?.Length != source.Length) _filtered = new byte[source.Length];
+            filtered = _filtered;
+            ApplyBackdropFilter(source, filtered, width, height, size, strength, backgroundClarity);
+        }
+        if (_result?.Length != source.Length) _result = new byte[source.Length];
+        var result = _result;
         var tint = dark ? 18d : 250d;
         var opacity = NormalizeTintOpacity(tintOpacity) * BodyTintScale(backgroundClarity, launchpadOptics) * strength;
         var dispersion = (dispersionParameters ?? LiquidGlassDispersionParameters.Default).Normalize();
