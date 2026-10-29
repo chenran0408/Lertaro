@@ -25,8 +25,7 @@ public static class Compaction
 {
     public static void Compact(Snapshot snapshot, DeltaOverlay delta, string path, CompactionStamp stamp = default)
     {
-        using var store = BuildMergedStore(snapshot, delta, stamp);
-        SnapshotWriter.Write(store, path);
+        SnapshotWriter.WriteCompacted(snapshot, delta, path, stamp);
     }
 
     // The merge half of compaction, without the file write -- also backs NetworkIndex.ToStore(), which
@@ -51,21 +50,35 @@ public static class Compaction
         try
         {
             store.Records.Capacity = snapshot.Count + delta.VisibleAddedCount;
+            // Decode each immutable base name once. Snapshot.GetName(row) would allocate the same
+            // UTF-8 name again for every hard-link row during a full compaction.
+            var baseNames = new string[snapshot.UniqueCount];
+            for (var uid = 0; uid < baseNames.Length; uid++)
+                baseNames[uid] = snapshot.GetUniqueName(uid);
+            var hasBaseChanges = !delta.HasNoBaseChanges || delta.MetadataOverrides.Count != 0;
 
             for (var row = 0; row < snapshot.Count; row++)
             {
-                if (delta.DeletedBase.Contains(row) || delta.RenamedAway.ContainsKey(row))
+                if (hasBaseChanges && (delta.DeletedBase.Contains(row) || delta.RenamedAway.ContainsKey(row)))
                     continue;
 
-                if (delta.BaseOverrides.TryGetValue(row, out var o))
+                if (hasBaseChanges && delta.BaseOverrides.TryGetValue(row, out var o))
                 {
                     store.Records.Add(new FileRecord(snapshot.Ids[row], o.ParentFrn, o.Name, (FileRecordFlags)o.Flags,
                         o.Size, o.Creation, o.LastWrite, o.LastAccess));
                 }
+                else if (!hasBaseChanges)
+                {
+                    var name = baseNames[(int)snapshot.NameIds[row]];
+                    store.Records.Add(new FileRecord(snapshot.Ids[row], snapshot.GetParentId(row), name,
+                        (FileRecordFlags)snapshot.Flags[row], snapshot.Sizes[row], snapshot.CreationTimes[row],
+                        snapshot.LastWriteTimes[row], snapshot.LastAccessTimes[row]));
+                }
                 else
                 {
                     var (size, creation, lastWrite, lastAccess) = delta.MetadataOf(row);
-                    store.Records.Add(new FileRecord(snapshot.Ids[row], snapshot.GetParentId(row), snapshot.GetName(row),
+                    var name = baseNames[(int)snapshot.NameIds[row]];
+                    store.Records.Add(new FileRecord(snapshot.Ids[row], snapshot.GetParentId(row), name,
                         (FileRecordFlags)snapshot.Flags[row], size, creation, lastWrite, lastAccess));
                 }
             }

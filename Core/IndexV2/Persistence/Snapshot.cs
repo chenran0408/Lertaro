@@ -117,6 +117,8 @@ public sealed unsafe class Snapshot : IDisposable
     public ReadOnlySpan<uint> CreationTimes => new(Section(SnapshotSection.CreationTimes), Count);
     public ReadOnlySpan<uint> LastWriteTimes => new(Section(SnapshotSection.LastWriteTimes), Count);
     public ReadOnlySpan<uint> LastAccessTimes => new(Section(SnapshotSection.LastAccessTimes), Count);
+    internal ReadOnlySpan<int> OrphanRows => new(Section(SnapshotSection.OrphanRows), Meta.OrphanCount);
+    internal ReadOnlySpan<UInt128> OrphanFrns => new(Section(SnapshotSection.OrphanFrns), Meta.OrphanCount);
 
     public ReadOnlySpan<byte> UniqueNameUtf8(int uid)
     {

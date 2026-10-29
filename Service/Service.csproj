@@ -1,7 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <!-- The service is also launched briefly for install/repair from the GUI. A console-subsystem
+         executable flashes a black window during that first-run path; the production service has no
+         interactive console, so use the Windows subsystem while keeping Cli/lff.exe as a console app. -->
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

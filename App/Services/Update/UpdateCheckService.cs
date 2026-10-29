@@ -9,8 +9,8 @@ namespace Lertaro.App.Services.Update;
 
 /// <summary>
 /// Startup update-check flow: checks GitHub for a new release and, depending on settings, either downloads
-/// and installs it without asking anything (auto-silent-update enabled, running as an administrator, service
-/// reachable) or prompts the user to open the About page. A release that failed to install is left alone for
+/// and installs it without asking anything (auto-silent-update enabled, service installed at this path) or
+/// prompts the user to open the About page. A release that failed to install is left alone for
 /// <see cref="UpdateRetryCooldown"/> rather than retried on every launch.
 /// </summary>
 /// <remarks>
@@ -59,9 +59,9 @@ public static class UpdateCheckService
             // with no service registered at this path (a portable one, above all) could not apply an update
             // at all, and finding that out after pulling a full release zip every startup is not a
             // behaviour worth having.
-            if (settings.AutoSilentUpdate && ElevationHelper.IsUserAdmin() &&
-                ServiceInstallManager.IsInstalledAtCurrentPath() &&
-                UpdateAssetSelector.SelectPortableZip(release.Assets, a => a.Name) is { } zipAsset)
+            var zipAsset = UpdateAssetSelector.SelectPortableZip(release.Assets, a => a.Name);
+            if (zipAsset is not null && ShouldUseSilentUpdate(settings,
+                ServiceInstallManager.IsInstalledAtCurrentPath(), assetAvailable: true))
             {
                 // No dispatcher hop: the download is a long-running stream whose continuations have no
                 // business on the UI thread, and CustomMessageBox already marshals the one dialog it may
@@ -75,18 +75,21 @@ public static class UpdateCheckService
                 var progress = new Action<double>(p =>
                     SilentUpdateState.Report(string.Format(downloadingFormat, (int)(p * 100))));
 
-                // Record before handing off: a copy failure rolls back and restarts this version,
-                // whose next startup must not immediately repeat the same failed installation.
-                if (!RememberFailedAttempt(settings, release.TagName)) return;
                 if (await UpdateInstaller.Instance.StartSilentUpdateAsync(zipAsset.BrowserDownloadUrl, progress))
                 {
+                    // StartSilentUpdateAsync returns true only after the service has launched the updater.
+                    // Record the attempt here so downloads, signature failures, and service refusals remain
+                    // immediately retryable instead of entering a 24-hour cooldown.
+                    RememberFailedAttempt(settings, release.TagName, DateTimeOffset.UtcNow);
+                    if (!settings.Save())
+                        Logger.Log("[App] Could not persist the silent-update retry marker.", LogLevel.Warn);
                     SilentUpdateState.Report(TranslationManager.Instance["About_Success"]);
                     TrayCleanExitHelper.CleanExit("automatic update", stopService: false);
                 }
                 else
                 {
-                    // Nothing is running, so nothing should be claimed to be running. The reason is in the
-                    // log, and the release will be offered again after the cooldown.
+                    // Nothing is running, so nothing should be claimed to be running. The release remains
+                    // immediately retryable because the failure happened before updater handoff.
                     SilentUpdateState.Report(null);
                 }
                 return;
@@ -167,6 +170,14 @@ public static class UpdateCheckService
     internal static bool ShouldOpenAbout(MessageBoxResult result) => result == MessageBoxResult.OK;
 
     /// <summary>
+    /// The service, not the interactive App, owns the privileged file replacement. A standard user can
+    /// therefore use silent updates once this installation has a service at its current path; portable
+    /// installs still take the visible/manual path because they have no privileged updater to hand off to.
+    /// </summary>
+    internal static bool ShouldUseSilentUpdate(UserSettings settings, bool serviceInstalled, bool assetAvailable)
+        => settings.AutoSilentUpdate && serviceInstalled && assetAvailable;
+
+    /// <summary>
     /// Whether this release is still being left alone after a failed install. Only the release it failed on
     /// is cooled down, so a newer one published afterwards is offered straight away.
     /// </summary>
@@ -187,10 +198,9 @@ public static class UpdateCheckService
         return now > failedAt && now - failedAt < UpdateRetryCooldown;
     }
 
-    private static bool RememberFailedAttempt(UserSettings settings, string tagName)
+    internal static void RememberFailedAttempt(UserSettings settings, string tagName, DateTimeOffset now)
     {
         settings.LastFailedUpdateTag = tagName;
-        settings.LastFailedUpdateUtcTicks = DateTime.UtcNow.Ticks;
-        return settings.Save();
+        settings.LastFailedUpdateUtcTicks = now.UtcTicks;
     }
 }

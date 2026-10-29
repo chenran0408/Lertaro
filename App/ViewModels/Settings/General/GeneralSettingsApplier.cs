@@ -35,8 +35,7 @@ internal static class GeneralSettingsApplier
 
         userSettings.StartWithWindows = startWithWindows;
         userSettings.AutoCheckUpdates = autoCheckUpdates;
-        if (vm.IsUserAdmin)
-            userSettings.AutoSilentUpdate = autoSilentUpdate;
+        userSettings.AutoSilentUpdate = autoSilentUpdate;
         userSettings.EnableHardwareAcceleration = enableHardwareAcceleration;
         userSettings.EnableFuzzyMatch = enableFuzzyMatch;
         userSettings.OrFirstPrecedence = orFirstPrecedence;

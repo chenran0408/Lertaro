@@ -112,6 +112,24 @@ public sealed class UpdateCheckServiceTests
     public void ShouldOpenAbout_NonOkResult_ReturnsFalse(MessageBoxResult result) =>
         Assert.IsFalse(UpdateCheckService.ShouldOpenAbout(result));
 
+    [TestMethod]
+    public void ShouldUseSilentUpdate_UsesServiceAndMatchingAssetWithoutAdminRequirement()
+    {
+        var settings = new UserSettings { AutoSilentUpdate = true };
+
+        Assert.IsTrue(UpdateCheckService.ShouldUseSilentUpdate(settings, serviceInstalled: true, assetAvailable: true));
+        Assert.IsFalse(UpdateCheckService.ShouldUseSilentUpdate(settings, serviceInstalled: false, assetAvailable: true));
+        Assert.IsFalse(UpdateCheckService.ShouldUseSilentUpdate(settings, serviceInstalled: true, assetAvailable: false));
+    }
+
+    [TestMethod]
+    public void ShouldUseSilentUpdate_DisabledSettingStaysManual()
+    {
+        var settings = new UserSettings { AutoSilentUpdate = false };
+
+        Assert.IsFalse(UpdateCheckService.ShouldUseSilentUpdate(settings, serviceInstalled: true, assetAvailable: true));
+    }
+
     private static readonly DateTimeOffset FailureTime = new(2026, 9, 24, 12, 0, 0, TimeSpan.Zero);
 
     private static UserSettings SettingsThatJustFailedOn(string tag) => new()
@@ -148,4 +166,26 @@ public sealed class UpdateCheckServiceTests
         // and must not throw either -- this reads a value another process wrote.
         Assert.IsFalse(UpdateCheckService.IsInCooldown(
             SettingsThatJustFailedOn("v9.0.0"), "v9.0.0", FailureTime - TimeSpan.FromDays(365)));
+
+    [TestMethod]
+    public void RememberFailedAttempt_OnlyCalledAfterHandoff_RecordsRetryWindow()
+    {
+        var settings = new UserSettings();
+
+        UpdateCheckService.RememberFailedAttempt(settings, "v9.0.0", FailureTime);
+
+        Assert.IsTrue(UpdateCheckService.IsInCooldown(
+            settings, "v9.0.0", FailureTime + TimeSpan.FromHours(1)));
+    }
+
+    [TestMethod]
+    public void PreHandoffFailure_DoesNotCreateRetryCooldown()
+    {
+        // StartSilentUpdateAsync returns false for download, signature, and service-handoff failures. The
+        // startup flow records the marker only in its true branch, so a fresh settings object stays open.
+        var settings = new UserSettings();
+
+        Assert.IsFalse(UpdateCheckService.IsInCooldown(
+            settings, "v9.0.0", FailureTime + TimeSpan.FromHours(1)));
+    }
 }

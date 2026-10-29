@@ -326,6 +326,10 @@ mod api_core;
 mod api_mutation;
 #[path = "store/api_records.rs"]
 mod api_records;
+#[path = "store/api_snapshot.rs"]
+mod api_snapshot;
+#[path = "store/snapshot.rs"]
+mod snapshot;
 #[cfg(test)]
 #[path = "store/tests.rs"]
 mod tests;

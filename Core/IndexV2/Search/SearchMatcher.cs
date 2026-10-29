@@ -163,6 +163,25 @@ internal static class SearchMatcher
         var mergeLock = new object();
         var chunkCount = (snapshot.UniqueCount + ChunkSize - 1) / ChunkSize;
 
+        // A small index has one chunk. Avoid creating Parallel.For's worker state and scheduler
+        // bookkeeping for the common case where there is no work to distribute.
+        if (chunkCount <= 1)
+        {
+            token.ThrowIfCancellationRequested();
+            var worker = RentWorker();
+            try
+            {
+                MatchChunk(snapshot, ctx, 0, snapshot.UniqueCount, worker, fileNamePatterns);
+                if (worker.Hits.Count > 0)
+                    consumeChunk(worker.Hits);
+            }
+            finally
+            {
+                ReturnWorker(worker);
+            }
+            return;
+        }
+
         // A broad/low-selectivity query (e.g. a single character) can touch a large fraction of the
         // whole unique-name table before this returns -- during normal rapid typing, every keystroke's
         // scan used to run to completion regardless of whether a newer keystroke had already superseded
@@ -177,42 +196,7 @@ internal static class SearchMatcher
             {
                 var start = chunk * ChunkSize;
                 var end = Math.Min(start + ChunkSize, snapshot.UniqueCount);
-                var masks = snapshot.UniqueMasks;
-
-                if (ctx.CanFilter && ctx.RequiredMask != 0 && Avx2.IsSupported && end - start >= 8)
-                {
-                    // Vectorized prefilter: 4 masks per iteration; only lanes whose mask covers the
-                    // whole required set fall through to the scalar per-candidate work.
-                    ref var m0 = ref MemoryMarshal.GetReference(masks);
-                    var required = Vector256.Create(ctx.RequiredMask);
-                    var i = start;
-                    for (; i + 4 <= end; i += 4)
-                    {
-                        var v = Vector256.LoadUnsafe(ref Unsafe.Add(ref m0, i));
-                        var bits = Vector256.Equals(Vector256.BitwiseAnd(v, required), required).ExtractMostSignificantBits();
-                        if (bits == 0)
-                            continue;
-                        for (var lane = 0; lane < 4; lane++)
-                        {
-                            if ((bits & (1u << lane)) != 0 && PassesOrSets(masks[i + lane], ctx.OrSetMasks))
-                                MatchOne(snapshot, ctx, i + lane, worker, fileNamePatterns);
-                        }
-                    }
-                    for (; i < end; i++)
-                    {
-                        if ((masks[i] & ctx.RequiredMask) == ctx.RequiredMask && PassesOrSets(masks[i], ctx.OrSetMasks))
-                            MatchOne(snapshot, ctx, i, worker, fileNamePatterns);
-                    }
-                }
-                else
-                {
-                    for (var uid = start; uid < end; uid++)
-                    {
-                        if (ctx.CanFilter && ((masks[uid] & ctx.RequiredMask) != ctx.RequiredMask || !PassesOrSets(masks[uid], ctx.OrSetMasks)))
-                            continue;
-                        MatchOne(snapshot, ctx, uid, worker, fileNamePatterns);
-                    }
-                }
+                  MatchChunk(snapshot, ctx, start, end, worker, fileNamePatterns);
                 if (worker.Hits.Count > 0)
                 {
                     lock (mergeLock)
@@ -227,6 +211,47 @@ internal static class SearchMatcher
             {
                 ReturnWorker(worker);
             });
+    }
+
+    private static void MatchChunk(Snapshot snapshot, QueryContext ctx, int start, int end, Worker worker,
+        string[]? fileNamePatterns)
+    {
+        var masks = snapshot.UniqueMasks;
+
+        if (ctx.CanFilter && ctx.RequiredMask != 0 && Avx2.IsSupported && end - start >= 8)
+        {
+            // Vectorized prefilter: 4 masks per iteration; only lanes whose mask covers the
+            // whole required set fall through to the scalar per-candidate work.
+            ref var m0 = ref MemoryMarshal.GetReference(masks);
+            var required = Vector256.Create(ctx.RequiredMask);
+            var i = start;
+            for (; i + 4 <= end; i += 4)
+            {
+                var v = Vector256.LoadUnsafe(ref Unsafe.Add(ref m0, i));
+                var bits = Vector256.Equals(Vector256.BitwiseAnd(v, required), required).ExtractMostSignificantBits();
+                if (bits == 0)
+                    continue;
+                for (var lane = 0; lane < 4; lane++)
+                {
+                    if ((bits & (1u << lane)) != 0 && PassesOrSets(masks[i + lane], ctx.OrSetMasks))
+                        MatchOne(snapshot, ctx, i + lane, worker, fileNamePatterns);
+                }
+            }
+            for (; i < end; i++)
+            {
+                if ((masks[i] & ctx.RequiredMask) == ctx.RequiredMask && PassesOrSets(masks[i], ctx.OrSetMasks))
+                    MatchOne(snapshot, ctx, i, worker, fileNamePatterns);
+            }
+        }
+        else
+        {
+            for (var uid = start; uid < end; uid++)
+            {
+                if (ctx.CanFilter && ((masks[uid] & ctx.RequiredMask) != ctx.RequiredMask || !PassesOrSets(masks[uid], ctx.OrSetMasks)))
+                    continue;
+                MatchOne(snapshot, ctx, uid, worker, fileNamePatterns);
+            }
+        }
     }
 
     private static void MatchOne(Snapshot snapshot, QueryContext ctx, int uid, Worker worker, string[]? fileNamePatterns)

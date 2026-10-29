@@ -89,7 +89,7 @@ public sealed partial class FileRecordCollection
             throw new ArgumentOutOfRangeException(nameof(index));
     }
 
-    private static void ThrowOnNativeFailure(int result)
+    internal static void ThrowOnNativeFailure(int result)
     {
         if (result != 0)
             throw new InvalidOperationException($"The native file-record store failed with status {result}.");
@@ -120,6 +120,15 @@ public sealed partial class FileRecordCollection
         internal ReadOnlySpan<NativeRecordNameSpan> NameSpans { get; }
         internal ReadOnlySpan<char> NameArena { get; }
         internal ReadOnlySpan<int> SortedActiveIndexes { get; }
+
+        internal NativeSnapshotBuilder BuildSnapshot(UInt128 rootId)
+        {
+            ThrowOnNativeFailure(Native.SnapshotBuilderNew(_owner._handle, (ulong)rootId,
+                (ulong)(rootId >> 64), out var handle));
+            var builder = new NativeSnapshotBuilder(handle);
+            ThrowOnNativeFailure(Native.RecordStoreReleaseSorted(_owner._handle));
+            return builder;
+        }
 
         internal string GetName(uint nameId)
         {
@@ -260,6 +269,63 @@ internal sealed class NativeStoreHandle : SafeHandleZeroOrMinusOneIsInvalid
     }
 }
 
+internal sealed unsafe class NativeSnapshotBuilder : IDisposable
+{
+    private readonly SnapshotBuilderHandle _handle;
+    private readonly NativeSnapshotView _view;
+
+    internal NativeSnapshotBuilder(SnapshotBuilderHandle handle)
+    {
+        _handle = handle;
+        FileRecordCollection.ThrowOnNativeFailure(Native.SnapshotBuilderView(handle, out _view));
+    }
+
+    internal int Count => _view.RowCount;
+    internal int UniqueCount => _view.UniqueCount;
+    internal int ChildrenCount => _view.ChildrenCount;
+    internal int OrphanCount => _view.OrphanCount;
+    internal int TotalFiles => _view.TotalFiles;
+    internal int TotalDirs => _view.TotalDirs;
+    internal ReadOnlySpan<uint> NameIds => new((void*)_view.NameIds, Count);
+    internal ReadOnlySpan<ushort> Flags => new((void*)_view.Flags, Count);
+    internal ReadOnlySpan<int> ParentIndexes => new((void*)_view.ParentIndexes, Count);
+    internal ReadOnlySpan<UInt128> Ids => new((void*)_view.Ids, Count);
+    internal ReadOnlySpan<long> Sizes => new((void*)_view.Sizes, Count);
+    internal ReadOnlySpan<long> RecursiveSizes => new((void*)_view.RecursiveSizes, Count);
+    internal ReadOnlySpan<uint> CreationTimes => new((void*)_view.CreationTimes, Count);
+    internal ReadOnlySpan<uint> LastWriteTimes => new((void*)_view.LastWriteTimes, Count);
+    internal ReadOnlySpan<uint> LastAccessTimes => new((void*)_view.LastAccessTimes, Count);
+    internal ReadOnlySpan<int> ChildStarts => new((void*)_view.ChildStarts, Count + 1);
+    internal ReadOnlySpan<int> Children => new((void*)_view.Children, ChildrenCount);
+    internal ReadOnlySpan<int> UidStarts => new((void*)_view.UidStarts, UniqueCount + 1);
+    internal ReadOnlySpan<int> UidRows => new((void*)_view.UidRows, Count);
+    internal ReadOnlySpan<int> OrphanRows => new((void*)_view.OrphanRows, OrphanCount);
+    internal ReadOnlySpan<UInt128> OrphanFrns => new((void*)_view.OrphanFrns, OrphanCount);
+    internal ReadOnlySpan<uint> UniqueNameIds => new((void*)_view.UniqueNameIds, UniqueCount);
+
+    public void Dispose() => _handle.Dispose();
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct NativeSnapshotView
+{
+    internal IntPtr NameIds, Flags, ParentIndexes, Ids, Sizes, RecursiveSizes;
+    internal IntPtr CreationTimes, LastWriteTimes, LastAccessTimes;
+    internal IntPtr ChildStarts, Children, UidStarts, UidRows, OrphanRows, OrphanFrns, UniqueNameIds;
+    internal int RowCount, UniqueCount, ChildrenCount, OrphanCount, TotalFiles, TotalDirs;
+}
+
+internal sealed class SnapshotBuilderHandle : SafeHandleZeroOrMinusOneIsInvalid
+{
+    internal SnapshotBuilderHandle() : base(ownsHandle: true) { }
+
+    protected override bool ReleaseHandle()
+    {
+        Native.SnapshotBuilderFree(handle);
+        return true;
+    }
+}
+
 internal static class Native
 {
     private const string Library = "lertaro_index_store";
@@ -294,6 +360,21 @@ internal static class Native
     internal static extern int RecordStoreSortActive(NativeStoreHandle handle, out IntPtr order, out int count);
     [DllImport(Library, EntryPoint = "lertaro_record_store_release_sorted", CallingConvention = CallingConvention.Winapi)]
     internal static extern int RecordStoreReleaseSorted(NativeStoreHandle handle);
+    [DllImport(Library, EntryPoint = "lertaro_snapshot_builder_new", CallingConvention = CallingConvention.Winapi)]
+    internal static extern int SnapshotBuilderNew(NativeStoreHandle handle, ulong rootLow, ulong rootHigh,
+        out SnapshotBuilderHandle builder);
+    [DllImport(Library, EntryPoint = "lertaro_compaction_snapshot_new", CallingConvention = CallingConvention.Winapi)]
+    internal static extern unsafe int CompactionSnapshotNew(
+        UInt128* baseIds, uint* baseNameUids, ushort* baseFlags, long* baseSizes,
+        uint* baseCreationTimes, uint* baseLastWriteTimes, uint* baseLastAccessTimes,
+        int* baseParentIndexes, int* orphanRows, UInt128* orphanFrns, int* actions,
+        NativeCompactionPatch* patches, int patchCount, NativeCompactionRecord* added, int addedCount,
+        int baseCount, int orphanCount, int uniqueCount, ulong rootLow, ulong rootHigh,
+        out SnapshotBuilderHandle builder);
+    [DllImport(Library, EntryPoint = "lertaro_snapshot_builder_view", CallingConvention = CallingConvention.Winapi)]
+    internal static extern int SnapshotBuilderView(SnapshotBuilderHandle handle, out NativeSnapshotView view);
+    [DllImport(Library, EntryPoint = "lertaro_snapshot_builder_free", CallingConvention = CallingConvention.Winapi)]
+    internal static extern void SnapshotBuilderFree(IntPtr handle);
     [DllImport(Library, EntryPoint = "lertaro_record_store_get_name", CallingConvention = CallingConvention.Winapi)]
     internal static extern int RecordStoreGetName(NativeStoreHandle handle, uint nameId, out IntPtr name, out int length);
     [DllImport(Library, EntryPoint = "lertaro_record_store_set", CallingConvention = CallingConvention.Winapi)]

@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Lertaro.Core.IndexV2.Delta;
 using Lertaro.Core.SearchIndex.Fzf;
 
 using Lertaro.Core.IndexV2.Alias;
@@ -32,67 +33,125 @@ public static class SnapshotWriter
     public static void Write(FileRecordStore store, string path)
     {
         var records = store.Records;
-        using var readLease = records.AcquireReadLease(sortActive: true);
-        var rows = readLease.Rows;
-        var order = readLease.SortedActiveIndexes;
-        var count = order.Length;
+        using var readLease = records.AcquireReadLease();
+        using var snapshot = readLease.BuildSnapshot(store.RootId);
+        var uniqueNames = new string[snapshot.UniqueCount];
+        for (var uid = 0; uid < uniqueNames.Length; uid++)
+            uniqueNames[uid] = readLease.GetName(snapshot.UniqueNameIds[uid]);
+        var aliasFingerprint = AliasProviderRegistry.ComputeProvidersFingerprint();
+        WriteColumns(snapshot, uniqueNames, new SnapshotFormat.Meta
+        {
+            SourceKey = store.SourceKey,
+            SourceRoot = PathHelpers.BuildSourceRoot(store.SourceKey),
+            SourceKind = store.SourceKind,
+            IdKind = store.IdKind,
+            FileSystemType = store.FileSystemType,
+            VolumeSerialNumber = store.VolumeSerialNumber,
+            RootId = store.RootId,
+            JournalId = store.JournalId,
+            NextUsn = store.NextUsn,
+            IsComplete = store.IsComplete,
+            ExclusionRulesFingerprint = store.ExclusionRulesFingerprint,
+            LastUpdated = store.LastUpdated,
+        }, path, null, aliasFingerprint);
+    }
 
-        var nameIds = new uint[count];
-        var flags = new ushort[count];
-        var parentIndexes = new int[count];
-        var ids = new UInt128[count];
-        var sizes = new long[count];
-        var creation = new uint[count];
-        var lastWrite = new uint[count];
-        var lastAccess = new uint[count];
+    internal static void WriteCompacted(Snapshot baseSnapshot, DeltaOverlay delta, string path,
+        CompactionStamp stamp)
+    {
+        var aliasFingerprint = AliasProviderRegistry.ComputeProvidersFingerprint();
+        // A compaction usually changes only a small delta. Keep the already-baked aliases for
+        // unchanged names when the provider set is identical; changed/new names still go through
+        // the normal generator below. A provider fingerprint mismatch deliberately disables reuse
+        // so a provider upgrade (or a provider setting included in its version) fully re-bakes.
+        var aliasSource = baseSnapshot.Meta.AliasEntryCount > 0
+            && string.Equals(baseSnapshot.AliasProvidersFingerprint, aliasFingerprint, StringComparison.Ordinal)
+            ? baseSnapshot
+            : null;
+        using var snapshot = NativeCompactionInterop.Build(baseSnapshot, delta, out var uniqueNames);
+        WriteColumns(snapshot, uniqueNames, new SnapshotFormat.Meta
+        {
+            SourceKey = baseSnapshot.SourceKey,
+            SourceRoot = PathHelpers.BuildSourceRoot(baseSnapshot.SourceKey),
+            SourceKind = baseSnapshot.SourceKind,
+            IdKind = baseSnapshot.IdKind,
+            FileSystemType = baseSnapshot.FileSystemType,
+            VolumeSerialNumber = baseSnapshot.VolumeSerialNumber,
+            RootId = baseSnapshot.RootId,
+            JournalId = stamp.JournalId ?? baseSnapshot.JournalId,
+            NextUsn = stamp.NextUsn ?? baseSnapshot.NextUsn,
+            IsComplete = stamp.IsComplete ?? baseSnapshot.IsComplete,
+            ExclusionRulesFingerprint = stamp.ExclusionRulesFingerprint ?? baseSnapshot.ExclusionRulesFingerprint,
+            LastUpdated = stamp.LastUpdated ?? baseSnapshot.LastUpdated,
+        }, path, aliasSource, aliasFingerprint);
+    }
 
-        var uidByName = new Dictionary<uint, int>();
-        var uniqueNames = new List<string>();
-        var nameBlob = new MemoryStream();
-        var nameOffsets = new List<uint> { 0 };
-        var masks = new List<ulong>();
-        var aliasStarts = new List<int>();
-        var aliasEntryOffsets = new List<uint> { 0 };
+    private static void WriteColumns(NativeSnapshotBuilder snapshot, IReadOnlyList<string> uniqueNames,
+        SnapshotFormat.Meta meta, string path, Snapshot? aliasSource, string aliasFingerprint)
+    {
+        var count = snapshot.Count;
+        var nameIds = snapshot.NameIds;
+        var flags = snapshot.Flags;
+        var parentIndexes = snapshot.ParentIndexes;
+        var ids = snapshot.Ids;
+        var sizes = snapshot.Sizes;
+        var recursiveSizes = snapshot.RecursiveSizes;
+        var creation = snapshot.CreationTimes;
+        var lastWrite = snapshot.LastWriteTimes;
+        var lastAccess = snapshot.LastAccessTimes;
+
+        var nameByteCount = 0;
+        foreach (var name in uniqueNames)
+            nameByteCount = checked(nameByteCount + SnapshotFormat.NameEncoding.GetByteCount(name));
+
+        var nameBlob = new MemoryStream(nameByteCount);
+        var nameOffsets = new List<uint>(uniqueNames.Count + 1) { 0 };
+        var masks = new List<ulong>(uniqueNames.Count);
+        var aliasStarts = new List<int>(uniqueNames.Count + 1);
+        var aliasEntryOffsets = new List<uint>(uniqueNames.Count + 1) { 0 };
         var aliasProviderIds = new List<byte>();
         var aliasBlob = new MemoryStream();
-        var totalFiles = 0;
-        var totalDirs = 0;
-
-        for (var n = 0; n < count; n++)
+        byte[] nameEncodingBuffer = Array.Empty<byte>();
+        for (var uid = 0; uid < uniqueNames.Count; uid++)
         {
-            var record = rows[order[n]];
-            if (!uidByName.TryGetValue(record.NameId, out var uid))
-            {
-                uid = uidByName.Count;
-                uidByName[record.NameId] = uid;
-                var name = readLease.GetName(record.NameId);
-                uniqueNames.Add(name);
-                nameBlob.Write(SnapshotFormat.NameEncoding.GetBytes(name));
-                nameOffsets.Add(checked((uint)nameBlob.Length));
-            }
-
-            nameIds[n] = (uint)uid;
-            flags[n] = (ushort)record.RecordFlags;
-            ids[n] = record.GetId(readLease.HighPairs);
-            sizes[n] = record.LogicalSize;
-            creation[n] = record.CreationTimeUnixSeconds;
-            lastWrite[n] = record.LastWriteTimeUnixSeconds;
-            lastAccess[n] = record.LastAccessTimeUnixSeconds;
-            if ((record.RecordFlags & FileRecordFlags.Directory) != 0)
-                totalDirs++;
-            else
-                totalFiles++;
+            var name = uniqueNames[uid];
+            var required = SnapshotFormat.NameEncoding.GetMaxByteCount(name.Length);
+            if (nameEncodingBuffer.Length < required)
+                nameEncodingBuffer = new byte[required];
+            var written = SnapshotFormat.NameEncoding.GetBytes(name.AsSpan(), nameEncodingBuffer.AsSpan());
+            nameBlob.Write(nameEncodingBuffer, 0, written);
+            nameOffsets.Add(checked((uint)nameBlob.Length));
         }
 
         // Alias generation is per-name-independent and dominates full-rebuild CPU on CJK-heavy
         // volumes, so it runs as a parallel pre-pass (byte-native via GetAliasesUtf8, no alias
-        // strings materialized); the blob writes below stay strictly serial in uid order, so the
-        // resulting snapshot bytes are identical to what the old inline serial loop produced.
+        // strings materialized). Compaction can skip that work for names carried unchanged from the
+        // base snapshot; the blob writes below stay strictly serial in uid order.
         var uniqueCount = uniqueNames.Count;
         var uniqueMasks = new ulong[uniqueCount];
         var aliasResults = new AliasGenerationUtf8.Result?[uniqueCount];
+        var reusedAliasUids = new int[uniqueCount];
+        Array.Fill(reusedAliasUids, -1);
+        Dictionary<string, int>? sourceUids = null;
+        if (aliasSource != null)
+        {
+            sourceUids = new Dictionary<string, int>(StringComparer.Ordinal);
+            for (var uid = 0; uid < aliasSource.UniqueCount; uid++)
+            {
+                if (aliasSource.HasAliases(uid))
+                    sourceUids.TryAdd(aliasSource.GetUniqueName(uid), uid);
+            }
+        }
+
         Parallel.For(0, uniqueCount, uid =>
         {
+            if (sourceUids != null && sourceUids.TryGetValue(uniqueNames[uid], out var sourceUid))
+            {
+                reusedAliasUids[uid] = sourceUid;
+                uniqueMasks[uid] = aliasSource!.UniqueMasks[sourceUid];
+                return;
+            }
+
             // Union of name + alias chars: over-admits, never rejects a real match -- the
             // structural equivalent of the old engine bucketing rows under alias chars.
             var mask = FzfAlgorithm.GetCharMask(uniqueNames[uid]);
@@ -103,6 +162,20 @@ public static class SnapshotWriter
         for (var uid = 0; uid < uniqueCount; uid++)
         {
             aliasStarts.Add(aliasProviderIds.Count);
+            var sourceUid = reusedAliasUids[uid];
+            if (sourceUid >= 0)
+            {
+                var (sourceStart, sourceEnd) = aliasSource!.AliasEntryRange(sourceUid);
+                for (var e = sourceStart; e < sourceEnd; e++)
+                {
+                    aliasBlob.Write(aliasSource.AliasUtf8(e));
+                    aliasEntryOffsets.Add(checked((uint)aliasBlob.Length));
+                    aliasProviderIds.Add(aliasSource.AliasProviderId(e));
+                }
+                masks.Add(uniqueMasks[uid]);
+                continue;
+            }
+
             var result = aliasResults[uid];
             if (result != null)
             {
@@ -122,45 +195,17 @@ public static class SnapshotWriter
 
         // Parent resolution against the sorted id column; unresolved links keep their FRN so a later
         // delta (or the next compaction) can heal them once the parent appears.
-        var orphanRows = new List<int>();
-        var orphanFrns = new List<UInt128>();
-        Dictionary<ulong, int>? recordIndexMap = null;
-        for (var n = 0; n < count; n++)
-        {
-            var record = rows[order[n]];
-            var parentIndex = -1;
-            var id = record.GetId(readLease.HighPairs);
-            var parentId = record.GetParentId(readLease.HighPairs);
-            if (parentId != id)
-            {
-                parentIndex = SnapshotWriterOps.ResolveParentIndexWithRecordIndexFallback(ids, parentId, ref recordIndexMap);
-                if (parentIndex < 0)
-                {
-                    orphanRows.Add(n);
-                    orphanFrns.Add(parentId);
-                }
-            }
-            parentIndexes[n] = parentIndex;
-        }
+        var childStarts = snapshot.ChildStarts;
+        var children = snapshot.Children;
+        var uidStarts = snapshot.UidStarts;
+        var uidRows = snapshot.UidRows;
+        var orphanRows = snapshot.OrphanRows;
+        var orphanFrns = snapshot.OrphanFrns;
 
-        var childStarts = new int[count + 1];
-        for (var n = 0; n < count; n++)
-            if (parentIndexes[n] >= 0)
-                childStarts[parentIndexes[n] + 1]++;
-        for (var n = 0; n < count; n++)
-            childStarts[n + 1] += childStarts[n];
-        var children = new int[childStarts[count]];
-        var childCursor = (int[])childStarts.Clone();
-        for (var n = 0; n < count; n++)
-            if (parentIndexes[n] >= 0)
-                children[childCursor[parentIndexes[n]]++] = n;
-
-        var recursiveSizes = SnapshotWriterOps.BuildRecursiveSizes(ids, flags, sizes, parentIndexes, store.RootId);
-
-        var asciiBits = new ulong[(uidByName.Count + 63) / 64];
+        var asciiBits = new ulong[(uniqueNames.Count + 63) / 64];
         {
             var blob = nameBlob.GetBuffer();
-            for (var uid = 0; uid < uidByName.Count; uid++)
+            for (var uid = 0; uid < uniqueNames.Count; uid++)
             {
                 var start = (int)nameOffsets[uid];
                 var length = (int)(nameOffsets[uid + 1] - nameOffsets[uid]);
@@ -169,44 +214,18 @@ public static class SnapshotWriter
             }
         }
 
-        var uidStarts = new int[uidByName.Count + 1];
-        for (var n = 0; n < count; n++)
-            uidStarts[nameIds[n] + 1]++;
-        for (var n = 0; n < uidByName.Count; n++)
-            uidStarts[n + 1] += uidStarts[n];
-        var uidRows = new int[count];
-        var uidCursor = (int[])uidStarts.Clone();
-        for (var n = 0; n < count; n++)
-            uidRows[uidCursor[nameIds[n]]++] = n;
-
-        var meta = new SnapshotFormat.Meta
-        {
-            SourceKey = store.SourceKey,
-            SourceRoot = PathHelpers.BuildSourceRoot(store.SourceKey),
-            SourceKind = store.SourceKind,
-            IdKind = store.IdKind,
-            FileSystemType = store.FileSystemType,
-            VolumeSerialNumber = store.VolumeSerialNumber,
-            RootId = store.RootId,
-            JournalId = store.JournalId,
-            NextUsn = store.NextUsn,
-            RowCount = count,
-            UniqueCount = uidByName.Count,
-            NameBlobLength = (int)nameBlob.Length,
-            ChildrenLength = children.Length,
-            AliasEntryCount = aliasProviderIds.Count,
-            AliasBlobLength = (int)aliasBlob.Length,
-            OrphanCount = orphanRows.Count,
-            TotalFiles = totalFiles,
-            TotalDirs = totalDirs,
-            IsComplete = store.IsComplete,
-            ExclusionRulesFingerprint = store.ExclusionRulesFingerprint,
-            // Stamped fresh on every write (not carried over from `store`) -- this is exactly the
-            // moment every unique name's aliases just got (re)generated above, via whatever alias
-            // providers are installed right now.
-            AliasProvidersFingerprint = AliasProviderRegistry.ComputeProvidersFingerprint(),
-            LastUpdated = store.LastUpdated,
-        };
+        meta.RowCount = count;
+        meta.UniqueCount = uniqueNames.Count;
+        meta.NameBlobLength = (int)nameBlob.Length;
+        meta.ChildrenLength = children.Length;
+        meta.AliasEntryCount = aliasProviderIds.Count;
+        meta.AliasBlobLength = (int)aliasBlob.Length;
+        meta.OrphanCount = snapshot.OrphanCount;
+        meta.TotalFiles = snapshot.TotalFiles;
+        meta.TotalDirs = snapshot.TotalDirs;
+        // Stamped fresh on every write (not carried over from the source) -- this is exactly the
+        // moment every unique name's aliases just got (re)generated above.
+        meta.AliasProvidersFingerprint = aliasFingerprint;
 
         // FileStream(..., FileMode.Create) never creates missing parent directories itself -- on a truly
         // fresh machine (no prior run has ever written here), %ProgramData%\Lertaro\indexes doesn't
@@ -249,8 +268,8 @@ public static class SnapshotWriter
                 SnapshotWriterOps.WriteSection(stream, offsets, SnapshotSection.AliasEntryOffsets, MemoryMarshal.AsBytes(CollectionsMarshal.AsSpan(aliasEntryOffsets)));
                 SnapshotWriterOps.WriteSection(stream, offsets, SnapshotSection.AliasProviderIds, CollectionsMarshal.AsSpan(aliasProviderIds));
                 SnapshotWriterOps.WriteSection(stream, offsets, SnapshotSection.AliasBlob, aliasBlob.GetBuffer().AsSpan(0, (int)aliasBlob.Length));
-                SnapshotWriterOps.WriteSection(stream, offsets, SnapshotSection.OrphanRows, MemoryMarshal.AsBytes(CollectionsMarshal.AsSpan(orphanRows)));
-                SnapshotWriterOps.WriteSection(stream, offsets, SnapshotSection.OrphanFrns, MemoryMarshal.AsBytes(CollectionsMarshal.AsSpan(orphanFrns)));
+                SnapshotWriterOps.WriteSection(stream, offsets, SnapshotSection.OrphanRows, MemoryMarshal.AsBytes(orphanRows));
+                SnapshotWriterOps.WriteSection(stream, offsets, SnapshotSection.OrphanFrns, MemoryMarshal.AsBytes(orphanFrns));
                 SnapshotWriterOps.WriteSection(stream, offsets, SnapshotSection.UniqueAsciiBits, MemoryMarshal.AsBytes(asciiBits));
                 stream.SetLength(totalLength);
                 // Disposing the stream flushes to the OS cache, not to the platter, and the File.Replace

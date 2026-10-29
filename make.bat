@@ -53,6 +53,11 @@ if exist "D:\Dev\Toolchains\InnoSetup7\ISCC.exe" (
     goto :iscc_found
 )
 
+if exist "D:\Dev\Toolchains\InnoSetup7.1.1\ISCC.exe" (
+    set "ISCC=D:\Dev\Toolchains\InnoSetup7.1.1\ISCC.exe"
+    goto :iscc_found
+)
+
 :iscc_not_found
 echo [Error] Inno Setup 7 compiler (ISCC.exe) not found.
 echo Checked paths:
@@ -92,6 +97,10 @@ if errorlevel 1 exit /b 1
 
 echo.
 echo === Building arm64 ===
+if /i "%SKIP_ARM64%"=="1" (
+    echo Skipping arm64 because SKIP_ARM64=1.
+    goto :build_complete
+)
 set "ARCH=arm64"
 :: The new repository is not visible to legacy installs, so use the conventional hyphenated suffix.
 :: Kept in step with UpdateAssetSelector.SuffixFor and installer.iss.
@@ -99,6 +108,8 @@ set "ARCHSUFFIX=-arm64"
 set "RIDARGS=-r win-arm64 --self-contained false -p:RustIndexStoreTarget=aarch64-pc-windows-msvc"
 call :build_arch
 if errorlevel 1 exit /b 1
+
+:build_complete
 
 :: 5. Clean up temporary publish folder
 echo.
