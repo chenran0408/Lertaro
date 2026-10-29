@@ -3,9 +3,9 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Lertaro.App.ViewModels.Settings;
+using Lertaro.App.Views.Controls;
 using Lertaro.App.Views.Settings.Hotkey;
 using Lertaro.Core;
-using GlassDesk.UI.Controls;
 using Window = System.Windows.Window;
 using Button = System.Windows.Controls.Button;
 using TabControl = System.Windows.Controls.TabControl;
@@ -22,6 +22,11 @@ public sealed class HotkeyBlacklistTabSectionTests
     [DataRow(780.0)]
     public void OnlyTheSelectedScopeIsVisibleAndEditingCanBeCancelled(double width)
     {
+        var application = Application.Current;
+        if (application == null)
+            application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        var fallbackPalette = new Lertaro.App.Services.Theme.BuiltInTheme("Light", false).GetResources();
+        application.Resources.MergedDictionaries.Add(fallbackPalette);
         var vm = new BlacklistSettingsViewModel(new UserSettings { BlacklistedProcesses = new() { "editor.exe" } });
         vm.Global.SetRunningProcesses(new[] { new Lertaro.App.Services.RunningProcessInfo("editor.exe", "Document", true) });
         vm.Global.EditProcessCommand.Execute(vm.Global.Items[0]);
@@ -58,12 +63,21 @@ public sealed class HotkeyBlacklistTabSectionTests
             Assert.IsFalse(vm.QuickPanel.IsManualEditorOpen);
             Assert.IsEmpty(vm.QuickPanel.Items);
         }
-        finally { window.Close(); }
+        finally
+        {
+            window.Close();
+            application.Resources.MergedDictionaries.Remove(fallbackPalette);
+        }
     }
 
     [StaTestMethod]
     public void ProcessPickerAndTabsFollowThemeChangesWithoutNativeLightChrome()
     {
+        var application = Application.Current;
+        if (application == null)
+            application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        var fallbackPalette = new Lertaro.App.Services.Theme.BuiltInTheme("Light", false).GetResources();
+        application.Resources.MergedDictionaries.Add(fallbackPalette);
         var vm = new BlacklistSettingsViewModel(new UserSettings());
         vm.Global.SetRunningProcesses([new Lertaro.App.Services.RunningProcessInfo("editor.exe", "Document", true)]);
         var section = new HotkeyBlacklistTabSection { DataContext = new { Blacklist = vm } };
@@ -82,9 +96,10 @@ public sealed class HotkeyBlacklistTabSectionTests
                 Drain(window);
                 var list = Find<ListBox>(section)!;
                 var expectedText = (SolidColorBrush)window.FindResource("TextPrimary");
-                window.SetValue(GlassWindow.ForegroundBrushProperty, expectedText);
-                var listBackground = Assert.IsInstanceOfType<LinearGradientBrush>(list.Background);
-                Assert.IsNotEmpty(listBackground.GradientStops, "The list should retain GlassDesk's glass surface brush.");
+                Assert.AreEqual(expectedText.Color, ((SolidColorBrush)window.ForegroundBrush!).Color);
+                var listBackground = Assert.IsInstanceOfType<SolidColorBrush>(list.Background);
+                Assert.AreEqual(byte.MaxValue, listBackground.Color.A,
+                    "The process picker uses an opaque theme surface.");
                 Assert.AreEqual(expectedText.Color, ((SolidColorBrush)list.Foreground).Color);
                 var check = Find<CheckBox>(list)!;
                 Assert.IsNotNull(check.Template.FindName("CheckMark", check), "Per-row selection must retain the themed checkbox template.");
@@ -98,7 +113,11 @@ public sealed class HotkeyBlacklistTabSectionTests
                 Assert.AreEqual(Colors.Transparent, ((SolidColorBrush)tabs.Background).Color);
             }
         }
-        finally { window.Close(); }
+        finally
+        {
+            window.Close();
+            application.Resources.MergedDictionaries.Remove(fallbackPalette);
+        }
     }
 
     private static void Drain(Window window) => window.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
@@ -115,6 +134,6 @@ public sealed class HotkeyBlacklistTabSectionTests
         for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++) Collect(VisualTreeHelper.GetChild(root, i), items);
     }
 
-    private sealed class ThemeWindow : GlassWindow { }
+    private sealed class ThemeWindow : AppWindow { }
 
 }

@@ -94,7 +94,7 @@ public partial class QuickLookManager
 
     internal static Task ShowOwnerWhenPreparedAsync(Window owner, Action show, Func<bool> isCurrent)
     {
-        if (owner is GlassDesk.UI.Controls.GlassWindow glassWindow)
+        if (owner is Lertaro.App.Views.Controls.AppWindow glassWindow)
             return GlassWindowPresentationHelper.ShowWhenPreparedAsync(glassWindow, show, isCurrent);
         if (isCurrent()) show();
         return Task.CompletedTask;
@@ -312,3 +312,4 @@ public partial class QuickLookManager
                 && _showOperationToken == token && !_hiddenForDialog && !window.IsShowingExternalPreview);
     }
 }
+

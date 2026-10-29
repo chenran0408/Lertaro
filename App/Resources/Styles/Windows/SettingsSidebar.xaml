@@ -51,7 +51,7 @@
                             <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SidebarHover}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SidebarHover}"/>
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SidebarSelected}"/>
                             <Setter TargetName="AccentBar" Property="Fill" Value="{DynamicResource AccentBarColor}"/>
                             <Setter Property="Foreground" Value="{DynamicResource SidebarTextActive}"/>
                             <Setter Property="TextElement.Foreground" Value="{DynamicResource SidebarTextActive}"/>

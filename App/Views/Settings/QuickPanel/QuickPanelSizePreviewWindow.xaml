@@ -1,15 +1,14 @@
-<glass:GlassWindow x:Class="Lertaro.App.Views.Settings.QuickPanel.QuickPanelSizePreviewWindow"
+<appWindow:AppWindow x:Class="Lertaro.App.Views.Settings.QuickPanel.QuickPanelSizePreviewWindow" xmlns:appWindow="clr-namespace:Lertaro.App.Views.Controls"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
- xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:glass="clr-namespace:GlassDesk.UI.Controls;assembly=GlassDesk.UI" xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
  xmlns:services="clr-namespace:Lertaro.App.Services"
  Title="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_SizePreview]}"
  Width="640" Height="480"
- ResizeMode="NoResize" WindowStartupLocation="CenterScreen" ShowInTaskbar="False" ShowActivated="False">
- <glass:GlassWindow.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries>
+ ResizeMode="NoResize" WindowStartupLocation="CenterScreen" ShowInTaskbar="False" ShowActivated="False" Background="{DynamicResource ContentBg}" AllowsTransparency="False">
+ <appWindow:AppWindow.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries>
   <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml"/>
- </ResourceDictionary.MergedDictionaries></ResourceDictionary></glass:GlassWindow.Resources>
+ </ResourceDictionary.MergedDictionaries></ResourceDictionary></appWindow:AppWindow.Resources>
     <Grid>
-        <glass:LiquidGlassSurface x:Name="GlassSurface" />
         <surface:BackgroundSurface UseTransparentBase="True" />
 
  <ScrollViewer Margin="20" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -24,4 +23,6 @@
     Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_PreviewHint]}"/>
   </StackPanel></ScrollViewer>
     </Grid>
-</glass:GlassWindow>
+</appWindow:AppWindow>
+
+

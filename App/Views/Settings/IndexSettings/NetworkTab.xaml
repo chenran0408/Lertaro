@@ -62,7 +62,7 @@
                                Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_HeaderMode]}"
                                Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
                 </Grid>
-                <Border Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1" CornerRadius="6"
+                <Border Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="6"
                         Padding="24,32" Margin="0,8,0,0"
                         Visibility="{Binding NetworkDrive.IsNetworkDrivesEmpty, Converter={StaticResource BoolToVis}}">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">

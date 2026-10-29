@@ -1,9 +1,8 @@
-<glass:GlassWindow x:Class="Lertaro.App.Views.Notifications.NotificationNoticeWindow"
+<appWindow:AppWindow x:Class="Lertaro.App.Views.Notifications.NotificationNoticeWindow" xmlns:appWindow="clr-namespace:Lertaro.App.Views.Controls"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:glass="clr-namespace:GlassDesk.UI.Controls;assembly=GlassDesk.UI" xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
         Title="Notification"
-        SizeToContent="WidthAndHeight"
-        Background="Transparent"
+        SizeToContent="WidthAndHeight" Background="{DynamicResource ContentBg}" AllowsTransparency="False"
         WindowStyle="None"
         ResizeMode="NoResize"
         ShowActivated="False"
@@ -11,18 +10,17 @@
         Topmost="True"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
-        TextElement.Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type glass:GlassWindow}}, Path=ForegroundBrush}"
+        TextElement.Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=ForegroundBrush}"
         TextOptions.TextFormattingMode="Display">
 
-    <glass:GlassWindow.Resources>
+    <appWindow:AppWindow.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </glass:GlassWindow.Resources>
+    </appWindow:AppWindow.Resources>
     <Grid>
-        <glass:LiquidGlassSurface x:Name="GlassSurface" />
         <surface:BackgroundSurface UseTransparentBase="True" />
 
 
@@ -36,4 +34,5 @@
                    TextTrimming="CharacterEllipsis"/>
     </Border>
     </Grid>
-</glass:GlassWindow>
+</appWindow:AppWindow>
+

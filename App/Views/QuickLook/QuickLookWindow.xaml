@@ -1,25 +1,22 @@
-<glass:GlassWindow x:Class="Lertaro.App.Views.QuickLook.QuickLookWindow"
+<appWindow:AppWindow x:Class="Lertaro.App.Views.QuickLook.QuickLookWindow" xmlns:appWindow="clr-namespace:Lertaro.App.Views.Controls"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:glass="clr-namespace:GlassDesk.UI.Controls;assembly=GlassDesk.UI" xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
         Title="QuickLook"
         Height="529" Width="400"
         MinHeight="300" MinWidth="300"
-        WindowStyle="None"
-        AllowsTransparency="True"
-        Background="Transparent"
+        WindowStyle="None" AllowsTransparency="False" Background="{DynamicResource ContentBg}"
         ShowInTaskbar="False"
         ShowActivated="False"
         Focusable="False"
         ResizeMode="CanResizeWithGrip"
         TextElement.Foreground="{Binding RelativeSource={RelativeSource Self}, Path=ForegroundBrush}"
         BorderThickness="0">
-    <glass:GlassWindow.Resources>
+    <appWindow:AppWindow.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         </ResourceDictionary>
-    </glass:GlassWindow.Resources>
+    </appWindow:AppWindow.Resources>
     <Grid>
-        <glass:LiquidGlassSurface x:Name="GlassSurface" />
         <surface:BackgroundSurface UseTransparentBase="True" />
 
     
@@ -52,7 +49,7 @@
             </Grid>
 
             <!-- Separator -->
-            <Border Grid.Row="0" VerticalAlignment="Bottom" Height="1" Background="{StaticResource LiquidControlEdge}" Margin="0,0,0,0"/>
+            <Border Grid.Row="0" VerticalAlignment="Bottom" Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,0"/>
 
             <Grid Grid.Row="1" Margin="0,12,0,12" Background="Transparent">
                 <ContentControl x:Name="ContentArea" Focusable="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
@@ -64,10 +61,11 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Border Grid.ColumnSpan="2" Height="1" VerticalAlignment="Top" Background="{StaticResource LiquidControlEdge}" Margin="0,-8,0,8"/>
+                <Border Grid.ColumnSpan="2" Height="1" VerticalAlignment="Top" Background="{DynamicResource ControlBorderBrush}" Margin="0,-8,0,8"/>
                 <TextBlock x:Name="TxtFooterSize" Grid.Column="0" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
                 <TextBlock x:Name="TxtFooterDate" Grid.Column="1" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" HorizontalAlignment="Right"/>
             </Grid>
     </Grid>
     </Grid>
-</glass:GlassWindow>
+</appWindow:AppWindow>
+

@@ -17,7 +17,7 @@
                 <Setter Property="Margin" Value="4,0,0,0"/>
             </Style>
             <DataTemplate x:Key="QuickLaunchItemTemplate">
-                <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,8">
+                <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,8">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="28"/><ColumnDefinition Width="24"/><ColumnDefinition Width="2*"/><ColumnDefinition Width="3*"/><ColumnDefinition Width="Auto"/>
@@ -149,7 +149,7 @@
                             <settings:PathEntryEditor Grid.Column="0" Grid.ColumnSpan="3" EntryName="{Binding NewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" EntryPath="{Binding NewPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" BrowseFolderCommand="{Binding BrowseFolderCommand}" BrowseFileCommand="{Binding BrowseFileCommand}"/>
                             <Button Grid.Column="3" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_Add]}" Style="{StaticResource PrimarySettingsButton}" Command="{Binding AddCommand}" Height="34" MinWidth="56" Padding="12,0" Margin="8,0,0,0"/>
                         </Grid>
-                        <Separator Background="{StaticResource LiquidControlEdge}" Height="1" Margin="0,0,0,12"/>
+                        <Separator Background="{DynamicResource ControlBorderBrush}" Height="1" Margin="0,0,0,12"/>
                         <Grid Margin="0,0,0,8">
                             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ListTitle]}"
                                        FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>

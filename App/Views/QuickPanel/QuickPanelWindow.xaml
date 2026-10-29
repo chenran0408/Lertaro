@@ -1,9 +1,8 @@
-<glass:GlassWindow x:Class="Lertaro.App.Views.QuickPanel.QuickPanelWindow"
+<appWindow:AppWindow x:Class="Lertaro.App.Views.QuickPanel.QuickPanelWindow" xmlns:appWindow="clr-namespace:Lertaro.App.Views.Controls"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ctrl="clr-namespace:Lertaro.App.Views.Controls"
-        xmlns:glass="clr-namespace:GlassDesk.UI.Controls;assembly=GlassDesk.UI"
         xmlns:services="clr-namespace:Lertaro.App.Services"
         xmlns:helpers="clr-namespace:Lertaro.App.Helpers.Visuals"
         xmlns:local="clr-namespace:Lertaro.App.Views.QuickPanel"
@@ -11,9 +10,7 @@
         Title="Lertaro Quick Panel"
         Width="330" Height="300" MinWidth="280" MinHeight="200" SizeToContent="Manual"
         WindowStyle="None"
-        ResizeMode="CanResizeWithGrip"
-        AllowsTransparency="True"
-        Background="Transparent"
+        ResizeMode="CanResizeWithGrip" AllowsTransparency="False" Background="{DynamicResource ContentBg}"
         TextElement.Foreground="{Binding RelativeSource={RelativeSource Self}, Path=ForegroundBrush}"
         ShowInTaskbar="False"
         Topmost="True"
@@ -21,7 +18,7 @@
         Focusable="True"
         PreviewKeyDown="Window_PreviewKeyDown"
         ShowActivated="False">
-    <glass:GlassWindow.Resources>
+    <appWindow:AppWindow.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml"/>
@@ -40,7 +37,7 @@
                 <ResourceDictionary Source="QuickPanelGroupResources.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </glass:GlassWindow.Resources>
+    </appWindow:AppWindow.Resources>
 
     <Border Background="Transparent" BorderThickness="0">
         <Border Background="Transparent">
@@ -49,7 +46,6 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <glass:LiquidGlassSurface x:Name="GlassSurface" Grid.RowSpan="99" Grid.ColumnSpan="99" UseLauncherTransparency="True" />
                 <surface:BackgroundSurface Grid.RowSpan="99" Grid.ColumnSpan="99" UseTransparentBase="True" />
 
                 <Border Grid.Row="0" Background="Transparent"
@@ -78,7 +74,7 @@
                                 <ColumnDefinition Width="35*"/>
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="1" Height="6" CornerRadius="3"
-                                    Background="{DynamicResource LiquidControlMuted}" Opacity="0.45"/>
+                                    Background="{DynamicResource TextSecondary}" Opacity="0.45"/>
                         </Grid>
 
                     </Grid>
@@ -222,7 +218,7 @@
                             <ContentControl.Template>
                                 <ControlTemplate TargetType="ContentControl">
                                     <Border Background="Transparent"
-                                            BorderBrush="{DynamicResource LiquidControlEdge}" BorderThickness="0,0,0,1">
+                                            BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1">
                                         <ContentPresenter Content="{TemplateBinding Content}"
                                                           ContentTemplate="{TemplateBinding ContentTemplate}"/>
                                     </Border>
@@ -255,4 +251,5 @@
             </Grid>
         </Border>
     </Border>
-</glass:GlassWindow>
+</appWindow:AppWindow>
+

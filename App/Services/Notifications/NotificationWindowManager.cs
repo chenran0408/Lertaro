@@ -94,7 +94,7 @@ internal sealed class NotificationWindowManager(
             window.ContentRendered += (_, _) => Restack(animated: true);
         }
 
-        if (window is GlassDesk.UI.Controls.GlassWindow glassWindow)
+        if (window is Lertaro.App.Views.Controls.AppWindow glassWindow)
             await GlassWindowPresentationHelper.ShowWhenPreparedAsync(glassWindow, Show,
                 () => _runners.TryGetValue(runner.Item, out var current) && ReferenceEquals(current, runner));
         else
@@ -179,7 +179,7 @@ internal sealed class NotificationWindowManager(
             if (isCurrent()) window.Visibility = Visibility.Visible;
         }
 
-        if (window is GlassDesk.UI.Controls.GlassWindow glassWindow)
+        if (window is Lertaro.App.Views.Controls.AppWindow glassWindow)
             return GlassWindowPresentationHelper.ShowWhenPreparedAsync(glassWindow, Show, isCurrent);
         Show();
         return Task.CompletedTask;
@@ -336,3 +336,4 @@ internal sealed class NotificationWindowManager(
         }
     }
 }
+

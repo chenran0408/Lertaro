@@ -14,7 +14,7 @@
     </ResourceDictionary.MergedDictionaries>
 
     <DataTemplate x:Key="RuleItemTemplate">
-        <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,9">
+        <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,9">
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <Grid Grid.ColumnSpan="3">
@@ -42,7 +42,7 @@
     </DataTemplate>
 
     <DataTemplate x:Key="GlobItemTemplate">
-        <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,9">
+        <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,9">
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <Grid Grid.ColumnSpan="3">
@@ -70,7 +70,7 @@
     </DataTemplate>
 
     <DataTemplate x:Key="RegexItemTemplate">
-        <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,9">
+        <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,9">
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <Grid Grid.ColumnSpan="3">

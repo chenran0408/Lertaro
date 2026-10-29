@@ -11,7 +11,7 @@ using Lertaro.App.Views.Controls.Results;
 using Lertaro.PluginSdk.Abstractions.Plugins.Preview;
 namespace Lertaro.App.Views.QuickLook;
 
-public partial class QuickLookWindow : GlassDesk.UI.Controls.GlassWindow
+public partial class QuickLookWindow : Lertaro.App.Views.Controls.AppWindow
 {
     // GlassDesk's visible glass surface fills the top-level window, so preview positioning uses its
     // complete bounds without adding or subtracting a second card margin.
@@ -301,3 +301,4 @@ public partial class QuickLookWindow : GlassDesk.UI.Controls.GlassWindow
         return $"{val:0.##} {suffixes[i]}";
     }
 }
+

@@ -210,8 +210,8 @@
                 </ctrl:TabStripScrollView>
 
                 <Border Grid.Column="1" Height="34" CornerRadius="6" Margin="16,0,8,0" VerticalAlignment="Top"
-                        Background="{StaticResource LiquidControlFill}"
-                        BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1">
+                        Background="{DynamicResource ControlBackground}"
+                        BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1">
                     <Grid>
                         <TextBox Background="Transparent" BorderThickness="0" FontSize="14"
                                  Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
@@ -244,7 +244,7 @@
                         Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Service_ClearLog]}"
                         Command="{Binding Log.ClearCommand}"/>
         </Grid>
-        <Border Grid.Row="3" Height="1" Background="{StaticResource LiquidControlEdge}" Margin="0,0,0,10"/>
+        <Border Grid.Row="3" Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,10"/>
 
         <Border Grid.Row="4" Style="{StaticResource SettingsCard}" Padding="0">
             <!-- RichTextBox instead of an ItemsControl/ListBox: read-only but still a real text-editing

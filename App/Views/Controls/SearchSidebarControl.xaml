@@ -18,7 +18,7 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <StackPanel>
-                                <Rectangle Height="1" Fill="{DynamicResource LiquidControlEdge}" Margin="18,12,18,12">
+                                <Rectangle Height="1" Fill="{DynamicResource ControlBorderBrush}" Margin="18,12,18,12">
                                     <Rectangle.Style>
                                         <Style TargetType="Rectangle">
                                             <Style.Triggers>

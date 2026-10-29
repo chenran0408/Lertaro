@@ -41,6 +41,48 @@ public sealed class InstantPassCacheTests
         Assert.HasCount(1, final.Where(row => ReferenceEquals(row.SourceProvider, provider)));
     }
 
+    [TestMethod]
+    public async Task GlobalQuickPaint_DoesNotWaitForBlockedInstantProvider_AndIncludesItAfterCompletion()
+    {
+        using var provider = new BlockingProvider();
+        var pass = new SearchResultMapper.InstantPassCache();
+        var providerPass = Task.Run(() => SearchResultMapper.CollectInstantPass(
+            pass, "pcl", "pcl", false, null, [provider]));
+
+        try
+        {
+            Assert.IsTrue(provider.Entered.Wait(TimeSpan.FromSeconds(5)), "The provider should be running before the file paint starts.");
+
+            var paint = Task.Run(() => SearchResultMapper.BuildQuickResults(
+                PclFiles(), "pcl", scope: null, contextDirectory: null, isInlineWindow: false,
+                rawQuery: "pcl", instantPass: pass));
+            var completed = await Task.WhenAny(paint, Task.Delay(TimeSpan.FromSeconds(2)));
+
+            Assert.AreSame(paint, completed, "The global quick-search file paint must not wait for a slow instant provider.");
+            var earlyRows = await paint;
+            CollectionAssert.IsSubsetOf(
+                new[] { @"C:\Notes\pcl-alpha.txt", @"C:\Notes\pcl-beta.txt" },
+                earlyRows.Select(row => row.FullPath).ToArray());
+            Assert.IsFalse(earlyRows.Any(row => ReferenceEquals(row.SourceProvider, provider)));
+            Assert.IsFalse(pass.Completion.IsCompleted, "The controlled provider is still blocked at this point.");
+
+            provider.Release.Set();
+            await providerPass.WaitAsync(TimeSpan.FromSeconds(5));
+            await pass.Completion.WaitAsync(TimeSpan.FromSeconds(5));
+
+            var refreshedRows = SearchResultMapper.BuildQuickResults(
+                PclFiles(), "pcl", scope: null, contextDirectory: null, isInlineWindow: false,
+                rawQuery: "pcl", instantPass: pass);
+            Assert.IsTrue(refreshedRows.Any(row => ReferenceEquals(row.SourceProvider, provider) && row.Name == "Late provider result"));
+            Assert.AreEqual(1, provider.Calls);
+        }
+        finally
+        {
+            provider.Release.Set();
+            await providerPass.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+    }
+
     private sealed class CountingProvider : IInstantResultProvider
     {
         public string Name => "Dictionary";
@@ -58,6 +100,31 @@ public sealed class InstantPassCacheTests
         }
     }
 
+    private sealed class BlockingProvider : IInstantResultProvider, IDisposable
+    {
+        public string Name => "Blocking";
+        public readonly ManualResetEventSlim Entered = new();
+        public readonly ManualResetEventSlim Release = new();
+        public int Calls;
+
+        public IEnumerable<InstantResultItem> GetInstantResults(string query) => GetInstantResults(query, null);
+
+        public IEnumerable<InstantResultItem> GetInstantResults(string query, string? contextDirectory)
+        {
+            Interlocked.Increment(ref Calls);
+            Entered.Set();
+            if (!Release.Wait(TimeSpan.FromSeconds(10)))
+                throw new TimeoutException("Test did not release the controlled provider.");
+            return [new InstantResultItem { Title = "Late provider result", ActionArgument = Guid.NewGuid().ToString() }];
+        }
+
+        public void Dispose()
+        {
+            Entered.Dispose();
+            Release.Dispose();
+        }
+    }
+
     private static AppSearchResult ProvidedRow(string name) =>
         new() { Name = name, FullPath = $"__INSTANT_RESULT__:{name}", ResultKind = "InstantResult" };
 
@@ -65,6 +132,12 @@ public sealed class InstantPassCacheTests
     [
         new SearchResult { Path = @"C:\Notes\alpha.txt", Name = "alpha.txt" },
         new SearchResult { Path = @"C:\Notes\beta.txt", Name = "beta.txt" },
+    ];
+
+    private static List<SearchResult> PclFiles() =>
+    [
+        new SearchResult { Path = @"C:\Notes\pcl-alpha.txt", Name = "pcl-alpha.txt", Drive = "C" },
+        new SearchResult { Path = @"C:\Notes\pcl-beta.txt", Name = "pcl-beta.txt", Drive = "C" },
     ];
 
     [TestMethod]

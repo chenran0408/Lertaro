@@ -20,7 +20,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <DataTemplate x:Key="PreviewProviderItemTemplate">
-                <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,9">
+                <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,9">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -71,7 +71,7 @@
                  parameterizing the one above, matching how e.g. QuickNavItemTemplate/TabOrderItemTemplate
                  each stay one template per reorderable list elsewhere in this settings area. -->
             <DataTemplate x:Key="ThumbnailProviderItemTemplate">
-                <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,9">
+                <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,9">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>

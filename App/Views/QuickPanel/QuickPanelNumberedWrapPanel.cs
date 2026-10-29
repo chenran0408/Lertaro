@@ -3,7 +3,6 @@ using System.Windows;
 using System.Windows.Media.Animation;
 using System.Windows.Media;
 using Lertaro.App.Converters;
-using GlassDesk.UI.Theming;
 using Point = System.Windows.Point;
 
 namespace Lertaro.App.Views.QuickPanel;
@@ -96,8 +95,6 @@ internal sealed class QuickPanelNumberedWrapPanel : System.Windows.Controls.Pane
         _previewGridSlots = slots;
         InvalidateMeasure();
         UpdateLayout();
-        if (ThemeService.Current?.AnimationsEnabled == false) return;
-
         var duration = TimeSpan.FromMilliseconds(210);
         foreach (var child in InternalChildren.Cast<UIElement>())
         {

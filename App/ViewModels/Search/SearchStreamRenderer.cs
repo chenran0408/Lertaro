@@ -57,7 +57,8 @@ internal sealed class SearchStreamRenderer
         bool resultMapperConsumesBatches = false,
         Action<int>? onReceivedCountUpdated = null,
         FileFilterScopeDirective? scopeDirective = null,
-        bool foldersOnly = false)
+        bool foldersOnly = false,
+        Task? additionalResultsReady = null)
     {
         var streamedResponse = new List<SearchResult>();
         object responseLock = new();
@@ -67,6 +68,7 @@ internal sealed class SearchStreamRenderer
         var copiedCount = 0;
         var responseHead = 0;
         var streamDone = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var supplementalResultsRendered = additionalResultsReady is null;
 
         // Scoped searches answer from N per-folder engine queries, so the same file can arrive from two
         // overlapping configured folders -- dedupe by path at accumulation.
@@ -107,6 +109,8 @@ internal sealed class SearchStreamRenderer
             if (searchVersion != _getSearchVersion() || token.IsCancellationRequested)
                 return;
 
+            var includeAdditionalResults = additionalResultsReady is null || additionalResultsReady.IsCompleted;
+
             List<SearchResult> snapshot;
             var received = 0;
             lock (responseLock)
@@ -126,7 +130,7 @@ internal sealed class SearchStreamRenderer
             if (localMatches != null)
                 uiResults = InlineListSearchHelper.MergeLocalMatches(uiResults, localMatches, query, contextDirectory);
 
-            if (final && uiResults.Count == 0)
+            if (final && includeAdditionalResults && uiResults.Count == 0)
                 uiResults.Add(SearchResultMapper.CreateNoResultsResult(query));
 
             var statusText = uiResults.Count > 0
@@ -134,6 +138,7 @@ internal sealed class SearchStreamRenderer
                 : string.Empty;
 
             // Let pending input invalidate this query before spending a UI turn on its rows.
+            var applied = false;
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 if (searchVersion != _getSearchVersion() || token.IsCancellationRequested)
@@ -141,7 +146,10 @@ internal sealed class SearchStreamRenderer
                 onResultsUpdated(uiResults, statusText, final);
                 if (!final)
                     onReceivedCountUpdated?.Invoke(received);
+                applied = true;
             }, DispatcherPriority.Background, token).Task.ConfigureAwait(false);
+            if (applied && includeAdditionalResults)
+                supplementalResultsRendered = true;
         }
 
         using var pumpCts = CancellationTokenSource.CreateLinkedTokenSource(token);
@@ -164,12 +172,21 @@ internal sealed class SearchStreamRenderer
                     if (streamDone.Task.IsCompleted)
                         await Task.Delay(interval, pumpToken).ConfigureAwait(false);
                     else
-                        await Task.WhenAny(Task.Delay(interval, pumpToken), streamDone.Task).ConfigureAwait(false);
+                    {
+                        var intervalTask = Task.Delay(interval, pumpToken);
+                        if (additionalResultsReady is not null && !supplementalResultsRendered)
+                            await Task.WhenAny(intervalTask, streamDone.Task, additionalResultsReady).ConfigureAwait(false);
+                        else
+                            await Task.WhenAny(intervalTask, streamDone.Task).ConfigureAwait(false);
+                    }
                     pumpToken.ThrowIfCancellationRequested();
 
                     var finished = streamDone.Task.IsCompleted;
                     var received = Volatile.Read(ref streamedCount);
                     var localChanged = (getLocalUpdateVersion?.Invoke() ?? renderedLocalVersion) != renderedLocalVersion;
+                    var supplementalChanged = additionalResultsReady is not null
+                        && additionalResultsReady.IsCompleted
+                        && !supplementalResultsRendered;
 
                     // The final render consumes every remaining batch and performs the full window's
                     // one exact rank sort. Draining the backlog through intermediate UI paints first
@@ -178,13 +195,15 @@ internal sealed class SearchStreamRenderer
                         return;
 
                     var take = plan.NextRenderSize(received, sinceLastPaint.ElapsedMilliseconds);
+                    if (supplementalChanged)
+                        take = Math.Max(take, received);
 
                     // The final render below contains the latest local snapshot, so an under-threshold
                     // completed stream never needs a visibly transient local-only paint first.
-                    if (finished && take == 0 && localSearchTask?.IsCompleted == true)
+                    if (finished && take == 0 && localSearchTask?.IsCompleted == true && !supplementalChanged)
                         return;
 
-                    if (take == 0 && !localChanged)
+                    if (take == 0 && !localChanged && !supplementalChanged)
                     {
                         if (!finished && onReceivedCountUpdated != null)
                         {
@@ -277,6 +296,29 @@ internal sealed class SearchStreamRenderer
         else
         {
             await RenderSnapshotAsync(final: true, int.MaxValue).ConfigureAwait(false);
+        }
+
+        if (additionalResultsReady is not null && !supplementalResultsRendered)
+            _ = RefreshAfterAdditionalResultsAsync(additionalResultsReady, token,
+                () => searchVersion == _getSearchVersion(),
+                () => RenderSnapshotAsync(final: true, int.MaxValue));
+    }
+
+    internal static async Task RefreshAfterAdditionalResultsAsync(Task additionalResultsReady, CancellationToken token,
+        Func<bool> isCurrentSearch, Func<Task> refresh)
+    {
+        try
+        {
+            await additionalResultsReady.WaitAsync(token).ConfigureAwait(false);
+            if (isCurrentSearch() && !token.IsCancellationRequested)
+                await refresh().ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"[SearchStreamRenderer] Supplemental search-result render failed: {ex}", LogLevel.Warn);
         }
     }
 

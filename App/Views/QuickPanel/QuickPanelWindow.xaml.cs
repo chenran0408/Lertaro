@@ -9,21 +9,11 @@ namespace Lertaro.App.Views.QuickPanel;
 // The panel itself: one workspace's sources, docked to the bottom-right of whatever window is in
 // front. Lifecycle, the hotkey and the docking maths all live in QuickPanelManager, and what is shown
 // comes from QuickPanelViewModel; this file is only the window's own input handling.
-public partial class QuickPanelWindow : GlassDesk.UI.Controls.GlassWindow,
+public partial class QuickPanelWindow : Lertaro.App.Views.Controls.AppWindow,
     PluginSdk.Abstractions.IPluginSearchWindow,
     Services.AppWindow.IHasVisibleContentInset
 {
     public Thickness VisibleContentInset => new(0);
-
-    protected override bool UseLauncherTextBrightness => true;
-
-    protected override double ResolveCornerRadius(GlassDesk.Core.Models.Settings.AppearanceSettings appearance)
-    {
-        ArgumentNullException.ThrowIfNull(appearance);
-        // GlassDesk's 80-DIP radius belongs to its launcher, which occupies most of the work area.
-        // Keep the same curve proportion on this much smaller quick panel.
-        return Math.Min(appearance.LauncherCornerRadius, Math.Min(Width, Height) * .08);
-    }
 
     internal bool IsSizeMenuOpen => SizeButton.ContextMenu?.IsOpen == true || _itemMenu.IsOpen;
     private readonly QuickPanelItemMenu _itemMenu;
@@ -42,8 +32,6 @@ public partial class QuickPanelWindow : GlassDesk.UI.Controls.GlassWindow,
     {
         _itemMenu = new QuickPanelItemMenu(this);
         InitializeComponent();
-        Loaded += (_, _) => UpdateGlassPanelShape();
-        SizeChanged += (_, _) => UpdateGlassPanelShape();
         _ = new QuickPanelArrangePinSupport(this, viewModel);
         var scrollSupport = new QuickPanelScrollSupport(GroupsScrollViewer, StickyGroupHeader);
         Loaded += (_, _) => Dispatcher.BeginInvoke(scrollSupport.Update, System.Windows.Threading.DispatcherPriority.Loaded);
@@ -70,12 +58,6 @@ public partial class QuickPanelWindow : GlassDesk.UI.Controls.GlassWindow,
             viewModel.PropertyChanged -= OnViewModelChanged;
             ReleasePreview();
         };
-    }
-
-    private void UpdateGlassPanelShape()
-    {
-        if (ActualWidth <= 0 || ActualHeight <= 0) return;
-        GlassSurface.SetPanelShape(new Rect(0, 0, ActualWidth, ActualHeight), PanelCornerRadius.TopLeft);
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -319,3 +301,4 @@ public partial class QuickPanelWindow : GlassDesk.UI.Controls.GlassWindow,
         }
     }
 }
+

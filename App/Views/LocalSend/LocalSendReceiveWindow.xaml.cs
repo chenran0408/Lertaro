@@ -10,7 +10,7 @@ using Lertaro.Core.Services.LocalSend.Models;
 using Lertaro.PluginSdk.Helpers;
 using System.Windows.Threading;
 namespace Lertaro.App.Views.LocalSend;
-public partial class LocalSendReceiveWindow : GlassDesk.UI.Controls.GlassWindow
+public partial class LocalSendReceiveWindow : Lertaro.App.Views.Controls.AppWindow
 {
     private readonly LocalSendUploadRequestArgs _requestArgs;
     private readonly Stopwatch _stopwatch = new();
@@ -300,3 +300,4 @@ public partial class LocalSendReceiveWindow : GlassDesk.UI.Controls.GlassWindow
     private void BtnCopyText_Click(object sender, RoutedEventArgs e)
     { if (_isTextUrl) { try { Process.Start(new ProcessStartInfo(TxtTextMessage.Text.Trim()) { UseShellExecute = true }); } catch { } } else System.Windows.Clipboard.SetText(TxtTextMessage.Text); Close(); }
 }
+

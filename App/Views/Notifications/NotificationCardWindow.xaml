@@ -1,12 +1,11 @@
-<glass:GlassWindow x:Class="Lertaro.App.Views.Notifications.NotificationCardWindow"
+<appWindow:AppWindow x:Class="Lertaro.App.Views.Notifications.NotificationCardWindow" xmlns:appWindow="clr-namespace:Lertaro.App.Views.Controls"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:glass="clr-namespace:GlassDesk.UI.Controls;assembly=GlassDesk.UI" xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
         xmlns:services="clr-namespace:Lertaro.App.Services"
         Title="Notification"
         Width="360"
         MaxHeight="260"
-        SizeToContent="Height"
-        Background="Transparent"
+        SizeToContent="Height" Background="{DynamicResource ContentBg}" AllowsTransparency="False"
         WindowStyle="None"
         ResizeMode="NoResize"
         ShowActivated="False"
@@ -19,7 +18,7 @@
 
     <!-- MaxHeight is NotificationWindowManager.CardMaxHeightDip, stated here rather than assigned at runtime so
          the card's height is final before the stack first measures it. -->
-    <glass:GlassWindow.Resources>
+    <appWindow:AppWindow.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml"/>
@@ -36,7 +35,7 @@
                 <Setter Property="FontSize" Value="10"/>
                 <Setter Property="Foreground">
                     <Setter.Value>
-                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type glass:GlassWindow}}" Path="SecondaryForegroundBrush"/>
+                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type appWindow:AppWindow}}" Path="SecondaryForegroundBrush"/>
                     </Setter.Value>
                 </Setter>
                 <Setter Property="Cursor" Value="Hand"/>
@@ -48,7 +47,7 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Plate" Property="Background" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type glass:GlassWindow}}, Path=PanelBorderBrush}"/>
+                                    <Setter TargetName="Plate" Property="Background" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelBorderBrush}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -56,9 +55,8 @@
                 </Setter>
             </Style>
         </ResourceDictionary>
-    </glass:GlassWindow.Resources>
+    </appWindow:AppWindow.Resources>
     <Grid>
-        <glass:LiquidGlassSurface x:Name="GlassSurface" />
         <surface:BackgroundSurface UseTransparentBase="True" />
 
 
@@ -82,7 +80,7 @@
 
                 <!-- Title bar. Dragging moves this card for as long as it lives and nothing longer. -->
                 <Border Grid.Row="0" Background="Transparent"
-                        BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type glass:GlassWindow}}, Path=PanelBorderBrush}" BorderThickness="0,0,0,1"
+                        BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelBorderBrush}" BorderThickness="0,0,0,1"
                         MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <Grid Margin="10,0,6,0">
                         <Grid.ColumnDefinitions>
@@ -112,7 +110,7 @@
 
                 <!-- The name of whoever sent this, injected by the host: a plugin cannot choose it. -->
                 <TextBlock x:Name="TxtSource" Grid.Row="1" FontSize="12" Margin="12,8,12,0"
-                           Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type glass:GlassWindow}}, Path=SecondaryForegroundBrush}" TextTrimming="CharacterEllipsis"/>
+                           Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=SecondaryForegroundBrush}" TextTrimming="CharacterEllipsis"/>
 
                 <!-- Scrolls instead of growing the card past its budget, and never sideways. Deferred
                      scrolling is off: dragging the thumb then repainting on release is the smear it buys,
@@ -131,8 +129,9 @@
                  it cannot catch a click meant for the body. Its corner radius follows the GlassDesk window clip. -->
             <Border x:Name="ArrivalRim" Grid.ColumnSpan="2" Opacity="0" IsHitTestVisible="False"
                     BorderThickness="2" BorderBrush="{DynamicResource AccentBlue}"
-                    Margin="-1" CornerRadius="{Binding PanelCornerRadius, RelativeSource={RelativeSource AncestorType={x:Type glass:GlassWindow}}}"/>
+                    Margin="-1" CornerRadius="{Binding PanelCornerRadius, RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}}"/>
         </Grid>
     </Border>
     </Grid>
-</glass:GlassWindow>
+</appWindow:AppWindow>
+

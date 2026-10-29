@@ -21,7 +21,7 @@
             <!-- Same shape as GeneralSettingsQuickNavigationTab.xaml's own QuickNavItemTemplate, wired to
                  SidebarGroupOrder's Move Up/Down commands instead of QuickNavigationOrder's. -->
             <DataTemplate x:Key="SidebarGroupOrderItemTemplate">
-                <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,9">
+                <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,9">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -70,7 +70,7 @@
             <!-- Same shape as SidebarGroupOrderItemTemplate above, wired to ColumnOrder's own Move
                  Up/Down commands. -->
             <DataTemplate x:Key="ColumnOrderItemTemplate">
-                <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,9">
+                <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,9">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -119,7 +119,7 @@
             <!-- Same shape as SidebarGroupOrderItemTemplate above, wired to ActionMenuGroupOrder's own
                  Move Up/Down commands. -->
             <DataTemplate x:Key="ActionMenuGroupOrderItemTemplate">
-                <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,9">
+                <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,9">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>

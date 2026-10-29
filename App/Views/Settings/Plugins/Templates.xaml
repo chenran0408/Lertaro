@@ -34,10 +34,10 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                             <Setter TargetName="AccentBar" Property="Fill" Value="{DynamicResource AccentBarColor}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -109,7 +109,7 @@
                 </TextBox.ToolTip>
             </TextBox>
             <Border Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" Visibility="{Binding IsIconField, Converter={StaticResource InvertBoolToVis}}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-            <Border Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1" Visibility="{Binding IsIconField, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <Border Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" Visibility="{Binding IsIconField, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Path Data="{Binding Value}" Fill="{DynamicResource DefaultPluginIconColor}" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center"/>
             </Border>
         </StackPanel>
@@ -141,7 +141,7 @@
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" MaxLength="{Binding MaxLength}" local:PluginConfigTemplates.ApplyInitialSelection="True" Width="{Binding EditorWidth}" TextAlignment="{Binding TextAlignment}" Height="26"/>
                                 <Border Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" Visibility="{Binding IsIconField, Converter={StaticResource InvertBoolToVis}}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                <Border Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1" Visibility="{Binding IsIconField, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <Border Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" Visibility="{Binding IsIconField, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center" HorizontalAlignment="Center">
                                     <Path Data="{Binding Value}" Fill="{DynamicResource DefaultPluginIconColor}" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                 </Border>
                             </StackPanel>
@@ -185,9 +185,9 @@
         <Setter Property="Height" Value="26"/>
         <Setter Property="Margin" Value="8,0,0,0"/>
         <Setter Property="Padding" Value="0"/>
-        <Setter Property="Background" Value="{StaticResource LiquidControlFill}"/>
-        <Setter Property="Foreground"><Setter.Value><Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlMuted}"/></Setter.Value></Setter>
-        <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdge}"/>
+        <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
+        <Setter Property="Foreground"><Setter.Value><Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextSecondary}"/></Setter.Value></Setter>
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FontFamily" Value="{DynamicResource AppIconFontFamily}"/>
@@ -201,7 +201,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                             <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
                             <Setter Property="Foreground" Value="{DynamicResource AccentBlue}"/>
                         </Trigger>

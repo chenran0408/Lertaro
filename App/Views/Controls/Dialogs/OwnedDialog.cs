@@ -84,7 +84,7 @@ internal static class OwnedDialog
     /// </remarks>
     public static void ShowModal(Window dialog)
     {
-        if (dialog is GlassDesk.UI.Controls.GlassWindow glassWindow && !dialog.IsVisible)
+        if (dialog is Lertaro.App.Views.Controls.AppWindow glassWindow && !dialog.IsVisible)
         {
             ShowPreparedModal(glassWindow);
             return;
@@ -93,7 +93,7 @@ internal static class OwnedDialog
         ShowModalNow(dialog);
     }
 
-    private static void ShowPreparedModal(GlassDesk.UI.Controls.GlassWindow dialog)
+    private static void ShowPreparedModal(Lertaro.App.Views.Controls.AppWindow dialog)
     {
         var owner = dialog.Owner;
         var ownerCloseDeferred = false;
@@ -179,3 +179,4 @@ internal static class OwnedDialog
     // destroyed the moment it is created, which is the same freeze as above with no window to blame.
     private static bool IsAlive(Window window) => new WindowInteropHelper(window).Handle != IntPtr.Zero;
 }
+

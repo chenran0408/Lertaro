@@ -96,7 +96,7 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ctrl:TabStripScrollView>
-            <Border Height="1" Background="{StaticResource LiquidControlEdge}" Margin="0,0,0,12"/>
+            <Border Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,12"/>
         </StackPanel>
 
         <ScrollViewer Grid.Row="2" Margin="0,4,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">

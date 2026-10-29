@@ -13,7 +13,7 @@
         <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="54"/></Grid.RowDefinitions>
         <Grid Grid.Row="0" Margin="16,14,16,12"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_Device]}" FontSize="14" FontWeight="Medium" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" Margin="0,0,0,8"/>
-            <Border Grid.Row="1" Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1" CornerRadius="8">
+            <Border Grid.Row="1" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="8">
                 <ListBox x:Name="DeviceList" ItemsSource="{Binding DiscoveredDevices}" SelectionMode="Multiple" SelectionChanged="DeviceList_SelectionChanged" Background="Transparent" BorderThickness="0" Margin="4" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ListBox.ItemContainerStyle>
                         <Style TargetType="ListBoxItem">
@@ -29,7 +29,7 @@
                                             </Border>
                                         </Grid>
                                         <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource LiquidControlHover}"/></Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ControlHoverBackground}"/></Trigger>
                                             <Trigger Property="IsSelected" Value="True"><Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SelectedBackground}"/><Setter TargetName="AccentBar" Property="Fill" Value="{DynamicResource AccentBarColor}"/></Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -73,7 +73,7 @@
                 </ListBox>
             </Border>
         </Grid>
-        <Border Grid.Row="1" Background="Transparent" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,1,0,0" Padding="16,0">
+        <Border Grid.Row="1" Background="Transparent" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,1,0,0" Padding="16,0">
             <Grid VerticalAlignment="Center">
                 <Button x:Name="SelectAllButton" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_SelectAll], Mode=OneWay}" Click="SelectAll_Click" Style="{StaticResource SettingsButton}" HorizontalAlignment="Left" Height="30"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

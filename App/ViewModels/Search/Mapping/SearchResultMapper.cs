@@ -29,9 +29,30 @@ public static class SearchResultMapper
     /// </remarks>
     internal sealed class InstantPassCache
     {
-        public bool Collected;
+        private readonly TaskCompletionSource _completed = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public volatile bool Collected;
         public readonly List<AppSearchResult> Rows = new();
         public bool HasPluginSearchActions;
+
+        public Task Completion => _completed.Task;
+
+        public bool TryGetRows(out IReadOnlyList<AppSearchResult> rows)
+        {
+            if (!Collected)
+            {
+                rows = Array.Empty<AppSearchResult>();
+                return false;
+            }
+
+            rows = Rows;
+            return true;
+        }
+
+        public void MarkCollected()
+        {
+            Collected = true;
+            _completed.TrySetResult();
+        }
     }
 
     internal static List<AppSearchResult> CollectInstantPass(InstantPassCache pass, string rawQuery, string query, bool isInlineWindow, string? contextDirectory,
@@ -43,12 +64,20 @@ public static class SearchResultMapper
             if (pass.Collected)
                 return pass.Rows;
 
-            // Providers and command actions need the original trigger word; only highlighting uses the stripped query.
-            PluginSearchResultMapper.AddInstantResults(pass.Rows, rawQuery, query, isInlineWindow, contextDirectory,
-                providers ?? PluginManager.Instance.InstantResultProviders);
-            pass.HasPluginSearchActions = PluginSearchResultMapper.AddPluginSearchActionResults(pass.Rows, rawQuery, contextDirectory, isInlineWindow);
-            pass.Collected = true;
-            return pass.Rows;
+            try
+            {
+                // Providers and command actions need the original trigger word; only highlighting uses the stripped query.
+                PluginSearchResultMapper.AddInstantResults(pass.Rows, rawQuery, query, isInlineWindow, contextDirectory,
+                    providers ?? PluginManager.Instance.InstantResultProviders);
+                pass.HasPluginSearchActions = PluginSearchResultMapper.AddPluginSearchActionResults(pass.Rows, rawQuery, contextDirectory, isInlineWindow);
+                return pass.Rows;
+            }
+            finally
+            {
+                // A failed plugin pass must still unblock file rendering. Rows already collected remain usable;
+                // the original exception continues to its caller.
+                pass.MarkCollected();
+            }
         }
     }
 
@@ -61,13 +90,19 @@ public static class SearchResultMapper
     internal static List<AppSearchResult> BuildQuickResults(List<SearchResult>? fileResults, string query, string? scope, string? contextDirectory, bool isInlineWindow, string? rawQuery = null, bool skipDisplayCap = false, FileFilterScopeDirective? fileFilterScope = null, bool folderScope = false, InstantPassCache? instantPass = null, bool preferLaunches = true)
     {
         var uiResults = new List<AppSearchResult>();
-        // One pass over the plugin providers per search, not per paint. This method IS a paint callback --
-        // the quick and inline windows re-run it on every intermediate paint of a streaming search, and a
-        // paint cannot reach the screen until the pass below finishes. See InstantPassCache.
+        // One pass over the plugin providers per search. The normal global quick search reads only a
+        // completed snapshot here; it does not wait for the early provider pass before showing file matches.
+        // Token, scoped, inline, and standalone mapper calls keep the synchronous path.
+        var ownsInstantPass = instantPass is null;
         instantPass ??= new InstantPassCache();
-        CollectInstantPass(instantPass, rawQuery ?? query, query, isInlineWindow, contextDirectory);
-        uiResults.AddRange(instantPass.Rows);
-        var hasPluginSearchActions = instantPass.HasPluginSearchActions;
+        // The normal global quick-search paint must not wait for slow live-state/plugin providers. Its
+        // owning SearchStreamRenderer will repaint this query when the asynchronous pass completes.
+        // Token, scoped, inline, and standalone mapper calls keep their synchronous behavior.
+        var deferInstantPass = !ownsInstantPass && !isInlineWindow && !skipDisplayCap && fileFilterScope is null && !folderScope;
+        if (!deferInstantPass)
+            CollectInstantPass(instantPass, rawQuery ?? query, query, isInlineWindow, contextDirectory);
+        if (instantPass.TryGetRows(out var instantRows))
+            uiResults.AddRange(instantRows);
 
         RemoveQueriedDirectoryItself(fileResults, query);
 

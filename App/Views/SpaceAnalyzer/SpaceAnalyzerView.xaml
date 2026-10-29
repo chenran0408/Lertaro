@@ -21,11 +21,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
-                                <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdgeActive}"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -49,7 +49,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Background" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                                <Setter TargetName="Background" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                                 <Setter Property="Foreground" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
@@ -82,7 +82,7 @@
                        Margin="0,5,0,0" FontSize="14" Style="{StaticResource GlassTextSecondary}"/>
         </StackPanel>
 
-        <Border Grid.Row="1" Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}"
+        <Border Grid.Row="1" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}"
                 BorderThickness="1" CornerRadius="9" Padding="6,3" Margin="20,0,20,10">
             <DockPanel>
                 <Button x:Name="BackButton" DockPanel.Dock="Left" Style="{StaticResource SpaceBreadcrumbButton}"
@@ -96,7 +96,7 @@
 
         <Grid Grid.Row="2" Margin="20,0,20,14">
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="330"/></Grid.ColumnDefinitions>
-            <Border Grid.Column="0" Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}"
+            <Border Grid.Column="0" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}"
                     BorderThickness="1" CornerRadius="12" Padding="8" Margin="0,0,12,0">
                 <Grid>
                     <Canvas x:Name="TreemapCanvas" SizeChanged="TreemapCanvas_SizeChanged"
@@ -110,7 +110,7 @@
                 </Grid>
             </Border>
 
-            <Border Grid.Column="1" Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}"
+            <Border Grid.Column="1" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}"
                     BorderThickness="1" CornerRadius="12" Padding="8">
                 <Grid>
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
@@ -141,7 +141,7 @@
                                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                     <TextBlock Grid.RowSpan="2" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="14"
-                                               Foreground="{StaticResource LiquidControlAccent}" Margin="0,0,8,0">
+                                               Foreground="{DynamicResource AccentBlue}" Margin="0,0,8,0">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Text" Value="&#xE8A5;"/>
@@ -163,7 +163,7 @@
                                                Style="{StaticResource GlassTextSecondary}" FontSize="11.5" Margin="10,0,0,0"/>
                                     <ProgressBar Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Value="{Binding RelativePercentage}"
                                                  Minimum="0" Maximum="100" Height="3" Margin="0,6,0,0" BorderThickness="0"
-                                                 Background="{StaticResource LiquidControlEdge}" IsHitTestVisible="False"/>
+                                                 Background="{DynamicResource ControlBorderBrush}" IsHitTestVisible="False"/>
                                     <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,5,0,0">
                                         <StackPanel.Style><Style TargetType="StackPanel">
                                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -185,7 +185,7 @@
             </Border>
         </Grid>
 
-        <Border Grid.Row="3" Background="Transparent" BorderBrush="{StaticResource LiquidControlEdge}"
+        <Border Grid.Row="3" Background="Transparent" BorderBrush="{DynamicResource ControlBorderBrush}"
                 BorderThickness="0,1,0,0" Padding="20,9">
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>

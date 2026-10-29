@@ -29,12 +29,12 @@ internal static class QuickNavigationMenuContentExtensions
     // bare `new Separator()`: this popup's items are built entirely in code with no local Style set, so
     // it was left depending on Menu.xaml's implicit TargetType="Separator" style resolving correctly for
     // an ad-hoc ContextMenu -- it visually came out a noticeably different, more saturated color than
-    // the actions menu's own separator. Using GlassDesk's LiquidControlEdge here keeps both code-built
+    // the actions menu's own separator. Using GlassDesk's ControlBorderBrush here keeps both code-built
     // popups on the same material token and continues to follow live theme updates.
     internal static Separator CreateSeparator()
     {
         var separator = new Separator();
-        separator.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, "LiquidControlEdge");
+        separator.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, "ControlBorderBrush");
         return separator;
     }
 

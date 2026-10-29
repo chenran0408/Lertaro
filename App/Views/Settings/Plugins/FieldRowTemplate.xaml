@@ -67,7 +67,7 @@
                     </StackPanel>
                     <TextBlock Text="{Binding Description}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
 
-                    <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0">
+                    <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0">
                         <!-- Collapsed layouts still create children. Only the matching layout may
                              host them: a plugin's CustomControl can have only one visual parent. -->
                         <ItemsControl>
@@ -92,7 +92,7 @@
                     </StackPanel>
                     <TextBlock Text="{Binding Description}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
 
-                    <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0">
+                    <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0">
                         <ItemsControl>
                             <ItemsControl.Style>
                                 <Style TargetType="ItemsControl">
@@ -219,13 +219,13 @@
                                             </Grid>
 
                                             <Border Grid.Column="1" Width="22" Height="22" Margin="0,0,8,0" CornerRadius="4"
-                                                    Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1"
+                                                    Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1"
                                                     Visibility="{Binding IconField, Converter={StaticResource NullToVis}}">
                                                 <Path Data="{Binding IconField.Value}" Fill="{DynamicResource DefaultPluginIconColor}" Width="11" Height="11" Stretch="Uniform"/>
                                             </Border>
                                             <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding DisplayTitle, Converter={StaticResource EmptyOrPlaceholder}}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" TextTrimming="CharacterEllipsis"/>
-                                                <Border Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1"
+                                                <Border Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1"
                                                         CornerRadius="4" Padding="5,0,5,1" Margin="0,3,0,0" HorizontalAlignment="Left"
                                                         Visibility="{Binding BadgeField, Converter={StaticResource BadgeFieldToVis}}">
                                                     <TextBlock Text="{Binding BadgeField.Value}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource BadgeText}"/>
@@ -251,7 +251,7 @@
                              then mirrors onto ArrayMasterListGrid: a pure Grid-Auto-row approach
                              here creates a feedback loop where a tall item list on the left drags
                              this panel's height up with it instead of staying at its own size. -->
-                        <Border Grid.Column="2" VerticalAlignment="Top" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1,0,0,0" Padding="12,0,0,0"
+                        <Border Grid.Column="2" VerticalAlignment="Top" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1,0,0,0" Padding="12,0,0,0"
                                 Visibility="{Binding SelectedArrayItem, Converter={StaticResource NullToVis}}"
                                 Loaded="ArrayDetailPanel_Loaded" SizeChanged="ArrayDetailPanel_SizeChanged">
                             <StackPanel DataContext="{Binding SelectedArrayItem}">
@@ -262,13 +262,13 @@
                     </ScrollViewer>
 
                     <!-- Scalar-array list: a single value column, no header needed -->
-                    <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0"
+                    <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0"
                             Visibility="{Binding IsScalarArray, Converter={StaticResource BoolToVis}}">
                         <StackPanel>
                             <ItemsControl ItemsSource="{Binding ArrayItems}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,4" Margin="0,0,0,4">
+                                        <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,4" Margin="0,0,0,4">
                                             <StackPanel Orientation="Horizontal">
                                                 <ContentControl Content="{Binding SimpleValueViewModel}" VerticalAlignment="Center" Focusable="False"
                                                                  Style="{StaticResource FieldValueEditorStyle}"/>

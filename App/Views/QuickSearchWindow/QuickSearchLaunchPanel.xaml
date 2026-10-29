@@ -26,7 +26,7 @@
             <Setter Property="CornerRadius" Value="6"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                    <Setter Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -68,10 +68,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="SelectionOverlay" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                                <Setter TargetName="SelectionOverlay" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="SelectionOverlay" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                                <Setter TargetName="SelectionOverlay" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -118,7 +118,7 @@
                                             <Border Visibility="{Binding ShortcutVisibility}"
                                                     HorizontalAlignment="Center" VerticalAlignment="Bottom"
                                                     Margin="0" CornerRadius="4"
-                                                    Background="{DynamicResource LiquidControlHover}"
+                                                    Background="{DynamicResource ControlHoverBackground}"
                                                     Panel.ZIndex="1" IsHitTestVisible="False">
                                                 <TextBlock Text="{Binding ShortcutHint}" Padding="4,1"
                                                            Foreground="{DynamicResource ShortcutColor}"
@@ -145,13 +145,13 @@
                                             <MenuItem Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_Edit]}"
                                                       Click="EditLaunchItem_Click">
                                                 <MenuItem.Icon>
-                                                    <TextBlock Text="&#xE70F;" FontFamily="{DynamicResource AppIconFontFamily}" Foreground="{DynamicResource LiquidControlText}"/>
+                                                    <TextBlock Text="&#xE70F;" FontFamily="{DynamicResource AppIconFontFamily}" Foreground="{DynamicResource TextPrimary}"/>
                                                 </MenuItem.Icon>
                                             </MenuItem>
                                             <MenuItem Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_Remove]}"
                                                       Click="DeleteLaunchItem_Click">
                                                 <MenuItem.Icon>
-                                                    <TextBlock Text="&#xE74D;" FontFamily="{DynamicResource AppIconFontFamily}" Foreground="{DynamicResource LiquidControlText}"/>
+                                                    <TextBlock Text="&#xE74D;" FontFamily="{DynamicResource AppIconFontFamily}" Foreground="{DynamicResource TextPrimary}"/>
                                                 </MenuItem.Icon>
                                             </MenuItem>
                                         </ContextMenu>
@@ -195,7 +195,7 @@
                                         <Ellipse Width="5" Height="5">
                                             <Ellipse.Style>
                                                 <Style TargetType="Ellipse">
-                                                    <Setter Property="Fill" Value="{DynamicResource LiquidControlMuted}"/>
+                                                    <Setter Property="Fill" Value="{DynamicResource TextSecondary}"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                             <Setter Property="Fill" Value="{DynamicResource AccentBlue}"/>

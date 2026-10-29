@@ -14,7 +14,7 @@ namespace Lertaro.App.Views.Notifications;
 /// Position 1: one card in the bottom-right stack. The window is the card; the stack's layout is the
 /// service's business, not this window's.
 /// </summary>
-public partial class NotificationCardWindow : GlassDesk.UI.Controls.GlassWindow
+public partial class NotificationCardWindow : Lertaro.App.Views.Controls.AppWindow
 {
     // Long enough to be noticed as "the new one", short enough that a card still on screen for twenty seconds is
     // not wearing it. Not tuned against anything: it is a legibility choice, not a measurement.
@@ -121,3 +121,4 @@ public partial class NotificationCardWindow : GlassDesk.UI.Controls.GlassWindow
     // Clicking the body means "I have read it", which is the same outcome as the close button.
     private void Body_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) => DismissRequested?.Invoke();
 }
+

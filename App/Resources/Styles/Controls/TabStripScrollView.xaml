@@ -27,7 +27,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -48,7 +48,7 @@
 
                         <Button x:Name="PART_LeftButton" Grid.Column="0" Style="{StaticResource TabStripArrowButton}" Visibility="Collapsed">
                             <Path Width="8" Height="14" Stretch="Uniform" Data="M15,4 L7,12 L15,20"
-                                  Stroke="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" StrokeThickness="2"
+                                  Stroke="{DynamicResource TextSecondary}" StrokeThickness="2"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
                         </Button>
 
@@ -59,7 +59,7 @@
 
                         <Button x:Name="PART_RightButton" Grid.Column="2" Style="{StaticResource TabStripArrowButton}" Visibility="Collapsed">
                             <Path Width="8" Height="14" Stretch="Uniform" Data="M9,4 L17,12 L9,20"
-                                  Stroke="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" StrokeThickness="2"
+                                  Stroke="{DynamicResource TextSecondary}" StrokeThickness="2"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
                         </Button>
                     </Grid>

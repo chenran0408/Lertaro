@@ -50,7 +50,7 @@
                                     Background="#FFFFFF" BorderThickness="2" ClipToBounds="True">
                                 <Border.Style>
                                     <Style TargetType="Border">
-                                        <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdge}"/>
+                                        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding Appearance.ThemeModeTag}" Value="Light">
                                                 <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
@@ -76,7 +76,7 @@
                                     Background="#1E1E1E" BorderThickness="2" ClipToBounds="True">
                                 <Border.Style>
                                     <Style TargetType="Border">
-                                        <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdge}"/>
+                                        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding Appearance.ThemeModeTag}" Value="Dark">
                                                 <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
@@ -102,7 +102,7 @@
                                     BorderThickness="2" ClipToBounds="True">
                                 <Border.Style>
                                     <Style TargetType="Border">
-                                        <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdge}"/>
+                                        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding Appearance.ThemeModeTag}" Value="FollowSystem">
                                                 <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
@@ -137,12 +137,6 @@
                                    FontSize="14" Margin="2,6,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
                     </StackPanel>
                 </StackPanel>
-            </Border>
-
-            <Border x:Name="RowGlassEffects" Style="{StaticResource SettingsCard}">
-                <CheckBox Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_GlassEffects]}"
-                          IsChecked="{Binding Appearance.GlassEffectsEnabled, Mode=TwoWay}"
-                          VerticalContentAlignment="Center"/>
             </Border>
 
             <local:BackgroundSettingsSection x:Name="BackgroundSection" DataContext="{Binding Appearance.Background}"/>

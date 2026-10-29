@@ -46,18 +46,10 @@ public partial class App : Application
     // Same reason: this owns the per-favorite global hotkeys' message-only window, and dropping the
     // instance would unregister every one of them.
     private Services.Favorites.FavoriteHotkeyService? _favoriteHotkeys;
-    private GlassDesk.UI.Theming.ThemeService? _glassTheme;
-    private IDisposable? _glassDiagnosticScope;
-    private bool _exportGlassDiagnostics;
     private readonly Helpers.App.DispatcherExceptionHandler _dispatcherExceptionHandler = new();
 
     protected override async void OnStartup(StartupEventArgs e)
     {
-        if (GlassDesk.UI.BackdropCaptureWorker.RunIfRequested(e.Args, out var workerExitCode))
-        {
-            Shutdown(workerExitCode);
-            return;
-        }
         Services.AppLifecycle.AppRestartService.WaitForParentExit(e.Args);
         // The shell worker pool is built here rather than on the first shell action, so that no click ever
         // asks the loader for a thread while a third-party shell extension is holding it (see ShellThread).
@@ -91,10 +83,7 @@ public partial class App : Application
         }
         // Initialize logger only after the user's data is accessible.
         Logger.Initialize("app.log", overwrite: false);
-        _exportGlassDiagnostics = e.Args.Contains("--glass-diagnostics", StringComparer.OrdinalIgnoreCase);
         Logger.Log($"[AppLifecycle] Starting process {Environment.ProcessId}.");
-        if (_exportGlassDiagnostics)
-            Logger.Log("[GlassDiagnostics] Capture trace export enabled; close this App normally to write the report.");
         SessionEnding += (_, args) => Logger.Log($"[AppLifecycle] Windows session ending: {args.ReasonSessionEnding}.");
 
         // Global exception handlers, registered as early as possible: anything thrown before the old
@@ -134,78 +123,6 @@ public partial class App : Application
         // per-request value, which only ever reaches the search pipeline's own async flow.
         SearchContext.DefaultFuzzyMatchEnabled = settings.EnableFuzzyMatch;
         SearchContext.DefaultAndFirstPrecedence = !settings.OrFirstPrecedence;
-        if (e.Args.Contains("--glass-preview", StringComparer.OrdinalIgnoreCase))
-        {
-            AppTypography.Initialize(Resources, TranslationManager.Instance.CurrentCulture);
-            TranslationManager.Instance.ReloadTranslations();
-            ThemeManager.Instance.Initialize("Dark");
-            Logger.Log("[GlassPreview] Initializing GlassDesk theme.");
-            _glassTheme = GlassDesk.UI.Theming.ThemeService.Initialize(Dispatcher);
-            _glassTheme.Update(new GlassDesk.Core.Models.Settings.AppearanceSettings
-            {
-                Theme = GlassDesk.Core.Models.ThemeMode.Dark,
-                GlassMaterial = ResolveGlassMaterial(e.Args),
-                ReduceTransparency = !settings.GlassEffectsEnabled
-            });
-            var startGlassDiagnostics = typeof(GlassDesk.UI.BackdropRecovery).GetMethod(
-                "BeginAutomaticDiagnostics", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
-            _glassDiagnosticScope = startGlassDiagnostics?.Invoke(null, [System.IO.Path.Combine(Logger.UserDataDir, "logs")]) as IDisposable;
-            Logger.Log("[GlassPreview] GlassDesk theme initialized.");
-            base.OnStartup(e);
-            if (e.Args.Contains("--glass-preview-settings", StringComparer.OrdinalIgnoreCase))
-            {
-                MainWindow = new SettingsWindow();
-            }
-            else
-            {
-                var previewModel = new ViewModels.QuickPanel.QuickPanelViewModel(
-                    () => settings.QuickPanel,
-                    (_, _) => Task.FromResult(new List<SearchResult>()),
-                    () => { });
-                await previewModel.RefreshAsync();
-                Logger.Log("[GlassPreview] QuickPanel view model loaded.");
-                MainWindow = new Views.QuickPanel.QuickPanelWindow(previewModel);
-            }
-            ShutdownMode = ShutdownMode.OnMainWindowClose;
-            MainWindow.Loaded += async (_, _) =>
-            {
-                await Task.Delay(1200);
-                var previewSurface = MainWindow.FindName("GlassSurface") as GlassDesk.UI.Controls.LiquidGlassSurface;
-                if (MainWindow is Views.QuickPanel.QuickPanelWindow quickPanel)
-                    Logger.Log($"[GlassPreview] Surface={quickPanel.SurfaceMode}; backdrop={previewSurface?.BackdropSource}.");
-                else
-                    Logger.Log($"[GlassPreview] Window={MainWindow.GetType().Name}; backdrop={previewSurface?.BackdropSource}.");
-                var diagnosticsField = typeof(GlassDesk.UI.BackdropRecovery).GetField(
-                    "Diagnostics", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
-                var diagnostics = diagnosticsField?.GetValue(null);
-                var snapshot = diagnostics?.GetType().GetMethod("Snapshot",
-                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)?.Invoke(diagnostics, null);
-                var recent = snapshot?.GetType().GetProperty("RecentEvents")?.GetValue(snapshot) as System.Collections.IEnumerable;
-                if (recent is not null) Logger.Log("[GlassPreview] Capture trace: " + string.Join(" | ", recent.Cast<object>()));
-                if (e.Args.Contains("--glass-preview-telemetry", StringComparer.OrdinalIgnoreCase))
-                {
-                    var telemetry = new System.Windows.Threading.DispatcherTimer
-                    {
-                        Interval = TimeSpan.FromSeconds(1)
-                    };
-                    var telemetryTick = 0;
-                    telemetry.Tick += (_, _) =>
-                    {
-                        if (!MainWindow.IsVisible) { telemetry.Stop(); return; }
-                        previewSurface = MainWindow.FindName("GlassSurface") as GlassDesk.UI.Controls.LiquidGlassSurface;
-                        Logger.Log($"[GlassPreviewTelemetry] Surface={previewSurface?.BackdropSource}; window={MainWindow.IsVisible}.");
-                        if (++telemetryTick % 2 == 0 && previewSurface is not null)
-                            Logger.Log("[GlassPreviewMetrics] " + System.Text.Json.JsonSerializer.Serialize(previewSurface.InspectPerformance()));
-                    };
-                    telemetry.Start();
-                    MainWindow.Closed += (_, _) => telemetry.Stop();
-                }
-            };
-            await Services.GlassWindowPresentationHelper.ShowWhenPreparedAsync(
-                (GlassDesk.UI.Controls.GlassWindow)MainWindow, () => MainWindow.Show());
-            Logger.Log("[GlassPreview] QuickPanel window shown.");
-            return;
-        }
         StartupManager.SetEnabled(settings.StartWithWindows);
         Logger.Log("=========================================");
         Logger.Log($"Application starting with arguments: {string.Join(" ", e.Args)}");
@@ -383,21 +300,7 @@ public partial class App : Application
                 : settings.Theme;
             ThemeManager.Instance.Initialize(startupThemeId);
             ThemeManager.Instance.InitializeSystemFollow();
-            var glassAppearance = new GlassDesk.Core.Models.Settings.AppearanceSettings
-            {
-                Theme = ThemeManager.Instance.ActiveTheme?.IsDark == false
-                    ? GlassDesk.Core.Models.ThemeMode.Light
-                    : GlassDesk.Core.Models.ThemeMode.Dark,
-                GlassMaterial = settings.Background.Kind == BackgroundKind.Material
-                    ? MapLegacyGlassMaterial(settings.Background)
-                    : ResolveGlassMaterial(e.Args),
-                ReduceTransparency = !settings.GlassEffectsEnabled
-            };
-            _glassTheme = GlassDesk.UI.Theming.ThemeService.Initialize(Dispatcher);
-            _glassTheme.Update(glassAppearance);
-            ThemeManager.Instance.ThemeChanged += UpdateGlassTheme;
-            BackgroundManager.Changed += UpdateGlassTheme;
-            Logger.Log($"[App] ThemeManager initialized with theme: {startupThemeId}");
+            Logger.Log($"[App] Theme initialized with theme: {startupThemeId}");
         }
         catch (Exception ex)
         {
@@ -448,25 +351,8 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         Logger.Log($"[AppLifecycle] Exiting process {Environment.ProcessId}; code={e.ApplicationExitCode}; initialized={_startupInitialized}.");
-        if (_exportGlassDiagnostics)
-        {
-            try
-            {
-                var reportPath = System.IO.Path.Combine(Logger.UserDataDir, "logs",
-                    $"glass-diagnostics-{DateTime.Now:yyyyMMdd-HHmmss}.json");
-                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(reportPath)!);
-                GlassDesk.UI.BackdropRecovery.ExportDiagnosticReport(reportPath);
-                Logger.Log($"[GlassDiagnostics] Report written to {reportPath}.");
-            }
-            catch (Exception error)
-            {
-                Logger.Log($"[GlassDiagnostics] Report export failed: {error}", LogLevel.Warn);
-            }
-        }
         if (!_startupInitialized)
         {
-            _glassDiagnosticScope?.Dispose(); _glassDiagnosticScope = null;
-            _glassTheme?.Dispose(); _glassTheme = null;
             _settingsSession?.Dispose();
             _appMutex?.Dispose();
             base.OnExit(e);
@@ -476,9 +362,6 @@ public partial class App : Application
         // Before anything else: a notification still open must be ended rather than left with a caller
         // awaiting a task no one will ever complete.
         Services.Notifications.NotificationService.Shutdown();
-        _glassTheme?.Dispose(); _glassTheme = null;
-        ThemeManager.Instance.ThemeChanged -= UpdateGlassTheme;
-        BackgroundManager.Changed -= UpdateGlassTheme;
         _favoriteHotkeys?.Dispose(); _favoriteHotkeys = null;
         foreach (var provider in PluginManager.Instance.AllSearchScopeProviders.OfType<IDisposable>()) provider.Dispose();
         HookClient?.Stop(); HookClient?.Dispose(); HookClient = null;
@@ -489,42 +372,6 @@ public partial class App : Application
         base.OnExit(e);
     }
 
-    private static GlassDesk.Core.Models.GlassMaterialMode ResolveGlassMaterial(string[] args)
-    {
-        var requested = args.FirstOrDefault(arg => arg.StartsWith("--glass-material=", StringComparison.OrdinalIgnoreCase))
-            ?.Split('=', 2).Last();
-        return requested?.ToLowerInvariant() switch
-        {
-            "physical" => GlassDesk.Core.Models.GlassMaterialMode.PhysicalGlass,
-            "frosted" => GlassDesk.Core.Models.GlassMaterialMode.FrostedGlass,
-            _ => GlassDesk.Core.Models.GlassMaterialMode.AndroidLiquidGlass
-        };
-    }
-
-    private void UpdateGlassTheme()
-    {
-        if (_glassTheme == null) return;
-        var background = BackgroundManager.Current;
-        var theme = new GlassDesk.Core.Models.Settings.AppearanceSettings
-        {
-            Theme = ThemeManager.Instance.ActiveTheme?.IsDark == false
-                ? GlassDesk.Core.Models.ThemeMode.Light
-                : GlassDesk.Core.Models.ThemeMode.Dark,
-            GlassMaterial = background.Kind == BackgroundKind.Material
-                ? MapLegacyGlassMaterial(background)
-                : GlassDesk.Core.Models.GlassMaterialMode.AndroidLiquidGlass,
-            ReduceTransparency = !UserSettings.Load().GlassEffectsEnabled
-        };
-        _glassTheme.Update(theme);
-    }
-
-    private static GlassDesk.Core.Models.GlassMaterialMode MapLegacyGlassMaterial(BackgroundSettings background)
-        => background.Material switch
-        {
-            WindowMaterial.LiquidGlass when background.GlassLevel == GlassLevel.Frosted
-                => GlassDesk.Core.Models.GlassMaterialMode.FrostedGlass,
-            WindowMaterial.LiquidGlass when background.GlassLevel == GlassLevel.StrongRefraction
-                => GlassDesk.Core.Models.GlassMaterialMode.PhysicalGlass,
-            _ => GlassDesk.Core.Models.GlassMaterialMode.FrostedGlass
-        };
 }
+
+

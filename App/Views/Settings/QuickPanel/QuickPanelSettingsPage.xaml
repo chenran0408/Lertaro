@@ -40,10 +40,10 @@
                             </Grid>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                                     <Setter TargetName="AccentBar" Property="Fill" Value="{DynamicResource AccentBlue}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
@@ -323,7 +323,7 @@
                     <ItemsControl x:Name="QuickPanelPluginTabsList" ItemsSource="{Binding PluginTabs}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,9">
+                                <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,9">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>

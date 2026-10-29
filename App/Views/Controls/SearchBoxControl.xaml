@@ -107,7 +107,7 @@
                 </StackPanel.Style>
                 <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_ActionsTitle]}"
                            Foreground="{DynamicResource AccentBlue}" FontSize="{Binding FontSize, ElementName=root}" VerticalAlignment="Center"/>
-                <Border Width="1" Height="{Binding RightIconSize, ElementName=root}" MaxHeight="{Binding ActualHeight, ElementName=SearchRow}" Margin="11,0,0,0" Background="{DynamicResource LiquidControlEdge}" SnapsToDevicePixels="True"/>
+                <Border Width="1" Height="{Binding RightIconSize, ElementName=root}" MaxHeight="{Binding ActualHeight, ElementName=SearchRow}" Margin="11,0,0,0" Background="{DynamicResource ControlBorderBrush}" SnapsToDevicePixels="True"/>
             </StackPanel>
 
             <!-- TextBox -->

@@ -7,7 +7,7 @@ namespace Lertaro.App.Views.Notifications;
 /// <summary>
 /// Position 2: the single line at the bottom centre of the screen. No title, no source, no controls.
 /// </summary>
-public partial class NotificationNoticeWindow : GlassDesk.UI.Controls.GlassWindow
+public partial class NotificationNoticeWindow : Lertaro.App.Views.Controls.AppWindow
 {
     public NotificationNoticeWindow()
     {
@@ -35,3 +35,4 @@ public partial class NotificationNoticeWindow : GlassDesk.UI.Controls.GlassWindo
             Line.SetResourceReference(TextBlock.ForegroundProperty, semanticColor);
     }
 }
+

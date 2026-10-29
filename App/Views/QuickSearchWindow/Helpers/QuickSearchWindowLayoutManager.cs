@@ -121,18 +121,19 @@ internal sealed class QuickSearchWindowLayoutManager
         ForceLayoutSoTheWindowResizes();
     }
 
-    // This used to spell "force layout" as a Manual -> WidthAndHeight SizeToContent round trip. That
-    // toggle was only ever an indirect way to make WPF run the pending measure/arrange immediately
-    // instead of letting the next paint pass pick it up; InlineSearchWindowLayoutManager does the same
-    // job with a plain UpdateLayout(). Measured against the real window, an explicit UpdateLayout()
-    // resizes it to the new height identically, and this window's content width is fixed (see
-    // QuickSearchWindow.xaml), so dropping the WidthAndHeight half of the round trip cannot change the
-    // width either way. Left as one named place so the sizing behavior is re-measurable in one spot if
-    // the window's sizing model ever changes.
+    // The visible quick-search window can have its SizeToContent measure pass consumed while the
+    // prepared first frame is being shown. A later list-height change followed by UpdateLayout alone
+    // then arranges the list beyond the old top-level height instead of resizing the HWND. Re-arm
+    // SizeToContent so WPF schedules a fresh top-level measure before applying the layout.
     // Do not wrap this in Dispatcher.DisableProcessing: layout raises UI Automation events whose
     // cross-thread calls need the normal message pump. A live trace of the wrapped pass showed
     // repeated ~750ms waits in AutomationPeer.UpdateSubtree, blocking both typing and result display.
-    private void ForceLayoutSoTheWindowResizes() => _window.UpdateLayout();
+    private void ForceLayoutSoTheWindowResizes()
+    {
+        _window.SizeToContent = SizeToContent.Manual;
+        _window.SizeToContent = SizeToContent.WidthAndHeight;
+        _window.UpdateLayout();
+    }
 
     public void UpdateShortcutHints() =>
         QuickSearchShortcutHelper.UpdateShortcutHints(_window, WpfUiHelper.GetScrollViewer(_window.LstResults));

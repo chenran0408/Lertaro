@@ -89,7 +89,7 @@
                         </Border>
                     </DockPanel>
 
-                    <Border Height="1" Background="{DynamicResource LiquidControlEdge}" Margin="0,0,0,12"/>
+                    <Border Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,12"/>
 
                     <DockPanel x:Name="RowLocalSendEnable" Margin="0,0,0,12">
                         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
@@ -101,7 +101,7 @@
                         <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Enabled}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                     </DockPanel>
 
-                    <Border Height="1" Background="{DynamicResource LiquidControlEdge}" Margin="0,0,0,12"/>
+                    <Border Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,12"/>
 
                     <Grid x:Name="RowLocalSendDeviceAlias" Margin="0,0,0,12">
                         <Grid.ColumnDefinitions>
@@ -113,8 +113,8 @@
                                 <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_DeviceAlias]}"
                                            FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                                 <Border Margin="6,0,0,0" Padding="5,1,5,1" CornerRadius="3"
-                                        Background="{StaticResource LiquidControlFill}"
-                                        BorderBrush="{DynamicResource LiquidControlEdge}" BorderThickness="1"
+                                        Background="{DynamicResource ControlBackground}"
+                                        BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1"
                                         VerticalAlignment="Center">
                                     <TextBlock Text="{Binding DeviceHashtag}" FontSize="11" FontWeight="SemiBold"
                                                Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
@@ -142,7 +142,7 @@
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="BtnIcon" Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
+                                                <Setter TargetName="BtnIcon" Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextPrimary}"/></Setter.Value></Setter>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -181,7 +181,7 @@
                                  Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"/>
                     </Grid>
 
-                    <Border Height="1" Background="{DynamicResource LiquidControlEdge}" Margin="0,0,0,12"/>
+                    <Border Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,12"/>
 
                     <Grid x:Name="RowLocalSendReceivePin" Margin="0,0,0,12">
                         <Grid.ColumnDefinitions>
@@ -198,7 +198,7 @@
                                  Text="{Binding ReceivePin, UpdateSourceTrigger=PropertyChanged}"/>
                     </Grid>
 
-                    <Border Height="1" Background="{DynamicResource LiquidControlEdge}" Margin="0,0,0,12"/>
+                    <Border Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,12"/>
 
                     <DockPanel x:Name="RowLocalSendEnableHttps" Margin="0,0,0,12">
                         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
@@ -210,7 +210,7 @@
                         <CheckBox DockPanel.Dock="Right" IsChecked="{Binding EnableHttps}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                     </DockPanel>
 
-                    <Border Height="1" Background="{DynamicResource LiquidControlEdge}" Margin="0,0,0,12"/>
+                    <Border Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,12"/>
 
                     <DockPanel x:Name="RowLocalSendCreateChecksums" Margin="0,0,0,12">
                         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
@@ -222,7 +222,7 @@
                         <CheckBox DockPanel.Dock="Right" IsChecked="{Binding CreateChecksums}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                     </DockPanel>
 
-                    <Border Height="1" Background="{DynamicResource LiquidControlEdge}" Margin="0,0,0,12"/>
+                    <Border Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,12"/>
 
                     <DockPanel x:Name="RowLocalSendVerifyChecksums" Margin="0,0,0,12">
                         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
@@ -234,7 +234,7 @@
                         <CheckBox DockPanel.Dock="Right" IsChecked="{Binding VerifyChecksums}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                     </DockPanel>
 
-                    <Border Height="1" Background="{DynamicResource LiquidControlEdge}" Margin="0,0,0,12"/>
+                    <Border Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,12"/>
 
                     <DockPanel x:Name="RowLocalSendQuickSave" Margin="0,0,0,12">
                         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">

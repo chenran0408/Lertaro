@@ -192,7 +192,7 @@
                 </StackPanel>
             </StackPanel>
             </ctrl:TabStripScrollView>
-            <Border Height="1" Background="{StaticResource LiquidControlEdge}" Margin="0,0,0,15"/>
+            <Border Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,15"/>
         </StackPanel>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">

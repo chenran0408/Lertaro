@@ -1,23 +1,21 @@
-<glass:GlassWindow x:Class="Lertaro.App.SettingsWindow"
+<appWindow:AppWindow x:Class="Lertaro.App.SettingsWindow" xmlns:appWindow="clr-namespace:Lertaro.App.Views.Controls"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:glass="clr-namespace:GlassDesk.UI.Controls;assembly=GlassDesk.UI"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:Lertaro.App.Views.Controls"
         xmlns:services="clr-namespace:Lertaro.App.Services"
         xmlns:local="clr-namespace:Lertaro.App.Converters"
         Title="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Title]}"
         Height="720" Width="1280"
         MinHeight="560" MinWidth="880"
-        WindowStartupLocation="CenterScreen"
-        Background="Transparent"
-        AllowsTransparency="True"
+        WindowStartupLocation="CenterScreen" Background="{DynamicResource ContentBg}" AllowsTransparency="False"
         WindowStyle="None"
         ResizeMode="CanResizeWithGrip"
         TextElement.Foreground="{Binding RelativeSource={RelativeSource Self}, Path=ForegroundBrush}"
         StateChanged="Window_StateChanged"
         SizeChanged="SettingsWindow_SizeChanged">
 
-    <glass:GlassWindow.Resources>
+    <appWindow:AppWindow.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml"/>
@@ -25,17 +23,16 @@
                 <ResourceDictionary Source="../../Resources/Styles/Windows/SettingsSidebar.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </glass:GlassWindow.Resources>
+    </appWindow:AppWindow.Resources>
     <Grid>
-        <glass:LiquidGlassSurface x:Name="GlassSurface" />
         <surface:BackgroundSurface UseTransparentBase="True" />
 
 
     <!-- Match GlassDesk's settings window: one content border follows the same panel geometry as the
          GlassWindow surface, rather than drawing a second inset rounded frame over the glass. -->
-    <Border Background="{Binding RelativeSource={RelativeSource AncestorType={x:Type glass:GlassWindow}}, Path=PanelBackgroundBrush}"
+    <Border Background="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelBackgroundBrush}"
             BorderThickness="0"
-            CornerRadius="{Binding RelativeSource={RelativeSource AncestorType={x:Type glass:GlassWindow}}, Path=PanelCornerRadius}"
+            CornerRadius="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelCornerRadius}"
             SnapsToDevicePixels="True">
             <Grid>
                 <Grid.RowDefinitions>
@@ -44,7 +41,7 @@
                     <RowDefinition Height="52"/>
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Background="Transparent" BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type glass:GlassWindow}}, Path=PanelBorderBrush}" BorderThickness="0,0,0,1"
+                <Border Grid.Row="0" Background="Transparent" BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelBorderBrush}" BorderThickness="0,0,0,1"
                         MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -65,8 +62,8 @@
                              in the title bar as requested. -->
                         <Border x:Name="SearchBoxBorder" Grid.Column="1" Width="320" Height="28" CornerRadius="{StaticResource CornerRadiusControl}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                                Background="{StaticResource LiquidControlFill}"
-                                BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1">
+                                Background="{DynamicResource ControlBackground}"
+                                BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -116,7 +113,7 @@
                 <Popup x:Name="SearchResultsPopup" PlacementTarget="{Binding ElementName=SearchBoxBorder}"
                        Placement="Bottom" Width="320" VerticalOffset="4" StaysOpen="True" AllowsTransparency="True"
                        PopupAnimation="Fade">
-                    <Border Background="{StaticResource LiquidControlPopup}" BorderBrush="{StaticResource LiquidControlEdge}"
+                    <Border Background="{DynamicResource MenuBackground}" BorderBrush="{DynamicResource ControlBorderBrush}"
                             BorderThickness="1" CornerRadius="{StaticResource CornerRadiusPopover}" Padding="0,4">
                         <StackPanel>
                             <ListBox x:Name="LstSearchResults" MaxHeight="400"
@@ -155,7 +152,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="Transparent" BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type glass:GlassWindow}}, Path=PanelBorderBrush}" BorderThickness="0,0,1,0">
+                    <Border Grid.Column="0" Background="Transparent" BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelBorderBrush}" BorderThickness="0,0,1,0">
                         <DockPanel LastChildFill="True">
                             <!-- Docked Bottom so "About" always sits at the sidebar's bottom edge regardless
                                  of window height, instead of just trailing the last item in the main list. -->
@@ -179,7 +176,7 @@
                                     </StackPanel>
                                 </ListBoxItem>
                             </ListBox>
-                            <Border DockPanel.Dock="Bottom" Height="1" Background="{StaticResource LiquidControlEdge}" Margin="8,4"/>
+                            <Border DockPanel.Dock="Bottom" Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="8,4"/>
                             <!-- CanContentScroll="False": a ListBox scrolls by ITEM by default, so its
                                  viewport is rounded down to a whole number of rows. Every row that
                                  fits by a fraction is one the viewport does not count, which showed a
@@ -269,7 +266,7 @@
                     </AdornerDecorator>
                 </Grid>
 
-                <Border Grid.Row="2" Background="Transparent" BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type glass:GlassWindow}}, Path=PanelBorderBrush}" BorderThickness="0,1,0,0">
+                <Border Grid.Row="2" Background="Transparent" BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelBorderBrush}" BorderThickness="0,1,0,0">
                     <Grid Margin="16,0">
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_SaveTip]}" 
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center"/>
@@ -289,4 +286,5 @@
             </Grid>
     </Border>
     </Grid>
-</glass:GlassWindow>
+</appWindow:AppWindow>
+

@@ -31,8 +31,8 @@
             <TextBlock Grid.Column="0" Style="{StaticResource SettingsSectionTitle}"
                        Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_RuntimeStatusTitle]}"/>
             <Border Grid.Column="1" Width="260" Height="28" CornerRadius="{StaticResource CornerRadiusControl}"
-                    Background="{StaticResource LiquidControlFill}"
-                    BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1"
+                    Background="{DynamicResource ControlBackground}"
+                    BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1"
                     VerticalAlignment="Top">
                 <Grid>
                     <Grid.ColumnDefinitions>

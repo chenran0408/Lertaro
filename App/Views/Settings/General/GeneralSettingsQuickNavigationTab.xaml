@@ -24,7 +24,7 @@
                  button used for its Move Up/Down actions, but defined locally rather than shared across
                  UserControls, matching how SettingsTextBox is page-local elsewhere in this settings area. -->
             <DataTemplate x:Key="QuickNavItemTemplate">
-                <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,9">
+                <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,9">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>

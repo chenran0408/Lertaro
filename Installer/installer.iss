@@ -50,9 +50,9 @@ AppUpdatesURL={#AppURL}
 DefaultDirName={commonpf64}\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
-; The app's own MIT terms are shipped separately as {app}\LICENSE. Display the vendored component's
-; scoped terms here so the installer does not imply the MIT file covers GlassDesk as well.
-LicenseFile={#PublishDir}\ThirdPartyLicenses\GlassDesk\LICENSE
+; The App no longer ships the GlassDesk rendering runtime. Source-vendor notices remain scoped
+; to their original files in the repository.
+LicenseFile={#PublishDir}\LICENSE
 OutputDir=..\dist
 OutputBaseFilename=Lertaro-Setup{#ArchSuffix}
 SetupIconFile=..\App\logo.ico
@@ -97,6 +97,11 @@ Name: "addtopath"; Description: "{cm:AddLffToPath}"; GroupDescription: "{cm:Comm
 [Files]
 Source: "..\portable-updater.ps1"; DestDir: "{tmp}"; Flags: dontcopy
 Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.pdb"; BeforeInstall: WaitForTaskbarHost
+
+[InstallDelete]
+Type: files; Name: "{app}\GlassDesk.Core.dll"
+Type: files; Name: "{app}\GlassDesk.Platform.dll"
+Type: files; Name: "{app}\GlassDesk.UI.dll"
 
 [Icons]
 Name: "{commonprograms}\{#AppName}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: startmenuicon

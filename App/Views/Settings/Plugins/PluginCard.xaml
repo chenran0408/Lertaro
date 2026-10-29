@@ -41,7 +41,7 @@
                 </Grid.ColumnDefinitions>
                 <!-- Plugin icon -->
                 <Border Grid.Column="0" Width="36" Height="36" CornerRadius="8" VerticalAlignment="Top"
-                        Background="{DynamicResource LiquidControlHover}" Margin="0,0,12,0">
+                        Background="{DynamicResource ControlHoverBackground}" Margin="0,0,12,0">
                     <TextBlock Text="&#xEA86;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="16"
                                Foreground="{DynamicResource AccentBlue}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
@@ -144,7 +144,7 @@
                 </StackPanel>
             </Grid>
             <!-- Fixed hairline divider line below the tab header row -->
-            <Border Grid.Row="2" Height="1" Background="{StaticResource LiquidControlEdge}" Margin="0,12,0,0"
+            <Border Grid.Row="2" Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,12,0,0"
                     Visibility="{Binding HasConfigFields, Converter={StaticResource BoolToVis}}"/>
             <!-- Content area below the tab header bar and divider line -->
             <Grid Grid.Row="3" Margin="0,4,0,0">
@@ -271,8 +271,8 @@
 
                                         <!-- Info button (!) -->
                                         <Border Grid.Column="1" Width="14" Height="14" CornerRadius="7"
-                                                Background="{DynamicResource LiquidControlHover}"
-                                                BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1"
+                                                Background="{DynamicResource ControlHoverBackground}"
+                                                BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1"
                                                 HorizontalAlignment="Center" VerticalAlignment="Center" Cursor="Help">
                                             <Border.ToolTip>
                                                 <ToolTip MaxWidth="300">

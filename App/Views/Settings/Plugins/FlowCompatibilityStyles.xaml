@@ -19,7 +19,7 @@
     <Style x:Key="SettingPanelSeparatorStyle" TargetType="{x:Type Separator}">
         <Setter Property="Margin" Value="0,8,0,8" />
         <Setter Property="Height" Value="1" />
-        <Setter Property="Background" Value="{StaticResource LiquidControlEdge}" />
+        <Setter Property="Background" Value="{DynamicResource ControlBorderBrush}" />
     </Style>
 
     <sys:Double x:Key="SettingPanelTextBoxMinWidth">180</sys:Double>
@@ -29,27 +29,27 @@
     <Style x:Key="SettingPanelTextBlockDescriptionStyle" TargetType="{x:Type TextBlock}">
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Margin" Value="0,2,0,0" />
-        <Setter Property="Foreground"><Setter.Value><Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlMuted}"/></Setter.Value></Setter>
+        <Setter Property="Foreground"><Setter.Value><Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextSecondary}"/></Setter.Value></Setter>
     </Style>
 
     <!-- Flow.Launcher standard settings container & label styles -->
     <Style x:Key="SettingGroupBox" TargetType="{x:Type Border}">
-        <Setter Property="Background" Value="{StaticResource LiquidControlFill}" />
-        <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdge}" />
+        <Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}" />
         <Setter Property="BorderThickness" Value="0,0,0,1" />
         <Setter Property="Padding" Value="0,12" />
         <Setter Property="Margin" Value="0" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
     </Style>
     <Style x:Key="SettingTitleLabel" TargetType="{x:Type TextBlock}">
-        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
+        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextPrimary}"/></Setter.Value></Setter>
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Margin" Value="0,0,0,2" />
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
     <Style x:Key="SettingSubTitleLabel" TargetType="{x:Type TextBlock}">
-        <Setter Property="Foreground"><Setter.Value><Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlMuted}"/></Setter.Value></Setter>
+        <Setter Property="Foreground"><Setter.Value><Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextSecondary}"/></Setter.Value></Setter>
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Margin" Value="0" />
         <Setter Property="Padding" Value="0,0,24,0" />
@@ -131,8 +131,8 @@
     </Style>
     <Style x:Key="DefaultListBoxStyle" TargetType="{x:Type ListBox}">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
-        <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdge}"/>
+        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextPrimary}"/></Setter.Value></Setter>
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="2"/>
         <Setter Property="MinHeight" Value="80"/>
@@ -142,15 +142,15 @@
         <Setter Property="Margin" Value="0,1"/>
     </Style>
     <Style x:Key="DefaultRadioButtonStyle" TargetType="{x:Type RadioButton}">
-        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
+        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextPrimary}"/></Setter.Value></Setter>
         <Setter Property="Margin" Value="0,4"/>
     </Style>
     <Style x:Key="DefaultTextBlockStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
+        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextPrimary}"/></Setter.Value></Setter>
         <Setter Property="FontSize" Value="14"/>
     </Style>
     <Style x:Key="DefaultLabelStyle" TargetType="{x:Type Label}">
-        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
+        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextPrimary}"/></Setter.Value></Setter>
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="Padding" Value="0,0,0,4"/>
     </Style>
@@ -159,15 +159,15 @@
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Margin" Value="0,4,0,4" />
-        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
+        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextPrimary}"/></Setter.Value></Setter>
     </Style>
     <Style x:Key="SettingPanelTextBlockStyle" TargetType="{x:Type TextBlock}">
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
+        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextPrimary}"/></Setter.Value></Setter>
     </Style>
     <Style x:Key="SettingPanelTextBlockTitleStyle" TargetType="{x:Type TextBlock}">
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
+        <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextPrimary}"/></Setter.Value></Setter>
     </Style>
 </ResourceDictionary>

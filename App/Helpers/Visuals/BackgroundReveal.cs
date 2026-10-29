@@ -22,10 +22,10 @@ public static class BackgroundReveal
                 return;
             }
             var property = element is Border ? Border.BackgroundProperty : System.Windows.Controls.Panel.BackgroundProperty;
-            // GlassDesk windows already own a sampled material surface. Repainting these broad
-            // header/sidebar bands with legacy theme brushes hides that surface even when the
-            // user has not selected a custom background.
-            element.SetCurrentValue(property, System.Windows.Media.Brushes.Transparent);
+            if (BackgroundManager.IsCustom)
+                element.SetCurrentValue(property, System.Windows.Media.Brushes.Transparent);
+            else
+                element.SetResourceReference(property, GetResource(element));
         }
         element.Loaded += (_, _) =>
         {

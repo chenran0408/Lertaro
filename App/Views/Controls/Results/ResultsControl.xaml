@@ -139,7 +139,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                    <Border Grid.Row="0" BorderBrush="{DynamicResource LiquidControlEdge}" BorderThickness="0,0,0,1"
+                    <Border Grid.Row="0" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1"
                             Padding="14,0,14,0" Background="Transparent">
                         <Border.Style>
                             <Style TargetType="Border">
@@ -171,8 +171,8 @@
                     <Border x:Name="ActionsSearchRow" Grid.Row="1" Margin="10,6,10,6" Visibility="Collapsed">
                         <Border Height="{Binding SelectedItem.ActionsHeaderHeight, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
                                 CornerRadius="{StaticResource CornerRadiusControl}"
-                                Background="{DynamicResource LiquidControlFill}"
-                                BorderBrush="{DynamicResource LiquidControlEdge}"
+                                Background="{DynamicResource ControlBackground}"
+                                BorderBrush="{DynamicResource ControlBorderBrush}"
                                 BorderThickness="1">
                             <Grid>
                                 <Grid.ColumnDefinitions>

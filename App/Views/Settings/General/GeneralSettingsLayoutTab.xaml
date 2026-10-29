@@ -25,7 +25,7 @@
             <!-- Same shape as GeneralSettingsPage.xaml's QuickNavItemTemplate, just wired to
                  ResultTypeOrder's own Move Up/Down commands instead of QuickNavigationOrder's. -->
             <DataTemplate x:Key="ResultTypeOrderItemTemplate">
-                <Border BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" Padding="0,9">
+                <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,9">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>

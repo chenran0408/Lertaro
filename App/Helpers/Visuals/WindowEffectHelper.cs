@@ -4,8 +4,7 @@ namespace Lertaro.App.Helpers.Visuals;
 
 public static class WindowEffectHelper
 {
-    public static double GetContentOpacity(double themeOpacity)
-        => Services.Theme.BackgroundManager.IsCustom ? 1.0 : themeOpacity;
+    public static double GetContentOpacity(double themeOpacity) => 1.0;
 
     public static void ApplyThemeEffects(Window window, PluginSdk.Abstractions.ITheme theme)
     {

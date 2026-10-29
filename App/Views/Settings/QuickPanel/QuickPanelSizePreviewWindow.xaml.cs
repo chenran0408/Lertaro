@@ -4,7 +4,7 @@ using Lertaro.App.ViewModels.Settings.QuickPanel;
 
 namespace Lertaro.App.Views.Settings.QuickPanel;
 
-public partial class QuickPanelSizePreviewWindow : GlassDesk.UI.Controls.GlassWindow
+public partial class QuickPanelSizePreviewWindow : Lertaro.App.Views.Controls.AppWindow
 {
     private QuickPanelWindowSizeSettingsViewModel? _model;
 
@@ -39,3 +39,4 @@ public partial class QuickPanelSizePreviewWindow : GlassDesk.UI.Controls.GlassWi
         Height = _model.Height;
     }
 }
+

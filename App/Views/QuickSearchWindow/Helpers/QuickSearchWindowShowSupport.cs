@@ -3,7 +3,6 @@ using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Lertaro.App.Helpers;
 using Lertaro.App.Services;
-using Lertaro.App.Services.Theme;
 using Lertaro.Core;
 
 namespace Lertaro.App.Views.QuickSearchWindow.Helpers;
@@ -81,8 +80,7 @@ internal sealed class QuickSearchWindowShowSupport
 
             if (fadeContent != null)
             {
-                var targetOpacity = ThemeManager.Instance.ActiveTheme?.WindowOpacity ?? 1.0;
-                var fadeIn = new DoubleAnimation(targetOpacity, (Duration)System.Windows.Application.Current.FindResource("DurationWindowFadeIn"))
+                var fadeIn = new DoubleAnimation(1.0, (Duration)System.Windows.Application.Current.FindResource("DurationWindowFadeIn"))
                 {
                     EasingFunction = System.Windows.Application.Current.TryFindResource("EaseOutCubic") as IEasingFunction
                 };

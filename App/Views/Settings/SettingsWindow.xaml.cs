@@ -16,7 +16,7 @@ namespace Lertaro.App;
 // SettingsWindowSearchExtensions.cs (extension methods, kept separate to stay under the file-length
 // convention) -- the three XAML-wired event handlers below stay here since XAML event wiring resolves
 // by reflection and can't target an extension method.
-public partial class SettingsWindow : GlassDesk.UI.Controls.GlassWindow
+public partial class SettingsWindow : Lertaro.App.Views.Controls.AppWindow
 {
     private int _validationErrorCount;
 
@@ -283,3 +283,4 @@ public partial class SettingsWindow : GlassDesk.UI.Controls.GlassWindow
         _currentPage = page;
     }
 }
+

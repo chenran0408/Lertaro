@@ -96,4 +96,25 @@ public sealed class SearchStreamRendererTests
         CollectionAssert.AreEqual(new[] { "3", "4" }, tail.Select(result => result.Path).ToList());
         Assert.AreEqual(3, partiallyConsumed.Count, "Ownership transfer must not mutate the source before its owner releases it.");
     }
+
+    [TestMethod]
+    public async Task RefreshAfterAdditionalResults_WaitsForPassAndRefreshesOnlyCurrentSearch()
+    {
+        var additionalResultsReady = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var refreshCount = 0;
+        var refresh = SearchStreamRenderer.RefreshAfterAdditionalResultsAsync(
+            additionalResultsReady.Task, CancellationToken.None, () => true,
+            () => { Interlocked.Increment(ref refreshCount); return Task.CompletedTask; });
+
+        Assert.IsFalse(refresh.IsCompleted, "The refresh must wait while the instant-result pass is still running.");
+        additionalResultsReady.SetResult();
+        await refresh.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.AreEqual(1, refreshCount);
+
+        var staleRefreshCount = 0;
+        await SearchStreamRenderer.RefreshAfterAdditionalResultsAsync(
+            Task.CompletedTask, CancellationToken.None, () => false,
+            () => { Interlocked.Increment(ref staleRefreshCount); return Task.CompletedTask; });
+        Assert.AreEqual(0, staleRefreshCount, "A late pass must not repaint a superseded query.");
+    }
 }

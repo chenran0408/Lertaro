@@ -38,18 +38,18 @@
             </TabControl.Template>
             <TabControl.Resources>
                 <Style TargetType="TabItem">
-                    <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource LiquidControlText}"/></Setter.Value></Setter>
+                    <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextPrimary}"/></Setter.Value></Setter>
                     <Setter Property="Padding" Value="14,8"/>
                     <Setter Property="Margin" Value="0,0,6,0"/>
                     <Setter Property="Template"><Setter.Value>
                         <ControlTemplate TargetType="TabItem">
-                            <Border x:Name="TabBorder" CornerRadius="6" Padding="{TemplateBinding Padding}" Background="{StaticResource LiquidControlFill}"
-                                    BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1">
+                            <Border x:Name="TabBorder" CornerRadius="6" Padding="{TemplateBinding Padding}" Background="{DynamicResource ControlBackground}"
+                                    BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1">
                                 <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsSelected" Value="True"><Setter TargetName="TabBorder" Property="BorderBrush" Value="{DynamicResource AccentBlue}"/></Trigger>
-                                <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource LiquidControlHover}"/></Trigger>
+                                <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource ControlHoverBackground}"/></Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value></Setter>

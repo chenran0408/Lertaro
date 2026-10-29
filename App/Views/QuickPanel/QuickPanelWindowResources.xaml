@@ -57,10 +57,10 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                             <Setter TargetName="AccentBar" Property="Fill" Value="{DynamicResource AccentBarColor}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -139,7 +139,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                         </Trigger>
                         <DataTrigger Binding="{Binding SortMode}" Value="NameAscending">
                             <Setter TargetName="Glyph" Property="Text" Value="&#xE81C;"/>
@@ -170,7 +170,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource LiquidControlHover}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                         </Trigger>
                         <DataTrigger Binding="{Binding IsThumbnailView}" Value="False">
                             <Setter TargetName="Glyph" Property="Text" Value="&#xE80A;"/>
@@ -247,7 +247,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="TileBorder" Property="BorderBrush" Value="{DynamicResource LiquidControlEdge}"/>
+                            <Setter TargetName="TileBorder" Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="TileBorder" Property="BorderBrush" Value="{DynamicResource AccentBarColor}"/>

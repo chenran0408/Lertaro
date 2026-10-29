@@ -18,7 +18,7 @@
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bar" Property="Background" Value="{DynamicResource LiquidControlHover}"/></Trigger>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bar" Property="Background" Value="{DynamicResource ControlHoverBackground}"/></Trigger>
                         <Trigger Property="IsChecked" Value="True"><Setter TargetName="Chevron" Property="Text" Value="&#xE70E;"/></Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -58,7 +58,7 @@
                                Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center"
                                TextTrimming="CharacterEllipsis" Text="{Binding FolderPath}"/>
                     <Border Grid.Column="2" Height="1" Margin="10,0,10,0" VerticalAlignment="Center"
-                            Background="{DynamicResource LiquidControlEdge}"/>
+                            Background="{DynamicResource ControlBorderBrush}"/>
                 </Grid>
             </ToggleButton>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">

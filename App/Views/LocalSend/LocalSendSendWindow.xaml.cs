@@ -9,7 +9,7 @@ using WpfKeyEventArgs = System.Windows.Input.KeyEventArgs;
 
 namespace Lertaro.App.Views.LocalSend;
 
-public partial class LocalSendSendWindow : GlassDesk.UI.Controls.GlassWindow
+public partial class LocalSendSendWindow : Lertaro.App.Views.Controls.AppWindow
 {
     private readonly LocalSendSendViewModel _vm;
     private CancelSource _cancelSource;
@@ -163,3 +163,4 @@ public partial class LocalSendSendWindow : GlassDesk.UI.Controls.GlassWindow
 
     private enum CancelSource { None, Self, Receiver }
 }
+

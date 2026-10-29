@@ -148,7 +148,8 @@ internal sealed class SearchDispatchController
         string? instantQuery,
         bool emitInstantResults,
         Action? beforeSearch,
-        Func<string?, List<AppSearchResult>>? collectInstantResults);
+        Func<string?, List<AppSearchResult>>? collectInstantResults,
+        Task? additionalResultsReady);
 
     private void RunEngineSearch(
         EngineSearchCall engineCall,
@@ -183,6 +184,7 @@ internal sealed class SearchDispatchController
         // Per search, not per paint: the mapper below is the render callback, and it asks every instant
         // provider and search-action plugin on each call. See SearchResultMapper.InstantPassCache.
         var instantPass = new SearchResultMapper.InstantPassCache();
+        var deferInstantPass = !_getIsInlineSearchContext() && !hasTokens && !hasScope && !folderScope;
         engineCall(
             searchQuery,
             hasScope ? null : _getSearchScope(),
@@ -208,7 +210,8 @@ internal sealed class SearchDispatchController
             // Nothing to start alongside a quick-window search: the rows this window can show all come from
             // the one search already, and its instant providers are folded into the mapper above.
             null,
-            contextDir => SearchResultMapper.CollectInstantPass(instantPass, originalValue, searchQuery, _getIsInlineSearchContext(), contextDir)
+            contextDir => SearchResultMapper.CollectInstantPass(instantPass, originalValue, searchQuery, _getIsInlineSearchContext(), contextDir),
+            deferInstantPass ? instantPass.Completion : null
         );
     }
     public void PerformSearch(string query)

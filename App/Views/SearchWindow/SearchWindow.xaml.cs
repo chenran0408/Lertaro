@@ -19,7 +19,7 @@ using Lertaro.App.Services.Theme;
 using Lertaro.App.Services.ShellMenu.Presenter;
 using Lertaro.App.Helpers.Visuals;
 namespace Lertaro.App;
-public partial class SearchWindow : GlassDesk.UI.Controls.GlassWindow, ISearchWindow, IHasVisibleContentInset
+public partial class SearchWindow : Lertaro.App.Views.Controls.AppWindow, ISearchWindow, IHasVisibleContentInset
 {
     private readonly SearchViewModel _viewModel;
     private readonly SearchWindowChromeHandler _chromeHandler;
@@ -294,3 +294,4 @@ public partial class SearchWindow : GlassDesk.UI.Controls.GlassWindow, ISearchWi
         UiMetrics.MainWindowHeight = settings.MainWindow.Height;
     }
 }
+

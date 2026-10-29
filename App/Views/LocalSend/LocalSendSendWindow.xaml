@@ -1,22 +1,21 @@
-<glass:GlassWindow x:Class="Lertaro.App.Views.LocalSend.LocalSendSendWindow"
+<appWindow:AppWindow x:Class="Lertaro.App.Views.LocalSend.LocalSendSendWindow" xmlns:appWindow="clr-namespace:Lertaro.App.Views.Controls"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:glass="clr-namespace:GlassDesk.UI.Controls;assembly=GlassDesk.UI" xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
         xmlns:services="clr-namespace:Lertaro.App.Services"
         xmlns:local="clr-namespace:Lertaro.App.Views.LocalSend"
         Title="LocalSend" Height="400" Width="480" MinWidth="420" MinHeight="320"
-        WindowStartupLocation="CenterScreen" Background="Transparent" AllowsTransparency="True"
+        WindowStartupLocation="CenterScreen" Background="{DynamicResource ContentBg}" AllowsTransparency="False"
         WindowStyle="None" ResizeMode="CanResizeWithGrip" ShowInTaskbar="True" Topmost="True"
         TextElement.Foreground="{Binding RelativeSource={RelativeSource Self}, Path=ForegroundBrush}">
-    <glass:GlassWindow.Resources>
+    <appWindow:AppWindow.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml"/>
                 <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles/Windows/SearchWindow.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </glass:GlassWindow.Resources>
+    </appWindow:AppWindow.Resources>
     <Grid>
-        <glass:LiquidGlassSurface x:Name="GlassSurface" />
         <surface:BackgroundSurface UseTransparentBase="True" />
 
     <!-- No WindowChrome, deliberately: see the note in LocalSendReceiveWindow. On a transparent window it
@@ -24,7 +23,7 @@
          grip that is painted but does not resize. -->
             <Grid>
                 <Grid.RowDefinitions><RowDefinition Height="40"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                <Border Grid.Row="0" Background="Transparent" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="0,0,0,1" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Border Grid.Row="0" Background="Transparent" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
                         <Image x:Name="TitleBarLogo" Width="18" Height="18" Margin="0,0,8,0"/>
                         <TextBlock x:Name="TxtWindowTitle" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_SendWindowTitle]}" FontSize="14" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
@@ -37,4 +36,5 @@
                 </Grid>
             </Grid>
     </Grid>
-</glass:GlassWindow>
+</appWindow:AppWindow>
+

@@ -17,7 +17,7 @@ namespace Lertaro.App;
 /// the active Explorer window or Desktop when the user types any character.
 /// Results expand upward, search box stays anchored at bottom.
 /// </summary>
-public partial class InlineSearchWindow : GlassDesk.UI.Controls.GlassWindow, ISearchWindow
+public partial class InlineSearchWindow : Lertaro.App.Views.Controls.AppWindow, ISearchWindow
 {
     private readonly QuickSearchViewModel _viewModel;
     private readonly InlineSearchManager _manager;
@@ -310,3 +310,4 @@ public partial class InlineSearchWindow : GlassDesk.UI.Controls.GlassWindow, ISe
         base.OnClosed(e);
     }
 }
+

@@ -14,25 +14,21 @@
              control any window declares, so a per-window dictionary only reaches the windows that
              remember to merge it, which is how half of them ended up with two different grips. -->
         <ResourceDictionary Source="Styles/Controls/ResizeGrip.xaml"/>
-        <!-- Use GlassDesk's actual global control theme after the legacy application styles so its
-             implicit Button/TextBox/ComboBox/ListBox/CheckBox/Menu/ToolTip templates win consistently. -->
-        <ResourceDictionary Source="pack://application:,,,/GlassDesk.UI;component/Theming/LiquidGlassTheme.xaml"/>
     </ResourceDictionary.MergedDictionaries>
-    <!-- Match GlassDesk GlassWindow ForegroundBrush and SecondaryForegroundBrush propagation. -->
-    <Style TargetType="TextBlock" BasedOn="{StaticResource GlassTextPrimary}"/>
-    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+    <Style TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="{DynamicResource AppUiFontWeight}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+    </Style>
+    <Style TargetType="Button">
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontWeight" Value="{DynamicResource AppUiFontWeight}"/>
     </Style>
-    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+    <Style TargetType="ComboBox">
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontWeight" Value="{DynamicResource AppUiFontWeight}"/>
     </Style>
-    <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="FontWeight" Value="{DynamicResource AppUiFontWeight}"/>
-    </Style>
-    <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+    <Style TargetType="ComboBoxItem">
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontWeight" Value="{DynamicResource AppUiFontWeight}"/>
     </Style>

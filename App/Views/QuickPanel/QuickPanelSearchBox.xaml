@@ -24,8 +24,8 @@
     </UserControl.Resources>
 
     <Border Height="26" CornerRadius="{StaticResource CornerRadiusControl}"
-            Background="{StaticResource LiquidControlFill}"
-            BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1">
+            Background="{DynamicResource ControlBackground}"
+            BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
