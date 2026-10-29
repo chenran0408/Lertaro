@@ -1,4 +1,7 @@
 using System.Reflection;
+using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Runtime.Intrinsics.X86;
 using System.Windows;
 using GlassDesk.UI.Controls;
 
@@ -7,6 +10,8 @@ namespace Lertaro.App.Tests.GlassDesk;
 [TestClass]
 public sealed class AndroidLiquidGlassRendererAllocationTests
 {
+    public TestContext TestContext { get; set; } = null!;
+
     private static readonly Type RendererType = typeof(LiquidGlassOptics).Assembly
         .GetType("GlassDesk.UI.Controls.AndroidLiquidGlassRenderer", throwOnError: true)!;
     private static readonly Type WorkerType = typeof(LiquidGlassOptics).Assembly
@@ -20,6 +25,34 @@ public sealed class AndroidLiquidGlassRendererAllocationTests
     private static readonly PropertyInfo FramePixelsProperty = WorkerType.Assembly
         .GetType("GlassDesk.UI.Controls.GlassFrameResult", throwOnError: true)!
         .GetProperty("Pixels", BindingFlags.Instance | BindingFlags.NonPublic)!;
+
+    [TestMethod]
+    public void Render_320KPixelReleaseLatency_IsReported()
+    {
+        const int width = 800;
+        const int height = 400;
+        const int sampleCount = 21;
+        var renderer = CreateRenderer();
+        var render = BindRender(renderer);
+        var source = CreateSource(width, height, 53);
+        for (var i = 0; i < 3; i++) Render(render, source, width, height);
+
+        var samples = new double[sampleCount];
+        var allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < sampleCount; i++)
+        {
+            var started = Stopwatch.GetTimestamp();
+            Render(render, source, width, height);
+            samples[i] = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+        }
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
+        var pixelHash = Convert.ToHexString(SHA256.HashData(Render(render, source, width, height)));
+        Array.Sort(samples);
+        TestContext.WriteLine($"AndroidLiquidGlassRenderer 320k pixels; warm p50={samples[sampleCount / 2]:F2} ms, p95={samples[sampleCount - 2]:F2} ms; allocated={allocated / sampleCount} B/frame; sha256={pixelHash}");
+        if (Avx.IsSupported && Sse41.IsSupported)
+            Assert.AreEqual("13D679DDD4CB217A55694802B0C0EEAEE2BA95237BC989D7F4FCD432F04BF920", pixelHash,
+                "The x64 Release fixture must keep the baseline frame pixels exactly.");
+    }
 
     [TestMethod]
     public void RepeatedRender_ReusesFilteredBuffer_AndMatchesFreshRenderer()
@@ -144,13 +177,43 @@ public sealed class AndroidLiquidGlassRendererAllocationTests
         CollectionAssert.AreEqual(snapshot, afterClear);
     }
 
+    [TestMethod]
+    public void Render_ChangedBoundsOnSameBuffer_ClearsPixelsOutsideNewCoverage()
+    {
+        const int width = 48;
+        const int height = 36;
+        var source = CreateSource(width, height, 61);
+        var renderer = CreateRenderer();
+        var first = Render(renderer, source, width, height, new Rect(0, 0, width, height));
+        var second = Render(renderer, source, width, height, new Rect(8, 8, width - 16, height - 16));
+        var fresh = Render(CreateRenderer(), source, width, height, new Rect(8, 8, width - 16, height - 16));
+
+        Assert.AreSame(first, second);
+        CollectionAssert.AreEqual(fresh, second, "Pixels outside changed coverage must match a fresh zero-initialized frame.");
+    }
+
     private static object CreateRenderer() => Activator.CreateInstance(RendererType, nonPublic: true)!;
     private static object CreateWorker() => Activator.CreateInstance(WorkerType, nonPublic: true)!;
 
     private static byte[] Render(object renderer, byte[] source, int width, int height) =>
+        Render(renderer, source, width, height, new Rect(0, 0, width, height));
+
+    private static byte[] Render(object renderer, byte[] source, int width, int height, Rect bounds) =>
         (byte[])RenderMethod.Invoke(renderer,
-        [source, width, height, new Size(width, height), new Rect(0, 0, width, height), 9d,
+        [source, width, height, new Size(width, height), bounds, 9d,
             false, true, .85d, .3d, .5d, null, false])!;
+
+    private static Func<byte[], int, int, Size, Rect, double, bool, bool, double, double, double,
+        LiquidGlassDispersionParameters?, bool, byte[]> BindRender(object renderer) =>
+        (Func<byte[], int, int, Size, Rect, double, bool, bool, double, double, double,
+            LiquidGlassDispersionParameters?, bool, byte[]>)RenderMethod.CreateDelegate(
+                typeof(Func<byte[], int, int, Size, Rect, double, bool, bool, double, double, double,
+                    LiquidGlassDispersionParameters?, bool, byte[]>), renderer);
+
+    private static byte[] Render(Func<byte[], int, int, Size, Rect, double, bool, bool, double, double, double,
+        LiquidGlassDispersionParameters?, bool, byte[]> render, byte[] source, int width, int height) =>
+        render(source, width, height, new Size(width, height), new Rect(0, 0, width, height), 9d,
+            false, true, .85d, .3d, .5d, null, false);
 
     private static void Clear(object renderer) => ClearMethod.Invoke(renderer, null);
 

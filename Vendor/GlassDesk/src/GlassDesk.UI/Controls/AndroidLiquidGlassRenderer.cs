@@ -19,6 +19,7 @@ internal sealed class AndroidLiquidGlassRenderer
     private Sample[]? _map;
     private byte[]? _filtered;
     private byte[]? _result;
+    private (int Width, int Height, Size Size, Rect Bounds, double Radius, bool Squircle)? _resultCoverageKey;
     private (int Width, int Height, Size Size, Rect Bounds, double Radius, bool Squircle, double Strength, bool Launchpad) _key;
 
     // Lertaro modification (2026-10-29): expose lifecycle clearing for hidden surfaces.
@@ -27,6 +28,7 @@ internal sealed class AndroidLiquidGlassRenderer
         _map = null;
         _filtered = null;
         _result = null;
+        _resultCoverageKey = null;
     }
 
     internal long InspectOwnedArrayBytes() => (_map is null ? 0 : MemoryMarshal.AsBytes(_map.AsSpan()).Length)
@@ -142,7 +144,11 @@ internal sealed class AndroidLiquidGlassRenderer
             filtered = _filtered;
             ApplyBackdropFilter(source, filtered, width, height, size, strength, backgroundClarity);
         }
+        var coverageKey = (width, height, size, bounds, radius, squircle);
+        var coverageChanged = _resultCoverageKey != coverageKey;
         if (_result?.Length != source.Length) _result = new byte[source.Length];
+        else if (coverageChanged) Array.Clear(_result, 0, _result.Length);
+        _resultCoverageKey = coverageKey;
         var result = _result;
         var tint = dark ? 18d : 250d;
         var opacity = NormalizeTintOpacity(tintOpacity) * BodyTintScale(backgroundClarity, launchpadOptics) * strength;
@@ -155,13 +161,20 @@ internal sealed class AndroidLiquidGlassRenderer
             var regionGain = sample.OuterBlend * dispersion.OuterDispersionGain / LiquidGlassDispersionParameters.DefaultOuterDispersionGain
                 + (1 - sample.OuterBlend) * dispersion.InnerDispersionGain / LiquidGlassDispersionParameters.DefaultInnerDispersionGain;
             var i = pixel * 4;
+            var baseSeparation = 0 * dispersionScale * regionGain;
+            var baseX = Math.Clamp(sample.X + sample.DispersionX * baseSeparation, 0, width - 1);
+            var baseY = Math.Clamp(sample.Y + sample.DispersionY * baseSeparation, 0, height - 1);
             for (var c = 0; c < 4; c++)
             {
                 // BGRA: blue bends slightly further, red slightly less. Green and alpha
                 // keep the original mapping; clarity only changes the filtered input.
                 var separation = (c == 0 ? -1 : c == 2 ? 1 : 0) * dispersionScale * regionGain;
-                var x = Math.Clamp(sample.X + sample.DispersionX * separation, 0, width - 1);
-                var y = Math.Clamp(sample.Y + sample.DispersionY * separation, 0, height - 1);
+                var x = c == 0 || c == 2
+                    ? Math.Clamp(sample.X + sample.DispersionX * separation, 0, width - 1)
+                    : baseX;
+                var y = c == 0 || c == 2
+                    ? Math.Clamp(sample.Y + sample.DispersionY * separation, 0, height - 1)
+                    : baseY;
                 var x0 = (int)x; var y0 = (int)y;
                 var x1 = Math.Min(x0 + 1, width - 1); var y1 = Math.Min(y0 + 1, height - 1);
                 var fx = x - x0; var fy = y - y0;
