@@ -9,7 +9,8 @@ namespace Lertaro.Core.Services.Update;
 
 /// <summary>
 /// Handles SearchRequestId.ApplyUpdate: verifies a staged update package and hands it to an elevated
-/// process in the caller's own session, which is how an update reaches Program Files without the App ever
+/// updater. Administrator callers use their own session; standard-user callers let this LocalSystem
+/// service run the updater directly, which is how an update reaches Program Files without the App ever
 /// owning a runas/UAC prompt of its own.
 /// </summary>
 /// <remarks>
@@ -55,8 +56,11 @@ internal static class UpdateApplyRequestHandler
                 !PipeClientIdentity.TryGetClientSessionId(pipe, out var sessionId))
                 return Reject("Unable to identify caller.");
 
-            if (!PipeClientIdentity.IsAuthorizedApp(pipe, administrator: true))
-                return Reject("Updating this installation requires an administrator account running this installation's App.");
+            // A signed package is the only payload the service will accept. A genuine App is enough
+            // authorization for a user-clicked update; the service performs the file replacement as
+            // LocalSystem so a standard user does not need to elevate the App or show a UAC prompt.
+            if (!PipeClientIdentity.IsAuthorizedApp(pipe))
+                return Reject("Updating this installation requires this installation's Lertaro.App.exe.");
             if (_applier is { HasExited: false }) return Reject("An update is already running.");
             _applier?.Dispose();
             _applier = null;
@@ -95,8 +99,11 @@ internal static class UpdateApplyRequestHandler
             var system32 = Environment.GetFolderPath(Environment.SpecialFolder.System);
             var arguments = $"-NoLogo -NoProfile -NonInteractive -File \"{updaterScript}\" -Source \"{payloadDir}\" -Destination \"{installDir}\"";
             var powershell = Path.Combine(system32, "WindowsPowerShell", "v1.0", "powershell.exe");
-            if (!SessionProcessLauncher.TryLaunch(sessionId, powershell, arguments, requestElevation: true,
-                    detachFromConsole: false, out var pid, out var error))
+            var launched = PipeClientIdentity.IsAdministratorAccount(callerPid)
+                ? SessionProcessLauncher.TryLaunch(sessionId, powershell, arguments, requestElevation: true,
+                    detachFromConsole: false, out var pid, out var error)
+                : TryLaunchAsService(powershell, arguments, installDir, out pid, out error);
+            if (!launched)
             {
                 // Nothing was copied and this service stays running, so the note would only make some later
                 // start of the service launch an App nobody asked for.
@@ -148,6 +155,37 @@ internal static class UpdateApplyRequestHandler
 
     internal static FileStream AcquireUpdateLock(string installDirectory) =>
         new(Path.Combine(installDirectory, "update.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+
+    private static bool TryLaunchAsService(string exePath, string arguments, string workingDirectory,
+        out int pid, out string? error)
+    {
+        pid = 0;
+        error = null;
+        try
+        {
+            using var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = exePath,
+                Arguments = arguments,
+                WorkingDirectory = workingDirectory,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+            if (process == null)
+            {
+                error = "The service could not start the update process.";
+                return false;
+            }
+
+            pid = process.Id;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
 
     private static PipeResponse Reject(string reason)
     {

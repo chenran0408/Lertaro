@@ -156,11 +156,6 @@
                     <!-- Update Progress Bar -->
                     <ProgressBar x:Name="PbUpdate" Margin="0,12,0,0" Visibility="Collapsed"/>
 
-                    <!-- Warning Tip for Non-Admins -->
-                    <TextBlock x:Name="TxtNoAdminWarning" Visibility="Collapsed"
-                               Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_NoAdminTip]}"
-                               Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap" Margin="0,12,0,0" FontSize="14"/>
-
                     <!-- Actions when new version found -->
                     <StackPanel x:Name="SpUpdateActions" Orientation="Horizontal" Margin="0,12,0,0" Visibility="Collapsed">
                         <Button x:Name="BtnAutoUpdate" Style="{StaticResource PrimarySettingsButton}"

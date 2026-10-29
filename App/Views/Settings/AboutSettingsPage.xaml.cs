@@ -135,7 +135,6 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
         BtnAutoUpdate.Visibility = Visibility.Collapsed;
         TxtUpdateStatus.Text = TranslationManager.Instance["About_Checking"];
         SpUpdateActions.Visibility = Visibility.Collapsed;
-        TxtNoAdminWarning.Visibility = Visibility.Collapsed;
 
         GitHubReleaseInfo? release = null;
         try
@@ -174,16 +173,9 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
                 SpUpdateActions.Visibility = Visibility.Visible;
                 BtnAutoUpdate.Visibility = Visibility.Visible;
 
-                // If user is not admin, show warning and disable auto-update button
-                if (!ElevationHelper.IsUserAdmin())
-                {
-                    TxtNoAdminWarning.Visibility = Visibility.Visible;
-                    BtnAutoUpdate.IsEnabled = false;
-                }
-                else
-                {
-                    BtnAutoUpdate.IsEnabled = true;
-                }
+                // The service applies signed packages as LocalSystem, so a standard user can update
+                // from this button without elevating the App or opening a download page.
+                BtnAutoUpdate.IsEnabled = true;
             }
             else
             {
