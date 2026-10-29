@@ -6,12 +6,10 @@ namespace Lertaro.Core.Tests.IndexV2;
 [TestClass]
 public sealed class LiveIndexTests
 {
-    // Regression coverage for the orphaned/stuck .bak file: Compact() used to keep the OLD snapshot's
-    // memory mapping open through the whole write-then-replace swap, only disposing it after reopening
-    // the fresh file. Compact() now disposes the old mapping right after merging (the only step that
-    // still needs it) and BEFORE SnapshotWriter.Write ever touches `path` on disk. This test mainly
-    // guards that the reordering didn't break the actual persist -- the merged data must still be
-    // exactly what was mutated in, and the file must end up in a state a brand new reader can open.
+    // Regression coverage for the orphaned/stuck .bak file: direct native compaction keeps the old
+    // mapping only while it builds and writes the replacement, then releases it before the backup is
+    // deleted. The persisted data must still be exactly what was mutated in, and a new reader must be
+    // able to open the result.
     [TestMethod]
     public void Compact_WithPendingChanges_PersistsTheMergeAndLeavesAFreshlyOpenableFile()
     {
@@ -38,6 +36,7 @@ public sealed class LiveIndexTests
         // left `path` in a valid, unlocked state, not still exclusively held by the disposed old mapping.
         using var independentReader = Snapshot.Open(fixture.Path);
         Assert.AreEqual(2, independentReader.Count);
+        Assert.IsFalse(File.Exists(fixture.Path + ".bak"));
     }
 
     [TestMethod]

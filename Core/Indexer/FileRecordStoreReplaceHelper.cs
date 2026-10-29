@@ -2,7 +2,8 @@ namespace Lertaro.Core;
 
 internal static class FileRecordStoreReplaceHelper
 {
-    public static void ReplaceWithRetry(string tempPath, string finalPath, Action<string> tryDelete)
+    public static void ReplaceWithRetry(string tempPath, string finalPath, Action<string> tryDelete,
+        Action? beforeBackupDelete = null)
     {
         const int maxAttempts = 5;
         var backupPath = finalPath + ".bak";
@@ -13,12 +14,12 @@ internal static class FileRecordStoreReplaceHelper
                 if (File.Exists(finalPath))
                 {
                     File.Replace(tempPath, finalPath, backupPath, ignoreMetadataErrors: true);
+                    beforeBackupDelete?.Invoke();
                     // The previous snapshot is discarded here rather than kept as a second known-good
-                    // generation: LiveIndex.Compact has to release its mapping before this swap, and on
-                    // some Windows/filesystem combinations an orphaned .bak still held by this very
-                    // process made the delete that follows the rename fail -- see the comment there. The
-                    // residual hole is a snapshot torn by a power loss with nothing to fall back to, which
-                    // costs a full re-scan of the drive, not data.
+                    // generation. LiveIndex.Compact releases its mapping immediately after this swap
+                    // and before this delete; on some Windows/filesystem combinations an open mapping
+                    // otherwise leaves the backup behind. The residual hole is a snapshot torn by a
+                    // power loss with nothing to fall back to, which costs a full re-scan, not data.
                     tryDelete(backupPath);
                 }
                 else
@@ -38,6 +39,7 @@ internal static class FileRecordStoreReplaceHelper
             if (File.Exists(finalPath))
             {
                 File.Replace(tempPath, finalPath, backupPath, ignoreMetadataErrors: true);
+                beforeBackupDelete?.Invoke();
                 tryDelete(backupPath);
             }
             else

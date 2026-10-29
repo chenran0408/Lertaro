@@ -57,7 +57,7 @@ public static class SnapshotWriter
     }
 
     internal static void WriteCompacted(Snapshot baseSnapshot, DeltaOverlay delta, string path,
-        CompactionStamp stamp)
+        CompactionStamp stamp, Action? beforeBackupDelete = null)
     {
         var aliasFingerprint = AliasProviderRegistry.ComputeProvidersFingerprint();
         // A compaction usually changes only a small delta. Keep the already-baked aliases for
@@ -83,11 +83,12 @@ public static class SnapshotWriter
             IsComplete = stamp.IsComplete ?? baseSnapshot.IsComplete,
             ExclusionRulesFingerprint = stamp.ExclusionRulesFingerprint ?? baseSnapshot.ExclusionRulesFingerprint,
             LastUpdated = stamp.LastUpdated ?? baseSnapshot.LastUpdated,
-        }, path, aliasSource, aliasFingerprint);
+        }, path, aliasSource, aliasFingerprint, beforeBackupDelete);
     }
 
     private static void WriteColumns(NativeSnapshotBuilder snapshot, IReadOnlyList<string> uniqueNames,
-        SnapshotFormat.Meta meta, string path, Snapshot? aliasSource, string aliasFingerprint)
+        SnapshotFormat.Meta meta, string path, Snapshot? aliasSource, string aliasFingerprint,
+        Action? beforeBackupDelete = null)
     {
         var count = snapshot.Count;
         var nameIds = snapshot.NameIds;
@@ -278,7 +279,8 @@ public static class SnapshotWriter
                 stream.Flush(flushToDisk: true);
             }
 
-            FileRecordStoreReplaceHelper.ReplaceWithRetry(temp, path, SnapshotWriterOps.TryDelete);
+            FileRecordStoreReplaceHelper.ReplaceWithRetry(temp, path, SnapshotWriterOps.TryDelete,
+                beforeBackupDelete);
         }
     }
 

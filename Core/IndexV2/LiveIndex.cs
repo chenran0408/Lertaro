@@ -103,20 +103,27 @@ public sealed class LiveIndex : IDisposable
             if (!force && _delta!.PendingChangeCount == 0)
                 return false;
 
-            // Merge first (the only step that still needs the OLD snapshot's memory-mapped data), then
-            // release that mapping BEFORE writing the fresh file over this same path. SnapshotWriter's
-            // temp-then-replace swap needs to delete the resulting backup file right after the rename,
-            // and an active memory mapping on it -- even one opened with FileShare.Delete, which only
-            // guarantees the RENAME succeeds -- can make that immediately-following delete fail on some
-            // Windows/filesystem combinations (seen reliably on a Windows 10 VM indexing a network share,
-            // not on Windows 11), leaving an orphaned .bak file this exact process still holds open.
-            using var mergedStore = Compaction.BuildMergedStore(_snapshot!, _delta!, stamp);
-            _snapshot!.Dispose();
-            _snapshot = null;
-            _delta = null;
+            // Direct compaction builds the final native snapshot columns without creating a full
+            // intermediate FileRecordStore. The old mapping must stay alive while those columns and
+            // unchanged aliases are copied, then be released immediately after File.Replace and before
+            // the replacement helper deletes its .bak file.
+            var oldSnapshot = _snapshot!;
+            var oldDelta = _delta!;
+            var oldSnapshotDisposed = false;
             try
             {
-                SnapshotWriter.Write(mergedStore, path);
+                Compaction.Compact(oldSnapshot, oldDelta, path, stamp, beforeBackupDelete: () =>
+                {
+                    oldSnapshot.Dispose();
+                    oldSnapshotDisposed = true;
+                });
+                if (!oldSnapshotDisposed)
+                {
+                    oldSnapshot.Dispose();
+                    oldSnapshotDisposed = true;
+                }
+                _snapshot = null;
+                _delta = null;
                 _snapshot = Snapshot.Open(path);
                 _delta = new DeltaOverlay(_snapshot);
                 Interlocked.Increment(ref _revision);
@@ -124,6 +131,13 @@ public sealed class LiveIndex : IDisposable
             }
             catch (Exception originalException)
             {
+                if (!oldSnapshotDisposed)
+                {
+                    oldSnapshot.Dispose();
+                    oldSnapshotDisposed = true;
+                }
+                _snapshot = null;
+                _delta = null;
                 // SnapshotWriter.Write uses File.Replace, which is all-or-nothing. On a write failure the
                 // original pre-compaction file should still be at `path`; on a successful write followed by
                 // an open failure the fresh file is there but unreadable. Either way, try to keep this

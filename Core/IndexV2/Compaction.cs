@@ -24,8 +24,15 @@ public readonly record struct CompactionStamp(
 public static class Compaction
 {
     public static void Compact(Snapshot snapshot, DeltaOverlay delta, string path, CompactionStamp stamp = default)
+        => Compact(snapshot, delta, path, stamp, beforeBackupDelete: null);
+
+    // LiveIndex uses this hook to release the old memory mapping after File.Replace has completed but
+    // before the replacement helper removes its .bak file. That keeps direct native compaction from
+    // materializing a FileRecordStore while preserving the Windows mapping/rename ordering contract.
+    internal static void Compact(Snapshot snapshot, DeltaOverlay delta, string path, CompactionStamp stamp,
+        Action? beforeBackupDelete)
     {
-        SnapshotWriter.WriteCompacted(snapshot, delta, path, stamp);
+        SnapshotWriter.WriteCompacted(snapshot, delta, path, stamp, beforeBackupDelete);
     }
 
     // The merge half of compaction, without the file write -- also backs NetworkIndex.ToStore(), which
