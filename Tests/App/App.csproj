@@ -17,12 +17,12 @@
 
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+    <Compile Remove="GlassDesk\**\*.cs" />
     <None Include="../Fixtures/background-loop.mp4" Link="Fixtures/background-loop.mp4" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\App\App.csproj" />
-    <ProjectReference Include="..\..\Vendor\GlassDesk\src\GlassDesk.UI\GlassDesk.UI.csproj" />
     <ProjectReference Include="..\..\Plugins\SystemSettings\SystemSettings.csproj" />
     <ProjectReference Include="..\..\Plugins\CustomActions\CustomActions.csproj" />
     <ProjectReference Include="..\..\Plugins\CustomCommands\CustomCommands.csproj" />

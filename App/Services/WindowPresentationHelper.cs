@@ -3,9 +3,9 @@ using Lertaro.App.Views.Controls;
 namespace Lertaro.App.Services;
 
 /// <summary>Runs a window's show callback on its owning dispatcher.</summary>
-internal static class GlassWindowPresentationHelper
+internal static class WindowPresentationHelper
 {
-    internal static Task ShowWhenPreparedAsync(Lertaro.App.Views.Controls.AppWindow window, Action show, Func<bool>? isCurrent = null)
+    internal static Task ShowAsync(Lertaro.App.Views.Controls.AppWindow window, Action show, Func<bool>? isCurrent = null)
     {
         ArgumentNullException.ThrowIfNull(window);
         ArgumentNullException.ThrowIfNull(show);

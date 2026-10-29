@@ -95,7 +95,7 @@ internal sealed class NotificationWindowManager(
         }
 
         if (window is Lertaro.App.Views.Controls.AppWindow glassWindow)
-            await GlassWindowPresentationHelper.ShowWhenPreparedAsync(glassWindow, Show,
+            await WindowPresentationHelper.ShowAsync(glassWindow, Show,
                 () => _runners.TryGetValue(runner.Item, out var current) && ReferenceEquals(current, runner));
         else
             Show();
@@ -180,7 +180,7 @@ internal sealed class NotificationWindowManager(
         }
 
         if (window is Lertaro.App.Views.Controls.AppWindow glassWindow)
-            return GlassWindowPresentationHelper.ShowWhenPreparedAsync(glassWindow, Show, isCurrent);
+            return WindowPresentationHelper.ShowAsync(glassWindow, Show, isCurrent);
         Show();
         return Task.CompletedTask;
     }

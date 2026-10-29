@@ -34,7 +34,7 @@ public partial class QuickPanelWindowSizeEditor : System.Windows.Controls.UserCo
         }
         var preview = _preview;
         _preview.Closed += (_, _) => _preview = null;
-        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(preview, preview.Show,
+        await WindowPresentationHelper.ShowAsync(preview, preview.Show,
             () => ReferenceEquals(_preview, preview));
     }
 

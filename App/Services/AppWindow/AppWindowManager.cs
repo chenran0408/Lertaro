@@ -73,7 +73,7 @@ public static class AppWindowManager
 
     private static async void ShowSettingsWindowPrepared(SettingsWindow window, bool focusSearch)
     {
-        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, () =>
+        await WindowPresentationHelper.ShowAsync(window, () =>
         {
             if (!window.IsVisible) window.Show();
             if (window.WindowState == WindowState.Minimized)
@@ -267,7 +267,7 @@ public static class AppWindowManager
         if (bringToFront)
             IdleWorkingSetTrimmer.WindowShowing();
 
-        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, () =>
+        await WindowPresentationHelper.ShowAsync(window, () =>
         {
             if (!window.IsVisible)
                 window.Show();

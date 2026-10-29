@@ -108,7 +108,7 @@ public static class LocalSendAppEventHandler
             DeviceValidationTimer.Stop();
         };
         var window = _activeSendWindow;
-        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, () =>
+        await WindowPresentationHelper.ShowAsync(window, () =>
         {
             window.Show();
             window.Activate();
@@ -124,7 +124,7 @@ public static class LocalSendAppEventHandler
         await manager.DiscoverDevicesAsync().ConfigureAwait(false);
     }
 
-    private static void OnUploadRequested(object? sender, LocalSendUploadRequestArgs e) => Application.Current.Dispatcher.BeginInvoke(new Action(async () =>
+    private static void OnUploadRequested(object? sender, LocalSendUploadRequestArgs e) => Application.Current.Dispatcher.BeginInvoke(new Action(() =>
     {
         // A receive dialog is modal; if a second request arrives while one is already open, opening
         // another would overwrite _activeReceiveWindow and corrupt the close-handler state. Drop the
@@ -134,10 +134,8 @@ public static class LocalSendAppEventHandler
 
         _activeReceiveWindow = new LocalSendReceiveWindow(e);
         _isReceiveWindowOpen = true;
-        _activeReceiveWindow.Closed += (_, _) => { _activeReceiveWindow = null; _isReceiveWindowOpen = false; };
         var window = _activeReceiveWindow;
-        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, static () => { },
-            () => ReferenceEquals(_activeReceiveWindow, window));
-        if (ReferenceEquals(_activeReceiveWindow, window)) window.ShowDialog();
+        window.Closed += (_, _) => { _activeReceiveWindow = null; _isReceiveWindowOpen = false; };
+        window.ShowDialog();
     }));
 }

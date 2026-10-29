@@ -68,7 +68,7 @@ internal sealed class QuickSearchWindowShowSupport
         var fadeContent = window.Content as UIElement;
         fadeContent?.BeginAnimation(UIElement.OpacityProperty, null);
         fadeContent?.Opacity = 0;
-        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, () =>
+        await WindowPresentationHelper.ShowAsync(window, () =>
         {
             // Keep the inline hook live until the prepared window is ready to receive focus. During
             // prewarm the host remains the foreground target and the hidden window owns no input.

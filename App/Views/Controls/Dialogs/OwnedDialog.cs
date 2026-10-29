@@ -1,8 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Interop;
-using System.Windows.Threading;
-using System.Runtime.ExceptionServices;
 using Lertaro.App.Services;
 
 using Application = System.Windows.Application;
@@ -84,54 +82,7 @@ internal static class OwnedDialog
     /// </remarks>
     public static void ShowModal(Window dialog)
     {
-        if (dialog is Lertaro.App.Views.Controls.AppWindow glassWindow && !dialog.IsVisible)
-        {
-            ShowPreparedModal(glassWindow);
-            return;
-        }
-
         ShowModalNow(dialog);
-    }
-
-    private static void ShowPreparedModal(Lertaro.App.Views.Controls.AppWindow dialog)
-    {
-        var owner = dialog.Owner;
-        var ownerCloseDeferred = false;
-        Exception? failure = null;
-        var frame = new DispatcherFrame();
-
-        void OnOwnerClosing(object? sender, CancelEventArgs e)
-        {
-            if (e.Cancel) return;
-            e.Cancel = true;
-            ownerCloseDeferred = true;
-        }
-
-        if (owner != null) owner.Closing += OnOwnerClosing;
-
-        dialog.Dispatcher.BeginInvoke(new Action(async () =>
-        {
-            try
-            {
-                // Keep the modal owner enabled while the hidden glass surface is prepared. ShowDialog
-                // starts only after preparation or its bounded neutral fallback has completed.
-                await GlassWindowPresentationHelper.ShowWhenPreparedAsync(dialog, static () => { });
-                dialog.ShowDialog();
-            }
-            catch (Exception ex)
-            {
-                failure = ex;
-            }
-            finally
-            {
-                if (owner != null) owner.Closing -= OnOwnerClosing;
-                if (ownerCloseDeferred && owner != null && IsAlive(owner)) owner.Close();
-                frame.Continue = false;
-            }
-        }));
-
-        Dispatcher.PushFrame(frame);
-        if (failure != null) ExceptionDispatchInfo.Capture(failure).Throw();
     }
 
     private static void ShowModalNow(Window dialog)

@@ -58,7 +58,7 @@ internal sealed class InlineSearchWindowCreationSupport
 
     private async Task ShowPreparedWindowAsync(InlineSearchWindow window, Core.Hook.ExplorerTracker tracker)
     {
-        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, () =>
+        await WindowPresentationHelper.ShowAsync(window, () =>
         {
             window.Show();
             _manager.KeyboardHook.IsInlineSearchVisible = true;

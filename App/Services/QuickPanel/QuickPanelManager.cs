@@ -269,7 +269,7 @@ public sealed partial class QuickPanelManager : IDisposable
             _window.Top = position.Y;
         }
         var windowToShow = _window;
-        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(windowToShow, () =>
+        await WindowPresentationHelper.ShowAsync(windowToShow, () =>
         {
             windowToShow.Show();
 

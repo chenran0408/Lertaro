@@ -57,7 +57,8 @@ public sealed class QuickSearchInputBindingTests
                 TimeSpan.FromSeconds(5)),
                 "Results.CollectionChanged should update ListBox items and its measured row height.");
             Assert.AreSame(firstResult, window.LstResults.Items[0]);
-            Assert.AreEqual(firstResult.ScaledItemHeight, window.LstResults.Height);
+            Assert.AreEqual(window.ViewModel.Results.Take(global::Lertaro.App.Services.UiMetrics.QuickSearchMaxVisibleResultRows)
+                .Sum(result => result.ScaledItemHeight), window.LstResults.Height);
             Assert.IsTrue(window.Height > 0);
         }
         finally

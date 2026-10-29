@@ -95,7 +95,7 @@ public partial class QuickLookManager
     internal static Task ShowOwnerWhenPreparedAsync(Window owner, Action show, Func<bool> isCurrent)
     {
         if (owner is Lertaro.App.Views.Controls.AppWindow glassWindow)
-            return GlassWindowPresentationHelper.ShowWhenPreparedAsync(glassWindow, show, isCurrent);
+            return WindowPresentationHelper.ShowAsync(glassWindow, show, isCurrent);
         if (isCurrent()) show();
         return Task.CompletedTask;
     }
@@ -307,7 +307,7 @@ public partial class QuickLookManager
 
     private async Task ShowPreparedPreviewAsync(Window owner, Views.QuickLook.QuickLookWindow window, int token)
     {
-        await GlassWindowPresentationHelper.ShowWhenPreparedAsync(window, () => window.Show(),
+        await WindowPresentationHelper.ShowAsync(window, () => window.Show(),
             () => ReferenceEquals(_owner, owner) && ReferenceEquals(_window, window)
                 && _showOperationToken == token && !_hiddenForDialog && !window.IsShowingExternalPreview);
     }
