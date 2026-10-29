@@ -74,6 +74,21 @@ public sealed class FileRecordNativeStoreTests
     }
 
     [TestMethod]
+    public void ReadLease_ExposesInternedNamesWithoutAnotherNativeCall()
+    {
+        var records = new FileRecordCollection
+        {
+            new FileRecord(1, 1, "目录😀.txt", FileRecordFlags.None),
+            new FileRecord(2, 1, "目录😀.txt", FileRecordFlags.None),
+        };
+
+        using var read = records.AcquireReadLease();
+
+        Assert.AreEqual("目录😀.txt", read.GetName(read.Rows[0].NameId));
+        Assert.AreEqual(read.Rows[0].NameId, read.Rows[1].NameId);
+    }
+
+    [TestMethod]
     public void AddRange_ReusesNativeInputScratchAcrossBatchFlushAndClear()
     {
         var rows = Enumerable.Range(0, 513)

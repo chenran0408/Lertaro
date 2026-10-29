@@ -42,11 +42,14 @@ public sealed partial class FileRecordCollection
             FlushPendingLocked();
             ThrowOnNativeFailure(Native.RecordStoreView(_handle, out var rows, out var rowCount,
                 out var highPairs, out var highPairCount));
+            ThrowOnNativeFailure(Native.RecordStoreNameView(_handle, out var nameSpans, out var nameSpanCount,
+                out var nameArena, out var nameArenaCount));
             var order = IntPtr.Zero;
             var orderCount = 0;
             if (sortActive)
                 ThrowOnNativeFailure(Native.RecordStoreSortActive(_handle, out order, out orderCount));
-            var lease = new RecordReadLease(this, rows, rowCount, highPairs, highPairCount, order, orderCount, sortActive);
+            var lease = new RecordReadLease(this, rows, rowCount, highPairs, highPairCount,
+                nameSpans, nameSpanCount, nameArena, nameArenaCount, order, orderCount, sortActive);
             _activeLeases++;
             return lease;
         }
@@ -99,19 +102,32 @@ public sealed partial class FileRecordCollection
         private readonly ReadLeaseToken _token;
 
         internal unsafe RecordReadLease(FileRecordCollection owner, IntPtr rows, int rowCount, IntPtr highPairs,
-            int highPairCount, IntPtr order, int orderCount, bool hasSortedIndexes)
+            int highPairCount, IntPtr nameSpans, int nameSpanCount, IntPtr nameArena, int nameArenaCount,
+            IntPtr order, int orderCount, bool hasSortedIndexes)
         {
             _owner = owner;
             _hasSortedIndexes = hasSortedIndexes;
             _token = new ReadLeaseToken();
             Rows = new ReadOnlySpan<NativeRecordRow>((void*)rows, rowCount);
             HighPairs = new ReadOnlySpan<NativeRecordHighPair>((void*)highPairs, highPairCount);
+            NameSpans = new ReadOnlySpan<NativeRecordNameSpan>((void*)nameSpans, nameSpanCount);
+            NameArena = new ReadOnlySpan<char>((void*)nameArena, nameArenaCount);
             SortedActiveIndexes = new ReadOnlySpan<int>((void*)order, orderCount);
         }
 
         internal ReadOnlySpan<NativeRecordRow> Rows { get; }
         internal ReadOnlySpan<NativeRecordHighPair> HighPairs { get; }
+        internal ReadOnlySpan<NativeRecordNameSpan> NameSpans { get; }
+        internal ReadOnlySpan<char> NameArena { get; }
         internal ReadOnlySpan<int> SortedActiveIndexes { get; }
+
+        internal string GetName(uint nameId)
+        {
+            var span = NameSpans[(int)nameId];
+            return span.Length == 0
+                ? string.Empty
+                : new string(NameArena.Slice(checked((int)span.Offset), checked((int)span.Length)));
+        }
 
         public void Dispose()
         {
@@ -162,6 +178,13 @@ internal struct NativeRecordRow
 internal struct NativeRecordHighPair
 {
     internal ulong IdHigh, ParentHigh;
+}
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+internal struct NativeRecordNameSpan
+{
+    internal ulong Offset;
+    internal uint Length;
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -264,6 +287,9 @@ internal static class Native
     [DllImport(Library, EntryPoint = "lertaro_record_store_view", CallingConvention = CallingConvention.Winapi)]
     internal static extern int RecordStoreView(NativeStoreHandle handle, out IntPtr rows, out int count,
         out IntPtr highPairs, out int highPairCount);
+    [DllImport(Library, EntryPoint = "lertaro_record_store_name_view", CallingConvention = CallingConvention.Winapi)]
+    internal static extern int RecordStoreNameView(NativeStoreHandle handle, out IntPtr spans, out int spanCount,
+        out IntPtr arena, out int arenaCount);
     [DllImport(Library, EntryPoint = "lertaro_record_store_sort_active", CallingConvention = CallingConvention.Winapi)]
     internal static extern int RecordStoreSortActive(NativeStoreHandle handle, out IntPtr order, out int count);
     [DllImport(Library, EntryPoint = "lertaro_record_store_release_sorted", CallingConvention = CallingConvention.Winapi)]

@@ -65,7 +65,7 @@ public static class SnapshotWriter
             {
                 uid = uidByName.Count;
                 uidByName[record.NameId] = uid;
-                var name = records.GetNameById(record.NameId);
+                var name = readLease.GetName(record.NameId);
                 uniqueNames.Add(name);
                 nameBlob.Write(SnapshotFormat.NameEncoding.GetBytes(name));
                 nameOffsets.Add(checked((uint)nameBlob.Length));

@@ -146,6 +146,31 @@ pub extern "system" fn lertaro_record_store_view(
 }
 
 #[unsafe(no_mangle)]
+pub extern "system" fn lertaro_record_store_name_view(
+    handle: *mut Handle,
+    spans: *mut *const NameSpan,
+    span_count: *mut i32,
+    arena: *mut *const u16,
+    arena_count: *mut i32,
+) -> i32 {
+    result_code(|| {
+        if spans.is_null() || span_count.is_null() || arena.is_null() || arena_count.is_null() {
+            return 1;
+        }
+        with_store(handle, |store| {
+            unsafe {
+                *spans = store.names.as_ptr();
+                *span_count = store.names.len().min(i32::MAX as usize) as i32;
+                *arena = store.name_arena.as_ptr();
+                *arena_count = store.name_arena.len().min(i32::MAX as usize) as i32;
+            }
+            0
+        })
+        .unwrap_or(1)
+    })
+}
+
+#[unsafe(no_mangle)]
 pub extern "system" fn lertaro_record_store_sort_active(
     handle: *mut Handle,
     output: *mut *const i32,
