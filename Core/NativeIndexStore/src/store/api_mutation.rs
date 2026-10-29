@@ -194,3 +194,35 @@ pub extern "system" fn lertaro_record_store_extend(
         0
     })
 }
+
+#[unsafe(no_mangle)]
+pub extern "system" fn lertaro_record_store_clone(
+    handle: *mut Handle,
+    source: *mut Handle,
+    count: *mut i32,
+) -> i32 {
+    result_code(|| {
+        if handle.is_null() || source.is_null() || count.is_null() || handle == source {
+            return 1;
+        }
+        let src_ref = unsafe { &*source };
+        let dst_ref = unsafe { &*handle };
+        let (src_guard, mut dst_guard) = if (source as usize) < (handle as usize) {
+            (
+                src_ref.0.lock().unwrap_or_else(|p| p.into_inner()),
+                dst_ref.0.lock().unwrap_or_else(|p| p.into_inner()),
+            )
+        } else {
+            let dst_guard = dst_ref.0.lock().unwrap_or_else(|p| p.into_inner());
+            let src_guard = src_ref.0.lock().unwrap_or_else(|p| p.into_inner());
+            (src_guard, dst_guard)
+        };
+
+        // A sorted view is a borrowed result of the source store, not part of its data.
+        dst_guard.clone_from(&src_guard);
+        unsafe {
+            *count = dst_guard.records.len().min(i32::MAX as usize) as i32;
+        }
+        0
+    })
+}

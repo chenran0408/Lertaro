@@ -90,3 +90,52 @@ fn sparse_high_pairs_round_trip_full_uint128_ids() {
     assert_eq!(output.parent_low, input.parent_low);
     assert_eq!(output.parent_high, input.parent_high);
 }
+
+#[test]
+fn cloning_preserves_interned_storage_without_sorted_views() {
+    let mut source = RecordStore::new();
+    let name = "中文😀.txt".encode_utf16().collect::<Vec<_>>();
+    let name_id = source.intern_name(&name);
+    let record = source.make_record(
+        RecordInput {
+            id_low: 17,
+            id_high: 2,
+            parent_low: 29,
+            parent_high: 3,
+            flags: 0,
+            ..RecordInput::default()
+        },
+        name_id,
+    );
+    source.records.push(record);
+    source.sort_active_indices();
+
+    let mut destination = RecordStore::new();
+    destination.intern_name(&[9, 9]);
+    destination.clone_from(&source);
+
+    assert_eq!(destination.records.len(), source.records.len());
+    assert_eq!(destination.records[0].id_low, source.records[0].id_low);
+    assert_eq!(
+        destination.records[0].high_pair_index,
+        source.records[0].high_pair_index
+    );
+    assert_eq!(destination.name_arena, source.name_arena);
+    assert_eq!(destination.names.len(), source.names.len());
+    assert_eq!(destination.name_hashes, source.name_hashes);
+    assert_eq!(destination.name_slots, source.name_slots);
+    assert_eq!(destination.high_pairs.len(), source.high_pairs.len());
+    assert_eq!(
+        destination.high_pairs[0].id_high,
+        source.high_pairs[0].id_high
+    );
+    assert_eq!(
+        destination.high_pairs[0].parent_high,
+        source.high_pairs[0].parent_high
+    );
+    assert!(destination.sorted_indices.is_empty());
+    let span = destination.names[name_id as usize];
+    let start = span.offset as usize;
+    let end = start + span.length as usize;
+    assert_eq!(&destination.name_arena[start..end], name);
+}

@@ -88,11 +88,12 @@ impl RecordStore {
 
     fn name_hash(name: &[u16]) -> u64 {
         let mut hash = 0xcbf29ce484222325u64;
-        for value in name {
-            for byte in value.to_le_bytes() {
-                hash ^= byte as u64;
-                hash = hash.wrapping_mul(0x100000001b3);
-            }
+        for &value in name {
+            // Names are UTF-16 throughout this FFI. Hashing the code units directly avoids
+            // materializing two little-endian bytes for every character while preserving the
+            // collision check in intern_name.
+            hash ^= u64::from(value);
+            hash = hash.wrapping_mul(0x100000001b3);
         }
         hash
     }
@@ -181,6 +182,16 @@ impl RecordStore {
         } else {
             self.high_pairs[index as usize]
         }
+    }
+
+    fn clone_from(&mut self, source: &Self) {
+        self.records.clone_from(&source.records);
+        self.name_arena.clone_from(&source.name_arena);
+        self.names.clone_from(&source.names);
+        self.name_hashes.clone_from(&source.name_hashes);
+        self.name_slots.clone_from(&source.name_slots);
+        self.high_pairs.clone_from(&source.high_pairs);
+        self.sorted_indices.clear();
     }
 
     fn output(&self, index: usize) -> Option<RecordOutput> {

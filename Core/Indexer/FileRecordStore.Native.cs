@@ -119,11 +119,21 @@ public sealed partial class FileRecordCollection : IList<FileRecord>, IReadOnlyL
         }
 
         source.FlushPending();
-        var sourceCount = source.Count;
         lock (_gate)
         {
             ThrowIfDisposed();
             FlushPendingLocked();
+            if (_count == 0)
+            {
+                ThrowOnNativeFailure(Native.RecordStoreClone(_handle, source._handle, out var clonedCount));
+                _count = clonedCount;
+                _flushedCount = clonedCount;
+                if (clonedCount != 0)
+                    Interlocked.Increment(ref _version);
+                return;
+            }
+
+            var sourceCount = source.Count;
             for (var start = 0; start < sourceCount; start += BatchSize)
                 ExtendRangeLocked(source, start, Math.Min(BatchSize, sourceCount - start));
         }

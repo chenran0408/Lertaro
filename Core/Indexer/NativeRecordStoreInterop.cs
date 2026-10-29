@@ -281,4 +281,6 @@ internal static class Native
         uint creationTime, uint lastWriteTime, uint lastAccessTime);
     [DllImport(Library, EntryPoint = "lertaro_record_store_extend", CallingConvention = CallingConvention.Winapi)]
     internal static extern int RecordStoreExtend(NativeStoreHandle handle, NativeStoreHandle source, int start, int count);
+    [DllImport(Library, EntryPoint = "lertaro_record_store_clone", CallingConvention = CallingConvention.Winapi)]
+    internal static extern int RecordStoreClone(NativeStoreHandle handle, NativeStoreHandle source, out int count);
 }
