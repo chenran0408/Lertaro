@@ -150,8 +150,16 @@ internal static class SearchMatcher
 
     internal static void MatchUniques(Snapshot snapshot, FzfPattern pattern, List<UniqueMatch> merged, CancellationToken token = default, string[]? fileNamePatterns = null)
     {
-        var ctx = BuildContext(pattern);
         merged.Clear();
+        MatchUniquesByChunk(snapshot, pattern, merged.AddRange, token, fileNamePatterns);
+    }
+
+    // Delivers each completed chunk synchronously while holding the merge lock. The hit list is
+    // cleared as soon as the callback returns and must not be retained by the consumer.
+    internal static void MatchUniquesByChunk(Snapshot snapshot, FzfPattern pattern, Action<List<UniqueMatch>> consumeChunk,
+        CancellationToken token = default, string[]? fileNamePatterns = null)
+    {
+        var ctx = BuildContext(pattern);
         var mergeLock = new object();
         var chunkCount = (snapshot.UniqueCount + ChunkSize - 1) / ChunkSize;
 
@@ -205,14 +213,18 @@ internal static class SearchMatcher
                         MatchOne(snapshot, ctx, uid, worker, fileNamePatterns);
                     }
                 }
+                if (worker.Hits.Count > 0)
+                {
+                    lock (mergeLock)
+                    {
+                        consumeChunk(worker.Hits);
+                        worker.Hits.Clear();
+                    }
+                }
                 return worker;
             },
             worker =>
             {
-                lock (mergeLock)
-                {
-                    merged.AddRange(worker.Hits);
-                }
                 ReturnWorker(worker);
             });
     }

@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Lertaro.Core.IndexV2.Delta;
 
 // Split out of DeltaOverlay purely to keep that file under the repo's per-file line limit; this
@@ -5,34 +7,34 @@ namespace Lertaro.Core.IndexV2.Delta;
 // DeltaChildLookup deliberately mirrors GetParentPath's resolution order below -- keep them in sync.
 internal static class DeltaPathBuilder
 {
-    // Same Path.Combine chain as Snapshot.GetFullPath, with delta overrides patched in along the walk.
+    // Same parent chain as Snapshot.GetFullPath, with delta overrides patched in along the walk.
     // Stepping onto a renamed-away row forwards to the FRN's live row (delta or base); with no live
     // row yet, the accumulated tail hangs off the source root, like the old engine's re-orphaned rows.
     public static string GetFullPath(DeltaOverlay o, int baseRow)
     {
-        var segments = new List<string>(8);
+        var segments = new List<int>(8);
         var current = baseRow;
         for (var depth = 0; depth < 512; depth++)
         {
             if (o.RenamedAway.TryGetValue(current, out var awayFrn))
             {
                 if (o.FindAddedDirectory(awayFrn) is { } liveRecord)
-                    return AppendSegments(GetFullPath(o, liveRecord), segments);
+                    return AppendSegments(GetFullPath(o, liveRecord), segments, o);
                 if (o.TryFindLiveBaseDirectory(awayFrn, out var liveRow) && liveRow != current)
                 {
                     current = liveRow;
                     continue;
                 }
-                return AppendSegments(o.Snapshot.SourceRoot, segments);
+                return AppendSegments(o.Snapshot.SourceRoot, segments, o);
             }
 
             var parent = o.ParentOf(current);
-            segments.Add(o.NameOf(current));
+            segments.Add(current);
             if (parent < 0 || parent == current)
                 break;
             current = parent;
         }
-        return AppendSegments(o.Snapshot.SourceRoot, segments);
+        return AppendSegments(o.Snapshot.SourceRoot, segments, o);
     }
 
     internal static string GetFullPath(DeltaOverlay o, DeltaOverlay.DeltaRecord record)
@@ -58,17 +60,66 @@ internal static class DeltaPathBuilder
         return o.Snapshot.SourceRoot;
     }
 
-    private static string AppendSegments(string basePath, List<string> reversedSegments)
+    private static string AppendSegments(string basePath, List<int> reversedSegments, DeltaOverlay o)
     {
-        var builder = new System.Text.StringBuilder(basePath, 64);
+        // Size once, then decode into the final string rather than allocating every ancestor name.
+        var length = basePath.Length;
+        var endsInSeparator = basePath[^1] == '\\';
         for (var i = reversedSegments.Count - 1; i >= 0; i--)
         {
-            if (reversedSegments[i].Length == 0)
+            var row = reversedSegments[i];
+            var nameLength = GetNameLength(o, row, out var nameEndsInSeparator);
+            if (nameLength == 0)
                 continue;
-            if (builder[^1] != '\\')
-                builder.Append('\\');
-            builder.Append(reversedSegments[i]);
+            if (!endsInSeparator)
+                length++;
+            length += nameLength;
+            endsInSeparator = nameEndsInSeparator;
         }
-        return builder.ToString();
+
+        return string.Create(length, (basePath, reversedSegments, o), static (destination, state) =>
+        {
+            state.basePath.AsSpan().CopyTo(destination);
+            var position = state.basePath.Length;
+            for (var i = state.reversedSegments.Count - 1; i >= 0; i--)
+            {
+                var row = state.reversedSegments[i];
+                AppendName(state.o, row, destination, ref position);
+            }
+        });
+    }
+
+    private static int GetNameLength(DeltaOverlay o, int row, out bool endsInSeparator)
+    {
+        if (o.BaseOverrides.TryGetValue(row, out var record))
+        {
+            endsInSeparator = record.Name.Length > 0 && record.Name[^1] == '\\';
+            return record.Name.Length;
+        }
+
+        var name = o.Snapshot.UniqueNameUtf8((int)o.Snapshot.NameIds[row]);
+        endsInSeparator = !name.IsEmpty && name[^1] == (byte)'\\';
+        return Encoding.UTF8.GetCharCount(name);
+    }
+
+    private static void AppendName(DeltaOverlay o, int row, Span<char> destination, ref int position)
+    {
+        if (o.BaseOverrides.TryGetValue(row, out var record))
+        {
+            if (record.Name.Length == 0)
+                return;
+            if (destination[position - 1] != '\\')
+                destination[position++] = '\\';
+            record.Name.AsSpan().CopyTo(destination[position..]);
+            position += record.Name.Length;
+            return;
+        }
+
+        var name = o.Snapshot.UniqueNameUtf8((int)o.Snapshot.NameIds[row]);
+        if (name.IsEmpty)
+            return;
+        if (destination[position - 1] != '\\')
+            destination[position++] = '\\';
+        position += Encoding.UTF8.GetChars(name, destination[position..]);
     }
 }

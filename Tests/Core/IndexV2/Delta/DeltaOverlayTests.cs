@@ -1,3 +1,5 @@
+using Lertaro.Core.IndexV2.Delta;
+
 namespace Lertaro.Core.Tests.IndexV2.Delta;
 
 [TestClass]
@@ -87,6 +89,89 @@ public sealed class DeltaOverlayTests
             delta.Upsert(3, 2, "renamed.txt", FileRecordFlags.None, 20, 0, 0, 0);
 
             Assert.AreEqual(@"C:\Projects\renamed.txt", delta.GetFullPath(baseRow));
+        });
+    }
+
+    [TestMethod]
+    public void GetFullPath_BaseNames_DecodesUtf8IntoTheFinalPath()
+    {
+        using var fixture = LiveIndexFixture.Build("C", new[]
+        {
+            LiveIndexFixture.Root(),
+            new FileRecord(2, 1, "資料", FileRecordFlags.Directory),
+            new FileRecord(3, 2, "猫🚀.txt", FileRecordFlags.None),
+        });
+        fixture.Index.Read((snapshot, delta) =>
+        {
+            var row = snapshot.FirstRowForId(3);
+            Assert.AreEqual(@"C:\資料\猫🚀.txt", delta.GetFullPath(row));
+            Assert.AreEqual(snapshot.GetFullPath(row), delta.GetFullPath(row));
+            return true;
+        });
+    }
+
+    [TestMethod]
+    public void GetFullPath_UncSourceRoot_PreservesRootSeparators()
+    {
+        using var fixture = LiveIndexFixture.Build(@"\\server\share", new[]
+        {
+            LiveIndexFixture.Root(),
+            new FileRecord(2, 1, "資料", FileRecordFlags.Directory),
+            new FileRecord(3, 2, "猫🚀.txt", FileRecordFlags.None),
+        });
+        fixture.Index.Read((snapshot, delta) =>
+        {
+            var row = snapshot.FirstRowForId(3);
+            Assert.AreEqual(@"\\server\share\資料\猫🚀.txt", delta.GetFullPath(row));
+            Assert.AreEqual(snapshot.GetFullPath(row), delta.GetFullPath(row));
+            return true;
+        });
+    }
+
+    [TestMethod]
+    public void GetFullPath_UsesOverriddenNamesAndForwardedRenameAncestors()
+    {
+        using var fixture = BuildSampleDrive();
+        fixture.Index.Mutate((snapshot, delta) =>
+        {
+            var file = snapshot.FirstRowForId(3);
+            Assert.IsTrue(DeltaLinkOps.RemoveLinkForRename(delta, 2, 1, "Projects"));
+            DeltaLinkOps.AddLink(delta, 2, 1, "資料", FileRecordFlags.Directory);
+            delta.Upsert(3, 2, "猫.txt", FileRecordFlags.None, 10, 0, 0, 0);
+
+            Assert.AreEqual(@"C:\資料\猫.txt", delta.GetFullPath(file));
+        });
+    }
+
+    [TestMethod]
+    public void GetFullPath_UnresolvedAddedParent_HangsOffRootThenResolvesWhenParentAppears()
+    {
+        using var fixture = BuildSampleDrive();
+        fixture.Index.Mutate((_, delta) =>
+        {
+            DeltaLinkOps.AddLink(delta, 100, 99, "child.txt", FileRecordFlags.None);
+            var child = delta.Added.Single(record => record.Id == 100);
+            Assert.AreEqual(@"C:\child.txt", delta.GetFullPath(child));
+
+            DeltaLinkOps.AddLink(delta, 99, 1, "live-parent", FileRecordFlags.Directory);
+            Assert.AreEqual(@"C:\live-parent\child.txt", delta.GetFullPath(child));
+        });
+    }
+
+    [TestMethod]
+    public void GetFullPath_DeepChainMatchesSnapshotDepthCap()
+    {
+        const int depth = 520;
+        var records = new List<FileRecord> { LiveIndexFixture.Root() };
+        for (var i = 0; i < depth; i++)
+            records.Add(new FileRecord((UInt128)(i + 2), (UInt128)(i + 1), $"d{i}", FileRecordFlags.Directory));
+        using var fixture = LiveIndexFixture.Build("C", records);
+
+        fixture.Index.Read((snapshot, delta) =>
+        {
+            var row = snapshot.FirstRowForId(depth + 1);
+            Assert.AreEqual(snapshot.GetFullPath(row), delta.GetFullPath(row));
+            return true;
         });
     }
 

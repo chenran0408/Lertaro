@@ -283,24 +283,25 @@ internal static class NameSearch
         }
         else
         {
-            var hits = SearchMatcher.RentHitList();
-            SearchMatcher.MatchUniques(snapshot, pattern, hits, token, fileNamePatterns);
-            foreach (var m in hits)
+            SearchMatcher.MatchUniquesByChunk(snapshot, pattern, hits =>
             {
-                foreach (var row in snapshot.RowsForUid(m.Uid))
+                var chunkFlags = snapshot.Flags;
+                foreach (var m in hits)
                 {
-                    if ((flags[row] & deletedFlag) != 0 || (mayBeSuperseded && delta.IsSuperseded(row)))
-                        continue;
-                    if (membership != null && !RowMatchesFilter(snapshot, delta, row, ctx, membership))
-                        continue;
-                    if (!MatchesFileScope(snapshot, delta, row, fileNamePatterns))
-                        continue;
-                    // The per-unique sort key applies verbatim to every row of that unique --
-                    // EntryIndex isn't packed into the key, so nothing is recomputed per row.
-                    topN.Add(new FzfRank(row, m.Match.Score, m.SortKey));
+                    foreach (var row in snapshot.RowsForUid(m.Uid))
+                    {
+                        if ((chunkFlags[row] & deletedFlag) != 0 || (mayBeSuperseded && delta.IsSuperseded(row)))
+                            continue;
+                        if (membership != null && !RowMatchesFilter(snapshot, delta, row, ctx, membership))
+                            continue;
+                        if (!MatchesFileScope(snapshot, delta, row, fileNamePatterns))
+                            continue;
+                        // The per-unique sort key applies verbatim to every row of that unique --
+                        // EntryIndex isn't packed into the key, so nothing is recomputed per row.
+                        topN.Add(new FzfRank(row, m.Match.Score, m.SortKey));
+                    }
                 }
-            }
-            SearchMatcher.ReturnHitList(hits);
+            }, token, fileNamePatterns);
         }
 
         MatchDeltaRows(snapshot, delta, pattern, matchAll, ctx, topN, fileNamePatterns);

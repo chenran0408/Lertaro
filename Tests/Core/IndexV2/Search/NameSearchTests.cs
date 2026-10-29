@@ -1,10 +1,52 @@
 using Lertaro.Core.IndexV2.Search;
+using Lertaro.Core.SearchIndex.Fzf;
 
 namespace Lertaro.Core.Tests.IndexV2.Search;
 
 [TestClass]
 public sealed class NameSearchTests
 {
+    [TestMethod]
+    public void MatchUniquesByChunk_MatchesLegacyListAcrossChunkBoundaries()
+    {
+        const int fileCount = SearchMatcher.ChunkSize * 2 + 123;
+        var records = new List<FileRecord>(fileCount + 1) { LiveIndexFixture.Root() };
+        for (var i = 0; i < fileCount; i++)
+            records.Add(new FileRecord((UInt128)(i + 2), 1, $"chunk-item-{i:D5}.txt", FileRecordFlags.None));
+        using var fixture = LiveIndexFixture.Build("Z", records);
+        var legacy = SearchMatcher.RentHitList();
+        var streamed = new List<UniqueMatch>(fileCount);
+        var callbackCount = 0;
+        var maxChunkSize = 0;
+
+        try
+        {
+            fixture.Index.Read((snapshot, _) =>
+            {
+                var pattern = FzfPattern.Parse("chunk");
+                SearchMatcher.MatchUniques(snapshot, pattern, legacy);
+                SearchMatcher.MatchUniquesByChunk(snapshot, pattern, chunk =>
+                {
+                    callbackCount++;
+                    maxChunkSize = Math.Max(maxChunkSize, chunk.Count);
+                    streamed.AddRange(chunk);
+                });
+                return true;
+            });
+
+            Assert.IsGreaterThan(1, callbackCount);
+            Assert.AreEqual(fileCount, streamed.Count);
+            Assert.AreEqual(fileCount, streamed.Select(match => match.Uid).Distinct().Count());
+            Assert.IsLessThanOrEqualTo(SearchMatcher.ChunkSize, maxChunkSize);
+            CollectionAssert.AreEqual(legacy.OrderBy(match => match.Uid).ToArray(),
+                streamed.OrderBy(match => match.Uid).ToArray());
+        }
+        finally
+        {
+            SearchMatcher.ReturnHitList(legacy);
+        }
+    }
+
     [TestMethod]
     public void SearchStreaming_WholeNameMatchOutranksAncestorCompletedMatch()
     {
