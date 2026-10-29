@@ -199,8 +199,7 @@ internal static unsafe class WgcWindowCapture
                     var pixels = reusePixels && _reusablePixels?.Length == length
                         ? _reusablePixels : new byte[length];
                     if (reusePixels) _reusablePixels = pixels;
-                    for (var y = 0; y < height; y++)
-                        Marshal.Copy(mapped.Data + checked((nint)(y * (long)mapped.RowPitch)), pixels, y * width * 4, width * 4);
+                    CopyMappedPixels(mapped.Data, mapped.RowPitch, width, height, pixels);
                     return new CapturePixels(width, height, pixels)
                     {SourceQpcTicks=(long)Math.Round(frame.SystemRelativeTime.TotalSeconds*System.Diagnostics.Stopwatch.Frequency)};
                 }
@@ -211,6 +210,20 @@ internal static unsafe class WgcWindowCapture
                 Release(ref texture); Release(ref access);
                 if (surface != 0) WinRT.MarshalInterface<IDirect3DSurface>.DisposeAbi(surface);
             }
+        }
+
+        // Lertaro modification: when the mapped texture is tightly packed, avoid one
+        // interop transition per scanline; padded D3D row pitches keep the original path.
+        internal static void CopyMappedPixels(nint data, uint rowPitch, int width, int height, byte[] pixels)
+        {
+            var rowBytes = checked(width * 4);
+            if (rowPitch == rowBytes)
+            {
+                Marshal.Copy(data, pixels, 0, checked(rowBytes * height));
+                return;
+            }
+            for (var y = 0; y < height; y++)
+                Marshal.Copy(data + checked((nint)(y * (long)rowPitch)), pixels, y * rowBytes, rowBytes);
         }
 
         private static bool SameTexture(TextureDesc a, TextureDesc b) =>

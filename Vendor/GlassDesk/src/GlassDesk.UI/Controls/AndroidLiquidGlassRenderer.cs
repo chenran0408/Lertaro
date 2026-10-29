@@ -164,20 +164,30 @@ internal sealed class AndroidLiquidGlassRenderer
             var baseSeparation = 0 * dispersionScale * regionGain;
             var baseX = Math.Clamp(sample.X + sample.DispersionX * baseSeparation, 0, width - 1);
             var baseY = Math.Clamp(sample.Y + sample.DispersionY * baseSeparation, 0, height - 1);
+            // Lertaro modification: Green and Alpha share this bilinear footprint.
+            var baseX0 = (int)baseX; var baseY0 = (int)baseY;
+            var baseX1 = Math.Min(baseX0 + 1, width - 1); var baseY1 = Math.Min(baseY0 + 1, height - 1);
+            var baseFx = baseX - baseX0; var baseFy = baseY - baseY0;
             for (var c = 0; c < 4; c++)
             {
                 // BGRA: blue bends slightly further, red slightly less. Green and alpha
                 // keep the original mapping; clarity only changes the filtered input.
-                var separation = (c == 0 ? -1 : c == 2 ? 1 : 0) * dispersionScale * regionGain;
-                var x = c == 0 || c == 2
-                    ? Math.Clamp(sample.X + sample.DispersionX * separation, 0, width - 1)
-                    : baseX;
-                var y = c == 0 || c == 2
-                    ? Math.Clamp(sample.Y + sample.DispersionY * separation, 0, height - 1)
-                    : baseY;
-                var x0 = (int)x; var y0 = (int)y;
-                var x1 = Math.Min(x0 + 1, width - 1); var y1 = Math.Min(y0 + 1, height - 1);
-                var fx = x - x0; var fy = y - y0;
+                int x0, y0, x1, y1;
+                double fx, fy;
+                if (c == 1 || c == 3)
+                {
+                    x0 = baseX0; y0 = baseY0; x1 = baseX1; y1 = baseY1;
+                    fx = baseFx; fy = baseFy;
+                }
+                else
+                {
+                    var separation = (c == 0 ? -1 : 1) * dispersionScale * regionGain;
+                    var x = Math.Clamp(sample.X + sample.DispersionX * separation, 0, width - 1);
+                    var y = Math.Clamp(sample.Y + sample.DispersionY * separation, 0, height - 1);
+                    x0 = (int)x; y0 = (int)y;
+                    x1 = Math.Min(x0 + 1, width - 1); y1 = Math.Min(y0 + 1, height - 1);
+                    fx = x - x0; fy = y - y0;
+                }
                 var top = filtered[(y0 * width + x0) * 4 + c] * (1 - fx)
                     + filtered[(y0 * width + x1) * 4 + c] * fx;
                 var bottom = filtered[(y1 * width + x0) * 4 + c] * (1 - fx)
