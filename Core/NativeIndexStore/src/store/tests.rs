@@ -67,6 +67,53 @@ fn active_sort_matches_uint128_and_stable_tie_order() {
 }
 
 #[test]
+fn large_active_sort_keeps_uint128_order_and_ties() {
+    let mut store = RecordStore::new();
+    for index in 0..512_u64 {
+        let input = RecordInput {
+            id_low: index.wrapping_mul(37) % 251,
+            id_high: index % 5,
+            flags: if index % 11 == 0 { 2 } else { 0 },
+            ..RecordInput::default()
+        };
+        let name_id = store.intern_name(&[]);
+        let record = store.make_record(input, name_id);
+        store.records.push(record);
+    }
+
+    let mut expected = store
+        .records
+        .iter()
+        .enumerate()
+        .filter(|(_, record)| record.flags & 2 == 0)
+        .map(|(index, record)| {
+            (
+                high_id_for(&store.high_pairs, record.high_pair_index),
+                record.id_low,
+                index,
+            )
+        })
+        .collect::<Vec<_>>();
+    expected.sort_unstable();
+
+    store.sort_active_indices();
+    let actual = store
+        .sorted_indices
+        .iter()
+        .map(|&index| {
+            let record = store.records[index as usize];
+            (
+                high_id_for(&store.high_pairs, record.high_pair_index),
+                record.id_low,
+                index as usize,
+            )
+        })
+        .collect::<Vec<_>>();
+
+    assert_eq!(actual, expected);
+}
+
+#[test]
 fn sparse_high_pairs_round_trip_full_uint128_ids() {
     let mut store = RecordStore::new();
     let zero_high_record = store.make_record(RecordInput::default(), 0);

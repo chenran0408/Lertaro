@@ -228,6 +228,12 @@ impl RecordStore {
                 .filter(|(_, r)| r.flags & 2 == 0)
                 .map(|(i, _)| i as i32),
         );
+
+        if self.sorted_indices.len() >= 256 {
+            self.radix_sort_active_indices();
+            return;
+        }
+
         let records = &self.records;
         let high_pairs = &self.high_pairs;
         self.sorted_indices.sort_unstable_by(|left, right| {
@@ -240,6 +246,51 @@ impl RecordStore {
                 .then_with(|| left_row.id_low.cmp(&right_row.id_low))
                 .then_with(|| left_index.cmp(&right_index))
         });
+    }
+
+    // Snapshot writes sort every active row by its full ID. A stable LSD radix pass avoids the
+    // comparator's repeated high-pair lookups and keeps equal IDs in their original row order.
+    fn radix_sort_active_indices(&mut self) {
+        let mut source = std::mem::take(&mut self.sorted_indices);
+        let mut target = vec![0_i32; source.len()];
+
+        for byte in 0..16 {
+            let mut counts = [0_usize; 256];
+            for &index in &source {
+                let row = self.records[index as usize];
+                let high = high_id_for(&self.high_pairs, row.high_pair_index);
+                let key = if byte < 8 {
+                    row.id_low >> (byte * 8)
+                } else {
+                    high >> ((byte - 8) * 8)
+                };
+                counts[(key & 0xff) as usize] += 1;
+            }
+
+            let mut offset = 0;
+            for count in &mut counts {
+                let next = offset + *count;
+                *count = offset;
+                offset = next;
+            }
+
+            for &index in &source {
+                let row = self.records[index as usize];
+                let high = high_id_for(&self.high_pairs, row.high_pair_index);
+                let key = if byte < 8 {
+                    row.id_low >> (byte * 8)
+                } else {
+                    high >> ((byte - 8) * 8)
+                };
+                let slot = &mut counts[(key & 0xff) as usize];
+                target[*slot] = index;
+                *slot += 1;
+            }
+
+            std::mem::swap(&mut source, &mut target);
+        }
+
+        self.sorted_indices = source;
     }
 }
 
