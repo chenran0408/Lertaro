@@ -60,7 +60,6 @@ public static class SearchInputHelper
         // Read once up front: the custom next/previous-item hotkeys must win over the hardcoded bare-Tab
         // shortcut below whenever the user has bound one of them to Tab, otherwise a Tab-as-next-item
         // binding would silently be swallowed by "Tab enters submenu" and never reach the match further down.
-        var actualKey = WpfUiHelper.GetActualKey(e);
         var settings = UserSettings.Load().Hotkeys;
         var isNextItemHotkey = WpfUiHelper.MatchesHotkey(settings.NextItemHotkey, e);
         var isPreviousItemHotkey = WpfUiHelper.MatchesHotkey(settings.PreviousItemHotkey, e);
@@ -148,8 +147,8 @@ public static class SearchInputHelper
         // -- and typing into it is the only way to narrow a long menu down, so a mnemonic must not steal
         // the first keystroke of it. Selecting the item and running the ordinary selected-action path
         // keeps one execution code path for click, Enter and letter.
-        if (noModifiers && window != null && string.IsNullOrEmpty(actionSearchBox?.Text)
-            && ActionsMenuShortcutMatcher.Find(window.LstActions.Items.OfType<ActionMenuItem>(), LetterOf(actualKey)) is { } shortcutItem)
+        if (window != null && TryGetActionsMenuMnemonic(e, Keyboard.Modifiers, actionSearchBox?.Text,
+                window.LstActions.Items.OfType<ActionMenuItem>(), out var shortcutItem))
         {
             window.LstActions.SelectedItem = shortcutItem;
             menuPresenter.ExecuteSelectedAction();
@@ -168,6 +167,20 @@ public static class SearchInputHelper
         }
 
         return false;
+    }
+
+    internal static bool TryGetActionsMenuMnemonic(System.Windows.Input.KeyEventArgs e, ModifierKeys modifiers, string? filterText,
+        IEnumerable<ActionMenuItem> items, out ActionMenuItem? shortcutItem)
+    {
+        shortcutItem = null;
+        // An IME can wrap a plain ASCII key as ImeProcessed, including the first key that starts
+        // composition. Let text input deliver it to the filter instead of treating it as a mnemonic.
+        // Other key routing (including modifier hotkeys above) still uses GetActualKey.
+        if (e.Key == Key.ImeProcessed || modifiers != ModifierKeys.None || !string.IsNullOrEmpty(filterText))
+            return false;
+
+        shortcutItem = ActionsMenuShortcutMatcher.Find(items, LetterOf(WpfUiHelper.GetActualKey(e)));
+        return shortcutItem != null;
     }
 
     // Keep every actions-menu Escape entry point identical, including mouse right-click and the

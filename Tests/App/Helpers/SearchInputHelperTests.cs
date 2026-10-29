@@ -1,4 +1,6 @@
 using Lertaro.App.Helpers;
+using Lertaro.App.Services.ShellMenu.ActionFlyout;
+using System.Reflection;
 using System.Windows.Input;
 using System.Windows.Interop;
 
@@ -69,5 +71,40 @@ public sealed class SearchInputHelperTests
 
         Assert.IsFalse(actionExecuted);
         Assert.AreEqual(1, defaultEnterCalls);
+    }
+
+    [STATestMethod]
+    public void ActionsMnemonic_PassesImeLettersToFilterAndStillMatchesPlainKeys()
+    {
+        using var source = new HwndSource(new HwndSourceParameters("ActionsMnemonicImeTest"));
+        var item = new ActionMenuItem { Text = "Open", ShortcutHint = "N" };
+        var items = new[] { item };
+        var imeKey = ImeProcessed(source, Key.N);
+
+        Assert.AreEqual(Key.N, WpfUiHelper.GetActualKey(imeKey));
+        Assert.IsTrue(WpfUiHelper.MatchesHotkey("Ctrl+N", ModifierKeys.Control, WpfUiHelper.GetActualKey(imeKey)));
+        Assert.IsFalse(SearchInputHelper.TryGetActionsMenuMnemonic(imeKey, ModifierKeys.None, string.Empty, items, out var imeMatch));
+        Assert.IsNull(imeMatch);
+
+        var plainKey = new KeyEventArgs(Keyboard.PrimaryDevice, source, Environment.TickCount, Key.N)
+        {
+            RoutedEvent = Keyboard.PreviewKeyDownEvent
+        };
+        Assert.IsTrue(SearchInputHelper.TryGetActionsMenuMnemonic(plainKey, ModifierKeys.None, string.Empty, items, out var plainMatch));
+        Assert.AreSame(item, plainMatch);
+        Assert.IsFalse(SearchInputHelper.TryGetActionsMenuMnemonic(plainKey, ModifierKeys.Control, string.Empty, items, out _));
+        Assert.IsFalse(SearchInputHelper.TryGetActionsMenuMnemonic(plainKey, ModifierKeys.None, "n", items, out _));
+    }
+
+    private static KeyEventArgs ImeProcessed(HwndSource source, Key actualKey)
+    {
+        var e = new KeyEventArgs(Keyboard.PrimaryDevice, source, Environment.TickCount, Key.ImeProcessed)
+        {
+            RoutedEvent = Keyboard.PreviewKeyDownEvent
+        };
+        var realKey = typeof(KeyEventArgs).GetField("_realKey", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new MissingFieldException(typeof(KeyEventArgs).FullName, "_realKey");
+        realKey.SetValue(e, actualKey);
+        return e;
     }
 }
