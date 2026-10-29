@@ -1,5 +1,7 @@
 using Lertaro.App.Services.Update;
 
+using System.Windows;
+
 using Lertaro.Core;
 using Lertaro.Core.Services.Update;
 
@@ -99,6 +101,16 @@ public sealed class UpdateCheckServiceTests
     public void IsNewerVersion_MajorVersionOlderButMinorHigher_StillOlderOverall() =>
         // Version comparison is lexicographic by component (major, then minor, ...), not a single number.
         Assert.IsFalse(UpdateCheckService.IsNewerVersion("v1.99.0", new Version(2, 0, 0), out _));
+
+    [TestMethod]
+    public void ShouldOpenAbout_OkResult_ReturnsTrue() =>
+        Assert.IsTrue(UpdateCheckService.ShouldOpenAbout(MessageBoxResult.OK));
+
+    [TestMethod]
+    [DataRow(MessageBoxResult.Cancel)]
+    [DataRow(MessageBoxResult.None)]
+    public void ShouldOpenAbout_NonOkResult_ReturnsFalse(MessageBoxResult result) =>
+        Assert.IsFalse(UpdateCheckService.ShouldOpenAbout(result));
 
     private static readonly DateTimeOffset FailureTime = new(2026, 9, 24, 12, 0, 0, TimeSpan.Zero);
 

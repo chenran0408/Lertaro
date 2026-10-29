@@ -18,11 +18,6 @@ public sealed class StatusBarControlTests
 
         try
         {
-            window.Opacity = 0;
-            window.Show();
-            Assert.IsTrue(PumpUntil(window.Dispatcher, () => !window.IsVisible, TimeSpan.FromSeconds(5)),
-                "The quick window should hide its first startup load.");
-
             window.Show();
             window.UpdateLayout();
             DrainDispatcher(window.Dispatcher);

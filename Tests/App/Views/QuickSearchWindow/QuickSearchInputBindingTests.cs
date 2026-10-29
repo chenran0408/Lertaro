@@ -18,17 +18,10 @@ public sealed class QuickSearchInputBindingTests
 
         try
         {
-            // The first load intentionally hides the startup seed. Show it once, pump Loaded, then show
-            // it again as the normal user summon. This does not run App.OnStartup or its process mutex.
-            window.Opacity = 0;
-            window.Show();
-            Assert.IsTrue(PumpUntil(window.Dispatcher, () => !window.IsVisible, TimeSpan.FromSeconds(5)),
-                "The first load should hide the startup seed after the Loaded handler runs.");
-
             window.Show();
             window.UpdateLayout();
             DrainDispatcher(window.Dispatcher);
-            Assert.IsTrue(window.IsVisible, "The second summon should leave the quick window visible.");
+            Assert.IsTrue(window.IsVisible, "The first summon should leave the quick window visible.");
 
             window.SearchTextBox.Text = "pcl";
             Assert.IsTrue(PumpUntil(window.Dispatcher, () => window.ViewModel.SearchQuery == "pcl", TimeSpan.FromSeconds(2)),

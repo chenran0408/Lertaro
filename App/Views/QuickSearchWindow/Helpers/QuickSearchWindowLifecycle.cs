@@ -13,7 +13,6 @@ public class QuickSearchWindowLifecycle
 {
     private readonly Lertaro.App.QuickSearchWindow _window;
     private readonly Action _handleTaskbarCreated;
-    private bool _isFirstLoad = true;
 
     private static readonly int WM_TASKBARCREATED = InlineSearchWindowNativeMethods.RegisterWindowMessage("TaskbarCreated");
 
@@ -32,9 +31,9 @@ public class QuickSearchWindowLifecycle
     }
 
     // Fires as soon as the Win32 HWND exists, before WPF's first layout/render pass -- the earliest
-    // point CompositionTarget.RenderMode can be set. This window is created once at startup and only
-    // ever Hidden, never Closed -- its DirectX composition surface stays alive for the whole process
-    // lifetime, which NVIDIA Advanced Optimus treats as "GPU in use" and refuses to hot-switch around
+    // point CompositionTarget.RenderMode can be set. This window is created once and remains alive for
+    // the whole process -- its DirectX composition surface stays alive, which NVIDIA Advanced Optimus
+    // treats as "GPU in use" and refuses to hot-switch around
     // (GitHub #82). Forcing software rendering on just this one window's HwndTarget avoids that,
     // without touching SettingsWindow/SearchWindow/etc. (which are properly closed and don't trigger
     // this). Setting it here rather than in HandleLoaded (which runs after the window has already
@@ -87,17 +86,6 @@ public class QuickSearchWindowLifecycle
 
         _window.PositionWindow();
 
-        // Focus search box or hide on first launch
-
-        if (_isFirstLoad)
-        {
-            _isFirstLoad = false;
-            CompleteHiddenStartup(_window);
-        }
-
-        else
-        {
-            _window.TxtSearch.Focus();
-        }
+        _window.TxtSearch.Focus();
     }
 }

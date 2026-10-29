@@ -99,8 +99,8 @@ public static class UpdateCheckService
                 var promptFormat = TranslationManager.Instance["About_NewVersionAvailablePrompt"];
                 var prompt = string.Format(promptFormat, release.TagName);
                 var title = TranslationManager.Instance["About_CheckUpdate"];
-                MessageBox.Show(prompt, title, MessageBoxButton.OK, MessageBoxImage.Information);
-                App.ShowSettingsWindow("About");
+                var result = MessageBox.Show(prompt, title, MessageBoxButton.OKCancel, MessageBoxImage.Information);
+                if (ShouldOpenAbout(result)) App.ShowSettingsWindow("About");
             }));
         }
         catch (Exception ex)
@@ -163,6 +163,8 @@ public static class UpdateCheckService
         var cleanTag = tagName.TrimStart('v', 'V');
         return Version.TryParse(cleanTag, out latestVersion) && latestVersion > currentVersion;
     }
+
+    internal static bool ShouldOpenAbout(MessageBoxResult result) => result == MessageBoxResult.OK;
 
     /// <summary>
     /// Whether this release is still being left alone after a failed install. Only the release it failed on

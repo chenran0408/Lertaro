@@ -315,11 +315,6 @@ public partial class App : Application
         base.OnStartup(e);
         _startupInitialized = true;
         MainWindow = new QuickSearchWindow();
-        // This seed initializes startup services but is not a user-visible summon. Keep it
-        // transparent while Show creates its HWND; the first-load lifecycle hides it and restores
-        // opacity before any later user summon.
-        Views.QuickSearchWindow.Helpers.QuickSearchWindowLifecycle.PrepareHiddenStartup(MainWindow);
-        MainWindow.Show();
 
         _ = Dispatcher.BeginInvoke(new Action(() =>
         {
