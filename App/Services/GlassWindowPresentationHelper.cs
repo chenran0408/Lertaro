@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using System.Windows;
 using GlassDesk.UI.Controls;
+using GlassDesk.UI;
 using Lertaro.Core;
 
 namespace Lertaro.App.Services;
@@ -13,7 +14,7 @@ namespace Lertaro.App.Services;
 /// </summary>
 internal static class GlassWindowPresentationHelper
 {
-    private static readonly TimeSpan PreShowBudget = TimeSpan.FromMilliseconds(250);
+    private static readonly TimeSpan PreShowBudget = TimeSpan.FromMilliseconds(300);
     private static readonly ConditionalWeakTable<GlassWindow, Preparation> Preparations = new();
 
     internal static Task ShowWhenPreparedAsync(
@@ -90,9 +91,33 @@ internal static class GlassWindowPresentationHelper
             return;
         }
 
+        var waitEndedAt = Stopwatch.GetTimestamp();
+        var waitPhase = completed ? "PreparationWaitCompleted" : "PreparationWaitTimedOut";
+        BackdropRecovery.RecordWindowPresentationTiming(window, waitPhase, startedAt, waitEndedAt, result?.Source);
+        var waitState = completed ? "completed" : "timed out";
+        var waitMilliseconds = Stopwatch.GetElapsedTime(startedAt, waitEndedAt).TotalMilliseconds;
+        Logger.Log($"[GlassWindow] First-display preparation {waitState} after {waitMilliseconds:0.0}ms (budget {PreShowBudget.TotalMilliseconds:0}ms; source {result?.Source ?? "unavailable"}).", LogLevel.Debug);
+
         if (!completed)
             window.WakeGlassSurfacesForDisplay();
-        show();
+        var requestedRecordStartedAt = Stopwatch.GetTimestamp();
+        BackdropRecovery.RecordWindowPresentation(window, "ShowRequested", result?.Source);
+        BackdropRecovery.RecordWindowPresentationTiming(window, "ShowRequestedDiagnostics", requestedRecordStartedAt,
+            Stopwatch.GetTimestamp(), result?.Source);
+        var showStartedAt = Stopwatch.GetTimestamp();
+        try
+        {
+            show();
+        }
+        finally
+        {
+            BackdropRecovery.RecordWindowPresentationTiming(window, "ShowCallback", showStartedAt,
+                Stopwatch.GetTimestamp(), result?.Source);
+        }
+        var shownRecordStartedAt = Stopwatch.GetTimestamp();
+        BackdropRecovery.RecordWindowPresentation(window, "Shown", result?.Source);
+        BackdropRecovery.RecordWindowPresentationTiming(window, "ShownDiagnostics", shownRecordStartedAt,
+            Stopwatch.GetTimestamp(), result?.Source);
         if (result is { } prepared)
             Logger.Log($"[GlassWindow] First-display material source: {prepared.Source} (optical ready: {prepared.IsOpticalMaterialReady}).", LogLevel.Debug);
     }

@@ -74,6 +74,23 @@ public sealed class FileRecordNativeStoreTests
     }
 
     [TestMethod]
+    public void AddRange_ReusesNativeInputScratchAcrossBatchFlushAndClear()
+    {
+        var rows = Enumerable.Range(0, 513)
+            .Select(i => new FileRecord((UInt128)(i + 1), 1,
+                i == 0 ? new string('长', 16_384) : $"目录😀-{i}.txt", FileRecordFlags.None, i))
+            .ToArray();
+        var records = new FileRecordCollection();
+
+        records.AddRange(rows);
+        CollectionAssert.AreEqual(rows, records.ToArray());
+        records.Clear();
+        records.AddRange(rows.Take(512));
+
+        CollectionAssert.AreEqual(rows.Take(512).ToArray(), records.ToArray());
+    }
+
+    [TestMethod]
     public void Enumeration_ThrowsWhenCollectionChanges()
     {
         var records = new FileRecordCollection

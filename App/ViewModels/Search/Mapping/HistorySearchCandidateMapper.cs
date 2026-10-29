@@ -13,7 +13,8 @@ internal static class HistorySearchCandidateMapper
     private const int MaxCandidates = 50;
 
     public static List<SearchResultMapper.RankedCandidate> Collect(FuzzyQuery fuzzy, string? scope) =>
-        Collect(fuzzy, scope, SearchHistoryStore.GetEntries(), SafeFileExists, SafeDirectoryExists);
+        Collect(fuzzy, scope, SearchHistoryStore.GetEntries(), SafeFileExists, SafeDirectoryExists,
+            ExclusionRuleSet.From(UserSettings.Load()));
 
     private static bool SafeFileExists(string path)
     {
@@ -34,7 +35,8 @@ internal static class HistorySearchCandidateMapper
         string? scope,
         IEnumerable<HistoryEntry> entries,
         Func<string, bool> fileExists,
-        Func<string, bool> directoryExists)
+        Func<string, bool> directoryExists,
+        ExclusionRuleSet? exclusionRules = null)
     {
         if (fuzzy.IsEmpty)
             return [];
@@ -54,12 +56,13 @@ internal static class HistorySearchCandidateMapper
         var candidates = new List<SearchResultMapper.RankedCandidate>(MaxCandidates);
         var candidatePaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var normalizedScope = string.IsNullOrEmpty(scope) ? null : SearchResultHelper.NormalizePath(scope);
+        exclusionRules ??= ExclusionRuleSet.Empty;
 
         foreach (var (entry, match) in matches)
         {
             if (candidates.Count >= MaxCandidates)
                 break;
-            if (!TryCreateResult(entry, query, normalizedScope, fileExists, directoryExists, out var result, out var normalizedPath) ||
+            if (!TryCreateResult(entry, query, normalizedScope, fileExists, directoryExists, exclusionRules, out var result, out var normalizedPath) ||
                 !candidatePaths.Add(normalizedPath))
                 continue;
 
@@ -86,6 +89,7 @@ internal static class HistorySearchCandidateMapper
         string? normalizedScope,
         Func<string, bool> fileExists,
         Func<string, bool> directoryExists,
+        ExclusionRuleSet exclusionRules,
         out AppSearchResult result,
         out string normalizedPath)
     {
@@ -101,6 +105,8 @@ internal static class HistorySearchCandidateMapper
                 ? rawPath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
                 : Path.GetFullPath(rawPath);
             var isDirectory = entry.Kind == HistoryEntryKind.Folder;
+            if (exclusionRules.IsExcludedPath(path, isDirectory))
+                return false;
             if (!(isDirectory ? directoryExists(path) : fileExists(path)))
                 return false;
 
@@ -182,7 +188,7 @@ internal static class HistorySearchCandidateMapper
         IReadOnlyDictionary<string, int> history,
         IReadOnlyList<SearchResultMapper.RankedCandidate> recent)
     {
-        var learned = Collect(fuzzy, null, entries, _ => true, _ => true);
+        var learned = Collect(fuzzy, null, entries, _ => true, _ => true, ExclusionRuleSet.From(UserSettings.Load()));
         return ApplyPriorities(history, [.. learned, .. recent]);
     }
 

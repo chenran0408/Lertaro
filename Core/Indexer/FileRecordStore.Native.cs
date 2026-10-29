@@ -10,6 +10,8 @@ public sealed partial class FileRecordCollection : IList<FileRecord>, IReadOnlyL
     private readonly object _gate = new();
     private readonly NativeStoreHandle _handle;
     private readonly List<FileRecord> _pending = new(BatchSize);
+    private readonly NativeRecordInput[] _rowScratch = new NativeRecordInput[BatchSize];
+    private char[] _nameScratch = new char[BatchSize * 24];
     private int _count;
     private int _flushedCount;
     private int _version;
@@ -162,22 +164,32 @@ public sealed partial class FileRecordCollection : IList<FileRecord>, IReadOnlyL
         if (_pending.Count == 0)
             return;
 
-        var rows = new NativeRecordInput[_pending.Count];
-        var names = new List<char>(_pending.Count * 24);
+        var namesLength = 0;
+        for (var i = 0; i < _pending.Count; i++)
+            namesLength = checked(namesLength + (_pending[i].Name?.Length ?? 0));
+
+        if (_nameScratch.Length < namesLength)
+        {
+            var capacity = Math.Max(1, _nameScratch.Length);
+            while (capacity < namesLength)
+                capacity = checked(capacity * 2);
+            _nameScratch = new char[capacity];
+        }
+
+        var offset = 0;
         for (var i = 0; i < _pending.Count; i++)
         {
             var record = _pending[i];
             var name = record.Name ?? string.Empty;
-            var offset = names.Count;
-            names.AddRange(name);
-            rows[i] = NativeRecordInput.From(record, offset, name.Length);
+            name.AsSpan().CopyTo(_nameScratch.AsSpan(offset));
+            _rowScratch[i] = NativeRecordInput.From(record, offset, name.Length);
+            offset += name.Length;
         }
-        var nameArray = names.ToArray();
         unsafe
         {
-            fixed (NativeRecordInput* rowPointer = rows)
-            fixed (char* namePointer = nameArray)
-                ThrowOnNativeFailure(Native.RecordStoreAddBatch(_handle, rowPointer, rows.Length, namePointer, nameArray.Length));
+            fixed (NativeRecordInput* rowPointer = _rowScratch)
+            fixed (char* namePointer = _nameScratch)
+                ThrowOnNativeFailure(Native.RecordStoreAddBatch(_handle, rowPointer, _pending.Count, namePointer, namesLength));
         }
         _flushedCount += _pending.Count;
         _pending.Clear();

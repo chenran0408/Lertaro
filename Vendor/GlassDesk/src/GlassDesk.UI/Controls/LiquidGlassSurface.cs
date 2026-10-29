@@ -1293,12 +1293,18 @@ public sealed partial class LiquidGlassSurface : FrameworkElement, IDisposable
         long? sourceTicks = null, long? endTicks = null)
     {
         var timing = _background.LastCaptureTiming;
+        var owner = Window.GetWindow(this);
+        var ownerHandle = owner is null ? 0 : new System.Windows.Interop.WindowInteropHelper(owner).Handle.ToInt64();
+        var dpi = owner is null ? default : VisualTreeHelper.GetDpi(owner);
+        // Lertaro modification (2026-10-29): attach the owning window and DPI to reveal/live material events.
         BackdropRecovery.Record(new(stage, reason, Stopwatch.GetTimestamp(), sourceTicks ?? timing?.SourceTicks ?? 0,
             EndTicks: endTicks ?? timing?.EndTicks ?? 0,
             Generation: BackdropRecovery.Generation, SurfaceId: _diagnosticId, Surface: UseLaunchpadOptics ? "Launcher" : "Dock",
+            WindowHandle: ownerHandle,
             MaterialSource: source, Visible: Window.GetWindow(this)?.IsVisible == true && IsVisible,
             Active: IsBackdropActive?.Invoke() != false, Sleeping: _performanceSleeping,
-            SceneHash: _backdropScene?.GetHashCode() ?? 0, Width: (int)Math.Max(0, ActualWidth), Height: (int)Math.Max(0, ActualHeight)));
+            SceneHash: _backdropScene?.GetHashCode() ?? 0, Width: (int)Math.Max(0, ActualWidth), Height: (int)Math.Max(0, ActualHeight),
+            DpiX: dpi.PixelsPerInchX, DpiY: dpi.PixelsPerInchY));
     }
 
     private GlassBackdropScene? CaptureBackdropScene()

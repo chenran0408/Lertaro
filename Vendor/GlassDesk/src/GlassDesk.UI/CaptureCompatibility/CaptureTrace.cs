@@ -1,9 +1,11 @@
+// Lertaro modification (2026-10-29): include per-window DPI for first-display diagnostics.
 internal readonly record struct CaptureTrace(string Stage,string Reason,long AtTicks,
     long SourceTicks=0,long EndTicks=0,long BarrierTicks=0,long Generation=0,int QueueFrames=0,
     long WindowHandle=0,uint WindowProcess=0,string? WindowClass=null,int ErrorCode=0,
     int SurfaceId=0,string? Surface=null,string? MaterialSource=null,bool? Visible=null,bool? Active=null,bool? Sleeping=null,
     int SceneHash=0,int Width=0,int Height=0,double NearBlackFraction=-1,double TransparentFraction=-1,double MeanChannel=-1,
-    int WorkerProcess=0,string? ExceptionType=null,string? ExceptionMessage=null,int NativeErrorCode=0,string? FailureStage=null);
+    int WorkerProcess=0,string? ExceptionType=null,string? ExceptionMessage=null,int NativeErrorCode=0,string? FailureStage=null,
+    double DpiX=0,double DpiY=0);
 
 internal sealed class CaptureTraceLog
 {

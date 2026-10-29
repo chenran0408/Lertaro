@@ -504,9 +504,11 @@ public abstract class GlassWindow : Window
         var ready = surfaces.Count > 0 && surfaces.All(item => item.Surface.IsCurrentRevealMaterialReady);
         var sources = surfaces.Select(item => item.Surface.CurrentFirstDisplayMaterialSource).Distinct().ToArray();
         var source = sources.Length == 1 ? sources[0] : "Mixed";
+        // Lertaro modification (2026-10-29): preserve pixel bounds and DPI beside the optical-ready tick.
         BackdropRecovery.Record(new("FirstDisplay", ready ? "OpticalReady" : "OpticalUnavailable",
             System.Diagnostics.Stopwatch.GetTimestamp(), WindowHandle: Handle.ToInt64(),
-            Surface: source, Width: (int)ActualWidth, Height: (int)ActualHeight));
+            Surface: source, Width: host.Width, Height: host.Height,
+            DpiX: dpi, DpiY: dpi));
         return new(ready, source);
     }
 

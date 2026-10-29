@@ -2,7 +2,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Media;
 using GlassDesk.Platform;
+using GlassDesk.Platform.Displays;
 
 namespace GlassDesk.UI;
 
@@ -36,6 +40,30 @@ public static class BackdropRecovery
     {
         Diagnostics.Observe(trace);
         Volatile.Read(ref _incidents)?.Observe(trace);
+    }
+    // Lertaro modification (2026-10-29): correlate hidden preparation with actual window visibility.
+    /// <summary>Records window visibility timing and geometry when Lertaro opts into glass diagnostics.</summary>
+    public static void RecordWindowPresentation(Window window, string phase, string? materialSource = null)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+        if (Volatile.Read(ref _incidents) is null) return;
+        var handle = new WindowInteropHelper(window).Handle;
+        var bounds = handle == 0 ? null : DisplayService.GetWindowPixelBounds(handle);
+        var dpi = VisualTreeHelper.GetDpi(window);
+        Record(new("WindowPresentation", phase, Stopwatch.GetTimestamp(), WindowHandle: handle.ToInt64(),
+            Surface: window.GetType().FullName, MaterialSource: materialSource,
+            Width: bounds?.Width ?? 0, Height: bounds?.Height ?? 0,
+            DpiX: dpi.PixelsPerInchX, DpiY: dpi.PixelsPerInchY, Visible: window.IsVisible));
+    }
+    /// <summary>Records an elapsed window-presentation phase using the caller's Stopwatch ticks.</summary>
+    public static void RecordWindowPresentationTiming(Window window, string phase, long sourceTicks, long endTicks,
+        string? materialSource = null)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+        if (Volatile.Read(ref _incidents) is null) return;
+        var handle = new WindowInteropHelper(window).Handle;
+        Record(new("WindowPresentationTiming", phase, endTicks, SourceTicks: sourceTicks, EndTicks: endTicks,
+            WindowHandle: handle.ToInt64(), Surface: window.GetType().FullName, MaterialSource: materialSource));
     }
     internal static IDisposable? BeginAutomaticDiagnostics(string logDirectory)
     {

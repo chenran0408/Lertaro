@@ -33,6 +33,20 @@ public sealed class QuickPanelPluginGroupTests
         Assert.AreEqual(saved.SourceId, groups.Single(group => group.FolderPath == @"C:\Projects").SourceId);
     }
 
+    [TestMethod]
+    public async Task PluginTab_FiltersGloballyExcludedEntryPaths()
+    {
+        var rules = Core.ExclusionRuleSet.From(new Core.UserSettings { ExcludedPaths = new() { @"C:\blocked" } }, @"C:\");
+        var vm = new QuickPanelViewModel(() => new Core.QuickPanelSettings(), saveSettings: () => { }, exclusionRules: () => rules);
+        var groups = new List<QuickPanelGroupViewModel>();
+        await vm.LoadPluginTabAsync(new Provider(), "plugin", "Plugin", (group, _) => groups.Add(group), CancellationToken.None);
+
+        var items = groups.SelectMany(group => group.Items).ToList();
+        CollectionAssert.AreEqual(new[] { "a.txt", "Example.App!App", "file.txt", "z.txt" }, items.Select(item => item.Name).OrderBy(name => name).ToArray());
+        Assert.IsFalse(items.Any(item => item.FullPath.StartsWith(@"C:\blocked", StringComparison.OrdinalIgnoreCase)));
+        Assert.IsTrue(items.Any(item => item.FullPath == @"shell:AppsFolder\Example.App!App"));
+    }
+
     private sealed class Provider : PluginSdk.Abstractions.Plugins.IQuickPanelTabProvider
     {
         public bool Reverse { get; set; }
@@ -40,7 +54,8 @@ public sealed class QuickPanelPluginGroupTests
         {
             IEnumerable<ISearchResult> entries = new ISearchResult[]
             {
-                new PluginItem(@"C:\Other\file.txt"), new PluginItem(@"C:\Projects\a.txt"), new PluginItem(@"C:\Projects\z.txt")
+                new PluginItem(@"C:\Other\file.txt"), new PluginItem(@"C:\Projects\a.txt"), new PluginItem(@"C:\Projects\z.txt"), new PluginItem(@"C:\blocked\secret.txt"),
+                new PluginItem(@"shell:AppsFolder\Example.App!App", isApplication: true)
             };
             return Task.FromResult<IReadOnlyList<ISearchResult>>((Reverse ? entries.Reverse() : entries).ToList());
         }

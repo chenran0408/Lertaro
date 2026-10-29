@@ -39,12 +39,9 @@ public class SearchService : IDisposable
     // bypassExclusions: opts this one search out of ExcludedPaths/IgnoredPathGlobs/IgnoredPathRegexes
     // filtering. The caller is responsible for stripping whatever query-string marker triggers this
     // (see SearchQuerySortParser.StripExclusionBypass) BEFORE calling here -- `query` itself is always
-    // matched/highlighted verbatim, so a caller must never pass the marker through as part of it. Also
-    // forced on automatically for a path-mode query (see effectiveBypassExclusions below) -- typing an
-    // exact path is the same "I want to see what's actually here" intent regardless of the marker. Only
-    // covers results that are already indexed -- content that was never indexed in the first place (an
-    // excluded/unconfigured network or WSL root, or a local drive not enabled for indexing) has nothing
-    // to unfilter here; recovering that is CheckNeedsLiveSearch's live-scan fallback's job instead.
+    // matched/highlighted verbatim, so a caller must never pass the marker through as part of it. A path
+    // query does not bypass exclusions by itself. An explicit bypass only affects results returned by the
+    // search sources; CheckNeedsLiveSearch decides when the live-scan fallback can provide missing data.
     public async Task<bool> SearchStreamingAsync(string query, int maxResults, int maxAppResults, string? directoryFilter, Action<SearchResult> onResult, CancellationToken token = default, Action? onLocalSearchFailed = null, bool bypassExclusions = false, string? fileNameFilter = null)
     {
         var settings = UserSettings.Load();
@@ -79,11 +76,8 @@ public class SearchService : IDisposable
         SearchContext.AndFirstPrecedence = !msg.OrFirstPrecedence;
 
         var parsed = SearchQueryParser.Parse(query);
-        // A path-mode query ("C:\Windows\...") is the user typing an exact location they want to look at,
-        // same as ExplorerSearchHelper's "current folder" search always passing bypassExclusions: true for
-        // the directory the user is actually standing in -- global exclusion settings have no business
-        // hiding results from a location the user explicitly pointed at either way.
-        var effectiveBypassExclusions = bypassExclusions || parsed.IsPathMode;
+        // Path-mode queries still honor global exclusions; only an explicit caller request bypasses them.
+        var effectiveBypassExclusions = bypassExclusions;
 
         var seenPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var uniqueOnResult = new Action<SearchResult>(result =>
@@ -101,6 +95,11 @@ public class SearchService : IDisposable
             }
             onResult(result);
         });
+        var uniqueUnexcludedResult = new Action<SearchResult>(result =>
+        {
+            if (!ShouldExcludeByUserRules(result, exclusionRules, directoryFilter, effectiveBypassExclusions))
+                uniqueOnResult(result);
+        });
 
         var localTask = Task.Run(async () =>
         {
@@ -108,8 +107,7 @@ public class SearchService : IDisposable
             {
                 await SearchPipeClient.SendSearchPipeCommandAsync(msg, result =>
                 {
-                    if (effectiveBypassExclusions || !exclusionRules.IsExcluded(result, directoryFilter))
-                        uniqueOnResult(result);
+                    uniqueUnexcludedResult(result);
                 }, token).ConfigureAwait(false);
                 return true;
             }
@@ -196,7 +194,7 @@ public class SearchService : IDisposable
                     // waiter at all. Its finalizer then reports a routine superseded search as a crash.
                     var scanTask = _sessionDirectoryCache.GetOrAdd(liveScanDir,
                         dir => Task.Run(() => LiveDirectorySearcher.ScanDirectory(dir, 10000, cacheFillToken,
-                            liveQuery: liveScanFilter, onLiveMatch: uniqueOnResult,
+                            liveQuery: liveScanFilter, onLiveMatch: uniqueUnexcludedResult,
                             onlyDirectChildren: onlyDirectChildren, parentPath: liveScanDir)).KeepObserved());
                     List<SearchResult> entries;
                     try
@@ -210,7 +208,7 @@ public class SearchService : IDisposable
                         throw;
                     }
 
-                    return LiveDirectorySearcher.MatchAndStream(entries, liveScanFilter, uniqueOnResult, token, onlyDirectChildren, liveScanDir);
+                    return LiveDirectorySearcher.MatchAndStream(entries, liveScanFilter, uniqueUnexcludedResult, token, onlyDirectChildren, liveScanDir);
                 }
                 catch (OperationCanceledException) { throw; }
                 catch (Exception ex)
@@ -252,9 +250,28 @@ public class SearchService : IDisposable
         var localResults = resp.Kind == PipeResponseKind.RecentFiles && resp.RecentFiles != null ? resp.RecentFiles : new List<SearchResult>();
 
         var networkResults = await networkTask.ConfigureAwait(false);
-        var merged = localResults.Concat(networkResults).OrderByDescending(r => r.Metadata.Modified);
+        var exclusionRules = ExclusionRuleSet.From(UserSettings.Load());
+        return FilterRecentFiles(localResults, networkResults, limit, exclusionRules);
+    }
+
+    internal static List<SearchResult> FilterRecentFiles(
+        IEnumerable<SearchResult> localResults,
+        IEnumerable<SearchResult> networkResults,
+        int limit,
+        ExclusionRuleSet exclusionRules)
+    {
+        var merged = localResults.Concat(networkResults)
+            .Where(result => !exclusionRules.IsExcludedPath(result.Path, result.IsDir))
+            .OrderByDescending(r => r.Metadata.Modified);
         return (limit > 0 ? merged.Take(limit) : merged).ToList();
     }
+
+    internal static bool ShouldExcludeByUserRules(
+        SearchResult result,
+        ExclusionRuleSet exclusionRules,
+        string? directoryFilter,
+        bool explicitlyBypassed)
+        => !explicitlyBypassed && exclusionRules.IsExcluded(result, directoryFilter);
 
     // Forwards to the pipe client -- kept on SearchService itself since SearchServiceManagementExtensions
     // and other callers already reach this as an instance method (`service.SendPipeCommandAsync(...)`).

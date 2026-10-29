@@ -77,8 +77,8 @@
 
                         <!-- Step 2 Progress Summary / Counter -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                            <TextBlock x:Name="TxtSpeed" FontSize="11.5" Foreground="{DynamicResource AccentBlue}" FontWeight="SemiBold" Margin="0,0,8,0"/>
-                            <TextBlock x:Name="TxtCounter" FontSize="11.5" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
+                            <TextBlock x:Name="TxtSpeed" FontSize="12" Foreground="{DynamicResource AccentBlue}" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                            <TextBlock x:Name="TxtCounter" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
                         </StackPanel>
 
                         <Button x:Name="BtnToggleSelectAll" Grid.Column="2" VerticalAlignment="Center"

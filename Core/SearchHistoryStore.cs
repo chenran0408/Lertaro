@@ -48,15 +48,16 @@ public static class SearchHistoryStore
             return;
         if (string.IsNullOrWhiteSpace(keyword))
             return;
+        if (!UserSettings.Load().EnableHistory)
+            return;
 
         // File.Exists/Directory.Exists below have no timeout and can block for seconds on a slow or
         // heavily-indexed network share -- callers invoke this synchronously right before/after launching
         // a result, often still on the UI thread, so recording history must not be able to freeze that.
-        var enabled = UserSettings.Load().EnableHistory;
-        Task.Run(() => RecordCore(keyword.Trim(), path, kind, enabled));
+        Task.Run(() => RecordCore(keyword.Trim(), path, kind));
     }
 
-    private static void RecordCore(string keyword, string path, HistoryEntryKind kind, bool enabled)
+    private static void RecordCore(string keyword, string path, HistoryEntryKind kind)
     {
         var isApp = kind == HistoryEntryKind.Application;
         var normalizedPath = isApp ? path.Trim() : NormalizePath(path);
@@ -68,9 +69,9 @@ public static class SearchHistoryStore
             EnsureCacheNoLock();
             var buckets = _buckets!;
 
-            var entryExists = buckets.Values.Any(list => list.Any(e =>
-                e.Path.Equals(normalizedPath, StringComparison.OrdinalIgnoreCase)));
-            if (!HistoryRecordingPolicy.ShouldRecord(enabled, entryExists))
+            // Check at commit time: settings may have changed while this background task was
+            // waiting or probing the target path.
+            if (!HistoryRecordingPolicy.ShouldRecord(UserSettings.Load().EnableHistory))
                 return;
 
             // A path belongs to at most one keyword -- drop it from wherever it currently lives

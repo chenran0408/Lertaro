@@ -1,4 +1,5 @@
 using Lertaro.App.ViewModels.Search.Mapping;
+using Lertaro.Core;
 using Lertaro.Core.SearchIndex;
 using Lertaro.PluginSdk.Services;
 
@@ -102,6 +103,42 @@ public sealed class HistorySearchCandidateMapperTests
         var results = HistorySearchCandidateMapper.Collect(FuzzyQuery.Parse("bc"), null, entries, _ => true, _ => false);
 
         Assert.IsEmpty(results);
+    }
+
+    [TestMethod]
+    public void Collect_ExcludedHistoryIsSkippedBeforeCandidateCap()
+    {
+        var entries = Enumerable.Range(0, 51)
+            .Select(i => Entry("atlas", $@"C:\Hidden\item{i}.txt", HistoryEntryKind.File, time: 200 - i))
+            .Append(Entry("atlas", @"C:\Visible\atlas.txt", HistoryEntryKind.File, time: 1));
+        var rules = ExclusionRuleSet.From(new UserSettings
+        {
+            ExcludedPaths = [@"C:\Hidden"], IgnoredPathGlobs = [], IgnoredPathRegexes = []
+        });
+
+        var results = HistorySearchCandidateMapper.Collect(FuzzyQuery.Parse("atlas"), null, entries,
+            _ => true, _ => false, rules);
+
+        Assert.HasCount(1, results);
+        Assert.AreEqual(@"C:\Visible\atlas.txt", results[0].Result.FullPath);
+    }
+
+    [TestMethod]
+    public void Collect_ExcludedHistorySkipsExistenceProbe()
+    {
+        var existenceProbeCalled = false;
+        var rules = ExclusionRuleSet.From(new UserSettings
+        {
+            ExcludedPaths = [@"C:\Hidden"], IgnoredPathGlobs = [], IgnoredPathRegexes = []
+        });
+
+        var results = HistorySearchCandidateMapper.Collect(FuzzyQuery.Parse("atlas"), null,
+            [Entry("atlas", @"C:\Hidden\atlas.txt", HistoryEntryKind.File)],
+            _ => { existenceProbeCalled = true; return true; },
+            _ => { existenceProbeCalled = true; return true; }, rules);
+
+        Assert.IsEmpty(results);
+        Assert.IsFalse(existenceProbeCalled);
     }
 
     [TestMethod]

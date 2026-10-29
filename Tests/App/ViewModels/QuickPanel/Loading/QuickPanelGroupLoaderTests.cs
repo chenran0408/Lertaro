@@ -59,10 +59,41 @@ public sealed class QuickPanelGroupLoaderTests
         }
     }
 
+    [TestMethod]
+    public async Task LoadAsync_FiltersExcludedPathsFromProgressAndFinalItems()
+    {
+        var settings = new UserSettings { ExcludedPaths = new() { @"C:\blocked" } };
+        var rules = ExclusionRuleSet.From(settings, @"C:\");
+        var finished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var appeared = new TaskCompletionSource<QuickPanelGroupViewModel>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var loader = new QuickPanelGroupLoader(async (_, progress, _) =>
+        {
+            progress.Report(new[] { Entry(@"C:\source\visible.txt"), Entry(@"C:\blocked\hidden.txt") });
+            await finished.Task;
+            return new List<SearchResult> { Entry(@"C:\source\visible.txt"), Entry(@"C:\blocked\hidden.txt") };
+        }, mapOnBackground: false, exclusionRules: () => rules);
+        var source = new QuickPanelFolderSource { Id = "source", Path = @"C:\source", Kind = QuickPanelSourceKind.All };
+
+        var loading = loader.LoadAsync(new QuickPanelTab(), source, group => appeared.TrySetResult(group), CancellationToken.None);
+        try
+        {
+            var group = await appeared.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            CollectionAssert.AreEqual(new[] { "visible.txt" }, group.Items.Select(item => item.Name).ToList());
+            finished.SetResult();
+            await loading.WaitAsync(TimeSpan.FromSeconds(10));
+            CollectionAssert.AreEqual(new[] { "visible.txt" }, group.Items.Select(item => item.Name).ToList());
+        }
+        finally
+        {
+            finished.TrySetResult();
+            await loading.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+    }
+
     private static SearchResult Entry(string name) => new()
     {
-        Name = name,
-        Path = @"C:\source\" + name,
+        Name = System.IO.Path.IsPathRooted(name) ? System.IO.Path.GetFileName(name) : name,
+        Path = System.IO.Path.IsPathRooted(name) ? name : @"C:\source\" + name,
         Metadata = new PluginSdk.Abstractions.FileMetadata(0, DateTime.MinValue, DateTime.MinValue, DateTime.MinValue),
     };
 }

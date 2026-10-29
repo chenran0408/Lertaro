@@ -37,6 +37,8 @@ public partial class QuickPanelViewModel
             return;
         }
 
+        var exclusionRules = _exclusionRules();
+        entries = entries.Where(entry => !IsExcludedFileSystemPath(exclusionRules, entry.FullPath, entry.IsDir)).ToList();
         if (entries.Count == 0) return;
 
         // Mapped rather than cast: a provider lives in a plugin assembly that cannot see AppSearchResult
@@ -88,4 +90,7 @@ public partial class QuickPanelViewModel
             place(groupViewModel, rank);
         }
     }
+
+    private static bool IsExcludedFileSystemPath(ExclusionRuleSet rules, string path, bool isDirectory)
+        => System.IO.Path.IsPathFullyQualified(path) && rules.IsExcludedPath(path, isDirectory);
 }

@@ -22,6 +22,7 @@ public partial class QuickPanelViewModel : ViewModelBase
     private readonly Func<QuickPanelFolderSource, CancellationToken, Task<List<SearchResult>>> _load;
     private readonly Func<QuickPanelFolderSource, IProgress<IReadOnlyList<SearchResult>>, CancellationToken, Task<List<SearchResult>>> _loadProgressively;
     private readonly Action _saveSettings;
+    private readonly Func<ExclusionRuleSet> _exclusionRules;
     private readonly QuickPanelGroupLoader _groupLoader;
 
     /// <summary>The tabs on screen: enabled, and with something behind them.</summary>
@@ -39,7 +40,8 @@ public partial class QuickPanelViewModel : ViewModelBase
     public QuickPanelViewModel(
         Func<QuickPanelSettings>? readSettings = null,
         Func<QuickPanelFolderSource, CancellationToken, Task<List<SearchResult>>>? load = null,
-        Action? saveSettings = null)
+        Action? saveSettings = null,
+        Func<ExclusionRuleSet>? exclusionRules = null)
     {
         _readSettings = readSettings ?? (() => UserSettings.Load().QuickPanel);
         _load = load ?? QuickPanelSourceLoader.LoadAsync;
@@ -47,7 +49,8 @@ public partial class QuickPanelViewModel : ViewModelBase
             ? QuickPanelSourceLoader.LoadProgressivelyAsync
             : async (source, _, token) => await _load(source, token).ConfigureAwait(true);
         _saveSettings = saveSettings ?? (() => UserSettings.Load().Save());
-        _groupLoader = new QuickPanelGroupLoader(_loadProgressively, mapOnBackground: load == null);
+        _exclusionRules = exclusionRules ?? (() => ExclusionRuleSet.From(UserSettings.Load()));
+        _groupLoader = new QuickPanelGroupLoader(_loadProgressively, mapOnBackground: load == null, exclusionRules: _exclusionRules);
 
         // Dragging a tab reorders this collection in place (a remove and an insert, which is what
         // DragReorder does to any IList), so the strip is where a new order first exists and this is the

@@ -10,13 +10,16 @@ internal sealed class QuickPanelGroupLoader
 {
     private readonly Func<QuickPanelFolderSource, IProgress<IReadOnlyList<SearchResult>>, CancellationToken, Task<List<SearchResult>>> _load;
     private readonly bool _mapOnBackground;
+    private readonly Func<ExclusionRuleSet> _exclusionRules;
 
     public QuickPanelGroupLoader(
         Func<QuickPanelFolderSource, IProgress<IReadOnlyList<SearchResult>>, CancellationToken, Task<List<SearchResult>>> load,
-        bool mapOnBackground)
+        bool mapOnBackground,
+        Func<ExclusionRuleSet>? exclusionRules = null)
     {
         _load = load;
         _mapOnBackground = mapOnBackground;
+        _exclusionRules = exclusionRules ?? (() => ExclusionRuleSet.From(UserSettings.Load()));
     }
 
     public async Task LoadAsync(
@@ -26,6 +29,7 @@ internal sealed class QuickPanelGroupLoader
         CancellationToken token)
     {
         workspace.GroupPreferences.TryGetValue(source.Id, out var preference);
+        var exclusionRules = _exclusionRules();
         QuickPanelGroupViewModel? group = null;
         var acceptingProgress = true;
         var progress = new Progress<IReadOnlyList<SearchResult>>(batch =>
@@ -33,7 +37,7 @@ internal sealed class QuickPanelGroupLoader
             if (!acceptingProgress || token.IsCancellationRequested)
                 return;
 
-            var items = Map(batch);
+            var items = Map(batch, exclusionRules);
             if (items.Count == 0)
                 return;
 
@@ -66,8 +70,8 @@ internal sealed class QuickPanelGroupLoader
         acceptingProgress = false;
         token.ThrowIfCancellationRequested();
         var completeItems = _mapOnBackground
-            ? await Task.Run(() => Map(results), token).ConfigureAwait(true)
-            : Map(results);
+            ? await Task.Run(() => Map(results, exclusionRules), token).ConfigureAwait(true)
+            : Map(results, exclusionRules);
         if (group == null)
         {
             if (completeItems.Count == 0 && (!source.AcceptsDrops || !System.IO.Directory.Exists(FavoritePathResolver.Resolve(source.Path))))
@@ -81,7 +85,9 @@ internal sealed class QuickPanelGroupLoader
         group.Replace(completeItems);
     }
 
-    internal static List<(AppSearchResult Item, DateTime? Modified)> Map(IEnumerable<SearchResult> results) => results
+    internal static List<(AppSearchResult Item, DateTime? Modified)> Map(IEnumerable<SearchResult> results, ExclusionRuleSet? exclusionRules = null) => results
+        .Where(result => !System.IO.Path.IsPathFullyQualified(result.Path)
+            || !(exclusionRules ?? ExclusionRuleSet.Empty).IsExcludedPath(result.Path, result.IsDir))
         .Select((result, index) => (
             Item: SearchResultHelper.CreateUiResult(result, string.Empty, index, isApplication: false, scope: null),
             Modified: ReadModified(result)))

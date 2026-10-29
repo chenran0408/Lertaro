@@ -1,5 +1,6 @@
 using System.IO;
 using Lertaro.App.ViewModels.Search.Mapping;
+using Lertaro.Core;
 using Lertaro.Core.SearchIndex;
 using Lertaro.PluginSdk.Services;
 using Shortcut = Lertaro.App.ViewModels.Search.Mapping.WindowsRecentCandidateMapper.Shortcut;
@@ -84,6 +85,42 @@ public sealed class WindowsRecentCandidateMapperTests
         var shortcuts = Enumerable.Range(0, 40).Select(i => Lnk($"atlas{i}.txt", Now.AddMinutes(-i))).ToArray();
 
         Assert.HasCount(20, Collect("atlas", shortcuts));
+    }
+
+    [TestMethod]
+    public void Collect_ExcludedTargetsDoNotConsumeCandidateCap()
+    {
+        var shortcuts = Enumerable.Range(0, 21).Select(i => Lnk($"atlas{i}.txt", Now.AddMinutes(-i)))
+            .Append(Lnk("atlas-visible.txt", Now.AddDays(-1))).ToArray();
+        var rules = ExclusionRuleSet.From(new UserSettings
+        {
+            ExcludedPaths = [@"D:\Hidden"], IgnoredPathGlobs = [], IgnoredPathRegexes = []
+        });
+
+        var results = WindowsRecentCandidateMapper.Collect(FuzzyQuery.Parse("atlas"), null, shortcuts,
+            s => s.TargetName == "atlas-visible.txt"
+                ? @"D:\Projects\atlas-visible.txt"
+                : $@"D:\Hidden\{s.TargetName}",
+            _ => true, _ => false, rules);
+
+        Assert.HasCount(1, results);
+        Assert.AreEqual(@"D:\Projects\atlas-visible.txt", results[0].Result.FullPath);
+    }
+
+    [TestMethod]
+    public void Collect_TargetExcludedAsFileAndDirectorySkipsKindProbe()
+    {
+        var rules = ExclusionRuleSet.From(new UserSettings
+        {
+            ExcludedPaths = [@"D:\Hidden"], IgnoredPathGlobs = [], IgnoredPathRegexes = []
+        });
+
+        var results = WindowsRecentCandidateMapper.Collect(FuzzyQuery.Parse("atlas"), null,
+            [Lnk("atlas.txt", Now)], _ => @"D:\Hidden\atlas.txt",
+            _ => throw new AssertFailedException("File existence probe should not run."),
+            _ => throw new AssertFailedException("Directory kind probe should not run."), rules);
+
+        Assert.IsEmpty(results);
     }
 
     // User decision: Lertaro picks first, then Windows Recent Items, then everything else -- even when the

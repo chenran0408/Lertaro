@@ -48,6 +48,7 @@ public partial class App : Application
     private Services.Favorites.FavoriteHotkeyService? _favoriteHotkeys;
     private GlassDesk.UI.Theming.ThemeService? _glassTheme;
     private IDisposable? _glassDiagnosticScope;
+    private bool _exportGlassDiagnostics;
     private readonly Helpers.App.DispatcherExceptionHandler _dispatcherExceptionHandler = new();
 
     protected override async void OnStartup(StartupEventArgs e)
@@ -90,7 +91,10 @@ public partial class App : Application
         }
         // Initialize logger only after the user's data is accessible.
         Logger.Initialize("app.log", overwrite: false);
+        _exportGlassDiagnostics = e.Args.Contains("--glass-diagnostics", StringComparer.OrdinalIgnoreCase);
         Logger.Log($"[AppLifecycle] Starting process {Environment.ProcessId}.");
+        if (_exportGlassDiagnostics)
+            Logger.Log("[GlassDiagnostics] Capture trace export enabled; close this App normally to write the report.");
         SessionEnding += (_, args) => Logger.Log($"[AppLifecycle] Windows session ending: {args.ReasonSessionEnding}.");
 
         // Global exception handlers, registered as early as possible: anything thrown before the old
@@ -444,6 +448,21 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         Logger.Log($"[AppLifecycle] Exiting process {Environment.ProcessId}; code={e.ApplicationExitCode}; initialized={_startupInitialized}.");
+        if (_exportGlassDiagnostics)
+        {
+            try
+            {
+                var reportPath = System.IO.Path.Combine(Logger.UserDataDir, "logs",
+                    $"glass-diagnostics-{DateTime.Now:yyyyMMdd-HHmmss}.json");
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(reportPath)!);
+                GlassDesk.UI.BackdropRecovery.ExportDiagnosticReport(reportPath);
+                Logger.Log($"[GlassDiagnostics] Report written to {reportPath}.");
+            }
+            catch (Exception error)
+            {
+                Logger.Log($"[GlassDiagnostics] Report export failed: {error}", LogLevel.Warn);
+            }
+        }
         if (!_startupInitialized)
         {
             _glassDiagnosticScope?.Dispose(); _glassDiagnosticScope = null;

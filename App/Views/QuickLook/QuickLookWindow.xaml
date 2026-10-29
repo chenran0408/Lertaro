@@ -65,8 +65,8 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <Border Grid.ColumnSpan="2" Height="1" VerticalAlignment="Top" Background="{StaticResource LiquidControlEdge}" Margin="0,-8,0,8"/>
-                <TextBlock x:Name="TxtFooterSize" Grid.Column="0" FontSize="11" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
-                <TextBlock x:Name="TxtFooterDate" Grid.Column="1" FontSize="11" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" HorizontalAlignment="Right"/>
+                <TextBlock x:Name="TxtFooterSize" Grid.Column="0" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
+                <TextBlock x:Name="TxtFooterDate" Grid.Column="1" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" HorizontalAlignment="Right"/>
             </Grid>
     </Grid>
     </Grid>

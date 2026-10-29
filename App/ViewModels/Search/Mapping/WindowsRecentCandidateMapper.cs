@@ -37,12 +37,14 @@ internal static class WindowsRecentCandidateMapper
     internal static Func<IReadOnlyList<Shortcut>> Source = Listing;
 
     public static List<SearchResultMapper.RankedCandidate> Collect(FuzzyQuery fuzzy, string? scope) =>
-        fuzzy.IsEmpty ? [] : Collect(fuzzy, scope, Source(), ResolveCached, SafeFileExists, SafeDirectoryExists);
+        fuzzy.IsEmpty ? [] : Collect(fuzzy, scope, Source(), ResolveCached, SafeFileExists, SafeDirectoryExists,
+            ExclusionRuleSet.From(UserSettings.Load()));
 
     // For ranking rows the index already returned (the full window): those exist by construction, so the
     // targets are not probed.
     public static List<SearchResultMapper.RankedCandidate> CollectForRanking(FuzzyQuery fuzzy) =>
-        fuzzy.IsEmpty ? [] : Collect(fuzzy, null, Source(), ResolveCached, _ => true, _ => true);
+        fuzzy.IsEmpty ? [] : Collect(fuzzy, null, Source(), ResolveCached, _ => true, _ => true,
+            ExclusionRuleSet.From(UserSettings.Load()));
 
     internal static List<SearchResultMapper.RankedCandidate> Collect(
         FuzzyQuery fuzzy,
@@ -50,7 +52,8 @@ internal static class WindowsRecentCandidateMapper
         IReadOnlyList<Shortcut> shortcuts,
         Func<Shortcut, string?> resolve,
         Func<string, bool> fileExists,
-        Func<string, bool> directoryExists)
+        Func<string, bool> directoryExists,
+        ExclusionRuleSet? exclusionRules = null)
     {
         if (fuzzy.IsEmpty || shortcuts.Count == 0)
             return [];
@@ -63,6 +66,7 @@ internal static class WindowsRecentCandidateMapper
         var normalizedScope = string.IsNullOrEmpty(scope) ? null : SearchResultHelper.NormalizePath(scope);
         var candidates = new List<SearchResultMapper.RankedCandidate>(MaxCandidates);
         var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        exclusionRules ??= ExclusionRuleSet.Empty;
 
         foreach (var (shortcut, match) in hits)
         {
@@ -74,10 +78,16 @@ internal static class WindowsRecentCandidateMapper
             var target = resolve(shortcut);
             if (string.IsNullOrWhiteSpace(target))
                 continue;
+            // The shortcut doesn't tell us whether its target is a file or folder. Skip the existence
+            // probe only when the lexical path is excluded under both possible kinds; otherwise probe
+            // its kind and let TryCreateResult apply the precise rule before its own existence check.
+            if (exclusionRules.IsExcludedPath(target, isDirectory: false) &&
+                exclusionRules.IsExcludedPath(target, isDirectory: true))
+                continue;
             var kind = directoryExists(target) ? HistoryEntryKind.Folder : HistoryEntryKind.File;
             if (!HistorySearchCandidateMapper.TryCreateResult(
                     new HistoryEntry(string.Empty, target, kind, 0), fuzzy.Text, normalizedScope,
-                    fileExists, directoryExists, out var result, out var normalizedPath) ||
+                    fileExists, directoryExists, exclusionRules, out var result, out var normalizedPath) ||
                 !paths.Add(normalizedPath))
                 continue;
 

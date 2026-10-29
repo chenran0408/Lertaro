@@ -117,7 +117,7 @@
                     <Border CornerRadius="4" Background="{StaticResource LiquidControlFill}" BorderBrush="{StaticResource LiquidControlEdge}" BorderThickness="1" Margin="8,0,0,0" Padding="5,1,5,2" VerticalAlignment="Center"
                             Cursor="Hand" MouseLeftButtonUp="SdkBadge_MouseLeftButtonUp"
                             ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_DevGuideTooltip]}">
-                        <TextBlock Text="{Binding HostSdkVersion, StringFormat='SDK v{0}'}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource BadgeText}" />
+                        <TextBlock Text="{Binding HostSdkVersion, StringFormat='SDK v{0}'}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource BadgeText}" />
                     </Border>
                 </StackPanel>
 
@@ -171,7 +171,7 @@
                 <Grid Grid.Row="0" Margin="8,0,8,4" Background="Transparent"
                       Cursor="Hand" MouseLeftButtonUp="PluginColumnHeader_Click">
                     <StackPanel Orientation="Horizontal" IsHitTestVisible="False">
-                        <TextBlock Text="↑↓" FontSize="10"
+                        <TextBlock Text="↑↓" FontSize="12"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
                         <TextBlock Text="{Binding PluginSortLabel}"
                                    FontSize="14" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"

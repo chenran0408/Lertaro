@@ -111,7 +111,7 @@
                 </Border>
 
                 <!-- The name of whoever sent this, injected by the host: a plugin cannot choose it. -->
-                <TextBlock x:Name="TxtSource" Grid.Row="1" FontSize="11" Margin="12,8,12,0"
+                <TextBlock x:Name="TxtSource" Grid.Row="1" FontSize="12" Margin="12,8,12,0"
                            Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type glass:GlassWindow}}, Path=SecondaryForegroundBrush}" TextTrimming="CharacterEllipsis"/>
 
                 <!-- Scrolls instead of growing the card past its budget, and never sideways. Deferred

@@ -487,7 +487,7 @@ public sealed class GlassWindowPresentationHelperTests
             Assert.AreEqual(1, preparationCount, "The pending capture must be reused rather than overlapped.");
             Assert.IsTrue(awakeWhenShown, "Surfaces must be awake when the timed-out reveal occurs.");
             Assert.IsTrue(elapsed.Elapsed < TimeSpan.FromMilliseconds(750),
-                $"A repeated summon took {elapsed.Elapsed.TotalMilliseconds:0} ms despite the 250 ms budget.");
+                $"A repeated summon took {elapsed.Elapsed.TotalMilliseconds:0} ms despite the configured pre-show budget.");
             pendingPreparation.SetResult(new FirstDisplayPreparationResult(true, "late"));
         }
         finally

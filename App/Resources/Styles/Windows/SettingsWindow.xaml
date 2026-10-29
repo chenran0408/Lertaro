@@ -27,7 +27,7 @@
     </Style>
 
     <Style x:Key="SettingsCard" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource LiquidControlFill}"/>
+        <Setter Property="Background" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=PanelBackgroundBrush, FallbackValue={StaticResource LiquidControlFill}}"/>
         <Setter Property="BorderBrush" Value="{StaticResource LiquidControlEdge}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="8"/>
