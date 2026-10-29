@@ -6,9 +6,10 @@ namespace Lertaro.App.Views.QuickSearchWindow.Helpers;
 // helper owns the delayed keyboard-focus handoff used by the one window it receives.
 internal sealed class QuickSearchWindowFocusHelper
 {
-    private readonly Lertaro.App.QuickSearchWindow _window;
+    private readonly System.Windows.Controls.TextBox _textBox;
+    private DispatcherTimer? _pendingFocusTimer;
 
-    internal QuickSearchWindowFocusHelper(Lertaro.App.QuickSearchWindow window) => _window = window;
+    internal QuickSearchWindowFocusHelper(System.Windows.Controls.TextBox textBox) => _textBox = textBox;
 
     // What the search box's text/caret should look like once it actually has keyboard focus. Kept as a
     // decision separate from the focus call so the precedence is explicit: a clipboard handoff selects
@@ -25,29 +26,44 @@ internal sealed class QuickSearchWindowFocusHelper
     // foreground window for up to 200ms so the first keystrokes after summoning are not lost.
     internal void FocusWhenForeground(IntPtr hwnd, bool selectSearchText, bool caretAtEnd = false)
     {
+        CancelPendingFocus();
         var deadline = Environment.TickCount64 + 200;
         var timer = new DispatcherTimer(DispatcherPriority.Input) { Interval = TimeSpan.FromMilliseconds(10) };
+        _pendingFocusTimer = timer;
         timer.Tick += (_, _) =>
         {
+            if (!ReferenceEquals(_pendingFocusTimer, timer))
+            {
+                timer.Stop();
+                return;
+            }
+
             var isForeground = hwnd == IntPtr.Zero || QuickSearchWindowNative.GetForegroundWindow() == hwnd;
             if (!isForeground && Environment.TickCount64 < deadline)
                 return;
 
             timer.Stop();
-            _window.TxtSearch.Focus();
-            System.Windows.Input.Keyboard.Focus(_window.TxtSearch);
+            _pendingFocusTimer = null;
+            _textBox.Focus();
+            System.Windows.Input.Keyboard.Focus(_textBox);
 
             switch (ResolveSearchBoxFocus(selectSearchText, caretAtEnd))
             {
                 case SearchBoxFocus.SelectAll:
-                    _window.TxtSearch.SelectAll();
+                    _textBox.SelectAll();
                     break;
                 case SearchBoxFocus.CaretAtEnd:
                     // Mirrors what the full window does with its own initialQuery on load.
-                    _window.TxtSearch.CaretIndex = _window.TxtSearch.Text.Length;
+                    _textBox.CaretIndex = _textBox.Text.Length;
                     break;
             }
         };
         timer.Start();
+    }
+
+    internal void CancelPendingFocus()
+    {
+        _pendingFocusTimer?.Stop();
+        _pendingFocusTimer = null;
     }
 }

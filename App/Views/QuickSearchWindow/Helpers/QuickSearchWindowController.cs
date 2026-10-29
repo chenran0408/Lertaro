@@ -49,7 +49,7 @@ public class QuickSearchWindowController
         _window = window;
         _positioner = new QuickSearchWindowPositioner(window, () => _lastActiveHwnd);
         _foregroundWatcher = new QuickSearchWindowForegroundWatcher(window, () => HideOnFocusLoss());
-        _focusHelper = new QuickSearchWindowFocusHelper(window);
+        _focusHelper = new QuickSearchWindowFocusHelper(window.TxtSearch);
         _showSupport = new QuickSearchWindowShowSupport(this);
     }
 
@@ -154,16 +154,17 @@ public class QuickSearchWindowController
 
     // The activation half of a summon, shared with ShowWindow so the two cannot drift apart.
     internal void ActivateAndFocus() => ActivateAndFocus(false);
-    internal void ActivateAndFocus(bool selectSearchText, bool caretAtEnd = false) => _window.Dispatcher.BeginInvoke(new Action(() =>
+    internal void ActivateAndFocus(bool selectSearchText, bool caretAtEnd = false)
     {
-        var hwnd = new WindowInteropHelper(_window).Handle;
-        if (hwnd != IntPtr.Zero) QuickSearchWindowNative.ForceForeground(hwnd);
-
-        _window.Activate();
-        _window.Focus();
-
-        _focusHelper.FocusWhenForeground(hwnd, selectSearchText, caretAtEnd);
-    }), DispatcherPriority.Input);
+        var visibilityToken = _visibilityOpToken;
+        _window.Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (visibilityToken != _visibilityOpToken) return;
+            var hwnd = new WindowInteropHelper(_window).Handle; if (hwnd != IntPtr.Zero) QuickSearchWindowNative.ForceForeground(hwnd);
+            _window.Activate(); _window.Focus();
+            _focusHelper.FocusWhenForeground(hwnd, selectSearchText, caretAtEnd);
+        }), DispatcherPriority.Input);
+    }
 
     /// <summary>
     /// The hide that happens because focus went elsewhere, as opposed to one the user asked for.
@@ -187,6 +188,7 @@ public class QuickSearchWindowController
     public void HideWindow(bool restoreFocus = true)
     {
         var opToken = ++_visibilityOpToken;
+        _focusHelper.CancelPendingFocus();
 
         _foregroundWatcher.Stop();
         if (_window.MenuPresenter != null && _window.MenuPresenter.IsInActionsMode)
