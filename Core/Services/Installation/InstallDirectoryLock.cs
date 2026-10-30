@@ -29,6 +29,8 @@ public static class InstallDirectoryLock
     internal static readonly SecurityIdentifier Users = new(WellKnownSidType.BuiltinUsersSid, null);
 
     private const AceFlags Inheritable = AceFlags.ObjectInherit | AceFlags.ContainerInherit;
+    private const string SharedPermissionsRevision = "1";
+    private const string SharedPermissionsRevisionFile = ".shared-permissions-version";
 
     /// <summary>
     /// The protected DACL at the top of a locked tree, and the owner of every entry that inherits it.
@@ -72,11 +74,45 @@ public static class InstallDirectoryLock
 
     public static Report PrepareSharedDataDirectory(string directory)
     {
+        directory = Path.GetFullPath(directory);
+        var legacyDirectory = Path.Combine(Directory.GetParent(directory)?.FullName ?? directory, "SwiftList");
+        var revision = SettingsFileReader.ReadIfPresent(Path.Combine(directory, SharedPermissionsRevisionFile));
+        if (!Directory.Exists(legacyDirectory) &&
+            (revision == SharedPermissionsRevision || revision is null) &&
+            SharedDataDirectoryAclsAreCurrent(directory, ReadOnlyForUsers, PrivateToService))
+        {
+            if (revision is null)
+                AtomicFileStore.Write(Path.Combine(directory, SharedPermissionsRevisionFile), SharedPermissionsRevision);
+            return new Report();
+        }
+
         var report = LockSharedDataDirectory(directory);
         if (report.Failed.Count != 0) return report;
         SettingsDataDirectoryMigrator.Migrate(directory, updateUserSettings: false);
         Merge(report, LockSharedDataDirectory(directory));
+        if (report.Failed.Count == 0 && report.UserDataFailed.Count == 0)
+            AtomicFileStore.Write(Path.Combine(directory, SharedPermissionsRevisionFile), SharedPermissionsRevision);
         return report;
+    }
+
+    internal static bool IsSharedDataDirectoryCurrent(string directory, Zone sharedZone, Zone privateZone)
+    {
+        directory = Path.GetFullPath(directory);
+        var revision = SettingsFileReader.ReadIfPresent(Path.Combine(directory, SharedPermissionsRevisionFile));
+        if (!string.Equals(revision, SharedPermissionsRevision, StringComparison.Ordinal))
+            return false;
+
+        return SharedDataDirectoryAclsAreCurrent(directory, sharedZone, privateZone);
+    }
+
+    private static bool SharedDataDirectoryAclsAreCurrent(string directory, Zone sharedZone, Zone privateZone)
+    {
+        var indexes = Path.Combine(directory, "indexes");
+        var logs = Path.Combine(directory, "logs");
+        return Directory.Exists(directory) && Directory.Exists(indexes) && Directory.Exists(logs) &&
+               GrantsAtLeast(directory, sharedZone) &&
+               GrantsAtLeast(indexes, privateZone) &&
+               GrantsAtLeast(logs, privateZone);
     }
 
     internal static Report LockSharedDataDirectory(string directory, Zone sharedZone, Zone indexZone)

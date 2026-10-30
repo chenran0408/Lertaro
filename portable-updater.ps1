@@ -15,7 +15,7 @@ function Invoke-LertaroUpdateCopy([string]$Source, [string]$Destination, [string
         if ($entries | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint }) { throw 'Update payload contains a link.' }
         foreach ($file in $entries | Where-Object { !$_.PSIsContainer } | Sort-Object FullName) {
             $relative = $file.FullName.Substring($sourceRoot.Length)
-            if ($relative -match '^(Data|update-payload)(\\|$)' -or $relative -in @('update.lock', 'update-result.json', '.permissions-version')) { continue }
+            if ($relative -match '^(Data|update-payload)(\\|$)' -or $relative -in @('update.lock', 'update-result.json', '.permissions-version', '.shared-permissions-version')) { continue }
             $target = [IO.Path]::GetFullPath((Join-Path $targetRoot $relative))
             if (!$target.StartsWith($targetRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Update path escaped the installation.' }
             $saved = Join-Path $backupRoot $relative

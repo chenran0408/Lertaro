@@ -51,6 +51,27 @@ public sealed class PermissionCompatibilityTests
     }
 
     [TestMethod]
+    public void SharedDataCurrent_UsesRootAclChecksWithoutWalkingIndexFiles()
+    {
+        var indexes = Directory.CreateDirectory(Path.Combine(_root, "indexes")).FullName;
+        var logs = Directory.CreateDirectory(Path.Combine(_root, "logs")).FullName;
+        File.WriteAllText(Path.Combine(indexes, "large-index.bin"), "index");
+        File.WriteAllText(Path.Combine(logs, "service.log"), "log");
+        var shared = new InstallDirectoryLock.Zone(User,
+            [InstallDirectoryLock.Allow(User, FileSystemRights.FullControl, AceFlags.ObjectInherit | AceFlags.ContainerInherit),
+             InstallDirectoryLock.Allow(InstallDirectoryLock.Users, FileSystemRights.ReadAndExecute, AceFlags.ObjectInherit | AceFlags.ContainerInherit)]);
+        var privateZone = PortableDirectoryLock.OwnedBy(User);
+
+        InstallDirectoryLock.LockSharedDataDirectory(_root, shared, privateZone);
+        Assert.IsFalse(InstallDirectoryLock.IsSharedDataDirectoryCurrent(_root, shared, privateZone));
+        AtomicFileStore.Write(Path.Combine(_root, ".shared-permissions-version"), "1");
+        Assert.IsTrue(InstallDirectoryLock.IsSharedDataDirectoryCurrent(_root, shared, privateZone));
+
+        File.WriteAllText(Path.Combine(_root, ".shared-permissions-version"), "0");
+        Assert.IsFalse(InstallDirectoryLock.IsSharedDataDirectoryCurrent(_root, shared, privateZone));
+    }
+
+    [TestMethod]
     public void Migration_IntoPrivateDirectory_DoesNotImportOldReadGrants()
     {
         var old = Path.Combine(Directory.CreateDirectory(Path.Combine(_root, "SwiftList", "indexes")).FullName, "private.idx");
