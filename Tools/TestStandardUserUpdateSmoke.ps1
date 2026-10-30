@@ -109,7 +109,10 @@ try {
     Write-Output "Verified $Architecture standard-user download, immediate retry, signature check, SYSTEM service handoff and file replacement."
 }
 finally {
-    if ($job) { Stop-Job $job; Receive-Job $job; Remove-Job $job }
+    if ($job) {
+        Stop-Job $job -ErrorAction SilentlyContinue
+        Remove-Job $job -Force -ErrorAction SilentlyContinue
+    }
     if ($installed) {
         $uninstaller = Join-Path $install 'unins000.exe'
         if (Test-Path -LiteralPath $uninstaller) {
