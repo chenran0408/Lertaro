@@ -75,7 +75,7 @@ try {
                         '/package.zip.sig' { Join-Path $package "Lertaro-Portable$suffix.zip.sig" }
                         default { $null }
                     }
-                    $body = if ($file) { [IO.File]::ReadAllBytes($file) } else { [byte[]]@() }
+                    [byte[]]$body = if ($file) { [IO.File]::ReadAllBytes($file) } else { [byte[]]::new(0) }
                     $status = if ($file) { '200 OK' } else { '404 Not Found' }
                     $header = [Text.Encoding]::ASCII.GetBytes("HTTP/1.1 $status`r`nContent-Length: $($body.Length)`r`nConnection: close`r`n`r`n")
                     $stream.Write($header, 0, $header.Length)
