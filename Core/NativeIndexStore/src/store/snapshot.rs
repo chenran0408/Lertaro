@@ -143,9 +143,34 @@ impl SnapshotBuilder {
         unique_count: usize,
         root_id: [u64; 2],
     ) -> Self {
-        let mut rows = Vec::with_capacity(base_ids.len() + added.len());
+        let mut added_rows = Vec::with_capacity(added.len());
+        for record in added {
+            added_rows.push(SnapshotRow {
+                id: [record.id_low, record.id_high],
+                parent: [record.parent_low, record.parent_high],
+                name_uid: record.name_uid,
+                flags: record.flags,
+                size: record.size,
+                creation_time: record.creation_time,
+                last_write_time: record.last_write_time,
+                last_access_time: record.last_access_time,
+            });
+        }
+        // The base rows are already sorted and remain sorted after filtering. Sort only the small
+        // added set, then merge it with the base stream instead of sorting the whole snapshot again.
+        // Equal IDs deliberately keep base rows before added rows, matching the previous stable sort.
+        added_rows.sort_by(compare_ids);
+        let mut added_index = 0;
+        let mut rows = Vec::with_capacity(base_ids.len() + added_rows.len());
         for row in 0..base_ids.len() {
             let action = actions[row];
+            while added_index < added_rows.len()
+                && compare_id_to(added_rows[added_index].id, base_ids[row])
+                    == std::cmp::Ordering::Less
+            {
+                rows.push(added_rows[added_index]);
+                added_index += 1;
+            }
             if action == -2 {
                 continue;
             }
@@ -180,21 +205,7 @@ impl SnapshotBuilder {
                 });
             }
         }
-        rows.extend(added.iter().map(|record| SnapshotRow {
-            id: [record.id_low, record.id_high],
-            parent: [record.parent_low, record.parent_high],
-            name_uid: record.name_uid,
-            flags: record.flags,
-            size: record.size,
-            creation_time: record.creation_time,
-            last_write_time: record.last_write_time,
-            last_access_time: record.last_access_time,
-        }));
-        rows.sort_by(|left, right| {
-            left.id[1]
-                .cmp(&right.id[1])
-                .then_with(|| left.id[0].cmp(&right.id[0]))
-        });
+        rows.extend(added_rows[added_index..].iter().copied());
         Self::build_from_rows(rows, unique_count, root_id)
     }
 
@@ -334,6 +345,14 @@ impl SnapshotBuilder {
     }
 }
 
+fn compare_ids(left: &SnapshotRow, right: &SnapshotRow) -> std::cmp::Ordering {
+    compare_id_to(left.id, right.id)
+}
+
+fn compare_id_to(left: [u64; 2], right: [u64; 2]) -> std::cmp::Ordering {
+    left[1].cmp(&right[1]).then_with(|| left[0].cmp(&right[0]))
+}
+
 fn base_parent(
     row: usize,
     ids: &[[u64; 2]],
@@ -461,5 +480,64 @@ mod tests {
         assert_eq!(snapshot.parent_indexes, [-1, 0, 1, 1]);
         assert_eq!(snapshot.recursive_sizes, [12, 12, 7, 5]);
         assert_eq!(snapshot.uid_starts, [0, 1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn compaction_merges_added_rows_after_sorted_base_rows() {
+        let base_ids = [[1, 0], [3, 0], [3, 0], [5, 0]];
+        let base_name_uids = [0, 1, 2, 3];
+        let base_flags = [1, 0, 0, 0];
+        let base_sizes = [0, 10, 20, 30];
+        let base_times = [0; 4];
+        let base_parent_indexes = [-1, 0, 0, 0];
+        let added = [
+            CompactionRecord {
+                id_low: 4,
+                parent_low: 1,
+                name_uid: 4,
+                ..Default::default()
+            },
+            CompactionRecord {
+                id_low: 3,
+                parent_low: 1,
+                name_uid: 5,
+                ..Default::default()
+            },
+            CompactionRecord {
+                id_low: 2,
+                parent_low: 1,
+                name_uid: 6,
+                ..Default::default()
+            },
+            CompactionRecord {
+                id_low: 3,
+                parent_low: 1,
+                name_uid: 7,
+                ..Default::default()
+            },
+        ];
+        let snapshot = SnapshotBuilder::build_compaction(
+            &base_ids,
+            &base_name_uids,
+            &base_flags,
+            &base_sizes,
+            &base_times,
+            &base_times,
+            &base_times,
+            &base_parent_indexes,
+            &[],
+            &[],
+            &[-1, -1, -1, -1],
+            &[],
+            &added,
+            8,
+            [1, 0],
+        );
+
+        assert_eq!(
+            snapshot.ids.iter().map(|id| id[0]).collect::<Vec<_>>(),
+            [1, 2, 3, 3, 3, 3, 4, 5]
+        );
+        assert_eq!(snapshot.name_ids, [0, 6, 1, 2, 5, 7, 4, 3]);
     }
 }

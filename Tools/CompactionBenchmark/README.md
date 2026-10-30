@@ -3,11 +3,13 @@
 Run on Windows with the .NET 10 SDK and the Rust/MSVC toolchain used by Core:
 
 ```powershell
-dotnet run --project Tools/CompactionBenchmark -c Release -- 500000 30
+dotnet run --project Tools/CompactionBenchmark -c Release -- 500000 30 1
 ```
 
 The benchmark writes a synthetic 500,000-row index, warms search and compaction,
-then starts a known-result query 5 ms after each of 30 real compactions begins.
+then starts a known-result query 5 ms after each real compaction begins. The optional third argument
+sets how many added rows are folded into each round; use a larger value to measure a burst of pending
+changes rather than a single-row update.
 It checks the result remains visible and all appended rows survive on disk.
 JSON reports total-query and first-result latency, save duration, total process
 managed allocations, and process peak working set (including setup).

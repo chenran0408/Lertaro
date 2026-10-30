@@ -8,8 +8,9 @@ using Lertaro.Core.IndexV2.Search;
 
 var rows = args.Length > 0 ? int.Parse(args[0]) : 500_000;
 var rounds = args.Length > 1 ? int.Parse(args[1]) : 10;
-if (rows < 100 || rounds < 1)
-    throw new ArgumentException("Use at least 100 rows and one round.");
+var addsPerRound = args.Length > 2 ? int.Parse(args[2]) : 1;
+if (rows < 100 || rounds < 1 || addsPerRound < 1)
+    throw new ArgumentException("Use at least 100 rows, one round, and one added row per round.");
 var directory = Directory.CreateTempSubdirectory("lertaro-compaction-bench-").FullName;
 try
 {
@@ -67,8 +68,14 @@ try
     {
         for (var round = 0; round < rounds; round++)
         {
-            index.Mutate((_, delta) => delta.Upsert((UInt128)(rows + round + 1), 1,
-                $"new_{round}.txt", FileRecordFlags.None, 0, 0, 0, 0));
+            index.Mutate((_, delta) =>
+            {
+                for (var added = 0; added < addsPerRound; added++)
+                {
+                    var id = rows + round * addsPerRound + added + 1;
+                    delta.Upsert((UInt128)id, 1, $"new_{id}.txt", FileRecordFlags.None, 0, 0, 0, 0);
+                }
+            });
             searching.Set();
             var clock = Stopwatch.StartNew();
             index.Compact(path);
@@ -86,10 +93,10 @@ try
     }
     if (searchError != null) throw new InvalidOperationException("Concurrent search failed.", searchError);
     using var final = Snapshot.Open(path);
-    if (final.Count != rows + rounds) throw new InvalidOperationException("Compaction lost rows.");
+    if (final.Count != rows + rounds * addsPerRound) throw new InvalidOperationException("Compaction lost rows.");
     Console.WriteLine(JsonSerializer.Serialize(new
     {
-        rows, rounds, samples = searchTimes.Count,
+        rows, rounds, adds_per_round = addsPerRound, samples = searchTimes.Count,
         search_ms = Summarize(searchTimes), first_result_ms = Summarize(firstResultTimes),
         compaction_ms = Summarize(compactTimes),
         process_allocated_bytes = GC.GetTotalAllocatedBytes(true) - allocatedBefore,
