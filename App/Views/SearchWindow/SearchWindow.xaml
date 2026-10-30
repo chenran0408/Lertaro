@@ -125,6 +125,10 @@
                         </Grid>
                         <!-- Window controls -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,6,6,0">
+                            <Button x:Name="BtnToggleFilters" Content="&#xE71C;"
+                                    ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_HideFiltersTooltip]}"
+                                    Style="{StaticResource WindowControlButton}"
+                                    Click="BtnToggleFilters_Click" Margin="0,0,8,0"/>
                             <Button Content="&#xE72B;" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_BackTooltip]}" Style="{StaticResource WindowControlButton}" Click="BtnBackToQuickSearch_Click" Margin="0,0,8,0"/>
                             <Button Content="&#xE949;" Style="{StaticResource WindowControlButton}" Click="BtnMinimize_Click"/>
                             <Button x:Name="BtnMaximize" Content="&#xE922;" Style="{StaticResource WindowControlButton}" Click="BtnMaximize_Click"/>
@@ -160,12 +164,12 @@
                         <!-- Keep filters readable without allowing a long plugin label to consume the
                              result area. Labels already use ellipsis/tooltips, so a stable column gives
                              the search list predictable room at the window's minimum size. -->
-                        <ColumnDefinition Width="236"/>
+                        <ColumnDefinition x:Name="SidebarColumn" Width="{x:Static app:SearchWindow.FilterSidebarWidth}"/>
                         <!-- Content Area -->
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <!-- Sidebar -->
-                    <controls:SearchSidebarControl Grid.Column="0" Width="236" HorizontalAlignment="Left"/>
+                    <controls:SearchSidebarControl x:Name="SearchSidebar" Grid.Column="0" Width="{x:Static app:SearchWindow.FilterSidebarWidth}" HorizontalAlignment="Left"/>
                     <!-- Main Results Grid -->
                     <Grid Grid.Column="1" Background="Transparent">
                         <!-- Shared ResultsControl component in Grid Mode -->

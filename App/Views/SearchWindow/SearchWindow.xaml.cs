@@ -21,6 +21,8 @@ using Lertaro.App.Helpers.Visuals;
 namespace Lertaro.App;
 public partial class SearchWindow : Lertaro.App.Views.Controls.AppWindow, ISearchWindow, IHasVisibleContentInset
 {
+    public const double FilterSidebarWidth = 236;
+
     private readonly SearchViewModel _viewModel;
     private readonly SearchWindowChromeHandler _chromeHandler;
     private readonly SearchWindowInputHandler _inputHandler;
@@ -33,10 +35,12 @@ public partial class SearchWindow : Lertaro.App.Views.Controls.AppWindow, ISearc
     // replacing is still finishing its own hide -- the tail of that clears its query, which re-fires its
     // selection handler and would close a preview opened any earlier.
     private bool _restorePreviewOnFirstResult;
+    private bool _isFilterPanelVisible = true;
     internal readonly string PowerWindowId = "full:" + Guid.NewGuid().ToString("N");
     public SearchWindow(string initialQuery = "", bool restorePreview = false, IReadOnlyList<AppSearchResult>? quickSearchRows = null)
     {
         InitializeComponent();
+        UpdateFilterPanelVisuals();
         _restorePreviewOnFirstResult = restorePreview;
 
         // Menu only, same as the settings window: custom chrome makes the OS system menu a clipped box
@@ -195,6 +199,24 @@ public partial class SearchWindow : Lertaro.App.Views.Controls.AppWindow, ISearc
     private void BtnMinimize_Click(object sender, RoutedEventArgs e) => _chromeHandler.Minimize();
     private void BtnMaximize_Click(object sender, RoutedEventArgs e) => _chromeHandler.ToggleMaximize();
     private void BtnClose_Click(object sender, RoutedEventArgs e) => _chromeHandler.Close();
+
+    internal void ToggleFilterPanel()
+    {
+        _isFilterPanelVisible = !_isFilterPanelVisible;
+        UpdateFilterPanelVisuals();
+    }
+
+    private void UpdateFilterPanelVisuals()
+    {
+        SidebarColumn.Width = new GridLength(_isFilterPanelVisible ? FilterSidebarWidth : 0);
+        SearchSidebar.Visibility = _isFilterPanelVisible ? Visibility.Visible : Visibility.Collapsed;
+        BtnToggleFilters.SetResourceReference(System.Windows.Controls.Button.BackgroundProperty,
+            _isFilterPanelVisible ? "SidebarSelected" : "Transparent");
+        BtnToggleFilters.ToolTip = TranslationManager.Instance[
+            _isFilterPanelVisible ? "Search_HideFiltersTooltip" : "Search_ShowFiltersTooltip"];
+    }
+
+    private void BtnToggleFilters_Click(object sender, RoutedEventArgs e) => ToggleFilterPanel();
 
     private void BtnBackToQuickSearch_Click(object sender, RoutedEventArgs e) => SearchWindowQuickReturnSupport.ReturnToQuickSearch(this);
 

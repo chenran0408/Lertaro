@@ -35,6 +35,13 @@ public class SearchWindowInputHandler
 
     public void HandleWindowPreviewKeyDown(KeyEventArgs e)
     {
+        if (IsFilterToggleShortcut(e.Key, Keyboard.Modifiers))
+        {
+            _window.ToggleFilterPanel();
+            e.Handled = true;
+            return;
+        }
+
         var enterBehavior = Keyboard.FocusedElement == _window.TxtSearchBoxControl
             ? (Action)(() => HandleTxtSearchBoxKeyDown(e))
             : () => OpenSelectedResult();
@@ -77,6 +84,9 @@ public class SearchWindowInputHandler
             return;
         }
     }
+
+    internal static bool IsFilterToggleShortcut(Key key, ModifierKeys modifiers) =>
+        key == Key.F && modifiers == (ModifierKeys.Control | ModifierKeys.Shift);
 
     public void HandleWindowPreviewMouseDown(MouseButtonEventArgs e)
     {

@@ -563,6 +563,8 @@
   "Search_HintKeyboard": "Double-click to open · Enter to open · ↑↓ Select",
   "QuickSearch_Placeholder": " Type to search...",
   "Search_BackTooltip": "Back to Quick Search",
+  "Search_ShowFiltersTooltip": "Show filters",
+  "Search_HideFiltersTooltip": "Hide filters",
   "Search_HeaderName": "Name",
   "Search_HeaderPath": "Path",
   "Search_HeaderDateModified": "Date Modified",

@@ -563,6 +563,8 @@
   "Search_HintKeyboard": "더블클릭하여 열기 · Enter로 열기 · ↑↓ 선택",
   "QuickSearch_Placeholder": " 입력하여 검색...",
   "Search_BackTooltip": "빠른 검색으로 돌아가기",
+  "Search_ShowFiltersTooltip": "필터 표시",
+  "Search_HideFiltersTooltip": "필터 숨기기",
   "Search_HeaderName": "이름",
   "Search_HeaderPath": "경로",
   "Search_HeaderDateModified": "수정한 날짜",
