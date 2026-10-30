@@ -91,7 +91,7 @@ try {
     $credential = [PSCredential]::new("$env:COMPUTERNAME\$user", $secure)
     Start-Service seclogon
     $probe = Start-Process -FilePath $app -Credential $credential -LoadUserProfile -WindowStyle Hidden -WorkingDirectory $install -ArgumentList @(
-        "http://127.0.0.1:$port", "`"$resultFile`"") -PassThru
+        "http://127.0.0.1:$port", "`"$resultFile`"") -Environment @{ TEMP = $scratch; TMP = $scratch } -PassThru
     if (!$probe.WaitForExit(120000)) { throw 'Standard-user update handoff timed out.' }
     if ($probe.ExitCode -ne 0) { throw "Probe failed: $(Get-Content -LiteralPath $resultFile -Raw -ErrorAction SilentlyContinue)" }
     if ([IO.File]::ReadAllText($resultFile) -ne 'standard-user;download-retry;verified;service-accepted') { throw 'Missing standard-user handoff proof.' }
