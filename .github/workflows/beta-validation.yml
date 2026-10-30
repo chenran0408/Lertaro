@@ -30,8 +30,9 @@ jobs:
       - name: Verify public repository links
         shell: pwsh
         run: |
-          $stale = rg -n 'github\.com/Lertaro/Lertaro' README.md Readmes
-          if ($LASTEXITCODE -eq 0) {
+          $stale = @(Get-ChildItem README.md, Readmes -File -Recurse |
+            Select-String -Pattern 'github\.com/Lertaro/Lertaro')
+          if ($stale.Count -gt 0) {
             Write-Error "Found stale links to the old Lertaro/Lertaro repository:`n$stale"
             exit 1
           }
