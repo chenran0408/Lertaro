@@ -105,7 +105,7 @@ function Stop-LertaroProcesses {
 }
 
 function Start-LertaroService {
-    param([string]$Sc, [int]$TimeoutMs = 15000, [int]$PollMs = 100)
+    param([string]$Sc, [int]$TimeoutMs = 60000, [int]$PollMs = 100)
     $deadline = [Diagnostics.Stopwatch]::StartNew()
     while ($true) {
         & $Sc start LertaroService | Out-Null
@@ -115,7 +115,7 @@ function Start-LertaroService {
             # sc.exe can time out while the service is still completing its start callback. In
             # particular, a first index build can outlive the SCM command timeout even though the
             # service is healthy. Observe SCM instead of reporting a false update failure.
-            while ($deadline.Elapsed.TotalMilliseconds -lt $TimeoutMs) {
+            do {
                 $service = Get-Service -Name LertaroService -ErrorAction SilentlyContinue
                 if ($service) {
                     try {
@@ -124,8 +124,9 @@ function Start-LertaroService {
                         if ($service.Status -eq 'Stopped') { break }
                     } finally { $service.Dispose() }
                 }
+                if ($deadline.Elapsed.TotalMilliseconds -ge $TimeoutMs) { break }
                 Start-Sleep -Milliseconds $PollMs
-            }
+            } while ($deadline.Elapsed.TotalMilliseconds -lt $TimeoutMs)
         }
         # A stop from another controller can still make start report 1061 briefly. A 1053 is
         # retried only after observing that SCM has not reached Running yet.
