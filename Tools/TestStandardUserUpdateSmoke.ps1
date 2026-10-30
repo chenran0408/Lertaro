@@ -114,7 +114,11 @@ try {
         Start-Sleep -Milliseconds 250
     }
     $result = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
-    if ($result.Status -ne 'success') { throw "Updater failed: $($result.Message)" }
+    if ($result.Status -ne 'success') {
+        $serviceLog = Join-Path $env:ProgramData 'Lertaro\logs\service.log'
+        $serviceTail = if (Test-Path -LiteralPath $serviceLog) { (Get-Content -LiteralPath $serviceLog -Tail 80) -join "`n" } else { 'service log missing' }
+        throw "Updater failed: $($result.Message)`nService log:`n$serviceTail"
+    }
     if ((Get-FileHash -LiteralPath $app -Algorithm SHA256).Hash -ne $expectedHash) { throw 'The updater did not restore the signed application host.' }
     if ([IO.File]::ReadAllText($sentinel) -ne 'keep-user-data') { throw 'Updating changed the existing user data.' }
     (Get-Service LertaroService).WaitForStatus('Running', [TimeSpan]::FromSeconds(30))
