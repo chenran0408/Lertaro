@@ -7,7 +7,7 @@
 [English](../README.md) | [简体中文](zh-CN.md) | [繁體中文（香港）](zh-HK.md) | [繁體中文（台灣）](zh-TW.md) | [日本語](ja-JP.md) | 한국어 | [Español](es-ES.md)
 
 > [!CAUTION]
-> **보안 경고: 공식 소스에서만 Lertaro를 다운로드하세요.** 안전을 위해 Lertaro는 공식 저장소, 공식 웹사이트 및 [GitHub Releases](https://github.com/Lertaro/Lertaro/releases)에서만 다운로드하세요. 확인되지 않은 소스나 저장소의 파일은 다운로드하거나 실행하지 마세요.
+> **보안 경고: 공식 소스에서만 Lertaro를 다운로드하세요.** 안전을 위해 Lertaro는 공식 저장소, 공식 웹사이트 및 [GitHub Releases](https://github.com/chenran0408/Lertaro/releases)에서만 다운로드하세요. 확인되지 않은 소스나 저장소의 파일은 다운로드하거나 실행하지 마세요.
 
 Lertaro는 **.NET 10 (WPF)** 기반으로 제작된 초경량, 고성능, 확장형 Windows 전역 파일 검색 및 생산성 런처 도구입니다. **Listary**와 **Everything**의 모던한 오픈소스 대안으로서, NTFS **USN 저널** 및 $MFT를 직접 파싱하여 적은 리소스 점유율로 밀리초 단위의 즉각적인 검색을 제공합니다.
 
@@ -30,11 +30,11 @@ Lertaro는 **.NET 10 (WPF)** 기반으로 제작된 초경량, 고성능, 확장
 최신 릴리스는 [공식 홈페이지](https://lertaro.github.io/ko-KR/) 또는 아래 링크에서 직접 다운로드할 수 있습니다:
 
 - **x64 버전 (Intel / AMD 프로세서)**
-  - [인스톨러 (Lertaro-Setup.exe)](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Setup.exe) —— 권장, 백그라운드 시스템 서비스 지원.
-  - [포터블 버전 (Lertaro-Portable.zip)](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Portable.zip) —— 무설치, 압축 해제 후 즉시 실행.
+  - [인스톨러 (Lertaro-Setup.exe)](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Setup.exe) —— 권장, 백그라운드 시스템 서비스 지원.
+  - [포터블 버전 (Lertaro-Portable.zip)](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Portable.zip) —— 무설치, 압축 해제 후 즉시 실행.
 - **ARM64 네이티브 버전 (Snapdragon / Windows on ARM 기기)**
-  - [인스톨러 (Lertaro-Setup-arm64.exe)](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Setup-arm64.exe) —— ARM 기기 권장.
-  - [포터블 버전 (Lertaro-Portable-arm64.zip)](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Portable-arm64.zip) —— ARM 네이티브 무설치 포터블 패키지.
+  - [인스톨러 (Lertaro-Setup-arm64.exe)](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Setup-arm64.exe) —— ARM 기기 권장.
+  - [포터블 버전 (Lertaro-Portable-arm64.zip)](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Portable-arm64.zip) —— ARM 네이티브 무설치 포터블 패키지.
 
 ## 소스코드에서 빌드하기
 

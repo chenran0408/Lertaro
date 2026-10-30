@@ -27,6 +27,14 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+      - name: Verify public repository links
+        shell: pwsh
+        run: |
+          $stale = rg -n 'github\.com/Lertaro/Lertaro' README.md Readmes
+          if ($LASTEXITCODE -eq 0) {
+            Write-Error "Found stale links to the old Lertaro/Lertaro repository:`n$stale"
+            exit 1
+          }
       - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           target: ${{ matrix.rust_target }}

@@ -7,7 +7,7 @@
 [English](../README.md) | [简体中文](zh-CN.md) | [繁體中文（香港）](zh-HK.md) | [繁體中文（台灣）](zh-TW.md) | 日本語 | [한국어](ko-KR.md) | [Español](es-ES.md)
 
 > [!CAUTION]
-> **セキュリティ警告：公式ソースのみから Lertaro をダウンロードしてください。** 安全のため、Lertaro は公式リポジトリ、公式ウェブサイト、[GitHub Releases](https://github.com/Lertaro/Lertaro/releases) からのみダウンロードしてください。未確認のソースやリポジトリからファイルをダウンロードしたり実行したりしないでください。
+> **セキュリティ警告：公式ソースのみから Lertaro をダウンロードしてください。** 安全のため、Lertaro は公式リポジトリ、公式ウェブサイト、[GitHub Releases](https://github.com/chenran0408/Lertaro/releases) からのみダウンロードしてください。未確認のソースやリポジトリからファイルをダウンロードしたり実行したりしないでください。
 
 Lertaro は、**.NET 10 (WPF)** をベースに構築された超軽量・高速・高拡張性を誇る Windows 向けグローバル検索およびランチャーツールです。**Listary** や **Everything** のモダンなオープンソース代替として、NTFS の **USN ジャーナル** および $MFT を直接読み取り、低リソース消費で瞬時のファイル検索を実現します。
 
@@ -30,11 +30,11 @@ Lertaro は、**.NET 10 (WPF)** をベースに構築された超軽量・高速
 最新リリースは[公式ホームページ](https://lertaro.github.io/ja-JP/)または以下から直接取得できます：
 
 - **x64 版（Intel / AMD プロセッサ）**
-  - [インストーラー (Lertaro-Setup.exe)](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Setup.exe) —— 推奨、バックグラウンドサービスに対応。
-  - [ポータブル版 (Lertaro-Portable.zip)](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Portable.zip) —— インストール不要、解凍してすぐに実行可能。
+  - [インストーラー (Lertaro-Setup.exe)](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Setup.exe) —— 推奨、バックグラウンドサービスに対応。
+  - [ポータブル版 (Lertaro-Portable.zip)](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Portable.zip) —— インストール不要、解凍してすぐに実行可能。
 - **ARM64 ネイティブ版（Snapdragon / Windows on ARM デバイス）**
-  - [インストーラー (Lertaro-Setup-arm64.exe)](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Setup-arm64.exe) —— ARM デバイス推奨。
-  - [ポータブル版 (Lertaro-Portable-arm64.zip)](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Portable-arm64.zip) —— ARM ネイティブポータブル版。
+  - [インストーラー (Lertaro-Setup-arm64.exe)](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Setup-arm64.exe) —— ARM デバイス推奨。
+  - [ポータブル版 (Lertaro-Portable-arm64.zip)](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Portable-arm64.zip) —— ARM ネイティブポータブル版。
 
 ## ソースからのビルド
 

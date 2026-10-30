@@ -7,7 +7,7 @@
 [English](../README.md) | 简体中文 | [繁體中文（香港）](zh-HK.md) | [繁體中文（台灣）](zh-TW.md) | [日本語](ja-JP.md) | [한국어](ko-KR.md) | [Español](es-ES.md)
 
 > [!CAUTION]
-> **安全警告：请仅从官方来源下载 Lertaro。** 为确保安全，请仅从官方仓库、官方网站和 [GitHub Releases](https://github.com/Lertaro/Lertaro/releases) 下载 Lertaro。请勿下载或运行来自未经验证的来源或仓库的文件。
+> **安全警告：请仅从官方来源下载 Lertaro。** 为确保安全，请仅从官方仓库、官方网站和 [GitHub Releases](https://github.com/chenran0408/Lertaro/releases) 下载 Lertaro。请勿下载或运行来自未经验证的来源或仓库的文件。
 
 Lertaro 是一款基于 **.NET 10 (WPF)** 打造的超轻量、极速、高度可扩展的 Windows 全局搜索与效率启动工具，是 **Listary** 和 **Everything** 的现代化开源替代——通过读取 NTFS **USN 日志** 与 $MFT 直接索引本地磁盘，实现毫秒级、低资源占用的检索体验。
 
@@ -30,11 +30,11 @@ Lertaro 是一款基于 **.NET 10 (WPF)** 打造的超轻量、极速、高度�
 在[项目主页](https://lertaro.github.io/zh-CN/)获取最新版本，或直接下载：
 
 - **x64 版本（Intel / AMD 处理器）**
-  - [安装包 Lertaro-Setup.exe](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Setup.exe) —— 推荐，支持后台系统服务。
-  - [便携版 Lertaro-Portable.zip](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Portable.zip) —— 绿色免安装，解压即用。
+  - [安装包 Lertaro-Setup.exe](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Setup.exe) —— 推荐，支持后台系统服务。
+  - [便携版 Lertaro-Portable.zip](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Portable.zip) —— 绿色免安装，解压即用。
 - **ARM64 原生版本（骁龙 / Windows on ARM 设备）**
-  - [安装包 Lertaro-Setup-arm64.exe](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Setup-arm64.exe) —— ARM 设备推荐，原生高效运行。
-  - [便携版 Lertaro-Portable-arm64.zip](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Portable-arm64.zip) —— ARM 原生免安装便携包。
+  - [安装包 Lertaro-Setup-arm64.exe](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Setup-arm64.exe) —— ARM 设备推荐，原生高效运行。
+  - [便携版 Lertaro-Portable-arm64.zip](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Portable-arm64.zip) —— ARM 原生免安装便携包。
 
 ## 从源码构建
 

@@ -7,7 +7,7 @@
 [English](../README.md) | [简体中文](zh-CN.md) | [繁體中文（香港）](zh-HK.md) | [繁體中文（台灣）](zh-TW.md) | [日本語](ja-JP.md) | [한국어](ko-KR.md) | Español
 
 > [!CAUTION]
-> **Aviso de seguridad: descarga Lertaro únicamente desde fuentes oficiales.** Por tu seguridad, descarga Lertaro únicamente desde el repositorio oficial, el sitio web oficial y [GitHub Releases](https://github.com/Lertaro/Lertaro/releases). No descargues ni ejecutes archivos provenientes de fuentes o repositorios no verificados.
+> **Aviso de seguridad: descarga Lertaro únicamente desde fuentes oficiales.** Por tu seguridad, descarga Lertaro únicamente desde el repositorio oficial, el sitio web oficial y [GitHub Releases](https://github.com/chenran0408/Lertaro/releases). No descargues ni ejecutes archivos provenientes de fuentes o repositorios no verificados.
 
 Lertaro es un buscador y lanzador de productividad global ultraligero, de alto rendimiento y extensible para Windows, construido sobre **.NET 10 (WPF)**. Es una alternativa moderna y de código abierto a **Listary** y **Everything**, que indexa unidades locales mediante el **USN Journal** y $MFT de NTFS para búsquedas instantáneas con un consumo mínimo de recursos.
 
@@ -30,11 +30,11 @@ Consulta el **[Manual de Usuario](https://lertaro.github.io/es-ES/user-guide/)**
 Obtén la última versión en la [página oficial](https://lertaro.github.io/es-ES/) o directamente:
 
 - **x64 (Intel / AMD)**
-  - [Instalador (Lertaro-Setup.exe)](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Setup.exe) —— Recomendado, incluye el servicio en segundo plano.
-  - [Portable (Lertaro-Portable.zip)](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Portable.zip) —— Sin instalación, descomprimir y ejecutar.
+  - [Instalador (Lertaro-Setup.exe)](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Setup.exe) —— Recomendado, incluye el servicio en segundo plano.
+  - [Portable (Lertaro-Portable.zip)](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Portable.zip) —— Sin instalación, descomprimir y ejecutar.
 - **ARM64 (Nativo para Snapdragon / Windows on ARM)**
-  - [Instalador (Lertaro-Setup-arm64.exe)](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Setup-arm64.exe) —— Recomendado para dispositivos ARM.
-  - [Portable (Lertaro-Portable-arm64.zip)](https://github.com/Lertaro/Lertaro/releases/latest/download/Lertaro-Portable-arm64.zip) —— Versión portable nativa para ARM.
+  - [Instalador (Lertaro-Setup-arm64.exe)](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Setup-arm64.exe) —— Recomendado para dispositivos ARM.
+  - [Portable (Lertaro-Portable-arm64.zip)](https://github.com/chenran0408/Lertaro/releases/latest/download/Lertaro-Portable-arm64.zip) —— Versión portable nativa para ARM.
 
 ## Compilación desde el Código Fuente
 
