@@ -28,7 +28,7 @@ try {
     & icacls.exe $scratch /grant "*$($account.SID.Value):(OI)(CI)M" | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'Unable to grant the probe output directory.' }
     $setup = Start-Process -FilePath (Join-Path $package "Lertaro-Setup$suffix.exe") -WindowStyle Hidden -ArgumentList @(
-        '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',"/DIR=$install") -PassThru
+        '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',"/DIR=`"$install`"") -PassThru
     if (!$setup.WaitForExit(480000)) { throw 'Installer timed out.' }
     if ($setup.ExitCode -ne 0) { throw "Installer failed: $($setup.ExitCode)" }
     $installed = $true
