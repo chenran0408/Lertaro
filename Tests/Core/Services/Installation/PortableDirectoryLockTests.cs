@@ -165,6 +165,38 @@ public sealed class PortableDirectoryLockTests
     }
 
     [TestMethod]
+    public void EnsureUserDirectories_CreatesNewProfileZoneWithoutWalkingMachineIndexes()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"LertaroPortableLock_{Guid.NewGuid():N}");
+        var user = WindowsIdentity.GetCurrent().User!;
+        var indexDirectory = Directory.CreateDirectory(Path.Combine(root, "Data", "Machine", "indexes")).FullName;
+        var indexFile = Path.Combine(indexDirectory, "large-index.bin");
+        File.WriteAllText(indexFile, "preserve index");
+        Directory.CreateDirectory(Path.Combine(root, "Data", "Users"));
+        var (zoneFor, userFolders) = PortableDirectoryLock.Zones(root, [user.Value]);
+        var targetFolder = userFolders[0];
+
+        try
+        {
+            var report = PortableDirectoryLock.EnsureUserDirectories(root, zoneFor, [targetFolder]);
+
+            Assert.IsEmpty(report.Failed);
+            Assert.IsEmpty(report.UserDataFailed);
+            Assert.IsTrue(Directory.Exists(targetFolder));
+            Assert.AreEqual("preserve index", File.ReadAllText(indexFile));
+            Assert.IsTrue(InstallDirectoryLock.GrantsAtLeast(targetFolder, zoneFor(targetFolder)!));
+        }
+        finally
+        {
+            var restore = new DirectorySecurity();
+            restore.AddAccessRule(new FileSystemAccessRule(user, FileSystemRights.FullControl,
+                InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
+            new DirectoryInfo(targetFolder).SetAccessControl(restore);
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [TestMethod]
     public void Zones_AnAccountsFolderGoesToThatAccount()
     {
         var (zoneFor, _) = PortableDirectoryLock.Zones(App, ProfileSids);

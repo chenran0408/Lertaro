@@ -90,27 +90,62 @@ public static class PortableDirectoryLock
     public static Report Lock(string appDirectory)
     {
         appDirectory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(appDirectory));
-        var (zoneFor, userFolders) = Zones(appDirectory, UserProfiles.Read().Keys);
+        var profileSids = UserProfiles.Read().Keys;
+        var (zoneFor, userFolders) = Zones(appDirectory, profileSids);
+
+        var dataDirectory = Path.Combine(appDirectory, "Data");
+        var revisionPath = Path.Combine(appDirectory, RevisionFile);
+        if (Directory.Exists(dataDirectory) &&
+            SettingsFileReader.ReadIfPresent(revisionPath) == PermissionsRevision &&
+            GrantsAtLeast(appDirectory, ReadOnlyForUsers) &&
+            ExistingUsersRootIsCurrent(appDirectory, zoneFor))
+        {
+            var fastReport = EnsureUserDirectories(appDirectory, zoneFor, userFolders);
+            if (fastReport.Failed.Count == 0 && fastReport.UserDataFailed.Count == 0)
+                AtomicFileStore.Write(revisionPath, PermissionsRevision);
+            return fastReport;
+        }
 
         // A failed walk must not leave a previous success marker suppressing the next repair.
-        File.Delete(Path.Combine(appDirectory, RevisionFile));
+        File.Delete(revisionPath);
         var report = InstallDirectoryLock.Lock(appDirectory, ReadOnlyForUsers, zoneFor);
-        if (!Directory.Exists(Path.Combine(appDirectory, "Data")))
+        if (!Directory.Exists(dataDirectory))
         {
-            if (report.Failed.Count == 0 && report.UserDataFailed.Count == 0) AtomicFileStore.Write(Path.Combine(appDirectory, RevisionFile), PermissionsRevision);
+            if (report.Failed.Count == 0 && report.UserDataFailed.Count == 0) AtomicFileStore.Write(revisionPath, PermissionsRevision);
             return report;
         }
 
-        // Created only now, inside a tree nobody else can write any more, so no link can be waiting on the
-        // path. Each new folder is then given its own zone.
-        foreach (var folder in userFolders.Prepend(Path.Combine(appDirectory, "Data", "Users")).Where(folder => !Directory.Exists(folder)))
-        {
-            Directory.CreateDirectory(folder);
-            Merge(report, InstallDirectoryLock.Lock(folder, zoneFor(folder)!, zoneFor));
-        }
-
-        if (report.Failed.Count == 0 && report.UserDataFailed.Count == 0) AtomicFileStore.Write(Path.Combine(appDirectory, RevisionFile), PermissionsRevision);
+        Merge(report, EnsureUserDirectories(appDirectory, zoneFor, userFolders));
+        if (report.Failed.Count == 0 && report.UserDataFailed.Count == 0) AtomicFileStore.Write(revisionPath, PermissionsRevision);
         return report;
+    }
+
+    internal static Report EnsureUserDirectories(string appDirectory, Func<string, Zone?> zoneFor,
+        IReadOnlyList<string> userFolders)
+    {
+        var report = new Report();
+        // The application tree is already locked before this method runs, so a new account's directory
+        // can be created safely without walking the unrelated machine index subtree.
+        foreach (var folder in userFolders.Prepend(Path.Combine(appDirectory, "Data", "Users")))
+        {
+            var zone = zoneFor(folder)!;
+            if (!Directory.Exists(folder))
+            {
+                Directory.CreateDirectory(folder);
+                Merge(report, InstallDirectoryLock.Lock(folder, zone, zoneFor));
+            }
+            else if (!GrantsAtLeast(folder, zone))
+            {
+                Merge(report, InstallDirectoryLock.Lock(folder, zone, zoneFor));
+            }
+        }
+        return report;
+    }
+
+    private static bool ExistingUsersRootIsCurrent(string appDirectory, Func<string, Zone?> zoneFor)
+    {
+        var usersRoot = Path.Combine(appDirectory, "Data", "Users");
+        return Directory.Exists(usersRoot) && GrantsAtLeast(usersRoot, zoneFor(usersRoot)!);
     }
 
     /// <summary>
