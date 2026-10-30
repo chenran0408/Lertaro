@@ -111,8 +111,11 @@ try {
 finally {
     if ($job) { Stop-Job $job; Receive-Job $job; Remove-Job $job }
     if ($installed) {
-        $uninstall = Start-Process -FilePath (Join-Path $install 'unins000.exe') -WindowStyle Hidden -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait -PassThru
-        if ($uninstall.ExitCode -ne 0) { Write-Error "Uninstaller failed: $($uninstall.ExitCode)" }
+        $uninstaller = Join-Path $install 'unins000.exe'
+        if (Test-Path -LiteralPath $uninstaller) {
+            $uninstall = Start-Process -FilePath $uninstaller -WindowStyle Hidden -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait -PassThru
+            if ($uninstall.ExitCode -ne 0) { Write-Error "Uninstaller failed: $($uninstall.ExitCode)" }
+        }
     }
     if ($createdUser) { Remove-LocalUser -Name $user }
 }
