@@ -77,12 +77,9 @@ public static class InstallDirectoryLock
         directory = Path.GetFullPath(directory);
         var legacyDirectory = Path.Combine(Directory.GetParent(directory)?.FullName ?? directory, "SwiftList");
         var revision = SettingsFileReader.ReadIfPresent(Path.Combine(directory, SharedPermissionsRevisionFile));
-        if (!Directory.Exists(legacyDirectory) &&
-            (revision == SharedPermissionsRevision || revision is null) &&
+        if (!Directory.Exists(legacyDirectory) && revision == SharedPermissionsRevision &&
             SharedDataDirectoryAclsAreCurrent(directory, ReadOnlyForUsers, PrivateToService))
         {
-            if (revision is null)
-                AtomicFileStore.Write(Path.Combine(directory, SharedPermissionsRevisionFile), SharedPermissionsRevision);
             return new Report();
         }
 
