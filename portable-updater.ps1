@@ -132,7 +132,11 @@ function Start-LertaroService {
         # retried only after observing that SCM has not reached Running yet.
         if ($exit -notin 1061, 1053 -or $deadline.Elapsed.TotalMilliseconds -ge $TimeoutMs) {
             $serviceState = (& $Sc queryex LertaroService 2>&1 | Out-String).Trim()
-            throw "Could not restart service: $exit. SCM state: $serviceState"
+            $serviceEvents = try {
+                (Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = 'Service Control Manager'; StartTime = (Get-Date).AddMinutes(-5) } -MaxEvents 5 |
+                    ForEach-Object { "$($_.TimeCreated.ToString('O')) $($_.Id): $($_.Message -replace '\s+', ' ')" }) -join ' | '
+            } catch { 'unavailable' }
+            throw "Could not restart service: $exit. SCM state: $serviceState. Recent SCM events: $serviceEvents"
         }
         Start-Sleep -Milliseconds $PollMs
     }
