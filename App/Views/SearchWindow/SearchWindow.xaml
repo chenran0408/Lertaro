@@ -125,10 +125,32 @@
                         </Grid>
                         <!-- Window controls -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,6,6,0">
-                            <Button x:Name="BtnToggleFilters" Content="&#xE71C;"
+                            <Button x:Name="BtnToggleFilters"
                                     ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_HideFiltersTooltip]}"
                                     Style="{StaticResource WindowControlButton}"
-                                    Click="BtnToggleFilters_Click" Margin="0,0,8,0"/>
+                                    Click="BtnToggleFilters_Click" Margin="0,0,8,0">
+                                <Button.Content>
+                                    <Grid Width="36" Height="28">
+                                        <TextBlock Text="&#xE71C;" FontFamily="{DynamicResource AppIconFontFamily}"
+                                                   FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <!-- Keep a selected-filter cue visible even when the sidebar is collapsed. -->
+                                        <Ellipse Width="7" Height="7" Margin="0,3,4,0"
+                                                 HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                 Fill="{DynamicResource AccentBlue}">
+                                            <Ellipse.Style>
+                                                <Style TargetType="Ellipse">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasActiveFilters}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+                                    </Grid>
+                                </Button.Content>
+                            </Button>
                             <Button Content="&#xE72B;" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_BackTooltip]}" Style="{StaticResource WindowControlButton}" Click="BtnBackToQuickSearch_Click" Margin="0,0,8,0"/>
                             <Button Content="&#xE949;" Style="{StaticResource WindowControlButton}" Click="BtnMinimize_Click"/>
                             <Button x:Name="BtnMaximize" Content="&#xE922;" Style="{StaticResource WindowControlButton}" Click="BtnMaximize_Click"/>

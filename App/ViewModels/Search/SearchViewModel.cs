@@ -171,6 +171,8 @@ public class SearchViewModel : ViewModelBase, IDisposable
     public ObservableRangeCollection<AppSearchResult> FilteredResults { get; }
     public ObservableCollection<DynamicSidebarGroupViewModel> DynamicSidebarGroups { get; } = new();
 
+    public bool HasActiveFilters => DynamicSidebarGroups.Any(group => group.HasSelection);
+
     // True when any item of the well-known result-type group is selected. Content-search results
     // are only merged into _allResults while no type filter is active; a selected type (e.g. "文件")
     // means the user asked for exactly that type, so the extra content rows are excluded.
@@ -259,7 +261,12 @@ public class SearchViewModel : ViewModelBase, IDisposable
         ApplyFiltersAndRender(extendsContent: false, unchangedPrefix: 0);
     }
 
-    public void OnDynamicFilterChanged() { _sidebarCountHelper?.Recalculate(); ApplyFiltersAndRender(extendsContent: false, unchangedPrefix: 0); }
+    public void OnDynamicFilterChanged()
+    {
+        OnPropertyChanged(nameof(HasActiveFilters));
+        _sidebarCountHelper?.Recalculate();
+        ApplyFiltersAndRender(extendsContent: false, unchangedPrefix: 0);
+    }
     private readonly DynamicFilterCoordinator _dynamicFilterCoordinator = new();
 
     // DynamicFilterCoordinator renders through an Action<List<AppSearchResult>> and can do so twice
