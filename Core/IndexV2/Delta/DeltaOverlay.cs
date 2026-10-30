@@ -12,6 +12,7 @@ namespace Lertaro.Core.IndexV2.Delta;
 // verified against the reference engine under 20-seed randomized fuzzing (see IndexMemBench).
 public sealed class DeltaOverlay
 {
+    private const int MutationAliasCacheCapacity = 2048;
     internal sealed class DeltaRecord
     {
         public UInt128 Id;
@@ -40,8 +41,46 @@ public sealed class DeltaOverlay
     // rows; rows with a full override record carry the refresh inside that record instead.
     internal readonly Dictionary<int, (long Size, uint Creation, uint LastWrite, uint LastAccess)> MetadataOverrides = new();
     private readonly Dictionary<UInt128, int> _addedById = new();
+    private Dictionary<string, AliasCacheEntry>? _mutationAliases;
+    private bool _mutationBatchActive;
+
+    private readonly record struct AliasCacheEntry(string[]? Aliases, byte[] ProviderIds);
 
     public DeltaOverlay(Snapshot snapshot) => Snapshot = snapshot;
+
+    // A USN batch can touch every hard link of one name, and metadata refresh can revisit that name
+    // while creating overrides. Keep alias results only for the duration of the atomic mutation batch:
+    // this avoids repeated provider work without retaining names or becoming stale across settings or
+    // provider changes.
+    internal void BeginMutationBatch()
+    {
+        _mutationBatchActive = true;
+        _mutationAliases?.Clear();
+    }
+
+    internal void EndMutationBatch()
+    {
+        _mutationAliases?.Clear();
+        _mutationBatchActive = false;
+    }
+
+    internal void GenerateAliases(DeltaRecord record)
+    {
+        if (_mutationBatchActive && _mutationAliases?.TryGetValue(record.Name, out var cached) == true)
+        {
+            record.Aliases = cached.Aliases;
+            record.ProviderIds = cached.ProviderIds;
+            return;
+        }
+
+        record.Aliases = AliasGeneration.Generate(record.Name, out var providerIds);
+        record.ProviderIds = providerIds;
+        if (!_mutationBatchActive || record.Aliases is null || _mutationAliases?.Count >= MutationAliasCacheCapacity)
+            return;
+
+        (_mutationAliases ??= new Dictionary<string, AliasCacheEntry>(StringComparer.Ordinal))[record.Name] =
+            new(record.Aliases, record.ProviderIds);
+    }
 
     public int VisibleAddedCount => Added.Count(r => !r.Removed);
     public int PendingChangeCount => DeletedBase.Count + BaseOverrides.Count + RenamedAway.Count + MetadataOverrides.Count + Added.Count;
@@ -81,8 +120,7 @@ public sealed class DeltaOverlay
             ParentBaseRow = ResolveParentRow(id, parentId),
             ParentFrn = parentId,
         };
-        record.Aliases = AliasGeneration.Generate(name, out var providerIds);
-        record.ProviderIds = providerIds;
+        GenerateAliases(record);
 
         if (_addedById.TryGetValue(id, out var deltaIdx))
         {

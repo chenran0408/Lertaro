@@ -1,5 +1,3 @@
-using Lertaro.Core.IndexV2.Alias;
-
 namespace Lertaro.Core.IndexV2.Delta;
 
 // Per-link delta operations mirroring HardLinkDelta: keyed by the (FRN, parentFRN, name) triple a USN
@@ -24,8 +22,7 @@ public static class DeltaLinkOps
             ParentBaseRow = delta.TryFindBaseRow(parentFrn, out var parentRow) ? parentRow : -1,
             ParentFrn = parentFrn,
         };
-        record.Aliases = AliasGeneration.Generate(name, out var providerIds);
-        record.ProviderIds = providerIds;
+        delta.GenerateAliases(record);
         delta.Added.Add(record);
         delta.CountAdded(flags.HasFlag(FileRecordFlags.Directory));
     }
@@ -186,8 +183,7 @@ public static class DeltaLinkOps
                     ParentBaseRow = snapshot.ParentIndexes[row],
                     ParentFrn = snapshot.GetParentId(row),
                 };
-                record.Aliases = AliasGeneration.Generate(name, out var providerIds);
-                record.ProviderIds = providerIds;
+                delta.GenerateAliases(record);
                 delta.MetadataOverrides.Remove(row);
                 delta.BaseOverrides[row] = record;
             }

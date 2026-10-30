@@ -62,7 +62,16 @@ public sealed class LiveIndex : IDisposable
             try
             {
                 EnsureUsable();
-                mutate(_snapshot!, _delta!);
+                var delta = _delta!;
+                delta.BeginMutationBatch();
+                try
+                {
+                    mutate(_snapshot!, delta);
+                }
+                finally
+                {
+                    delta.EndMutationBatch();
+                }
                 Interlocked.Increment(ref _revision);
             }
             finally
