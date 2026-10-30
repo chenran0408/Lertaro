@@ -13,8 +13,16 @@ internal static unsafe class NativeCompactionInterop
         for (var uid = 0; uid < baseNames.Length; uid++)
             baseNames[uid] = snapshot.GetUniqueName(uid);
 
-        var names = new List<string>(snapshot.UniqueCount + delta.VisibleAddedCount);
-        var nameIds = new Dictionary<string, uint>(StringComparer.Ordinal);
+        // Preserve the base UID table instead of looking up every unchanged row in a dictionary.
+        // Compaction usually changes only a small fraction of rows, so this keeps the hot loop on
+        // the native snapshot's existing integer IDs and only allocates IDs for changed names.
+        var names = new List<string>(baseNames.Length + delta.VisibleAddedCount);
+        var nameIds = new Dictionary<string, uint>(baseNames.Length + delta.VisibleAddedCount, StringComparer.Ordinal);
+        for (var uid = 0; uid < baseNames.Length; uid++)
+        {
+            names.Add(baseNames[uid]);
+            nameIds.Add(baseNames[uid], (uint)uid);
+        }
         uint GetNameId(string name)
         {
             if (nameIds.TryGetValue(name, out var uid))
@@ -27,7 +35,7 @@ internal static unsafe class NativeCompactionInterop
 
         var actions = new int[snapshot.Count];
         Array.Fill(actions, -1);
-        var baseNameIds = new uint[snapshot.Count];
+        var baseNameIds = snapshot.NameIds.ToArray();
         var patches = new List<NativeCompactionPatch>(delta.BaseOverrides.Count + delta.MetadataOverrides.Count);
 
         for (var row = 0; row < snapshot.Count; row++)
@@ -48,8 +56,6 @@ internal static unsafe class NativeCompactionInterop
                 continue;
             }
 
-            var name = baseNames[(int)snapshot.NameIds[row]];
-            baseNameIds[row] = GetNameId(name);
             if (delta.MetadataOverrides.TryGetValue(row, out var metadata))
             {
                 actions[row] = patches.Count;
