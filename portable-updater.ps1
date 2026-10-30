@@ -131,7 +131,8 @@ function Start-LertaroService {
         # A stop from another controller can still make start report 1061 briefly. A 1053 is
         # retried only after observing that SCM has not reached Running yet.
         if ($exit -notin 1061, 1053 -or $deadline.Elapsed.TotalMilliseconds -ge $TimeoutMs) {
-            throw "Could not restart service: $exit"
+            $serviceState = (& $Sc queryex LertaroService 2>&1 | Out-String).Trim()
+            throw "Could not restart service: $exit. SCM state: $serviceState"
         }
         Start-Sleep -Milliseconds $PollMs
     }
