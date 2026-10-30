@@ -565,6 +565,7 @@
   "Search_BackTooltip": "クイック検索に戻る",
   "Search_ShowFiltersTooltip": "フィルターを表示",
   "Search_HideFiltersTooltip": "フィルターを非表示",
+  "Search_ClearFiltersTooltip": "すべてのフィルターをクリア",
   "Search_HeaderName": "名前",
   "Search_HeaderPath": "パス",
   "Search_HeaderDateModified": "更新日時",

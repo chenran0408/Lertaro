@@ -87,15 +87,25 @@ public class DynamicSidebarGroupViewModel : ViewModelBase
 
     private void ClearSelection()
     {
-        var anyChanged = false;
-        foreach (var item in Items)
-            anyChanged |= item.SetSelectedSilently(false);
+        var anyChanged = ClearSelectionSilently();
 
         if (!anyChanged)
             return;
 
-        OnPropertyChanged(nameof(HasSelection));
         _mainVm.OnDynamicFilterChanged();
+    }
+
+    // Used by the global clear action so all groups can be reset before the search is recomputed once.
+    internal bool ClearSelectionSilently()
+    {
+        var anyChanged = false;
+        foreach (var item in Items)
+            anyChanged |= item.SetSelectedSilently(false);
+
+        if (anyChanged)
+            OnPropertyChanged(nameof(HasSelection));
+
+        return anyChanged;
     }
 }
 

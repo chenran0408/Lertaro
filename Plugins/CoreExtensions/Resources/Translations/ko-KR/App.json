@@ -565,6 +565,7 @@
   "Search_BackTooltip": "빠른 검색으로 돌아가기",
   "Search_ShowFiltersTooltip": "필터 표시",
   "Search_HideFiltersTooltip": "필터 숨기기",
+  "Search_ClearFiltersTooltip": "모든 필터 지우기",
   "Search_HeaderName": "이름",
   "Search_HeaderPath": "경로",
   "Search_HeaderDateModified": "수정한 날짜",

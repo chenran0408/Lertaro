@@ -173,6 +173,23 @@ public class SearchViewModel : ViewModelBase, IDisposable
 
     public bool HasActiveFilters => DynamicSidebarGroups.Any(group => group.HasSelection);
 
+    private ICommand? _clearAllFiltersCommand;
+    public ICommand ClearAllFiltersCommand => _clearAllFiltersCommand ??= new RelayCommand(ClearAllFilters);
+
+    public void ClearAllFilters()
+    {
+        var anyChanged = false;
+        foreach (var group in DynamicSidebarGroups)
+            anyChanged |= group.ClearSelectionSilently();
+
+        if (!anyChanged)
+            return;
+
+        OnPropertyChanged(nameof(HasActiveFilters));
+        _sidebarCountHelper?.Recalculate();
+        ApplyFiltersAndRender(extendsContent: false, unchangedPrefix: 0);
+    }
+
     // True when any item of the well-known result-type group is selected. Content-search results
     // are only merged into _allResults while no type filter is active; a selected type (e.g. "文件")
     // means the user asked for exactly that type, so the extra content rows are excluded.

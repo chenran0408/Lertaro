@@ -125,6 +125,22 @@
                         </Grid>
                         <!-- Window controls -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,6,6,0">
+                            <Button x:Name="BtnClearFilters"
+                                    Content="&#xE711;"
+                                    ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_ClearFiltersTooltip]}"
+                                    Command="{Binding ClearAllFiltersCommand}"
+                                    Margin="0,0,8,0">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource WindowControlButton}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasActiveFilters}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                             <Button x:Name="BtnToggleFilters"
                                     ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_HideFiltersTooltip]}"
                                     Style="{StaticResource WindowControlButton}"

@@ -565,6 +565,7 @@
   "Search_BackTooltip": "Back to Quick Search",
   "Search_ShowFiltersTooltip": "Show filters",
   "Search_HideFiltersTooltip": "Hide filters",
+  "Search_ClearFiltersTooltip": "Clear all filters",
   "Search_HeaderName": "Name",
   "Search_HeaderPath": "Path",
   "Search_HeaderDateModified": "Date Modified",

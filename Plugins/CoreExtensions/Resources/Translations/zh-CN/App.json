@@ -565,6 +565,7 @@
   "Search_BackTooltip": "返回快速搜索",
   "Search_ShowFiltersTooltip": "显示筛选",
   "Search_HideFiltersTooltip": "隐藏筛选",
+  "Search_ClearFiltersTooltip": "清除全部筛选",
   "Search_HeaderName": "名称",
   "Search_HeaderPath": "路径",
   "Search_HeaderDateModified": "修改时间",
