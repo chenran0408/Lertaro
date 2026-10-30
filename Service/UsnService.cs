@@ -46,8 +46,14 @@ public class UsnService : ServiceBase
 
             _pipeServer = new UsnServicePipeServer();
             _pipeServer.Start(_engine, Stop);
-            RelaunchAppAfterUpdate();
-            CompletedUpdatePayloadCleanup.Schedule(AppContext.BaseDirectory);
+            // The SCM start callback must return promptly. Launching the user's App can involve
+            // cross-session token setup, and cleanup may wait for the updater's lock; neither belongs
+            // on the service-start critical path.
+            _ = Task.Run(() =>
+            {
+                RelaunchAppAfterUpdate();
+                CompletedUpdatePayloadCleanup.Schedule(AppContext.BaseDirectory);
+            });
             Logger.Log("[UsnService] Service Started successfully.");
         }
         catch (Exception ex)
