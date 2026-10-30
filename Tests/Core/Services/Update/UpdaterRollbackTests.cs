@@ -153,6 +153,23 @@ public sealed class UpdaterRollbackTests
         }
     }
 
+    [TestMethod]
+    public async Task StartService_1053WaitsForRunningStateBeforeReportingFailure()
+    {
+        var root = Directory.CreateTempSubdirectory("LertaroUpdaterStart_").FullName;
+        try
+        {
+            var sc = WriteFakeSc(root, 1053);
+            var runner = WriteUpdaterRunner(root);
+
+            var run = await RunUpdaterActionAsync(runner, "StartDelayed1053", sc);
+
+            Assert.AreEqual(0, run.ExitCode, run.Error);
+            Assert.AreEqual(1, ReadFakeScCalls(sc));
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
     // The fake returns scripted sc.exe exit codes while recording how many times the helper called it.
     private static string WriteFakeSc(string root, params int[] exitCodes)
     {
@@ -194,6 +211,19 @@ public sealed class UpdaterRollbackTests
                 }
                 'StartTransient' {
                     Start-LertaroService $Sc 2000 10
+                    exit 0
+                }
+                'StartDelayed1053' {
+                    $script:service=[PSCustomObject]@{ Status='StartPending'; Disposed=$false }
+                    $script:service | Add-Member ScriptMethod Refresh {
+                        $this.Status='Running'
+                    }
+                    $script:service | Add-Member ScriptMethod Dispose {
+                        $this.Disposed=$true
+                    }
+                    function Get-Service { param($Name,$ErrorAction) return $script:service }
+                    Start-LertaroService $Sc 2000 10
+                    if (!$script:service.Disposed) { throw 'Service controller was not disposed.' }
                     exit 0
                 }
                 'CompleteRestartFailure' {

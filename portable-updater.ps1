@@ -111,8 +111,27 @@ function Start-LertaroService {
         & $Sc start LertaroService | Out-Null
         $exit = $LASTEXITCODE
         if ($exit -in 0, 1056) { return }
-        # A stop from another controller can still make start report 1061 briefly.
-        if ($exit -ne 1061 -or $deadline.Elapsed.TotalMilliseconds -ge $TimeoutMs) { throw "Could not restart service: $exit" }
+        if ($exit -eq 1053) {
+            # sc.exe can time out while the service is still completing its start callback. In
+            # particular, a first index build can outlive the SCM command timeout even though the
+            # service is healthy. Observe SCM instead of reporting a false update failure.
+            while ($deadline.Elapsed.TotalMilliseconds -lt $TimeoutMs) {
+                $service = Get-Service -Name LertaroService -ErrorAction SilentlyContinue
+                if ($service) {
+                    try {
+                        $service.Refresh()
+                        if ($service.Status -eq 'Running') { return }
+                        if ($service.Status -eq 'Stopped') { break }
+                    } finally { $service.Dispose() }
+                }
+                Start-Sleep -Milliseconds $PollMs
+            }
+        }
+        # A stop from another controller can still make start report 1061 briefly. A 1053 is
+        # retried only after observing that SCM has not reached Running yet.
+        if ($exit -notin 1061, 1053 -or $deadline.Elapsed.TotalMilliseconds -ge $TimeoutMs) {
+            throw "Could not restart service: $exit"
+        }
         Start-Sleep -Milliseconds $PollMs
     }
 }
