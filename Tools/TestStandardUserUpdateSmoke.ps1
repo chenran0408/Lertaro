@@ -52,19 +52,21 @@ try {
     }
     Copy-Item -LiteralPath (Join-Path $client 'Lertaro.UpdateSmoke.exe') -Destination $app -Force
     $portFile = Join-Path $scratch 'port'
-    $job = Start-Job -ArgumentList $package,$suffix,$portFile -ScriptBlock {
-        param($package,$suffix,$portFile)
+    $requestLog = Join-Path $scratch 'http-requests.log'
+    $job = Start-Job -ArgumentList $package,$suffix,$portFile,$requestLog -ScriptBlock {
+        param($package,$suffix,$portFile,$requestLog)
         $ErrorActionPreference = 'Stop'
         $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 0)
         $listener.Start()
         try {
             [IO.File]::WriteAllText($portFile, [string]$listener.LocalEndpoint.Port)
-            for ($i = 0; $i -lt 3; $i++) {
+            for ($i = 0; $i -lt 4; $i++) {
                 $connection = $listener.AcceptTcpClient()
                 try {
                     $stream = $connection.GetStream()
                     $reader = [IO.StreamReader]::new($stream, [Text.Encoding]::ASCII, $false, 1024, $true)
                     $request = $reader.ReadLine().Split(' ')[1]
+                    Add-Content -LiteralPath $requestLog -Value $request
                     while ($reader.ReadLine()) { }
                     $file = switch ($request) {
                         '/package.zip' { Join-Path $package "Lertaro-Portable$suffix.zip" }
@@ -93,7 +95,10 @@ try {
     $probe = Start-Process -FilePath $app -Credential $credential -LoadUserProfile -WindowStyle Hidden -WorkingDirectory $install -ArgumentList @(
         "http://127.0.0.1:$port", "`"$resultFile`"") -Environment @{ TEMP = $scratch; TMP = $scratch } -PassThru
     if (!$probe.WaitForExit(120000)) { throw 'Standard-user update handoff timed out.' }
-    if ($probe.ExitCode -ne 0) { throw "Probe failed: $(Get-Content -LiteralPath $resultFile -Raw -ErrorAction SilentlyContinue)" }
+    if ($probe.ExitCode -ne 0) {
+        $requests = Get-Content -LiteralPath $requestLog -Raw -ErrorAction SilentlyContinue
+        throw "Probe failed: $(Get-Content -LiteralPath $resultFile -Raw -ErrorAction SilentlyContinue) Requests: $requests"
+    }
     if ([IO.File]::ReadAllText($resultFile) -ne 'standard-user;download-retry;verified;service-accepted') { throw 'Missing standard-user handoff proof.' }
     $resultPath = Join-Path $install 'update-result.json'
     $clock.Restart()
