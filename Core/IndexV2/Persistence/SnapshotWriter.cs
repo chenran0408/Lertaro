@@ -28,7 +28,15 @@ public static class SnapshotWriter
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, object> _pathLocks =
         new(StringComparer.OrdinalIgnoreCase);
 
-    private static object GetPathLock(string path) => _pathLocks.GetOrAdd(path, static _ => new object());
+    internal static object GetPathLock(string path) => _pathLocks.GetOrAdd(path, static _ => new object());
+
+    internal static void Publish(string preparedPath, string path, Action? afterReplace = null,
+        string? backupPath = null)
+    {
+        lock (GetPathLock(path))
+            FileRecordStoreReplaceHelper.ReplaceWithRetry(preparedPath, path, SnapshotWriterOps.TryDelete,
+                afterReplace, backupPath);
+    }
 
     public static void Write(FileRecordStore store, string path)
     {
@@ -279,8 +287,7 @@ public static class SnapshotWriter
                 stream.Flush(flushToDisk: true);
             }
 
-            FileRecordStoreReplaceHelper.ReplaceWithRetry(temp, path, SnapshotWriterOps.TryDelete,
-                beforeBackupDelete);
+            Publish(temp, path, beforeBackupDelete);
         }
     }
 

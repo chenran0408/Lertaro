@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(CoreAssembly)' == ''">
+    <ProjectReference Include="../../Core/Core.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(CoreAssembly)' != ''">
+    <Reference Include="Lertaro.Core" HintPath="$(CoreAssembly)" />
+    <Reference Include="Lertaro.PluginSdk" HintPath="$([System.IO.Path]::GetDirectoryName('$(CoreAssembly)'))/Lertaro.PluginSdk.dll" />
+  </ItemGroup>
+</Project>

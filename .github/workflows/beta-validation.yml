@@ -1,9 +1,14 @@
 name: Beta validation
 
 on:
+  workflow_call:
+    secrets:
+      SIGNING_KEY:
+        required: true
   workflow_dispatch:
   push:
     branches:
+      - main
       - fix/explorer-locate-hang
       - codex/v5.10.1-input-performance-glass
 
@@ -146,3 +151,32 @@ jobs:
       - name: Upgrade installed beta7 and uninstall
         shell: pwsh
         run: ./Tools/TestUpgradeSmoke.ps1 -PackageDirectory candidate -Architecture '${{ matrix.architecture }}'
+
+  standard-user-update:
+    needs: package
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            architecture: X64
+            rid: win-x64
+          - runner: windows-11-arm
+            architecture: Arm64
+            rid: win-arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/download-artifact@v4
+        with:
+          name: beta-candidate
+          path: candidate
+      - name: Build standard-user caller host
+        run: dotnet publish Tools/UpdateSmokeClient/UpdateSmokeClient.csproj -c Release -r ${{ matrix.rid }} --self-contained false -p:EnableRustIndexStoreBuild=false -o probe
+      - name: Exercise the application installer as a standard user
+        shell: pwsh
+        run: ./Tools/TestStandardUserUpdateSmoke.ps1 -PackageDirectory candidate -ClientDirectory probe -Architecture '${{ matrix.architecture }}'

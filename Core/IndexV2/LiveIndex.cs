@@ -6,21 +6,15 @@ namespace Lertaro.Core.IndexV2;
 // Owns one drive's Snapshot + DeltaOverlay pair and the concurrency model the prototype never needed
 // (a single-threaded benchmark has no readers to race). Snapshot itself is immutable once mapped, so
 // searches never need to block each other -- only DeltaOverlay's mutable dictionaries/lists need
-// protection, and Compact() needs a consistent view to merge from. Readers take the read lock (many
-// concurrent searches); a USN/watcher batch or a Compact()/SwapSnapshot() call takes the write lock.
-//
-// Compact() deliberately holds the write lock for its ENTIRE duration (merge + file write + reopen),
-// not just the final swap -- DeltaOverlay's dictionaries aren't safe to iterate while a concurrent
-// Mutate() call could be appending to them, so there is no cheaper correct alternative without a
-// versioned/copy-on-write overlay. This blocks searches for the duration of one compaction (bounded,
-// background/idle-triggered), matching this codebase's existing tolerance for blocking full-process
-// GC.Collect calls during rebuilds. Shrinking this window is a valid future optimization, not a
-// correctness requirement.
+// protection. The mutation gate freezes writers during compaction without blocking searches. Only
+// publication takes the reader/writer lock exclusively; the old mapping stays alive until readers drain.
 public sealed class LiveIndex : IDisposable
 {
     private readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.NoRecursion);
+    private readonly object _mutationGate = new();
     private Snapshot? _snapshot;
     private DeltaOverlay? _delta;
+    private string? _retainedBackupPath;
     private long _revision;
 
     public LiveIndex(Snapshot snapshot)
@@ -62,16 +56,19 @@ public sealed class LiveIndex : IDisposable
     // atomic with respect to concurrent searches (a search never sees half an update batch applied).
     public void Mutate(Action<Snapshot, DeltaOverlay> mutate)
     {
-        _lock.EnterWriteLock();
-        try
+        lock (_mutationGate)
         {
-            EnsureUsable();
-            mutate(_snapshot!, _delta!);
-            Interlocked.Increment(ref _revision);
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
+            _lock.EnterWriteLock();
+            try
+            {
+                EnsureUsable();
+                mutate(_snapshot!, _delta!);
+                Interlocked.Increment(ref _revision);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
         }
     }
 
@@ -95,90 +92,87 @@ public sealed class LiveIndex : IDisposable
     // IsComplete/ExclusionRulesFingerprint/LastUpdated for network/WSL/folder drives; omitted fields
     // keep the snapshot's current value.
     public bool Compact(string path, CompactionStamp stamp = default, bool force = false)
+        => Compact(path, stamp, force, Snapshot.Open);
+
+    internal bool Compact(string path, CompactionStamp stamp, bool force, Func<string, Snapshot> openSnapshot)
     {
-        _lock.EnterWriteLock();
-        try
+        // ponytail: incoming mutations wait for this save; searches do not. A versioned overlay can
+        // remove the remaining writer pause if measurements show that ingestion needs it.
+        lock (_mutationGate)
+        lock (SnapshotWriter.GetPathLock(path))
         {
             EnsureUsable();
             if (!force && _delta!.PendingChangeCount == 0)
                 return false;
 
-            // Direct compaction builds the final native snapshot columns without creating a full
-            // intermediate FileRecordStore. The old mapping must stay alive while those columns and
-            // unchanged aliases are copied, then be released immediately after File.Replace and before
-            // the replacement helper deletes its .bak file.
             var oldSnapshot = _snapshot!;
             var oldDelta = _delta!;
-            var oldSnapshotDisposed = false;
+            var preparedPath = path + ".compact";
+            // After a post-replacement open failure, the old mapping still owns .bak. Do not ask
+            // ReplaceFile to overwrite that mapped backup on retry (Windows refuses it).
+            var backupPath = path + (_retainedBackupPath == null ? ".bak" : ".bak.next");
             try
             {
-                Compaction.Compact(oldSnapshot, oldDelta, path, stamp, beforeBackupDelete: () =>
-                {
-                    oldSnapshot.Dispose();
-                    oldSnapshotDisposed = true;
-                });
-                if (!oldSnapshotDisposed)
-                {
-                    oldSnapshot.Dispose();
-                    oldSnapshotDisposed = true;
-                }
-                _snapshot = null;
-                _delta = null;
-                _snapshot = Snapshot.Open(path);
-                _delta = new DeltaOverlay(_snapshot);
-                Interlocked.Increment(ref _revision);
-                return true;
-            }
-            catch (Exception originalException)
-            {
-                if (!oldSnapshotDisposed)
-                {
-                    oldSnapshot.Dispose();
-                    oldSnapshotDisposed = true;
-                }
-                _snapshot = null;
-                _delta = null;
-                // SnapshotWriter.Write uses File.Replace, which is all-or-nothing. On a write failure the
-                // original pre-compaction file should still be at `path`; on a successful write followed by
-                // an open failure the fresh file is there but unreadable. Either way, try to keep this
-                // LiveIndex serving a valid snapshot before propagating the failure.
+                Compaction.Compact(oldSnapshot, oldDelta, preparedPath, stamp);
+                // Validate before replacing the live file. Windows cannot ReplaceFile from a mapped
+                // source, so release this validation mapping before publishing.
+                using (openSnapshot(preparedPath)) { }
+                _lock.EnterWriteLock();
                 try
                 {
-                    _snapshot = Snapshot.Open(path);
-                    _delta = new DeltaOverlay(_snapshot);
-                    Logger.Log($"LiveIndex.Compact failed to write/reopen '{path}', recovered the on-disk snapshot: {originalException.Message}", LogLevel.Error);
+                    SnapshotWriter.Publish(preparedPath, path, () =>
+                    {
+                        // If opening fails, keep the old mapping/overlay and the backup for retry.
+                        Snapshot nextSnapshot;
+                        try { nextSnapshot = openSnapshot(path); }
+                        catch
+                        {
+                            _retainedBackupPath ??= backupPath;
+                            throw;
+                        }
+                        var nextDelta = new DeltaOverlay(nextSnapshot);
+                        _snapshot = nextSnapshot;
+                        _delta = nextDelta;
+                        Interlocked.Increment(ref _revision);
+                        oldSnapshot.Dispose();
+                        if (_retainedBackupPath != null)
+                        {
+                            SnapshotWriterOps.TryDelete(_retainedBackupPath);
+                            _retainedBackupPath = null;
+                        }
+                    }, backupPath);
                 }
-                catch (Exception reopenException)
+                finally
                 {
-                    Logger.Log($"LiveIndex.Compact could not recover a snapshot after '{path}' write/reopen failure: {reopenException.Message}", LogLevel.Error);
-                    _snapshot = null;
-                    _delta = null;
-                    throw new ObjectDisposedException(nameof(LiveIndex), originalException);
+                    _lock.ExitWriteLock();
                 }
-
-                throw;
+                return true;
             }
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
+            finally
+            {
+                SnapshotWriterOps.TryDelete(preparedPath);
+                SnapshotWriterOps.TryDelete(preparedPath + ".tmp");
+            }
         }
     }
 
     // Swaps in a snapshot built OUTSIDE this LiveIndex (e.g. a full rebuild's first load) and resets
-    // the overlay to empty. Compact() reaches the same end state via SwapUnderLock while already
-    // holding the write lock; this is the entry point for callers that aren't already inside one.
+    // the overlay to empty. Serialized with compaction so an in-flight preparation cannot publish an
+    // obsolete base after this replacement.
     public void SwapSnapshot(Snapshot newSnapshot)
     {
-        _lock.EnterWriteLock();
-        try
+        lock (_mutationGate)
         {
-            EnsureUsable();
-            SwapUnderLock(newSnapshot);
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
+            _lock.EnterWriteLock();
+            try
+            {
+                EnsureUsable();
+                SwapUnderLock(newSnapshot);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
         }
     }
 
@@ -195,19 +189,21 @@ public sealed class LiveIndex : IDisposable
 
     public void Dispose()
     {
-        _lock.EnterWriteLock();
-        try
+        lock (_mutationGate)
         {
-            _snapshot?.Dispose();
-            _snapshot = null;
-            _delta = null;
+            _lock.EnterWriteLock();
+            try
+            {
+                _snapshot?.Dispose();
+                _snapshot = null;
+                _delta = null;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+            // Readers may still be queued while shutdown clears the index.
+            LiveIndexLockTeardown.TryDispose(_lock);
         }
-        finally
-        {
-            _lock.ExitWriteLock();
-        }
-        // Never throws: a monitor thread that is still inside Mutate()/Read() on this lock must not turn a
-        // service stop into a process death -- see LiveIndexLockTeardown for the field failure this covers.
-        LiveIndexLockTeardown.TryDispose(_lock);
     }
 }

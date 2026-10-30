@@ -8,38 +8,43 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
-  build-and-release:
+  preflight:
     runs-on: windows-latest
-
     steps:
-      # 1. Checkout codebase with full history to retrieve previous tags/commits
-      - name: Checkout Code
+      - name: Checkout release source
         uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      # The Core project builds its in-process index store for the current RID.
-      - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v2
-        with:
-          target: aarch64-pc-windows-msvc
-
-      # 2. Configure .NET SDK
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: '10.0.x'
-
-      # 3. Install Inno Setup 7, required for the 64-bit x64 Setup shell
-      - name: Install Inno Setup
+      - name: Require a new matching version
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          winget install JRSoftware.InnoSetup.7 --force --silent --no-upgrade --accept-source-agreements
+          $version = ([xml](Get-Content App/App.csproj)).Project.PropertyGroup.Version
+          if ($env:RELEASE_TAG -cne "v$version") { throw 'Tag does not match the application version.' }
+          $tags = gh api "repos/$env:GITHUB_REPOSITORY/releases" --paginate --jq '.[].tag_name'
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to check existing releases.' }
+          if ($tags -ccontains $env:RELEASE_TAG) { throw 'Published releases are immutable. Use a new version.' }
 
-      # 4. Execute the build and package batch script
-      - name: Run Build and Package Script
-        run: |
-          .\make.bat
+  validate:
+    needs: preflight
+    uses: ./.github/workflows/beta-validation.yml
+    secrets: inherit
+
+  publish:
+    needs: validate
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Download the exact signed packages exercised by both architecture smoke-test jobs.
+      - uses: actions/download-artifact@v4
+        with:
+          name: beta-candidate
+          path: dist
 
       # 5. Publish short, user-facing notes instead of a raw commit log.
       - name: Generate Changelog
@@ -56,17 +61,25 @@ jobs:
           fi
           echo "" >> changelog.md
 
-      # Both application and service pin this same public key; never publish placeholder signatures.
-      - name: Sign and Verify Release Packages
+      - name: Verify tested packages and record hashes
         shell: pwsh
-        env:
-          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
         run: |
-          ./Tools/SignRelease.ps1 -PackageDirectory dist
-          if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw 'Signing failed.' }
+          $verifier = [Security.Cryptography.ECDsa]::Create()
+          try {
+            $verifier.ImportFromPem([IO.File]::ReadAllText('release-signing-public-key.pem'))
+            foreach ($name in @('Lertaro-Portable.zip','Lertaro-Portable-arm64.zip')) {
+              $path = Join-Path dist $name
+              if (!$verifier.VerifyData([IO.File]::ReadAllBytes($path), [IO.File]::ReadAllBytes($path + '.sig'),
+                  [Security.Cryptography.HashAlgorithmName]::SHA256,
+                  [Security.Cryptography.DSASignatureFormat]::Rfc3279DerSequence)) {
+                throw "Invalid update signature: $name"
+              }
+            }
+          } finally { $verifier.Dispose() }
           Add-Content changelog.md "`n<details><summary>文件校验信息（可选）</summary>`n"
           Add-Content changelog.md '更新包已使用本 fork 的更新密钥签名，并完成校验。'
           Add-Content changelog.md "`nSHA-256：`n"
+          Add-Content changelog.md ('Source commit: `' + $env:GITHUB_SHA + '`')
           foreach ($name in @('Lertaro-Setup.exe','Lertaro-Portable.zip','Lertaro-Setup-arm64.exe','Lertaro-Portable-arm64.zip')) {
             $hash = (Get-FileHash (Join-Path dist $name) -Algorithm SHA256).Hash.ToLowerInvariant()
             Add-Content changelog.md ('- **' + $name + '**: `' + $hash + '`')
@@ -88,6 +101,8 @@ jobs:
             dist/Lertaro-Portable-arm64.zip.sig
           name: ${{ github.ref_name }}
           draft: false
+          fail_on_unmatched_files: true
+          overwrite_files: false
           prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, '-rc') || contains(github.ref_name, '-alpha') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

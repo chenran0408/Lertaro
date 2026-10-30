@@ -3,57 +3,40 @@ namespace Lertaro.Core;
 internal static class FileRecordStoreReplaceHelper
 {
     public static void ReplaceWithRetry(string tempPath, string finalPath, Action<string> tryDelete,
-        Action? beforeBackupDelete = null)
+        Action? beforeBackupDelete = null, string? backupPath = null)
     {
         const int maxAttempts = 5;
-        var backupPath = finalPath + ".bak";
-        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        backupPath ??= finalPath + ".bak";
+        var replacedExisting = false;
+        for (var attempt = 1; ; attempt++)
         {
             try
             {
                 if (File.Exists(finalPath))
                 {
                     File.Replace(tempPath, finalPath, backupPath, ignoreMetadataErrors: true);
-                    beforeBackupDelete?.Invoke();
-                    // The previous snapshot is discarded here rather than kept as a second known-good
-                    // generation. LiveIndex.Compact releases its mapping immediately after this swap
-                    // and before this delete; on some Windows/filesystem combinations an open mapping
-                    // otherwise leaves the backup behind. The residual hole is a snapshot torn by a
-                    // power loss with nothing to fall back to, which costs a full re-scan, not data.
-                    tryDelete(backupPath);
+                    replacedExisting = true;
                 }
                 else
                 {
                     File.Move(tempPath, finalPath, overwrite: true);
                 }
-                return;
+                break;
             }
             catch (IOException) when (attempt < maxAttempts)
             {
                 Thread.Sleep(50 * attempt);
             }
+            catch
+            {
+                try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
+                throw;
+            }
         }
 
-        try
-        {
-            if (File.Exists(finalPath))
-            {
-                File.Replace(tempPath, finalPath, backupPath, ignoreMetadataErrors: true);
-                beforeBackupDelete?.Invoke();
-                tryDelete(backupPath);
-            }
-            else
-            {
-                File.Move(tempPath, finalPath, overwrite: true);
-            }
-        }
-        catch
-        {
-            // Every attempt failed -- the caller already logs this (see
-            // NetworkIndexerPublisher.PublishCheckpoint's catch), so this only prevents tempPath from
-            // being orphaned forever once nothing else is ever going to retry it.
-            try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
-            throw;
-        }
+        // A failed callback is not a failed replacement: never retry a consumed temp file.
+        beforeBackupDelete?.Invoke();
+        if (replacedExisting)
+            tryDelete(backupPath);
     }
 }
