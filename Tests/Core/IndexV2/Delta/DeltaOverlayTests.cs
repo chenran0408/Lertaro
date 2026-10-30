@@ -316,6 +316,7 @@ public sealed class DeltaOverlayTests
             Assert.IsTrue(delta.Exists(100));
             Assert.AreEqual(1, delta.FileCountDelta, "resurrection must count exactly like a fresh add");
             Assert.AreEqual(0, delta.DirCountDelta);
+            Assert.AreEqual(1, delta.VisibleAddedCount, "only the resurrected slot is visible");
         });
     }
 
@@ -332,6 +333,29 @@ public sealed class DeltaOverlayTests
 
             Assert.AreEqual(0, delta.FileCountDelta, "the removed file's earlier add/remove pair nets to zero");
             Assert.AreEqual(1, delta.DirCountDelta, "the resurrection counts as one live directory");
+            Assert.AreEqual(1, delta.VisibleAddedCount);
+        });
+    }
+
+    [TestMethod]
+    public void VisibleAddedCount_TracksAddRemoveAndLinkOperationsWithoutScanning()
+    {
+        using var fixture = BuildSampleDrive();
+        fixture.Index.Mutate((_, delta) =>
+        {
+            Assert.AreEqual(0, delta.VisibleAddedCount);
+
+            delta.Upsert(100, 2, "new.txt", FileRecordFlags.None, 1, 0, 0, 0);
+            DeltaLinkOps.AddLink(delta, 101, 2, "linked.txt", FileRecordFlags.None);
+            Assert.AreEqual(2, delta.VisibleAddedCount);
+
+            delta.Remove(100);
+            DeltaLinkOps.RemoveLink(delta, 101, 2, "linked.txt");
+            Assert.AreEqual(0, delta.VisibleAddedCount);
+
+            DeltaLinkOps.AddLink(delta, 102, 2, "renamed.txt", FileRecordFlags.None);
+            DeltaLinkOps.RemoveLinkForRename(delta, 102, 2, "renamed.txt");
+            Assert.AreEqual(0, delta.VisibleAddedCount);
         });
     }
 }

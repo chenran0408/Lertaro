@@ -23,7 +23,7 @@ public static class DeltaLinkOps
             ParentFrn = parentFrn,
         };
         delta.GenerateAliases(record);
-        delta.Added.Add(record);
+        delta.AddAdded(record);
         delta.CountAdded(flags.HasFlag(FileRecordFlags.Directory));
     }
 
@@ -69,7 +69,7 @@ public static class DeltaLinkOps
         // marking this record Removed is enough for them to fall through to the source root until
         // the next AddLink recreates a live record under the same FRN -- no separate forwarding
         // bookkeeping needed for in-session (never-yet-compacted) directories.
-        added.Removed = true;
+        delta.MarkAddedRemoved(added);
         delta.CountRemoved((added.Flags & (ushort)FileRecordFlags.Directory) != 0);
         return true;
     }

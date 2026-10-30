@@ -66,7 +66,7 @@ internal static class DeltaCascade
     {
         if (record.Removed || depth >= MaxDepth)
             return;
-        record.Removed = true;
+        delta.MarkAddedRemoved(record);
         delta.CountRemoved((record.Flags & (ushort)FileRecordFlags.Directory) != 0);
         if ((record.Flags & (ushort)FileRecordFlags.Directory) == 0)
             return;

@@ -157,13 +157,15 @@
                             </Style>
                         </Grid.Style>
                     <Grid.ColumnDefinitions>
-                        <!-- Sidebar -->
-                        <ColumnDefinition Width="Auto"/>
+                        <!-- Keep filters readable without allowing a long plugin label to consume the
+                             result area. Labels already use ellipsis/tooltips, so a stable column gives
+                             the search list predictable room at the window's minimum size. -->
+                        <ColumnDefinition Width="236"/>
                         <!-- Content Area -->
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <!-- Sidebar -->
-                    <controls:SearchSidebarControl Grid.Column="0"/>
+                    <controls:SearchSidebarControl Grid.Column="0" Width="236" HorizontalAlignment="Left"/>
                     <!-- Main Results Grid -->
                     <Grid Grid.Column="1" Background="Transparent">
                         <!-- Shared ResultsControl component in Grid Mode -->

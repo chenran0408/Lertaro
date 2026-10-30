@@ -43,6 +43,7 @@ public sealed class DeltaOverlay
     private readonly Dictionary<UInt128, int> _addedById = new();
     private Dictionary<string, AliasCacheEntry>? _mutationAliases;
     private bool _mutationBatchActive;
+    private int _visibleAddedCount;
 
     private readonly record struct AliasCacheEntry(string[]? Aliases, byte[] ProviderIds);
 
@@ -82,7 +83,9 @@ public sealed class DeltaOverlay
             new(record.Aliases, record.ProviderIds);
     }
 
-    public int VisibleAddedCount => Added.Count(r => !r.Removed);
+    // Added rows can be churned repeatedly before compaction. Keep the live count incrementally so
+    // compaction sizing does not rescan the whole historical Added list on every pass.
+    public int VisibleAddedCount => _visibleAddedCount;
     public int PendingChangeCount => DeletedBase.Count + BaseOverrides.Count + RenamedAway.Count + MetadataOverrides.Count + Added.Count;
 
     // Running adjustment to Snapshot.TotalFiles/TotalDirs from every visibility change this overlay
@@ -130,6 +133,7 @@ public sealed class DeltaOverlay
             {
                 // Resurrection: the earlier Remove already decounted this row, so bringing it back
                 // counts as a fresh add (the prior add/remove pair nets to zero either way).
+                _visibleAddedCount++;
                 CountAdded(isDirectory);
             }
             else if (wasDirectory != isDirectory)
@@ -151,9 +155,24 @@ public sealed class DeltaOverlay
             // tombstoned base row must stay dead and the reused id gets a fresh delta row, exactly
             // like the old engine's TryGetIndexById-skips-deleted + append behavior.
             _addedById[id] = Added.Count;
-            Added.Add(record);
+            AddAdded(record);
             CountAdded(isDirectory);
         }
+    }
+
+    internal void AddAdded(DeltaRecord record)
+    {
+        Added.Add(record);
+        if (!record.Removed)
+            _visibleAddedCount++;
+    }
+
+    internal void MarkAddedRemoved(DeltaRecord record)
+    {
+        if (record.Removed)
+            return;
+        record.Removed = true;
+        _visibleAddedCount--;
     }
 
     // Whether `id` currently resolves to a LIVE row -- a base row that's unmodified or overridden
