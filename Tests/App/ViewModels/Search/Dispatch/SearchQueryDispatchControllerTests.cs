@@ -131,7 +131,7 @@ public sealed class SearchQueryDispatchControllerTests
         var second = new TestProvider("second", 1);
         var batches = new List<List<AppSearchResult>>();
 
-        SearchQueryDispatchController.StreamFullSearchFileRows("cs report", [first, second], () => true, batches.Add);
+        FullSearchContentRowStreamer.StreamFullSearchFileRows("cs report", [first, second], () => true, batches.Add);
 
         CollectionAssert.AreEqual(new[] { 60, 240, 1, 1 }, batches.Select(b => b.Count).ToArray());
         CollectionAssert.AreEqual(Enumerable.Range(0, 301).Select(i => $"first-{i}").ToArray(),
@@ -149,7 +149,7 @@ public sealed class SearchQueryDispatchControllerTests
         var provider = new TestProvider("old", 100);
         var batches = new List<List<AppSearchResult>>();
 
-        SearchQueryDispatchController.StreamFullSearchFileRows("cs a", [provider], () => false, batches.Add);
+        FullSearchContentRowStreamer.StreamFullSearchFileRows("cs a", [provider], () => false, batches.Add);
 
         Assert.AreEqual(0, provider.Reads);
         Assert.IsEmpty(batches);
@@ -163,7 +163,7 @@ public sealed class SearchQueryDispatchControllerTests
         var second = new TestProvider("unread", 1);
         var batches = new List<List<AppSearchResult>>();
 
-        SearchQueryDispatchController.StreamFullSearchFileRows("cs a", [first, second], () => current, batches.Add);
+        FullSearchContentRowStreamer.StreamFullSearchFileRows("cs a", [first, second], () => current, batches.Add);
 
         Assert.AreEqual(6, first.Reads);
         Assert.IsTrue(first.Disposed);
@@ -178,7 +178,7 @@ public sealed class SearchQueryDispatchControllerTests
         var provider = new TestProvider("old", 100);
         var batches = new List<List<AppSearchResult>>();
 
-        SearchQueryDispatchController.StreamFullSearchFileRows("cs a", [provider], () => current,
+        FullSearchContentRowStreamer.StreamFullSearchFileRows("cs a", [provider], () => current,
             rows => { batches.Add(rows); current = false; });
 
         Assert.HasCount(60, Assert.ContainsSingle(batches));
@@ -193,7 +193,7 @@ public sealed class SearchQueryDispatchControllerTests
         var provider = new TestProvider("old", 5) { OnCompleted = () => current = false };
         var batches = new List<List<AppSearchResult>>();
 
-        SearchQueryDispatchController.StreamFullSearchFileRows("cs a", [provider], () => current, batches.Add);
+        FullSearchContentRowStreamer.StreamFullSearchFileRows("cs a", [provider], () => current, batches.Add);
 
         Assert.AreEqual(5, provider.Reads);
         Assert.IsTrue(provider.Disposed);
@@ -208,7 +208,7 @@ public sealed class SearchQueryDispatchControllerTests
         var second = new TestProvider("unread", 1);
         var batches = new List<List<AppSearchResult>>();
 
-        SearchQueryDispatchController.StreamFullSearchFileRows("cs a", [first, second], () => current,
+        FullSearchContentRowStreamer.StreamFullSearchFileRows("cs a", [first, second], () => current,
             rows => { batches.Add(rows); current = false; });
 
         Assert.HasCount(1, Assert.ContainsSingle(batches));
@@ -222,7 +222,7 @@ public sealed class SearchQueryDispatchControllerTests
         var healthy = new TestProvider("healthy", 1);
         var batches = new List<List<AppSearchResult>>();
 
-        SearchQueryDispatchController.StreamFullSearchFileRows("cs a", [failing, healthy], () => true, batches.Add);
+        FullSearchContentRowStreamer.StreamFullSearchFileRows("cs a", [failing, healthy], () => true, batches.Add);
 
         Assert.AreEqual(1, failing.StreamsStarted);
         Assert.AreEqual(1, healthy.Reads);
