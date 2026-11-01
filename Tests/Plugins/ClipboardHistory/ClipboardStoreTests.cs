@@ -245,6 +245,30 @@ public sealed class ClipboardStoreTests
     }
 
     [TestMethod]
+    public async Task SearchAsync_TrigramMatchesSubstringsInsideContent()
+    {
+        var store = CreateStore();
+        await store.InitializeAsync();
+        var entry = await store.AddAsync("alpha older", "App", "Title", 500, 1000000);
+
+        var results = await store.SearchAsync("lph");
+
+        Assert.AreEqual(entry!.Id, results.Single().Id);
+    }
+
+    [TestMethod]
+    public async Task SearchAsync_TwoCharacterCjkUsesSqliteFallback()
+    {
+        var store = CreateStore();
+        await store.InitializeAsync();
+        var entry = await store.AddAsync("剪贴板文本", "App", "Title", 500, 1000000);
+
+        var results = await store.SearchAsync("贴板");
+
+        Assert.AreEqual(entry!.Id, results.Single().Id);
+    }
+
+    [TestMethod]
     public async Task SearchAsync_RemovesDeletedRowsAndSurvivesReopen()
     {
         var store = CreateStore();
