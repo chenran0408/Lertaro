@@ -17,6 +17,7 @@
   <Project Path="Plugins/BrowserData/BrowserData.csproj" />
   <Project Path="Plugins/ProcessManager/ProcessManager.csproj" />
   <Project Path="Plugins/WindowSwitcher/WindowSwitcher.csproj" />
+  <Project Path="Plugins/ClipboardHistory/ClipboardHistory.csproj" />
   <Project Path="Plugins/DirectoryOpus/DirectoryOpus.csproj" />
   <Project Path="Plugins/TotalCommander/TotalCommander.csproj" />
   <Project Path="Plugins/QuickLookBridge/QuickLookBridge.csproj" />
@@ -31,4 +32,5 @@
   <Project Path="Plugins/Calendar/Calendar.csproj" />
   <Project Path="Plugins/TaskbarAppearance/TaskbarAppearance.csproj" />
   <Project Path="TaskbarHost/TaskbarHost.csproj" />
+  <Project Path="Tools/SourceSize/SourceSize.csproj" />
 </Solution>

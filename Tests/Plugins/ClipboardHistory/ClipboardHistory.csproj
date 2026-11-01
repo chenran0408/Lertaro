@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>Lertaro.Plugins.ClipboardHistory.Tests</AssemblyName>
+    <RootNamespace>Lertaro.Plugins.ClipboardHistory.Tests</RootNamespace>
+    <!-- The plugin project keeps its flattened TargetPath (its PostBuild only deletes flat output
+         when TargetDir is the shared Plugins root), so a normal ProjectReference works and no
+         source-linking is needed. The SQLite packages mirror the plugin's own references: a RID is
+         what copies the native e_sqlite3.dll into this test's output at all (taken from the building
+         machine, so arm64 hosts load an arm64 native library). -->
+    <UseCurrentRuntimeIdentifier>true</UseCurrentRuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MSTest" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Plugins\ClipboardHistory\ClipboardHistory.csproj" />
+  </ItemGroup>
+
+</Project>

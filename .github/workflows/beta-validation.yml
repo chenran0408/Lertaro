@@ -13,7 +13,11 @@ on:
       - codex/v5.10.1-input-performance-glass
 
 jobs:
+  quality:
+    uses: ./.github/workflows/quality.yml
+
   windows-tests:
+    needs: quality
     strategy:
       fail-fast: false
       matrix:
@@ -52,8 +56,12 @@ jobs:
       - name: Test bundled actions
         if: success() || failure()
         run: dotnet test Tests/Plugins/CoreExtensions/CoreExtensions.csproj -c Release -r ${{ matrix.rid }} -p:RustIndexStoreTarget=${{ matrix.rust_target }} --logger "console;verbosity=normal" -v quiet
+      - name: Test clipboard history
+        if: success() || failure()
+        run: dotnet test Tests/Plugins/ClipboardHistory/ClipboardHistory.csproj -c Release -r ${{ matrix.rid }} --logger "console;verbosity=normal" -v quiet
 
   package:
+    needs: quality
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4

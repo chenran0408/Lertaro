@@ -1,0 +1,88 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Lertaro.Plugins.ClipboardHistory</AssemblyName>
+    <Version>1.0.0</Version>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <!-- Same reasoning as Plugins/BrowserData/BrowserData.csproj: Microsoft.Data.Sqlite ships a
+         native e_sqlite3.dll that a plain framework-dependent build only selects with a RID, and
+         UseCurrentRuntimeIdentifier takes that RID from the building machine instead of hardcoding
+         one. CopyLocalLockFileAssemblies flattens the managed + native dependency set next to this
+         plugin's own DLL so Assembly.LoadFrom's same-directory probing finds all of it. -->
+    <UseCurrentRuntimeIdentifier>true</UseCurrentRuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PluginSdk\PluginSdk.csproj" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <!-- Overrides the bundle's transitively-pinned native lib version: 2.1.x has a known
+         high-severity advisory (GHSA-2m69-gcr7-jv3q) in the bundled sqlite3 build. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Lertaro.Plugins.ClipboardHistory.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Translations\**\*.json" />
+  </ItemGroup>
+
+  <!-- Like BrowserData, the plugin's SQLite dependency closure must live inside its own
+       Plugins/<AssemblyName>/ subfolder, never flat in a shared plugin load directory. Unlike
+       BrowserData, a normal private TargetDir build (including the test project's ProjectReference
+       build) must NOT delete the flattened TargetPath: deleting it breaks the referencing project's
+       copy-local step, which is why the BrowserData tests had to source-link production files.
+       So this target only copies the named closure: into the nested subfolder beside TargetDir and
+       into the App's plugin folder. The flattened originals are deleted ONLY when TargetDir really
+       is the shared ...\Plugins\ root (build_and_run.bat passes that as /p:OutputPath and every
+       plugin builds flat into it); a private bin folder keeps them and ProjectReference builds keep
+       working. -->
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <ItemGroup>
+      <ClipboardHistoryOutput Include="$(TargetDir)$(TargetName).dll" Condition="Exists('$(TargetDir)$(TargetName).dll')" />
+      <ClipboardHistoryOutput Include="$(TargetDir)$(TargetName).pdb" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
+      <ClipboardHistoryOutput Include="$(TargetDir)Microsoft.Data.Sqlite.dll" Condition="Exists('$(TargetDir)Microsoft.Data.Sqlite.dll')" />
+      <ClipboardHistoryOutput Include="$(TargetDir)SQLitePCLRaw.batteries_v2.dll" Condition="Exists('$(TargetDir)SQLitePCLRaw.batteries_v2.dll')" />
+      <ClipboardHistoryOutput Include="$(TargetDir)SQLitePCLRaw.core.dll" Condition="Exists('$(TargetDir)SQLitePCLRaw.core.dll')" />
+      <ClipboardHistoryOutput Include="$(TargetDir)SQLitePCLRaw.provider.e_sqlite3.dll" Condition="Exists('$(TargetDir)SQLitePCLRaw.provider.e_sqlite3.dll')" />
+      <ClipboardHistoryOutput Include="$(TargetDir)e_sqlite3.dll" Condition="Exists('$(TargetDir)e_sqlite3.dll')" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ClipboardHistoryOutput)" DestinationFolder="$(TargetDir)$(AssemblyName)\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(ClipboardHistoryOutput)" DestinationFolder="..\..\App\bin\$(Configuration)\net10.0-windows\Plugins\$(AssemblyName)\" SkipUnchangedFiles="true"
+          Condition="'$(RuntimeIdentifier)' == '$(NETCoreSdkRuntimeIdentifier)'" />
+    <Delete Files="@(ClipboardHistoryOutput)"
+            Condition="$([System.String]::Copy($(TargetDir)).EndsWith('Plugins\',System.StringComparison.OrdinalIgnoreCase)) Or $([System.String]::Copy($(TargetDir)).EndsWith('Plugins/',System.StringComparison.OrdinalIgnoreCase))" />
+  </Target>
+
+  <!-- make.bat publishes with dotnet publish -o <dir>/Plugins, which bypasses the PostBuild target
+       above entirely: Publish gathers its own dependency closure into $(PublishDir) flat, so this
+       needs the same named-list nest-and-delete treatment retargeted at $(PublishDir), always. -->
+  <Target Name="PostPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <ClipboardHistoryPublishOutput Include="$(PublishDir)$(TargetName).dll" Condition="Exists('$(PublishDir)$(TargetName).dll')" />
+      <ClipboardHistoryPublishOutput Include="$(PublishDir)$(TargetName).pdb" Condition="Exists('$(PublishDir)$(TargetName).pdb')" />
+      <ClipboardHistoryPublishOutput Include="$(PublishDir)Microsoft.Data.Sqlite.dll" Condition="Exists('$(PublishDir)Microsoft.Data.Sqlite.dll')" />
+      <ClipboardHistoryPublishOutput Include="$(PublishDir)SQLitePCLRaw.batteries_v2.dll" Condition="Exists('$(PublishDir)SQLitePCLRaw.batteries_v2.dll')" />
+      <ClipboardHistoryPublishOutput Include="$(PublishDir)SQLitePCLRaw.core.dll" Condition="Exists('$(PublishDir)SQLitePCLRaw.core.dll')" />
+      <ClipboardHistoryPublishOutput Include="$(PublishDir)SQLitePCLRaw.provider.e_sqlite3.dll" Condition="Exists('$(PublishDir)SQLitePCLRaw.provider.e_sqlite3.dll')" />
+      <ClipboardHistoryPublishOutput Include="$(PublishDir)e_sqlite3.dll" Condition="Exists('$(PublishDir)e_sqlite3.dll')" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ClipboardHistoryPublishOutput)" DestinationFolder="$(PublishDir)$(AssemblyName)\" SkipUnchangedFiles="true" />
+    <Delete Files="@(ClipboardHistoryPublishOutput)" />
+  </Target>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="Lertaro.Plugin.NameKey" Value="ClipboardHistory_PluginName" />
+    <AssemblyMetadata Include="Lertaro.Plugin.DescriptionKey" Value="ClipboardHistory_PluginDesc" />
+  </ItemGroup>
+</Project>

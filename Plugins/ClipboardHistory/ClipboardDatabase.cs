@@ -1,0 +1,80 @@
+using System.IO;
+using Microsoft.Data.Sqlite;
+
+namespace Lertaro.Plugins.ClipboardHistory;
+
+/// <summary>
+/// Database-level plumbing for <see cref="ClipboardStore"/>: connection opening, schema creation
+/// and corruption recovery. Split out purely to keep ClipboardStore under the per-file line limit;
+/// it has no state of its own and only touches the database file it is constructed with.
+/// </summary>
+internal sealed class ClipboardDatabase(string databasePath)
+{
+    // Primary result codes under which a database file is proven corrupt; every other error
+    // (locked file, disk full, bad path, ...) must propagate to the caller untouched.
+    internal const int SqliteCorrupt = 11;
+    internal const int SqliteNotADatabase = 26;
+
+    private const string SchemaSql = """
+        CREATE TABLE IF NOT EXISTS clipboard_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            content TEXT NOT NULL,
+            plain_preview TEXT NOT NULL,
+            content_sha256 BLOB NOT NULL,
+            source_process TEXT NOT NULL DEFAULT '',
+            source_window_title TEXT NOT NULL DEFAULT '',
+            pinned INTEGER NOT NULL DEFAULT 0,
+            seen_count INTEGER NOT NULL DEFAULT 1,
+            created_at_ms INTEGER NOT NULL,
+            last_seen_at_ms INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_clipboard_last_seen ON clipboard_history(pinned DESC, last_seen_at_ms DESC);
+        CREATE INDEX IF NOT EXISTS idx_clipboard_sha ON clipboard_history(content_sha256);
+        """;
+
+    internal SqliteConnection OpenConnection()
+    {
+        var builder = new SqliteConnectionStringBuilder
+        {
+            DataSource = databasePath,
+            Mode = SqliteOpenMode.ReadWriteCreate,
+            // Pooling would keep the file open across calls, which would block renaming it aside
+            // during corruption recovery.
+            Pooling = false,
+        };
+        var connection = new SqliteConnection(builder.ToString());
+        try { connection.Open(); return connection; }
+        catch { connection.Dispose(); throw; }
+    }
+
+    internal void EnsureSchema()
+    {
+        using var connection = OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = SchemaSql;
+        command.ExecuteNonQuery();
+    }
+
+    internal void MoveCorruptDatabaseAside()
+    {
+        var suffix = $".corrupt-{DateTime.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid():N}";
+        // Sidecars first, then the database itself, and only recreate after every rename succeeded:
+        // a failure here propagates and leaves the corrupt files in place instead of ending up with
+        // a fresh database whose recovery evidence is half gone.
+        foreach (var sidecar in (string[])["-journal", "-wal", "-shm"])
+        {
+            var sidecarPath = databasePath + sidecar;
+            if (File.Exists(sidecarPath)) File.Move(sidecarPath, sidecarPath + suffix);
+        }
+
+        File.Move(databasePath, databasePath + suffix);
+    }
+
+    internal static long GetMaxStamp(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT COALESCE(MAX(last_seen_at_ms), 0) FROM clipboard_history";
+        return (long)command.ExecuteScalar()!;
+    }
+}

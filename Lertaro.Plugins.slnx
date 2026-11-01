@@ -15,6 +15,7 @@
   <Project Path="Plugins/SystemSettings/SystemSettings.csproj" />
   <Project Path="Plugins/ProcessManager/ProcessManager.csproj" />
   <Project Path="Plugins/WindowSwitcher/WindowSwitcher.csproj" />
+  <Project Path="Plugins/ClipboardHistory/ClipboardHistory.csproj" />
   <Project Path="Plugins/CustomCommands/CustomCommands.csproj" />
   <Project Path="Plugins/FileFilters/FileFilters.csproj" />
   <Project Path="Plugins/CustomActions/CustomActions.csproj" />
