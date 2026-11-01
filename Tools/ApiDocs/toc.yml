@@ -1,0 +1,4 @@
+- name: Developer manual
+  href: /dev-guide/
+- name: API Reference
+  href: reference/toc.yml

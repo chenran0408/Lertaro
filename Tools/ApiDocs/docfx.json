@@ -1,0 +1,30 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "src": "../..",
+          "files": ["PluginSdk/PluginSdk.csproj"]
+        }
+      ],
+      "dest": "reference",
+      "properties": {
+        "Configuration": "Release",
+        "EnableWindowsTargeting": "true"
+      }
+    }
+  ],
+  "build": {
+    "content": [
+      { "files": ["index.md", "toc.yml"] },
+      { "files": ["reference/**/*.yml"] }
+    ],
+    "dest": "../../Site/public/api",
+    "template": ["default", "modern"],
+    "globalMetadata": {
+      "_appTitle": "Lertaro Plugin SDK",
+      "_appName": "Lertaro Plugin SDK",
+      "_enableSearch": true
+    }
+  }
+}

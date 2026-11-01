@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>14.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>10.0</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- Existing warnings remain visible while projects enter the strict list individually. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <!-- Set this before SDK targets derive DocumentationFile, which IDE0005 requires. -->
+  <PropertyGroup Condition="'$(MSBuildProjectFullPath)' == '$(MSBuildThisFileDirectory)Tools\CompactionBenchmark\CompactionBenchmark.csproj'">
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,46 @@
+name: Code quality
+
+on:
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: Site/package-lock.json
+      - name: Restore documentation tool
+        run: dotnet tool restore
+      - name: Install site dependencies
+        run: npm ci
+        working-directory: Site
+      - name: Build API reference and all site locales
+        run: npm run docs:build
+        working-directory: Site
+
+  quality:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Check source file size
+        shell: pwsh
+        run: ./Tools/TestSourceSize.ps1
+      - name: Test source size gate
+        run: dotnet test Tests/Tools/SourceSize/SourceSize.csproj -c Release -v quiet
+      - name: Build strict projects
+        run: dotnet build Tools/CompactionBenchmark/CompactionBenchmark.csproj -c Release -p:EnableRustIndexStoreBuild=false -v quiet

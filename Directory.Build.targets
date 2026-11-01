@@ -1,0 +1,6 @@
+<Project>
+  <!-- Match the full path: production and test projects often share a project name. -->
+  <PropertyGroup Condition="'$(MSBuildProjectFullPath)' == '$(MSBuildThisFileDirectory)Tools\CompactionBenchmark\CompactionBenchmark.csproj' Or '$(MSBuildProjectFullPath)' == '$(MSBuildThisFileDirectory)Tests\Tools\SourceSize\SourceSize.csproj'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>
