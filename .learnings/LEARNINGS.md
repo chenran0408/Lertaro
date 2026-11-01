@@ -55,4 +55,3 @@ When enumerating Lertaro runtime roles, record process id, executable, and comma
 
 - GitHub language statistics reflect the default branch, not the latest release tag. Confirm the default branch and languages API before explaining an absent language as a small percentage.
 - On Windows, File.Replace cannot consume a memory-mapped source. Validate then close the candidate before replacement. A mapped destination can be renamed to a backup, but retry must not overwrite a backup still owned by the retained mapping after a failed publication open.
-

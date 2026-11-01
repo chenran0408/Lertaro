@@ -191,7 +191,7 @@ public sealed class LiveIndexTests
                 compactor.Start();
                 Assert.IsTrue(started.Wait(TimeSpan.FromSeconds(10)));
                 Assert.IsTrue(SpinWait.SpinUntil(() =>
-                    (compactor.ThreadState & System.Threading.ThreadState.WaitSleepJoin) != 0,
+                    (compactor.ThreadState & ThreadState.WaitSleepJoin) != 0,
                     TimeSpan.FromSeconds(10)));
                 var read = Task.Run(() =>
                 {

@@ -6,8 +6,8 @@ public sealed class QuickPanelGroupOrderingTests
     [TestMethod]
     public void CloneKeepsGridPositionsWithoutSharingMutableState()
     {
-        var tab = new Lertaro.Core.QuickPanelTab();
-        tab.GroupPreferences["source"] = new Lertaro.Core.QuickPanelGroupPreference { GridSlots = new() { ["file"] = 7 } };
+        var tab = new QuickPanelTab();
+        tab.GroupPreferences["source"] = new QuickPanelGroupPreference { GridSlots = new() { ["file"] = 7 } };
         tab.GroupPreferences["source"].ItemLabels["file"] = new() { DisplayName = "Short label", HideName = true };
         var clone = tab.Clone();
         clone.GroupPreferences["source"].GridSlots["file"] = 2;
