@@ -2,8 +2,10 @@
   "name": "lertaro-site",
   "version": "2026.10.8",
   "scripts": {
+    "api:build": "dotnet docfx ../Tools/ApiDocs/docfx.json --warningsAsErrors",
     "site:dev": "node copy-assets.js && vitepress dev",
     "site:build": "node copy-assets.js && vitepress build",
+    "docs:build": "npm run api:build && npm run site:build",
     "site:preview": "node copy-assets.js && vitepress preview"
   },
   "devDependencies": {

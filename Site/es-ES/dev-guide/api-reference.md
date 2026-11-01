@@ -1,0 +1,7 @@
+# Referencia de la API
+
+La superficie completa de `Lertaro.PluginSdk` está documentada en una referencia generada automáticamente: <a href="/api/index.html">Referencia de la API de PluginSdk</a>. La genera DocFX directamente a partir del código fuente actual del SDK, de modo que cada interfaz, clase y servicio que aparece allí —junto con sus firmas y comentarios XML— se lee mecánicamente del código. Esto incluye los bloques `remarks`, las descripciones de parámetros y valores devueltos, y los vínculos cruzados entre tipos relacionados. Los comentarios del código fuente están escritos en inglés y se conservan tal cual en todos los idiomas de este manual.
+
+Como la referencia es tan completa como los comentarios del propio código, pueden existir omisiones: un miembro con poca o ninguna documentación XML sigue apareciendo en el listado, pero no queda descrito por completo. Trate las páginas generadas como un mapa fiel del código actual, no como la garantía de que cada comportamiento esté documentado.
+
+Para la orientación de uso —cómo implementar las interfaces, cómo reacciona el anfitrión a los resultados y qué patrones se recomiendan— lea la [guía del SDK escrita a mano](./sdk/core-search-actions) y las páginas que la siguen. La referencia generada complementa esa guía sin sustituirla y se genera a partir del código fuente de la compilación actual, que puede diferir de la versión de `Lertaro.PluginSdk` incluida en una versión instalada.

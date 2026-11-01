@@ -42,6 +42,8 @@ export const dictionary = {
     dgSdkAbstractions: 'Shared Abstractions',
     dgSdkServices: 'Host Services',
     dgSdkNotifications: 'Notifications',
+    dgApiReference: 'API Reference',
+    dgWindowSwitcherWalkthrough: 'Window Switcher Walkthrough',
     dgExamples: 'Example Plugins',
     dgPackaging: 'Packaging & Deployment',
 
@@ -116,6 +118,8 @@ export const dictionary = {
     dgSdkAbstractions: '共享抽象契约',
     dgSdkServices: '宿主服务',
     dgSdkNotifications: '通知卡片',
+    dgApiReference: 'API 参考',
+    dgWindowSwitcherWalkthrough: '窗口切换器实战',
     dgExamples: '插件示例',
     dgPackaging: '打包与发布',
 
@@ -187,6 +191,8 @@ export const dictionary = {
     dgSdkAbstractions: '共享抽象契約',
     dgSdkServices: '宿主服務',
     dgSdkNotifications: '通知卡片',
+    dgApiReference: 'API 參考',
+    dgWindowSwitcherWalkthrough: '視窗切換器實戰',
     dgExamples: '插件示例',
     dgPackaging: '打包與發佈',
 
@@ -258,6 +264,8 @@ export const dictionary = {
     dgSdkAbstractions: '共用抽象契約',
     dgSdkServices: '宿主服務',
     dgSdkNotifications: '通知卡片',
+    dgApiReference: 'API 參考',
+    dgWindowSwitcherWalkthrough: '視窗切換器實戰',
     dgExamples: '外掛範例',
     dgPackaging: '封裝與發布',
 
@@ -329,6 +337,8 @@ export const dictionary = {
     dgSdkAbstractions: '共有抽象化',
     dgSdkServices: 'ホストサービス',
     dgSdkNotifications: '通知表示',
+    dgApiReference: 'API リファレンス',
+    dgWindowSwitcherWalkthrough: 'ウィンドウ切り替えウォークスルー',
     dgExamples: 'サンプルプラグイン',
     dgPackaging: 'パッケージングと配布',
 
@@ -400,6 +410,8 @@ export const dictionary = {
     dgSdkAbstractions: '공유 추상화',
     dgSdkServices: '호스트 서비스',
     dgSdkNotifications: '알림 카드',
+    dgApiReference: 'API 참조',
+    dgWindowSwitcherWalkthrough: '윈도우 전환기 워크스루',
     dgExamples: '예제 플러그인',
     dgPackaging: '패키징 및 배포',
 
@@ -471,6 +483,8 @@ export const dictionary = {
     dgSdkAbstractions: 'Abstracciones compartidas',
     dgSdkServices: 'Servicios del host',
     dgSdkNotifications: 'Notificaciones',
+    dgApiReference: 'Referencia de la API',
+    dgWindowSwitcherWalkthrough: 'Tutorial del conmutador de ventanas',
     dgExamples: 'Plugins de ejemplo',
     dgPackaging: 'Empaquetado y despliegue',
 

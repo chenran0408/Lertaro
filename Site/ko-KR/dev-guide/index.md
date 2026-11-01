@@ -8,6 +8,7 @@ Lertaro 개발자 참조 매뉴얼에 오신 것을 환영합니다. Lertaro는 
 - **[빠른 시작 가이드](./getting-started)** —— 클래스 라이브러리 프로젝트 생성, SDK 참조, `IPlugin` 진입점 구현 및 로컬 디버깅 모범 사례.
 - **[패키징 및 배포](./packaging)** —— 어셈블리 디렉토리 구조 표준, 서드파티 관리/네이티브 DLL 패키징, 다국어 JSON 리소스 임베딩 및 PostBuild 자동 배포.
 - **[공식 플러그인 예제 분석](./examples)** —— 오픈소스로 제공되는 `CoreExtensions`, `PinyinAlias`, `FlowLauncherBridge`, `FileUnlocker` 플러그인의 실전 코드 분석.
+- **[윈도우 전환기 워크스루](./window-switcher-walkthrough)** —— 사용자 지정 트리거와 결과별 동작을 지원하는 즉시 창 검색 플러그인을 만듭니다.
 
 ## 2. 플러그인 SDK API 레퍼런스
 
@@ -19,6 +20,8 @@ Lertaro 개발자 참조 매뉴얼에 오신 것을 환영합니다. Lertaro는 
 | **[공유 추상화 계약](./sdk/abstractions)** | `ISearchResult`<br>`FileMetadata`<br>`IPluginSearchWindow`<br>`IConfigurable` | 검색 결과 읽기 전용 데이터 계약, 고정밀 파일 타임스탬프 및 크기 메타데이터, 호스트 윈도우 제어 핸들, 스키마 기반 네이티브 설정 폼. |
 | **[호스트 제공 서비스](./sdk/services)** | `FuzzyMatchService`<br>`TranslationService`<br>`IconService`<br>`FavoritesService`<br>`HistoryService`<br>`FileMetadataService`<br>`DirectoryIndexerService`<br>`MemoryMaintenanceService`<br>`RecentFilesService`<br>`ExplorerPathService`<br>`PluginSettingsService`<br>`SettingsSearchService`<br>`SettingsWindowService`<br>`SearchRefreshService`<br>`UserDataService`<br>`Logger` | 고성능 호스트 인프라: fzf 퍼지 매칭 및 하이라이트 마스크, 다국어 파싱, 캐싱 아이콘 추출, 즐겨찾기 관리/기록 조회, 디렉토리 인덱서 프록시, 지연 메모리 정리, 사용자 데이터 격리, Shell 네이티브 파일 작업. |
 | **[알림](./sdk/notifications)** | `PluginNotificationService`<br>`NotificationRequest`<br>`INotificationHandle`<br>`NotificationLevel`<br>`NotificationPosition`<br>`NotificationResult`<br>`NotificationFailure` | 호스트 자신의 창을 통한 배경 알림: 오른쪽 아래 카드 더미 또는 하단 중앙의 한 줄 알림, 호스트가 잘라내는 표시 시간, `Id` 기반 대체, 플러그인별 제한, 반드시 끝나는 완료 작업. |
+
+- **[API 참조](./api-reference)** —— 자동 생성된 <a href="/api/index.html">PluginSdk API 참조</a>가 다루는 범위와 위의 손으로 작성한 SDK 가이드를 보완하는 방식.
 
 > [!NOTE]
 > 이 페이지들의 인터페이스 시그니처와 멤버명, 기본값, 매개변수 순서는 `Lertaro.PluginSdk` 소스에서 그대로 읽은 것입니다. 페이지가 플러그인 호출에 대한 **호스트**의 반응까지 설명하는 문장은 현재 동작의 기록일 뿐, 플러그인이 의존할 수 있는 계약이 아닙니다.

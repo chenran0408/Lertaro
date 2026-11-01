@@ -8,6 +8,7 @@
 - **[快速上手指南](./getting-started)** —— 从零创建插件类库工程、引用 SDK、实现 `IPlugin` 入口以及本地调试的最佳实践。
 - **[打包与分发](./packaging)** —— 插件程序集目录结构规范、第三方托管/原生依赖库打包、多语言 JSON 资源内嵌与 PostBuild 自动部署。
 - **[官方插件范例](./examples)** —— 剖析随包开源的 `CoreExtensions`、`PinyinAlias`、`FlowLauncherBridge` 与 `FileUnlocker` 等真实插件的实现代码。
+- **[窗口切换器实战](./window-switcher-walkthrough)** —— 构建支持自定义触发词和结果操作的即时窗口搜索插件。
 
 ## 2. 插件 SDK 接口参考
 
@@ -19,6 +20,8 @@
 | **[共享抽象契约](./sdk/abstractions)** | `ISearchResult`<br>`FileMetadata`<br>`IPluginSearchWindow`<br>`IConfigurable` | 检索结果只读数据契约、纳秒级文件时间戳与大小元数据、宿主窗口安全控制句柄与基于模式驱动的原生配置表单。 |
 | **[宿主开放服务](./sdk/services)** | `FuzzyMatchService`<br>`TranslationService`<br>`IconService`<br>`FavoritesService`<br>`HistoryService`<br>`FileMetadataService`<br>`DirectoryIndexerService`<br>`MemoryMaintenanceService`<br>`RecentFilesService`<br>`ExplorerPathService`<br>`PluginSettingsService`<br>`SettingsSearchService`<br>`SettingsWindowService`<br>`SearchRefreshService`<br>`UserDataService`<br>`Logger` | 宿主暴露的高性能基础设施：fzf 模糊匹配与高亮掩码、多语言解析、带缓存图标提取、收藏管理与历史读取、后台目录索引代理、延迟内存维护、用户数据目录隔离及 Shell 原生文件操作。 |
 | **[通知](./sdk/notifications)** | `PluginNotificationService`<br>`NotificationRequest`<br>`INotificationHandle`<br>`NotificationLevel`<br>`NotificationPosition`<br>`NotificationResult`<br>`NotificationFailure` | 通过宿主自己的窗口在后台获得用户注意：右下角的卡片堆或底部居中的一行提示、由宿主裁剪的时长、按 `Id` 替换、按插件计数的上限，以及一定会完成的结束任务。 |
+
+- **[API 参考](./api-reference)** —— 自动生成的 <a href="/api/index.html">PluginSdk API 参考</a> 涵盖的内容，以及它如何补充上方的手写插件 SDK 指南。
 
 > [!NOTE]
 > 本手册各页的接口签名、成员名称、默认值与参数顺序均直接读取自 `Lertaro.PluginSdk` 源码。若某页同时描述了**宿主**对插件调用的反应，该句只是对当前行为的说明，并非插件可以依赖的契约。

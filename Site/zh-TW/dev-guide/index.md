@@ -8,6 +8,7 @@
 - **[快速上手指南](./getting-started)** —— 從零建立外掛模組類別庫專案、引用 SDK、實作 `IPlugin` 入口以及本機偵錯的最佳實踐。
 - **[封裝與分發](./packaging)** —— 外掛模組組件目錄結構規範、第三方託管/原生相依庫打包、多語言 JSON 資源內嵌與 PostBuild 自動部署。
 - **[官方外掛模組範例](./examples)** —— 剖析隨包開源的 `CoreExtensions`、`PinyinAlias`、`FlowLauncherBridge` 與 `FileUnlocker` 等真實外掛模組的實作程式碼。
+- **[視窗切換器實戰](./window-switcher-walkthrough)** —— 建立支援自訂觸發詞與結果操作的即時視窗搜尋外掛模組。
 
 ## 2. 外掛模組 SDK 介面參考
 
@@ -19,6 +20,8 @@
 | **[共用抽象契約](./sdk/abstractions)** | `ISearchResult`<br>`FileMetadata`<br>`IPluginSearchWindow`<br>`IConfigurable` | 檢索結果唯讀資料契約、奈秒級檔案時間戳記與大小中繼資料、宿主視窗安全控制控制代碼與基於結構描述驅動的原生設定表單。 |
 | **[宿主開放服務](./sdk/services)** | `FuzzyMatchService`<br>`TranslationService`<br>`IconService`<br>`FavoritesService`<br>`HistoryService`<br>`FileMetadataService`<br>`DirectoryIndexerService`<br>`MemoryMaintenanceService`<br>`RecentFilesService`<br>`ExplorerPathService`<br>`PluginSettingsService`<br>`SettingsSearchService`<br>`SettingsWindowService`<br>`SearchRefreshService`<br>`UserDataService`<br>`Logger` | 宿主暴露的高效能基礎設施：fzf 模糊比對與反白遮罩、多語言剖析、帶快取圖示擷取、收藏管理與歷程讀取、背景目錄索引代理、延遲記憶體維護、使用者資料目錄隔離及 Shell 原生檔案操作。 |
 | **[通知](./sdk/notifications)** | `PluginNotificationService`<br>`NotificationRequest`<br>`INotificationHandle`<br>`NotificationLevel`<br>`NotificationPosition`<br>`NotificationResult`<br>`NotificationFailure` | 透過宿主自己的視窗取得背景注意：右下角的卡片堆或下方置中的一行提示、由宿主裁剪的時長、依 `Id` 取代、逐外掛模組上限，以及一個總是會完成的工作。 |
+
+- **[API 參考](./api-reference)** —— 自動生成的 <a href="/api/index.html">PluginSdk API 參考</a> 涵蓋的內容，以及它如何補充上方的手寫外掛模組 SDK 指南。
 
 > [!NOTE]
 > 本手冊各頁的介面簽章、成員名稱、預設值與參數順序均取自 `Lertaro.PluginSdk` 原始碼。當某一頁同時描述**宿主**對外掛模組呼叫的反應時，該句只是目前行為的文件，並非外掛模組可以依賴的契約。
