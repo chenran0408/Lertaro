@@ -215,6 +215,21 @@ public sealed class SearchQueryDispatchControllerTests
         Assert.AreEqual(0, second.StreamsStarted, "A provider can start expensive work before returning its iterator.");
     }
 
+    [TestMethod]
+    public void StreamFullSearchFileRows_FailingProvider_ContinuesWithNextProvider()
+    {
+        var failing = new ThrowingProvider("broken");
+        var healthy = new TestProvider("healthy", 1);
+        var batches = new List<List<AppSearchResult>>();
+
+        SearchQueryDispatchController.StreamFullSearchFileRows("cs a", [failing, healthy], () => true, batches.Add);
+
+        Assert.AreEqual(1, failing.StreamsStarted);
+        Assert.AreEqual(1, healthy.Reads);
+        Assert.IsTrue(healthy.Disposed);
+        Assert.AreEqual("healthy-0", Assert.ContainsSingle(batches).Single().Name);
+    }
+
     private sealed class TestProvider(string name, int count) : IFullSearchFileResultProvider
     {
         public string Name => name;
@@ -250,6 +265,21 @@ public sealed class SearchQueryDispatchControllerTests
             {
                 Disposed = true;
             }
+        }
+    }
+
+    private sealed class ThrowingProvider(string name) : IFullSearchFileResultProvider
+    {
+        public string Name => name;
+        public int StreamsStarted { get; private set; }
+
+        public IReadOnlyList<InstantResultItem> GetFileResults(string query, int limit) =>
+            throw new InvalidOperationException("The streaming path must be used.");
+
+        public IEnumerable<InstantResultItem> GetFileResultsStreamed(string query, int limit)
+        {
+            StreamsStarted++;
+            throw new InvalidOperationException("expected provider failure");
         }
     }
 }
