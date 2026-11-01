@@ -293,6 +293,22 @@ public sealed class QuickSwitchTests
         Assert.AreEqual(@"D:\New", tracker.SelectQuickSwitchPath(Dialog));
     }
 
+    [TestMethod]
+    public void SelectQuickSwitchPath_EvictsTheOldestProviderWhenHistoryIsFull()
+    {
+        using var tracker = new ExplorerTracker();
+        var firstWindow = new IntPtr(0x6000);
+        tracker.WindowIsAlive = hwnd => hwnd == firstWindow;
+        tracker.WindowProcessId = _ => 7;
+        tracker.UpdatePath(@"D:\Fallback", isDesktop: false);
+        var provider = new ProviderAdapter();
+
+        for (var index = 0; index < 17; index++)
+            tracker.RememberPathProvider(provider, new IntPtr(0x6000 + index), $@"C:\Folder{index}");
+
+        Assert.AreEqual(@"D:\Fallback", tracker.SelectQuickSwitchPath(IntPtr.Zero, 42));
+    }
+
     // The gesture half: recognizing Ctrl+G must not wait for the lock the WinEvent thread holds while it reads
     // a file manager, or the keystroke is simply dropped.
     [TestMethod]

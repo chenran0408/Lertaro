@@ -31,29 +31,11 @@ public class ExplorerTracker : IDisposable
     public Func<string, string?>? PathNormalizer { get; set; }
     public IntPtr LastActiveHwnd { get; set; }
     public string? LastActiveExplorerPath => _dialogTracker.LastActiveExplorerPath;
-    // The last window that was really a path provider (a file manager, not a dialog). Deciding the browsed
-    // folder from "whatever window happened to be active just before the dialog" is not reliable: with two
-    // file managers open, or when focus passes through an unrelated window on the way to the dialog, that
-    // window is not a provider at all -- and then nothing ever reads the folder the user is actually
-    // browsing, which is what Quick Switch navigates to. Adapter and handle travel as one value, because a
-    // provider read aimed at one window's handle through another window's adapter reads a window nobody
-    // asked about. That pairing is only worth something because every read and write is under StateLock:
-    // a nullable tuple of this size is not written atomically, so a reader outside the lock could still see
-    // one window's adapter beside another window's handle.
-    // Deliberately NOT cleared by Deactivate: the fallback exists for the focus that passed through an
-    // unrelated window, and Deactivate is exactly what such a window triggers.
-    internal (IInlineSearchAdapter Adapter, IntPtr Hwnd)? LastPathProvider { get; private set; }
+    // Retains recently recognized file-manager windows and their folders for Quick Switch.
+    private readonly ExplorerPathProviderHistory _pathProviderHistory = new();
 
-    // Every provider window this session has recognized, most recently seen first, with the folder it showed
-    // then. One global path could only ever answer with whichever window happened to be classified last, so
-    // with two file managers open Ctrl+G was a coin toss between them. Reached under StateLock, pruned of dead
-    // windows as it is read; entries deliberately survive Deactivate, which is what a bounce through an
-    // unrelated window looks like.
-    private readonly List<(IntPtr Hwnd, uint ProcessId, string Path)> _pathProviders = [];
-
-    // ponytail: fixed cap, evicted oldest-first. Sixteen file-manager windows in one logon session is already
-    // past the point where the eleventh-oldest could be what the user meant.
-    private const int MaxPathProviders = 16;
+    // Deliberately NOT cleared by Deactivate: a bounce through an unrelated window should retain the fallback.
+    internal (IInlineSearchAdapter Adapter, IntPtr Hwnd)? LastPathProvider => _pathProviderHistory.LastProvider;
 
     // The two window facts the list above needs are native calls, and where Ctrl+G lands is not a policy to
     // leave unexercised; overriding them is what lets the tests below build the multi-window cases that the
@@ -69,24 +51,12 @@ public class ExplorerTracker : IDisposable
     internal void RememberPathProvider(IInlineSearchAdapter? adapter, IntPtr hwnd, string? path = null)
     {
         if (adapter == null || hwnd == IntPtr.Zero || !adapter.IsFileExplorer) return;
-        LastPathProvider = (adapter, hwnd);
-        if (string.IsNullOrEmpty(path)) return;
-
-        _pathProviders.RemoveAll(entry => entry.Hwnd == hwnd);
-        _pathProviders.Insert(0, (hwnd, WindowProcessId(hwnd), path));
-        if (_pathProviders.Count > MaxPathProviders) _pathProviders.RemoveRange(MaxPathProviders, _pathProviders.Count - MaxPathProviders);
+        var processId = string.IsNullOrEmpty(path) ? 0 : WindowProcessId(hwnd);
+        _pathProviderHistory.Remember(adapter, hwnd, processId, path);
     }
 
     // Keeps a known provider's folder current without adding a window nobody has read a folder from yet.
-    private void RefreshProviderPath(IntPtr hwnd, string path)
-    {
-        if (hwnd == IntPtr.Zero || string.IsNullOrEmpty(path)) return;
-        var index = _pathProviders.FindIndex(entry => entry.Hwnd == hwnd);
-        if (index < 0) return;
-        var entry = _pathProviders[index];
-        _pathProviders.RemoveAt(index);
-        _pathProviders.Insert(0, (entry.Hwnd, entry.ProcessId, path));
-    }
+    private void RefreshProviderPath(IntPtr hwnd, string path) => _pathProviderHistory.Refresh(hwnd, path);
 
     /// <summary>
     /// The folder Quick Switch should land on for a dialog: the provider window that shares the dialog's
@@ -99,19 +69,8 @@ public class ExplorerTracker : IDisposable
     {
         // Dead windows are dropped as the list is read rather than on a timer: a closed file manager must not
         // keep answering for a folder nobody is looking at any more.
-        _pathProviders.RemoveAll(entry => !WindowIsAlive(entry.Hwnd));
-
         if (dialogProcessId == 0 && dialogHwnd != IntPtr.Zero) dialogProcessId = WindowProcessId(dialogHwnd);
-        if (dialogProcessId != 0)
-        {
-            var sameProcess = _pathProviders.FirstOrDefault(entry => entry.ProcessId == dialogProcessId && !string.IsNullOrEmpty(entry.Path));
-            if (!string.IsNullOrEmpty(sameProcess.Path)) return sameProcess.Path;
-        }
-
-        foreach (var entry in _pathProviders)
-            if (!string.IsNullOrEmpty(entry.Path)) return entry.Path;
-
-        return _dialogTracker.LastActiveExplorerPath;
+        return _pathProviderHistory.Select(dialogProcessId, WindowIsAlive, _dialogTracker.LastActiveExplorerPath);
     }
 
     // Publishes the provider's folder as the last browsed path, which is what the App's mirror tracker turns
@@ -499,7 +458,7 @@ public class ExplorerTracker : IDisposable
         IsDesktop = false;
         ActiveHwnd = IntPtr.Zero;
         _dialogTracker.Clear();
-        _pathProviders.Clear();
+        _pathProviderHistory.Clear();
         Logger.Log("[ExplorerTracker] Stopped.");
     }
     public bool TryGetActiveWindowRect(out RECT rect)
@@ -531,46 +490,14 @@ public class ExplorerTracker : IDisposable
     /// non-dialog window, and for a dialog whose adapter does not opt in -- see
     /// <see cref="IFileDialogAdapter.TryGetTargetFieldBounds"/>.
     /// </summary>
-    public bool TryGetTargetFieldRect(out RECT rect)
-    {
-        rect = default;
-        if (ActiveHwnd == IntPtr.Zero || ActiveAdapter == null)
-            return false;
-        if (!ActiveAdapter.TryGetTargetFieldBounds(ActiveHwnd, out var bounds))
-            return false;
-        if (!IsUsableBounds(bounds))
-            return false;
-
-        rect = ToRect(bounds);
-        return true;
-    }
+    public bool TryGetTargetFieldRect(out RECT rect) => ExplorerDialogBounds.TryGetTargetFieldRect(ActiveHwnd, ActiveAdapter, out rect);
 
     /// <summary>
     /// The active dialog's own file list, when that dialog's adapter can see it. False for a non-dialog
     /// window, and for a dialog whose adapter does not opt in -- see
     /// <see cref="IFileDialogAdapter.TryGetFileListBounds"/>.
     /// </summary>
-    public bool TryGetFileListRect(out RECT rect)
-    {
-        rect = default;
-        if (ActiveHwnd == IntPtr.Zero || ActiveAdapter == null)
-            return false;
-        if (!ActiveAdapter.TryGetFileListBounds(ActiveHwnd, out var bounds))
-            return false;
-        if (!IsUsableBounds(bounds))
-            return false;
-
-        rect = ToRect(bounds);
-        return true;
-    }
-
-    // Reported across a process boundary by someone else's UI framework, which is exactly where an empty or
-    // bogus rect comes from; a region with no area cannot anchor anything.
-    private static bool IsUsableBounds(AdapterRect bounds) =>
-        bounds.Right > bounds.Left && bounds.Bottom > bounds.Top;
-
-    private static RECT ToRect(AdapterRect b) =>
-        new() { Left = b.Left, Top = b.Top, Right = b.Right, Bottom = b.Bottom };
+    public bool TryGetFileListRect(out RECT rect) => ExplorerDialogBounds.TryGetFileListRect(ActiveHwnd, ActiveAdapter, out rect);
 
     private void WinEventProc(IntPtr hWinEventHook, uint eventType, IntPtr hwnd,
         int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
