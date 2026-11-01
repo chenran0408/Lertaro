@@ -63,6 +63,7 @@ public class SearchableItem
 
     /// <summary>
     /// Optional pre-loaded icon as a GDI HBITMAP (Win32 handle).
+    /// </summary>
     public IntPtr HBitmapIcon { get; set; }
 
     /// <summary>

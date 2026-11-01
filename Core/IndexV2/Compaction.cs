@@ -30,10 +30,7 @@ public static class Compaction
     // before the replacement helper removes its .bak file. That keeps direct native compaction from
     // materializing a FileRecordStore while preserving the Windows mapping/rename ordering contract.
     internal static void Compact(Snapshot snapshot, DeltaOverlay delta, string path, CompactionStamp stamp,
-        Action? beforeBackupDelete)
-    {
-        SnapshotWriter.WriteCompacted(snapshot, delta, path, stamp, beforeBackupDelete);
-    }
+        Action? beforeBackupDelete) => SnapshotWriter.WriteCompacted(snapshot, delta, path, stamp, beforeBackupDelete);
 
     // The merge half of compaction, without the file write -- also backs NetworkIndex.ToStore(), which
     // needs a FileRecordStore (not a file on disk) as the next scan's TreeDiffBaseline input.

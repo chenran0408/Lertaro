@@ -5,8 +5,45 @@ using Lertaro.PluginSdk.Abstractions.Plugins;
 namespace Lertaro.App.Tests.Services.ShellMenu.ActionFlyout;
 
 [TestClass]
+[DoNotParallelize]
 public sealed class ActionMenuBuilderTests
 {
+    private IDynamicActionProvider[] _savedProviders = [];
+
+    [TestInitialize]
+    public void Initialize() => _savedProviders = Lertaro.App.Services.Plugin.PluginManager.Instance.AllDynamicActionProviders.ToArray();
+
+    [TestCleanup]
+    public void Cleanup()
+    {
+        var providers = (IList<IDynamicActionProvider>)Lertaro.App.Services.Plugin.PluginManager.Instance.AllDynamicActionProviders;
+        providers.Clear();
+        foreach (var provider in _savedProviders) providers.Add(provider);
+    }
+
+    [TestMethod]
+    public void VirtualRowsOnlyReceiveProvidersThatOptIntoInstantResults()
+    {
+        var providers = (IList<IDynamicActionProvider>)Lertaro.App.Services.Plugin.PluginManager.Instance.AllDynamicActionProviders;
+        providers.Clear();
+        providers.Add(new OptInProvider(false));
+        providers.Add(new OptInProvider(true));
+        var actions = ActionMenuBuilder.BuildDynamic([new AppSearchResult { ResultKind = "InstantResult", FullPath = "clip:1" }],
+            IntPtr.Zero, SearchWindowType.Main, new(), new());
+        CollectionAssert.AreEqual(new[] { "virtual" }, actions.Where(action => !action.IsSectionHeader).Select(action => action.Text).ToArray());
+    }
+
+    private sealed class OptInProvider(bool allowInstant) : IDynamicActionProvider
+    {
+        public string GroupName => "Clipboard";
+        public bool CanProvideForInstantResults => allowInstant;
+        public bool CanProvide(IReadOnlyList<ISearchResult> results) => true;
+        public IEnumerable<DynamicMenuItem> GetMenuItems(IReadOnlyList<ISearchResult> results, IntPtr hMenu) =>
+            [new DynamicMenuItem { Text = allowInstant ? "virtual" : "file only", CommandId = 1, OnExecute = () => { } }];
+        public void ExecuteCommand(IReadOnlyList<ISearchResult> results, uint commandId, IntPtr ownerHwnd) { }
+        public void ClearSession() { }
+    }
+
     private static ActionMenuItem Item(string text, bool hasSubMenu = false) => new() { Text = text, HasSubMenu = hasSubMenu };
     private static ActionMenuItem Separator() => new() { IsSeparator = true };
     private static ActionMenuItem Header(string title, string groupId = "") => new() { IsSectionHeader = true, SectionTitle = title, SectionGroupId = groupId };

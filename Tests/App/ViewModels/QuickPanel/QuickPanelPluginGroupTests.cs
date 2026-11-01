@@ -11,6 +11,41 @@ namespace Lertaro.App.Tests.ViewModels.QuickPanel;
 public sealed class QuickPanelPluginGroupTests
 {
     [TestMethod]
+    public async Task VirtualEntriesKeepProviderOrderInOneGroupDespiteDifferentSourcesAndTimes()
+    {
+        var provider = new VirtualProvider();
+        var vm = new QuickPanelViewModel(() => new Core.QuickPanelSettings(), saveSettings: () => { });
+        var groups = new List<QuickPanelGroupViewModel>();
+        await vm.LoadPluginTabAsync(provider, "virtual", "Clipboard", (group, _) => groups.Add(group), CancellationToken.None);
+        Assert.HasCount(1, groups);
+        CollectionAssert.AreEqual(new[] { "pinned", "recent" }, groups[0].Items.Select(item => item.Name).ToArray());
+        Assert.IsTrue(groups[0].Items.All(item => item.IsInstantResult));
+        Assert.IsFalse(groups[0].IsThumbnailView);
+        Assert.AreEqual(string.Empty, groups[0].FolderPath);
+    }
+
+    private sealed class VirtualProvider : PluginSdk.Abstractions.Plugins.IQuickPanelTabProvider
+    {
+        public Task<IReadOnlyList<ISearchResult>> GetEntriesAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<ISearchResult>>([new VirtualItem("pinned", "editor", 1), new VirtualItem("recent", "browser", 2)]);
+    }
+
+    private sealed class VirtualItem : PluginSdk.Abstractions.Plugins.InstantResultItem, ISearchResult
+    {
+        internal VirtualItem(string name, string source, int day)
+        {
+            Title = name; Description = source; ActionArgument = $"clip:{day}";
+            Metadata = new FileMetadata(0, default, new DateTime(2026, 1, day), default);
+        }
+        public string Name => Title;
+        public string FullPath => ActionArgument;
+        public string ContextDirectory => "";
+        public bool IsDir => false;
+        public bool IsApplication => false;
+        public FileMetadata Metadata { get; }
+    }
+
+    [TestMethod]
     public async Task SavedPluginGroupChoicesFollowTheFolderWhenProviderOrderChanges()
     {
         var settings = new Core.QuickPanelSettings();

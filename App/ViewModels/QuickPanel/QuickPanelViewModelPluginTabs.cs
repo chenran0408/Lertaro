@@ -46,16 +46,18 @@ public partial class QuickPanelViewModel
         var items = entries
             .Select((entry, index) => (
                 Item: Helpers.PluginResultMapper.ToUiResult(entry, index),
-                Modified: entry.Metadata.Modified is var modified && modified != DateTime.MinValue ? modified : (DateTime?)null))
+                // Virtual instant entries carry a provider-owned order, such as pinned clipboard items.
+                Modified: entry is not InstantResultItem && entry.Metadata.Modified is var modified && modified != DateTime.MinValue ? modified : (DateTime?)null))
             .ToList();
 
         // Tiles unless the settings page says otherwise, which is what a folder source gets too. The
         // header's own toggle still overrides it for as long as the panel is open.
-        var asList = _readSettings().ListViewPluginTabIds.Contains(id, StringComparer.OrdinalIgnoreCase);
+        var asList = entries.All(entry => entry is InstantResultItem) ||
+            _readSettings().ListViewPluginTabIds.Contains(id, StringComparer.OrdinalIgnoreCase);
 
         // Group entries by parent directory so a plugin tab can contain multiple groups/folders.
         var groups = items
-            .GroupBy(i => i.Item.ParentDir ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+            .GroupBy(i => i.Item.IsInstantResult ? string.Empty : i.Item.ParentDir ?? string.Empty, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         var singleGroupNoPath = groups.Count == 1 && string.IsNullOrEmpty(groups[0].Key);

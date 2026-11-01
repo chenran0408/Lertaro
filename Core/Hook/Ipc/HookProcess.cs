@@ -63,7 +63,7 @@ public sealed class HookProcess : IDisposable
     internal bool IsHotkeyRecorderFocused
     {
         get => _isHotkeyRecorderFocused;
-        set { _isHotkeyRecorderFocused = value; if (_keyboardHook != null) _keyboardHook.IsHotkeyRecorderFocused = value; }
+        set { _isHotkeyRecorderFocused = value; _keyboardHook?.IsHotkeyRecorderFocused = value; }
     }
     // Written by the keyboard hook thread, read by the tracker thread; the window message between them is the
     // synchronization, and a plain field read here would be the one place the value could still be torn.

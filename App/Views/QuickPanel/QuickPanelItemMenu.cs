@@ -65,7 +65,10 @@ internal sealed class QuickPanelItemMenu
                 using var existence = PathExistenceCache.BeginScope();
                 await Task.Run(() => PathExistenceCache.PrimeResults(selection));
                 if (_generation != generation || !window.IsVisible) return;
-                PrependActions(menu, ActionMenuBuilder.FinalizeItems(ActionMenuBuilder.BuildStatic(selection, SearchWindowType.Main)), selection, window);
+                var actions = selection.Any(result => result.IsInstantResult)
+                    ? ActionMenuBuilder.BuildDynamic(selection, IntPtr.Zero, SearchWindowType.Main, new(), new())
+                    : ActionMenuBuilder.BuildStatic(selection, SearchWindowType.Main);
+                PrependActions(menu, ActionMenuBuilder.FinalizeItems(actions), selection, window);
             }
             catch (Exception ex) { Core.Logger.Log($"[QuickPanel] Building item actions failed: {ex.Message}", Core.LogLevel.Error); }
             finally { if (_generation == generation) _building = false; }

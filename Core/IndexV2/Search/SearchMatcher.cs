@@ -207,10 +207,7 @@ internal static class SearchMatcher
                 }
                 return worker;
             },
-            worker =>
-            {
-                ReturnWorker(worker);
-            });
+            worker => ReturnWorker(worker));
     }
 
     private static void MatchChunk(Snapshot snapshot, QueryContext ctx, int start, int end, Worker worker,

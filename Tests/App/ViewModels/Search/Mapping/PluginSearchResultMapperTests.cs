@@ -8,6 +8,26 @@ namespace Lertaro.App.Tests.ViewModels.Search.Mapping;
 public sealed class PluginSearchResultMapperTests
 {
     [TestMethod]
+    public void VirtualResultsWithIdenticalPreviewsKeepTheirOwnStableIdentities()
+    {
+        var rows = new List<AppSearchResult>();
+        PluginSearchResultMapper.AddInstantResultItems(rows,
+            [new VirtualItem("clip:1"), new VirtualItem("clip:2")], "cb", new FakeComponent());
+        CollectionAssert.AreEqual(new[] { "clip:1", "clip:2" }, rows.Select(row => row.FullPath).ToArray());
+        Assert.IsTrue(rows.All(row => row.IsInstantResult));
+    }
+
+    private sealed class VirtualItem : InstantResultItem, PluginSdk.Abstractions.ISearchResult
+    {
+        internal VirtualItem(string argument) { Title = "Same preview"; ActionArgument = argument; ActionType = "None"; }
+        public string Name => Title;
+        public string FullPath => ActionArgument;
+        public string ContextDirectory => "";
+        public bool IsDir => false;
+        public bool IsApplication => false;
+    }
+
+    [TestMethod]
     public void AddInstantResultItems_RealFile_MapsAsFileResult()
     {
         var tempFile = Path.Combine(Path.GetTempPath(), $"mapper_test_{Guid.NewGuid():N}.txt");

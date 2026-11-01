@@ -120,7 +120,7 @@ public static class SnapshotWriter
         var aliasEntryOffsets = new List<uint>(uniqueNames.Count + 1) { 0 };
         var aliasProviderIds = new List<byte>();
         var aliasBlob = new MemoryStream();
-        byte[] nameEncodingBuffer = Array.Empty<byte>();
+        var nameEncodingBuffer = Array.Empty<byte>();
         for (var uid = 0; uid < uniqueNames.Count; uid++)
         {
             var name = uniqueNames[uid];

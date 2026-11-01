@@ -170,6 +170,8 @@ internal static class ActionMenuBuilder
             // was previously OrderByDescending, silently contradicting that doc).
             foreach (var provider in PluginManager.Instance.DynamicActionProviders.OrderBy(p => p.Priority))
             {
+                if (selection.Any(result => result.IsInstantResult) && !provider.CanProvideForInstantResults)
+                    continue;
                 if (provider.Keywords.Count > 0)
                     continue;
 

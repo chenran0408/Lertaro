@@ -20,6 +20,11 @@ public partial class QuickPanelWindow
         if (_activeList?.DataContext is ViewModels.QuickPanel.QuickPanelGroupViewModel { IsReordering: true }) return;
         if (_activeList?.SelectedItem is not AppSearchResult result) return;
 
+        if (result.IsInstantResult)
+        {
+            Services.Plugin.PluginActionExecutor.TryExecute(result, this);
+            return;
+        }
         FileExecutor.OpenFileOrFolder(result.FullPath);
     }
 

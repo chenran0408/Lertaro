@@ -1,5 +1,3 @@
-using System.Collections;
-
 namespace Lertaro.Core;
 
 // Build-time records live in Rust as a 48-byte row plus sparse high-ID pairs and unique UTF-16 names.

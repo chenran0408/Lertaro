@@ -16,6 +16,24 @@ internal static class PluginResultMapper
 {
     public static AppSearchResult ToUiResult(PluginSdk.Abstractions.ISearchResult item, int index)
     {
+        if (item is PluginSdk.Abstractions.Plugins.InstantResultItem instant)
+            return new AppSearchResult
+            {
+                Name = item.Name,
+                FullPath = item.FullPath,
+                ContextDirectory = item.ContextDirectory,
+                ParentDir = instant.Description,
+                Index = index,
+                ResultKind = "InstantResult",
+                InstantResultActionType = instant.ActionType,
+                InstantResultActionArgument = instant.ActionArgument,
+                InstantResultOnExecute = instant.OnExecute,
+                InstantResultOnExecuteFunc = instant.OnExecuteFunc,
+                IconOverride = string.IsNullOrWhiteSpace(instant.IconData) ? null :
+                    Services.ShellIcons.ShellIconHelper.CreateVectorIcon(instant.IconData, instant.IconColor ?? "DefaultPluginIconColor"),
+                TabCompletion = instant.TabCompletion
+            };
+
         // A web-address favorite isn't a real filesystem path: Path.GetDirectoryName mangles it (e.g.
         // "https://www.google.com" becomes "https:"), and there's no shell icon to look up for it either.
         var isWebUrl = FavoriteUrlHelper.IsWebUrl(item.FullPath);

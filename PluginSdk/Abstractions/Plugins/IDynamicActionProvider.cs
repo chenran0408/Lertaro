@@ -103,7 +103,7 @@ public class DynamicMenuItem
     /// <summary>
     /// Optional direct invocation delegate set by the plugin.
     /// When non-null, the host calls this instead of routing through
-    /// <see cref="IQuickNavigationProvider.ExecuteCommand"/> or path navigation.
+    /// <see cref="WindowAdapters.IQuickNavigationProvider.ExecuteCommand"/> or path navigation.
     /// Plugins use this for items whose execution logic they own entirely
     /// (e.g. virtual Shell namespace items, custom actions).
     /// </summary>

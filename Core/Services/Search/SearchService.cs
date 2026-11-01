@@ -105,10 +105,7 @@ public class SearchService : IDisposable
         {
             try
             {
-                await SearchPipeClient.SendSearchPipeCommandAsync(msg, result =>
-                {
-                    uniqueUnexcludedResult(result);
-                }, token).ConfigureAwait(false);
+                await SearchPipeClient.SendSearchPipeCommandAsync(msg, result => uniqueUnexcludedResult(result), token).ConfigureAwait(false);
                 return true;
             }
             catch (OperationCanceledException)

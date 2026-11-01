@@ -46,6 +46,8 @@ public interface IActivePathCollector : IOpenedFolderCollector
     bool CanHandle(IntPtr windowHwnd, string windowClassName, string processName) => CanHandle(windowClassName);
 
     /// <summary>
+    /// Collects the active path from the identified file-manager window or control.
+    /// </summary>
     /// <param name="activeHwnd">The currently active foreground or focused control window handle.</param>
     /// <param name="activeClassName">The class name of the active window/control.</param>
     /// <param name="windowHwnd">The top-level root owner window handle.</param>
