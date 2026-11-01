@@ -24,6 +24,8 @@ internal sealed class ClipboardStore(string databasePath)
     // Column order shared by every SELECT; MapEntry depends on it.
     private const string EntryColumns =
         "id, content, plain_preview, source_process, source_window_title, pinned, seen_count, created_at_ms, last_seen_at_ms";
+    private const string SearchEntryColumns =
+        "h.id, h.content, h.plain_preview, h.source_process, h.source_window_title, h.pinned, h.seen_count, h.created_at_ms, h.last_seen_at_ms";
 
     private readonly ClipboardDatabase _database = new(databasePath);
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -40,6 +42,9 @@ internal sealed class ClipboardStore(string databasePath)
 
     public Task<IReadOnlyList<ClipboardEntry>> GetEntriesAsync(CancellationToken cancellationToken = default) =>
         RunLockedAsync<IReadOnlyList<ClipboardEntry>>(() => GetEntriesCore(cancellationToken), cancellationToken);
+
+    public Task<IReadOnlyList<ClipboardEntry>> SearchAsync(string query, CancellationToken cancellationToken = default) =>
+        RunLockedAsync<IReadOnlyList<ClipboardEntry>>(() => SearchCore(query, cancellationToken), cancellationToken);
 
     public Task SetPinnedAsync(long id, bool pinned, CancellationToken cancellationToken = default) =>
         RunLockedAsync(() => SetPinnedCore(id, pinned), cancellationToken);
@@ -199,6 +204,53 @@ internal sealed class ClipboardStore(string databasePath)
         cancellationToken.ThrowIfCancellationRequested();
         return entries;
     }
+
+    private List<ClipboardEntry> SearchCore(string query, CancellationToken cancellationToken)
+    {
+        var terms = query.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (terms.Length == 0) return GetEntriesCore(cancellationToken);
+
+        var longTerms = terms.Where(term => term.EnumerateRunes().Count() >= 3).ToArray();
+        var shortTerms = terms.Where(term => term.EnumerateRunes().Count() < 3).ToArray();
+        var entries = new List<ClipboardEntry>();
+
+        using var connection = OpenConnection();
+        using var command = connection.CreateCommand();
+        var conditions = new List<string>();
+        if (longTerms.Length > 0)
+        {
+            conditions.Add("clipboard_history_fts MATCH @ftsQuery");
+            command.Parameters.AddWithValue("@ftsQuery", string.Join(" AND ", longTerms.Select(QuoteFtsTerm)));
+        }
+
+        for (var index = 0; index < shortTerms.Length; index++)
+        {
+            conditions.Add($"h.content LIKE @short{index} ESCAPE '\\' COLLATE NOCASE");
+            command.Parameters.AddWithValue($"@short{index}", "%" + EscapeLike(shortTerms[index]) + "%");
+        }
+
+        command.CommandText = $"""
+            SELECT {SearchEntryColumns}
+            FROM clipboard_history h
+            {(longTerms.Length > 0 ? "JOIN clipboard_history_fts fts ON fts.rowid = h.id" : string.Empty)}
+            WHERE {string.Join(" AND ", conditions)}
+            ORDER BY h.pinned DESC, h.last_seen_at_ms DESC, h.id DESC
+            """;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            entries.Add(MapEntry(reader));
+        }
+        cancellationToken.ThrowIfCancellationRequested();
+        return entries;
+    }
+
+    private static string QuoteFtsTerm(string term) => "\"" + term.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
+
+    private static string EscapeLike(string term) => term.Replace("\\", "\\\\", StringComparison.Ordinal)
+        .Replace("%", "\\%", StringComparison.Ordinal)
+        .Replace("_", "\\_", StringComparison.Ordinal);
 
     private void SetPinnedCore(long id, bool pinned)
     {

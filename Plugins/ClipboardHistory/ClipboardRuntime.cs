@@ -115,6 +115,17 @@ internal sealed class ClipboardRuntime : IDisposable
         finally { _gate.Release(); }
     }
 
+    internal IReadOnlyList<ClipboardEntry> Search(string term)
+    {
+        if (_store == null || _stopping || !_ready.IsCompletedSuccessfully) return [];
+        try { return _store.SearchAsync(term).GetAwaiter().GetResult(); }
+        catch (Exception ex)
+        {
+            LogFailure(ex);
+            return [];
+        }
+    }
+
     private void Publish(IReadOnlyList<ClipboardEntry> entries)
     {
         Volatile.Write(ref _entries, entries.ToArray());

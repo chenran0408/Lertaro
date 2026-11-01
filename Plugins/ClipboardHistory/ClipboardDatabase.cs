@@ -30,6 +30,24 @@ internal sealed class ClipboardDatabase(string databasePath)
         );
         CREATE INDEX IF NOT EXISTS idx_clipboard_last_seen ON clipboard_history(pinned DESC, last_seen_at_ms DESC);
         CREATE INDEX IF NOT EXISTS idx_clipboard_sha ON clipboard_history(content_sha256);
+        CREATE VIRTUAL TABLE IF NOT EXISTS clipboard_history_fts USING fts5(
+            content,
+            content='clipboard_history',
+            content_rowid='id',
+            tokenize='trigram'
+        );
+        CREATE TRIGGER IF NOT EXISTS clipboard_history_ai AFTER INSERT ON clipboard_history BEGIN
+            INSERT INTO clipboard_history_fts(rowid, content) VALUES (new.id, new.content);
+        END;
+        CREATE TRIGGER IF NOT EXISTS clipboard_history_ad AFTER DELETE ON clipboard_history BEGIN
+            INSERT INTO clipboard_history_fts(clipboard_history_fts, rowid, content)
+            VALUES ('delete', old.id, old.content);
+        END;
+        CREATE TRIGGER IF NOT EXISTS clipboard_history_au AFTER UPDATE OF content ON clipboard_history BEGIN
+            INSERT INTO clipboard_history_fts(clipboard_history_fts, rowid, content)
+            VALUES ('delete', old.id, old.content);
+            INSERT INTO clipboard_history_fts(rowid, content) VALUES (new.id, new.content);
+        END;
         """;
 
     internal SqliteConnection OpenConnection()
@@ -53,6 +71,17 @@ internal sealed class ClipboardDatabase(string databasePath)
         using var command = connection.CreateCommand();
         command.CommandText = SchemaSql;
         command.ExecuteNonQuery();
+
+        using var consistency = connection.CreateCommand();
+        consistency.CommandText = """
+            SELECT (SELECT COUNT(*) FROM clipboard_history_fts) <> (SELECT COUNT(*) FROM clipboard_history)
+            """;
+        if (Convert.ToInt32(consistency.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture) != 0)
+        {
+            using var rebuild = connection.CreateCommand();
+            rebuild.CommandText = "INSERT INTO clipboard_history_fts(clipboard_history_fts) VALUES ('rebuild')";
+            rebuild.ExecuteNonQuery();
+        }
     }
 
     internal void MoveCorruptDatabaseAside()

@@ -13,15 +13,9 @@ public sealed class ClipboardInstantProvider : IInstantResultProvider
     {
         if (!ClipboardSettings.Enabled || !TriggerWord.TryMatch(query, ClipboardSettings.TriggerKeyword, out var term))
             return [];
-        return MatchEntries(ClipboardRuntime.Instance.Entries, term)
+        return ClipboardRuntime.Instance.Search(term)
             .Select(entry => (InstantResultItem)new ClipboardSearchResult(entry)).ToArray();
     }
-
-    internal static IEnumerable<ClipboardEntry> MatchEntries(IEnumerable<ClipboardEntry> entries, string term) =>
-        entries.Where(entry => entry.Content.Contains(term, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(entry => entry.Pinned)
-            .ThenByDescending(entry => entry.LastSeenAtMs)
-            .ThenByDescending(entry => entry.Id);
 
     public bool[]? GetHighlightMask(string text, string query)
     {

@@ -214,6 +214,54 @@ public sealed class ClipboardStoreTests
     }
 
     [TestMethod]
+    public async Task SearchAsync_UsesSqliteFullTextAndKeepsPinnedNewestOrder()
+    {
+        var store = CreateStore();
+        await store.InitializeAsync();
+        var older = await store.AddAsync("alpha older", "App", "Title", 500, 1000000);
+        var newer = await store.AddAsync("alpha newer", "App", "Title", 500, 1000000);
+        var pinned = await store.AddAsync("alpha pinned", "App", "Title", 500, 1000000);
+        await store.SetPinnedAsync(pinned!.Id, true);
+
+        var results = await store.SearchAsync("alpha");
+
+        CollectionAssert.AreEqual(new[] { pinned.Id, newer!.Id, older!.Id }, results.Select(item => item.Id).ToArray());
+    }
+
+    [TestMethod]
+    public async Task SearchAsync_SupportsShortTermsAndFtsSpecialCharacters()
+    {
+        var store = CreateStore();
+        await store.InitializeAsync();
+        var shortTerm = await store.AddAsync("C# / C++ _100%", "App", "Title", 500, 1000000);
+        var other = await store.AddAsync("unrelated", "App", "Title", 500, 1000000);
+
+        var shortResults = await store.SearchAsync("C#");
+        var specialResults = await store.SearchAsync("_100%");
+
+        Assert.AreEqual(shortTerm!.Id, shortResults.Single().Id);
+        Assert.AreEqual(shortTerm.Id, specialResults.Single().Id);
+        Assert.IsFalse(specialResults.Any(item => item.Id == other!.Id));
+    }
+
+    [TestMethod]
+    public async Task SearchAsync_RemovesDeletedRowsAndSurvivesReopen()
+    {
+        var store = CreateStore();
+        await store.InitializeAsync();
+        var removed = await store.AddAsync("remove-me", "App", "Title", 500, 1000000);
+        await store.AddAsync("keep-me", "App", "Title", 500, 1000000);
+        await store.DeleteAsync(removed!.Id);
+        Assert.IsEmpty(await store.SearchAsync("remove-me"));
+
+        var reopened = CreateStore();
+        await reopened.InitializeAsync();
+        var results = await reopened.SearchAsync("keep-me");
+        Assert.HasCount(1, results);
+        Assert.AreEqual("keep-me", results[0].Content);
+    }
+
+    [TestMethod]
     public async Task Entries_PersistAcrossStoreReopen()
     {
         var firstStore = CreateStore();
