@@ -791,6 +791,7 @@
   "Hotkeys_QuickNavTitle": "快捷導航觸發",
   "Hotkeys_QuickNavDoubleClick": "在支援的視窗空白處按滑鼠左鍵兩下呼叫",
   "Hotkeys_QuickNavMiddleClick": "在支援的視窗空白處按中鍵呼叫",
+  "Hotkeys_ClipboardPanelHotkey": "剪貼板面板",
   "Hotkeys_QuickNavHotkey": "快速導航選單",
   "Settings_Blacklist": "處理程序黑名單",
   "Blacklist_Hint": "當這些程式在前景時，停用 Lertaro 快捷鍵，避免影響程式內的操作。選擇作用範圍，再加入需要避讓的程式。",

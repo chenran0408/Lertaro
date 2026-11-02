@@ -791,6 +791,7 @@
   "Hotkeys_QuickNavTitle": "빠른 탐색 트리거",
   "Hotkeys_QuickNavDoubleClick": "지원되는 창의 빈 공간에서 왼쪽 버튼 더블클릭",
   "Hotkeys_QuickNavMiddleClick": "지원되는 창의 빈 공간에서 가운데 버튼 클릭",
+  "Hotkeys_ClipboardPanelHotkey": "클립보드 패널",
   "Hotkeys_QuickNavHotkey": "빠른 탐색 메뉴",
   "Settings_Blacklist": "프로세스 차단 목록",
   "Blacklist_Hint": "이 프로그램이 전면에 있을 때 Lertaro 단축키를 꺼서 프로그램 조작에 영향을 주지 않습니다. 적용 범위를 선택한 후 프로그램을 추가하세요.",

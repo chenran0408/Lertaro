@@ -137,6 +137,7 @@ public class HotkeyPageSettings
     // so it has to be reachable while that window has focus, which means the hook service detects it.
     public string QuickPanelHotkey { get; set; } = "Ctrl+F2";
     public string QuickPanelAlternateHotkey { get; set; } = string.Empty;
+    public string ClipboardPanelHotkey { get; set; } = "Win+V";
     public bool QuickPanelMouseRightHold { get; set; }
     public bool QuickPanelMouseCircle { get; set; }
     public int QuickPanelRightHoldMilliseconds { get; set; } = 600;

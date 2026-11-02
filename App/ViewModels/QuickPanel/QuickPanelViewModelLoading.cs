@@ -40,7 +40,7 @@ public partial class QuickPanelViewModel
     /// hold the whole panel closed. Those batches are only a provisional view: the source applies its
     /// complete sort and cap once enumeration ends, so the final list remains exactly the configured one.
     /// </remarks>
-    public async Task RefreshAsync(string? processName = null, CancellationToken token = default)
+    public async Task RefreshAsync(string? processName = null, string? requestedTabId = null, CancellationToken token = default)
     {
         _loadCancellation?.Cancel();
         var loadCancellation = CancellationTokenSource.CreateLinkedTokenSource(token);
@@ -66,7 +66,10 @@ public partial class QuickPanelViewModel
         // What the panel wants to open on, decided before anything has loaded. _activeTabId is what it
         // is actually showing, which may be a stand-in until the wanted one turns up -- or forever, if
         // that tab has nothing in it.
-        _wantedTabId = ResolveActiveTabId(settings, processName, workspaces, candidates);
+        _wantedTabId = !string.IsNullOrEmpty(requestedTabId)
+            && candidates.Any(tab => tab.Id.Equals(requestedTabId, StringComparison.OrdinalIgnoreCase))
+            ? requestedTabId
+            : ResolveActiveTabId(settings, processName, workspaces, candidates);
         _activeTabId = string.Empty;
 
         RebuildTabs();

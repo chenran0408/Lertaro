@@ -69,7 +69,7 @@ public sealed class QuickPanelWakeSettingsTests
         var vm = new HotkeySettingsViewModel(settings, new BlacklistSettingsViewModel(settings), (_, _) => true);
         try
         {
-            vm.ToggleHotkeyValue = "Ctrl"; vm.QuickPanelHotkey = ""; vm.QuickSwitchComboHotkey = ""; vm.QuickNavigationHotkey = "";
+            vm.ToggleHotkeyValue = "Ctrl"; vm.QuickPanelHotkey = ""; vm.QuickSwitchComboHotkey = ""; vm.QuickNavigationHotkey = ""; vm.ClipboardPanelHotkey = "";
             vm.QuickPanelAlternateHotkey = "Alt+Space";
             var taken = vm.ProbeGlobalCombinations();
             Assert.HasCount(1, taken); Assert.AreEqual("", vm.QuickPanelAlternateHotkey);

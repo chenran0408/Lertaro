@@ -110,6 +110,33 @@ public sealed partial class QuickPanelManager : IDisposable
         Show(host, process);
     }
 
+    public void ShowClipboard()
+    {
+        Views.QuickSearchWindow.Helpers.ShellOverlayDismissHelper.DismissOverlayIfForeground();
+        var host = GetForegroundWindow();
+        if (_window is { IsVisible: true })
+        {
+            Hide();
+            return;
+        }
+        var settings = Core.UserSettings.Load();
+        if (!settings.QuickPanel.Enabled) return;
+        var process = ProcessNameOf(host);
+        if (Core.QuickPanelTabSelection.IsBlocked(process, settings))
+        {
+            Core.Logger.Log($"[QuickPanel] '{process}' is blacklisted, so not opening the clipboard panel.", Core.LogLevel.Debug);
+            return;
+        }
+        var provider = QuickPanelPluginTabs.Available
+            .FirstOrDefault(p => p.GetType().Name == "ClipboardTabProvider");
+        if (provider == null)
+        {
+            Core.Logger.Log("[QuickPanel] Clipboard history plugin is not available, so not opening the clipboard panel.", Core.LogLevel.Debug);
+            return;
+        }
+        Show(host, process, QuickPanelPluginTabs.ComponentId(provider));
+    }
+
     internal static bool IsCurrentProcess(uint foregroundProcessId, uint currentProcessId) =>
         foregroundProcessId != 0 && foregroundProcessId == currentProcessId;
 
@@ -150,7 +177,7 @@ public sealed partial class QuickPanelManager : IDisposable
 
     private bool _showing;
 
-    private async void Show(IntPtr host, string? process)
+    private async void Show(IntPtr host, string? process, string? requestedTabId = null)
     {
         // Show awaits a real load, and the hotkey that got here can be pressed again while it does --
         // at which point Toggle still sees a window that is not visible yet and starts a second one.
@@ -159,7 +186,7 @@ public sealed partial class QuickPanelManager : IDisposable
         _showing = true;
         try
         {
-            await ShowCoreAsync(host, process);
+            await ShowCoreAsync(host, process, requestedTabId);
         }
         finally
         {
@@ -167,7 +194,7 @@ public sealed partial class QuickPanelManager : IDisposable
         }
     }
 
-    private async Task ShowCoreAsync(IntPtr host, string? process)
+    private async Task ShowCoreAsync(IntPtr host, string? process, string? requestedTabId = null)
     {
         // As early as possible, before Show() -- Windows' Power Throttling operates at the process
         // scheduling level, so lifting it only after this window has already started painting would miss
@@ -182,7 +209,7 @@ public sealed partial class QuickPanelManager : IDisposable
         // Loaded before there is a window to put it in: whether one is built at all depends on what this
         // turns up, and the panel shows what is recent and where you currently are, so it has to be
         // asked on every open rather than once.
-        await _viewModel.RefreshAsync(process);
+        await _viewModel.RefreshAsync(process, requestedTabId);
 
         // Nothing to show, nothing to open: the panel exists to put content over the window in front,
         // and flashing an empty shell over it would only be in the way.

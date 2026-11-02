@@ -26,6 +26,18 @@ public sealed class GlobalHotkeyDetectorTests
     }
 
     [TestMethod]
+    public void ClipboardPanelHotkey_MatchesWinVAndConsumesTheKey()
+    {
+        var settings = new UserSettings();
+        settings.Hotkeys.ClipboardPanelHotkey = "Win+V";
+        var detector = new GlobalHotkeyDetector(settings, new ExplorerTracker());
+
+        detector.OnKeyDown(0x5B);
+        Assert.IsTrue(detector.CheckClipboardPanelHotkey(0x56, out var consumeKey));
+        Assert.IsTrue(consumeKey);
+    }
+
+    [TestMethod]
     public void ToggleHotkey_RecognizesTrackedAltState()
     {
         var settings = new UserSettings();

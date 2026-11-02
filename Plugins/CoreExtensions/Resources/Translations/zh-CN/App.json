@@ -791,6 +791,7 @@
   "Hotkeys_QuickNavTitle": "快捷导航触发",
   "Hotkeys_QuickNavDoubleClick": "在支持的窗口空白处双击左键呼出",
   "Hotkeys_QuickNavMiddleClick": "在支持的窗口空白处点击中键呼出",
+  "Hotkeys_ClipboardPanelHotkey": "剪贴板面板",
   "Hotkeys_QuickNavHotkey": "快速导航菜单",
   "Settings_Blacklist": "进程黑名单",
   "Blacklist_Hint": "当这些程序处于前台时，停用 Lertaro 快捷键，避免影响程序内的操作。选择作用范围，再添加需要避让的程序。",

@@ -151,6 +151,19 @@ public sealed class GlobalHotkeyDetector
         return _keyRules.FirstOrDefault(r => MatchConfiguredHotkey(r.Key, vkCode, time));
     }
 
+    public bool CheckClipboardPanelHotkey(int vkCode, out bool consumeKey)
+    {
+        var hotkey = _settings.Hotkeys.ClipboardPanelHotkey;
+        consumeKey = false;
+        if (string.IsNullOrWhiteSpace(hotkey)) return false;
+        if (HotkeyStringFormat.IsDoubleTap(hotkey, out _)) return false;
+        HotkeyStringFormat.ParseCombo(hotkey, out var modifier, out var key);
+        var targetVk = KeyboardUtils.GetKeyVirtualCode(key);
+        if (targetVk == 0 || vkCode != targetVk || !CheckModifiersMatch(modifier)) return false;
+        consumeKey = true;
+        return true;
+    }
+
     private void EnsureQuickPanelRules()
     {
         var settings = _settings.Hotkeys;
@@ -274,6 +287,7 @@ public sealed class GlobalHotkeyDetector
         yield return hotkeys.QuickSwitchHotkey;
         yield return hotkeys.QuickPanelHotkey;
         yield return hotkeys.QuickPanelAlternateHotkey;
+        yield return hotkeys.ClipboardPanelHotkey;
         yield return hotkeys.QuickNavigationHotkey;
         yield return hotkeys.NextItemHotkey;
         yield return hotkeys.PreviousItemHotkey;

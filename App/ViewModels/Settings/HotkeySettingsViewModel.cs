@@ -52,6 +52,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         MouseWakeWhitelist = new ProcessBlacklistEditorViewModel(hotkeys.QuickPanelMouseAllowedProcesses ?? []);
 
         _quickNavigationHotkey = hotkeys.QuickNavigationHotkey;
+        _clipboardPanelHotkey = hotkeys.ClipboardPanelHotkey;
         PluginActionGroups = HotkeyPluginActionGroupBuilder.Build(hotkeys.PluginActionHotkeys);
         QuickPanelWake = new QuickPanelWakeSettingsViewModel(this, userSettings, _combinationTaken);
 
@@ -107,6 +108,7 @@ public class HotkeySettingsViewModel : ViewModelBase
     private static readonly string[] HostHotkeyProperties =
     [
         nameof(ToggleHotkeyValue), nameof(QuickSwitchComboHotkey), nameof(QuickNavigationHotkey),
+        nameof(ClipboardPanelHotkey),
         nameof(NextItemHotkey), nameof(PreviousItemHotkey), nameof(ActionsMenuHotkey),
         nameof(CompleteFromSelectionHotkey), nameof(QuickLookHotkey), nameof(KeywordHistoryPreviousHotkey),
         nameof(KeywordHistoryNextHotkey), nameof(KeywordHistoryDeleteHotkey), nameof(OpenFullWindowHotkey),
@@ -118,6 +120,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         (nameof(ToggleHotkeyValue), ToggleHotkeyValue),
         (nameof(QuickSwitchComboHotkey), QuickSwitchComboHotkey),
         (nameof(QuickNavigationHotkey), QuickNavigationHotkey),
+        (nameof(ClipboardPanelHotkey), ClipboardPanelHotkey),
         (nameof(NextItemHotkey), NextItemHotkey),
         (nameof(PreviousItemHotkey), PreviousItemHotkey),
         (nameof(ActionsMenuHotkey), ActionsMenuHotkey),
@@ -162,6 +165,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         var hostHotkeys = new[]
             {
                 ToggleHotkeyValue, QuickSwitchComboHotkey, QuickNavigationHotkey,
+                ClipboardPanelHotkey,
                 NextItemHotkey, PreviousItemHotkey, ActionsMenuHotkey, CompleteFromSelectionHotkey,
                 QuickLookHotkey, KeywordHistoryPreviousHotkey, KeywordHistoryNextHotkey,
                 KeywordHistoryDeleteHotkey, OpenFullWindowHotkey, LocalSendSendWindowHotkey, StayOpenHotkey
@@ -365,6 +369,14 @@ public class HotkeySettingsViewModel : ViewModelBase
     }
     public string QuickNavigationHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(QuickNavigationHotkey));
 
+    private string _clipboardPanelHotkey;
+    public string ClipboardPanelHotkey
+    {
+        get => _clipboardPanelHotkey;
+        set => SetProperty(ref _clipboardPanelHotkey, value);
+    }
+    public string ClipboardPanelHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(ClipboardPanelHotkey));
+
     private string _stayOpenHotkey;
     public string StayOpenHotkey
     {
@@ -438,6 +450,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         }
 
         hotkeys.QuickNavigationHotkey = QuickNavigationHotkey;
+        hotkeys.ClipboardPanelHotkey = ClipboardPanelHotkey;
 
         var pluginActionHotkeys = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
         foreach (var group in PluginActionGroups)
@@ -495,6 +508,7 @@ public class HotkeySettingsViewModel : ViewModelBase
             QuickPanelAlternateHotkey = ProbeGlobalCombination(QuickPanelAlternateHotkey, defaults.QuickPanelAlternateHotkey, taken);
         }
         QuickNavigationHotkey = ProbeGlobalCombination(QuickNavigationHotkey, defaults.QuickNavigationHotkey, taken);
+        ClipboardPanelHotkey = ProbeGlobalCombination(ClipboardPanelHotkey, defaults.ClipboardPanelHotkey, taken);
         return taken;
     }
 

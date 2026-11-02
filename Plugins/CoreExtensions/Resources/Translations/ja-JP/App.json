@@ -791,6 +791,7 @@
   "Hotkeys_QuickNavTitle": "クイックナビゲーションのトリガー",
   "Hotkeys_QuickNavDoubleClick": "対応ウィンドウの空白部分をダブルクリック",
   "Hotkeys_QuickNavMiddleClick": "対応ウィンドウの空白部分を中クリック",
+  "Hotkeys_ClipboardPanelHotkey": "クリップボードパネル",
   "Hotkeys_QuickNavHotkey": "クイックナビゲーションメニュー",
   "Settings_Blacklist": "プロセスブラックリスト",
   "Blacklist_Hint": "これらのプログラムが前面にある間は Lertaro のショートカットを無効にして、操作への干渉を防ぎます。適用範囲を選び、プログラムを追加してください。",

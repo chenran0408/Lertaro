@@ -379,6 +379,12 @@ public sealed class HookProcess : IDisposable
                     Hwnd = ExplorerNativeHooks.GetForegroundWindow().ToInt64(), StringVal1 = id, BoolVal = true });
             };
             _keyboardHook.OnQuickNavigationHotkey += () => _ipcServer.SendQuickNavigationHotkey();
+            _keyboardHook.OnClipboardPanelHotkey += () =>
+            {
+                Logger.Log("[HookProcess] Clipboard panel hotkey detected.", LogLevel.Debug);
+                if (_appProcessId != 0) AllowSetForegroundWindow((int)_appProcessId);
+                _ipcServer.SendMessage(new IpcMessage { Id = IpcMessageId.ClipboardPanelHotkey });
+            };
             _keyboardHook.OnFavoriteDoubleTapHotkey += index => _ipcServer.SendMessage(new IpcMessage
             { Id = IpcMessageId.FavoriteDoubleTapHotkey, IntVal = index });
             _keyboardHook.OnQuickSwitchRequested += dialogHwnd =>

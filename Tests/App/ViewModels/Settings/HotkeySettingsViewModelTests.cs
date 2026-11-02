@@ -18,6 +18,7 @@ public sealed class HotkeySettingsViewModelTests
         // emptied here so each test answers for exactly the property it sets.
         vm.QuickSwitchComboHotkey = string.Empty;
         vm.QuickPanelHotkey = string.Empty;
+        vm.ClipboardPanelHotkey = string.Empty;
         return vm;
     }
 

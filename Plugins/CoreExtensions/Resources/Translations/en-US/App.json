@@ -791,6 +791,7 @@
   "Hotkeys_QuickNavTitle": "Quick Navigation Trigger",
   "Hotkeys_QuickNavDoubleClick": "Double left click in empty space of supported windows",
   "Hotkeys_QuickNavMiddleClick": "Middle click in empty space of supported windows",
+  "Hotkeys_ClipboardPanelHotkey": "Clipboard panel",
   "Hotkeys_QuickNavHotkey": "Quick Navigation Menu",
   "Settings_Blacklist": "Process Blacklist",
   "Blacklist_Hint": "Disable Lertaro hotkeys while these programs are in the foreground to avoid interfering with their controls. Choose the scope, then add programs.",

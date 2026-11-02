@@ -58,6 +58,7 @@ public sealed class HookIpcClient : IDisposable
     public event Action<string, string>? OnQuickPanelWakeTestResult;
     public event Action? OnQuickNavigationHotkey;
     public event Action<int>? OnFavoriteDoubleTapHotkey;
+    public event Action? OnClipboardPanelHotkey;
     public event Action<char>? OnCharacterTyped;
     public event Action<int, nint>? OnInlineInputStarted;
     public event Action? OnBackspacePressed;
@@ -353,6 +354,7 @@ public sealed class HookIpcClient : IDisposable
                 case IpcMessageId.QuickPanelWakeTestResult: OnQuickPanelWakeTestResult?.Invoke(msg.StringVal1 ?? "", msg.StringVal2 ?? ""); break;
                 case IpcMessageId.QuickNavigationHotkey: OnQuickNavigationHotkey?.Invoke(); break;
                 case IpcMessageId.FavoriteDoubleTapHotkey: OnFavoriteDoubleTapHotkey?.Invoke(msg.IntVal); break;
+                case IpcMessageId.ClipboardPanelHotkey: OnClipboardPanelHotkey?.Invoke(); break;
                 case IpcMessageId.KeyBackspace: OnBackspacePressed?.Invoke(); break;
                 case IpcMessageId.KeyEscape: OnEscapePressed?.Invoke(); break;
                 case IpcMessageId.KeyEnter: OnEnterPressed?.Invoke(); break;
