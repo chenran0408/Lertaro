@@ -8,6 +8,11 @@
     <!-- Existing warnings remain visible while projects enter the strict list individually. -->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
+  <!-- docfx restores Windows-targeting projects on the Linux docs runner; the property must be
+       visible to restore, which does not pick up per-invocation docfx properties. -->
+  <PropertyGroup Condition="'$([MSBuild]::IsOSPlatform(Linux))'">
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
   <!-- Set this before SDK targets derive DocumentationFile, which IDE0005 requires. -->
   <PropertyGroup Condition="'$(MSBuildProjectFullPath)' == '$(MSBuildThisFileDirectory)Tools\CompactionBenchmark\CompactionBenchmark.csproj'">
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
