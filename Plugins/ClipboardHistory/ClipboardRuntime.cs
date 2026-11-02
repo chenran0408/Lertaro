@@ -148,6 +148,14 @@ internal sealed class ClipboardRuntime : IDisposable
         catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); return false; }
     }
 
+    internal async Task CopyAsync(long id)
+    {
+        var entry = Entries.FirstOrDefault(entry => entry.Id == id);
+        if (entry == null || _monitor == null) return;
+        try { await _monitor.WriteTextAsync(entry.Content); }
+        catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); }
+    }
+
     /// <summary>Pastes into the tracked source window and reports whether the panel should close.
     /// The panel closes after pasting so the injected Ctrl+V lands in the window the user was
     /// typing in -- except for pinned entries: a pin is the user saying "keep this handy", so the
@@ -168,13 +176,7 @@ internal sealed class ClipboardRuntime : IDisposable
         catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); }
     }
 
-    internal async void Copy(long id)
-    {
-        var entry = Entries.FirstOrDefault(entry => entry.Id == id);
-        if (entry == null || _monitor == null) return;
-        try { await _monitor.WriteTextAsync(entry.Content); }
-        catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); }
-    }
+    internal void Copy(long id) => _ = CopyAsync(id);
 
     internal void TogglePin(long id) => _ = MutateAsync(async store =>
     {
@@ -188,6 +190,12 @@ internal sealed class ClipboardRuntime : IDisposable
     {
         await store.DeleteAsync(id).ConfigureAwait(false);
         Publish(Entries.Where(entry => entry.Id != id).ToArray());
+    });
+
+    internal void ClearHistory() => _ = MutateAsync(async store =>
+    {
+        await store.ClearAsync().ConfigureAwait(false);
+        Publish([]);
     });
 
     internal bool CanOpenSource(long id) => _sources.TryGetValue(id, out var source) && source.IsAlive;

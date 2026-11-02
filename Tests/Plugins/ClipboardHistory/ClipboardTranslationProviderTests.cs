@@ -20,7 +20,7 @@ public sealed class ClipboardTranslationProviderTests
                 Assert.IsTrue(translations.ContainsKey(field.LabelKey), field.LabelKey);
                 Assert.IsTrue(translations.ContainsKey(field.DescriptionKey), field.DescriptionKey);
             }
-            foreach (var action in new[] { "Paste", "Copy", "Pin", "Unpin", "Delete", "OpenSource" })
+            foreach (var action in new[] { "Paste", "Copy", "Pin", "Unpin", "Delete", "OpenSource", "ClearHistory" })
                 Assert.IsTrue(translations.ContainsKey("ClipboardHistory_" + action), culture + ":" + action);
         }
     }

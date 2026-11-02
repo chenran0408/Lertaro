@@ -24,5 +24,6 @@
   "ClipboardHistory_Config_ExcludedProcessesDesc": "これらのアプリが前面にある間にコピーしたテキストは記録されません。プロセス名をカンマで区切って指定します（.exe は不要、大文字小文字は区別しない）。例: keepass,keepassxc",
   "Plugin_Comp_Desc_ClipboardTabProvider": "クイックパネルにクリップボードタブを提供し、記録済みのクリップボードテキストを新しい順に表示します。",
   "Plugin_Comp_Desc_ClipboardInstantProvider": "検索ボックスからトリガーワード（既定は cb）で記録済みのクリップボードテキスト履歴を検索します。",
-  "Plugin_Comp_Desc_ClipboardActionProvider": "クリップボード履歴項目に対して、貼り付け、コピー、ピン留め、削除、コピー元ウィンドウを開く操作を提供します。"
+  "Plugin_Comp_Desc_ClipboardActionProvider": "クリップボード履歴に対する貼り付け、コピー、ピン留め、削除、ソース表示、履歴消去を提供します。",
+  "ClipboardHistory_ClearHistory": "履歴を消去"
 }

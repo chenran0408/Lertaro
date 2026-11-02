@@ -17,8 +17,8 @@ public sealed class ClipboardActionProvider : IDynamicActionProvider
         var runtime = ClipboardRuntime.Instance;
         var entry = runtime.Entries.FirstOrDefault(entry => entry.Id == id);
         if (entry == null) yield break;
-        string[] keys = ["Paste", "Copy", entry.Pinned ? "Unpin" : "Pin", "Delete", "OpenSource"];
-        string[] shortcuts = ["P", "C", "T", "D", "O"];
+        string[] keys = ["Paste", "Copy", entry.Pinned ? "Unpin" : "Pin", "Delete", "OpenSource", "ClearHistory"];
+        string[] shortcuts = ["P", "C", "T", "D", "O", "A"];
         for (uint command = 1; command <= keys.Length; command++)
         {
             var captured = command;
@@ -50,6 +50,7 @@ public sealed class ClipboardActionProvider : IDynamicActionProvider
             case 3: runtime.TogglePin(id); break;
             case 4: runtime.Delete(id); break;
             case 5: runtime.OpenSource(id); break;
+            case 6: runtime.ClearHistory(); break;
         }
     }
 

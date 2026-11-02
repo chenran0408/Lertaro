@@ -24,5 +24,6 @@
   "ClipboardHistory_Config_ExcludedProcessesDesc": "这些应用前台时复制的内容不会被记录。用英文逗号分隔进程名（不含 .exe，不区分大小写），例如 keepass,keepassxc。",
   "Plugin_Comp_Desc_ClipboardTabProvider": "在快速面板中提供剪贴板标签页，按时间从新到旧列出已记录的剪贴板文本。",
   "Plugin_Comp_Desc_ClipboardInstantProvider": "在搜索框中通过触发词（默认 cb）检索已记录的剪贴板文本历史。",
-  "Plugin_Comp_Desc_ClipboardActionProvider": "为剪贴板历史条目提供粘贴、复制、置顶、删除和打开来源窗口等操作。"
+  "Plugin_Comp_Desc_ClipboardActionProvider": "为剪贴板历史条目提供粘贴、复制、置顶、删除、打开来源窗口和清空历史等操作。",
+  "ClipboardHistory_ClearHistory": "清空历史"
 }

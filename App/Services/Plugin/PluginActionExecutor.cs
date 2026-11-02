@@ -18,7 +18,9 @@ public static class PluginActionExecutor
                 if (result.InstantResultOnExecuteFunc != null)
                 {
                     var shouldHide = result.InstantResultOnExecuteFunc();
-                    if (shouldHide)
+                    // A pinned quick panel is an explicit request to keep the palette available. Plugin
+                    // callbacks do not know the host, so the host has the final word before hiding.
+                    if (shouldHide && view is not Views.QuickPanel.QuickPanelWindow { IsStayOpen: true })
                     {
                         (view as QuickSearchWindow)?.SuppressNextForegroundRestore();
                         view?.HideWindow();

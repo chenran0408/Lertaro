@@ -214,6 +214,21 @@ public sealed class ClipboardStoreTests
     }
 
     [TestMethod]
+    public async Task ClearAsync_RemovesAllRowsIncludingPinned()
+    {
+        var store = CreateStore();
+        await store.InitializeAsync();
+        var first = await store.AddAsync("first", "App", "Title", 500, 1000000);
+        await store.SetPinnedAsync(first!.Id, true);
+        await store.AddAsync("second", "App", "Title", 500, 1000000);
+
+        await store.ClearAsync();
+
+        Assert.IsEmpty(await store.GetEntriesAsync());
+        Assert.IsEmpty(await store.SearchAsync("first"));
+    }
+
+    [TestMethod]
     public async Task SearchAsync_UsesSqliteFullTextAndKeepsPinnedNewestOrder()
     {
         var store = CreateStore();

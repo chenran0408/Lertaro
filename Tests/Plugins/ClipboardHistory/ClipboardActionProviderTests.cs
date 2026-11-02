@@ -1,5 +1,6 @@
 using Lertaro.PluginSdk.Abstractions;
 using Lertaro.PluginSdk.Abstractions.Plugins;
+using Lertaro.Plugins.ClipboardHistory;
 
 namespace Lertaro.Plugins.ClipboardHistory.Tests;
 
@@ -31,5 +32,32 @@ public sealed class ClipboardActionProviderTests
         Assert.IsFalse(result.IsApplication);
         Assert.IsInstanceOfType<InstantResultItem>(result);
         Assert.AreEqual(DateTimeOffset.FromUnixTimeMilliseconds(1000).LocalDateTime, result.Metadata.Modified);
+    }
+
+    [TestMethod]
+    public void MenuIncludesClearHistoryAfterPerEntryActions()
+    {
+        var entry = ClipboardInstantProviderTests.Entry(42, "text", pinned: true, time: 1);
+        var provider = new ClipboardActionProvider();
+        var previousLookup = PluginSdk.Services.TranslationService.LookupFunc;
+        PluginSdk.Services.TranslationService.LookupFunc = key => key;
+        var entriesField = typeof(ClipboardRuntime).GetField("_entries", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.IsNotNull(entriesField);
+        var previousEntries = (ClipboardEntry[])entriesField.GetValue(ClipboardRuntime.Instance)!;
+        entriesField.SetValue(ClipboardRuntime.Instance, new[] { entry });
+        try
+        {
+            var items = provider.GetMenuItems([new ClipboardSearchResult(entry)], IntPtr.Zero).ToArray();
+
+            Assert.HasCount(6, items);
+            Assert.AreEqual(6u, items[^1].CommandId);
+            Assert.AreEqual("ClipboardHistory_ClearHistory", items[^1].Text);
+            Assert.IsNotNull(items[^1].OnExecute);
+        }
+        finally
+        {
+            PluginSdk.Services.TranslationService.LookupFunc = previousLookup;
+            entriesField.SetValue(ClipboardRuntime.Instance, previousEntries);
+        }
     }
 }

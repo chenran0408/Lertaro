@@ -24,5 +24,6 @@
   "ClipboardHistory_Config_ExcludedProcessesDesc": "El texto copiado mientras una de estas aplicaciones está en primer plano no se registra. Separa los nombres de proceso con comas (sin .exe, sin distinguir mayúsculas), p. ej. keepass,keepassxc.",
   "Plugin_Comp_Desc_ClipboardTabProvider": "Proporciona la pestaña del portapapeles en el panel rápido, mostrando las entradas de texto registradas de la más reciente a la más antigua.",
   "Plugin_Comp_Desc_ClipboardInstantProvider": "Busca en el historial de texto del portapapeles desde el cuadro de búsqueda mediante la palabra clave (por defecto cb).",
-  "Plugin_Comp_Desc_ClipboardActionProvider": "Proporciona acciones para las entradas del historial del portapapeles: pegar, copiar, fijar, eliminar y abrir la ventana de origen."
+  "Plugin_Comp_Desc_ClipboardActionProvider": "Proporciona acciones de pegar, copiar, anclar, eliminar, abrir la ventana de origen y borrar el historial.",
+  "ClipboardHistory_ClearHistory": "Borrar historial"
 }

@@ -24,5 +24,6 @@
   "ClipboardHistory_Config_ExcludedProcessesDesc": "Text copied while one of these apps is in the foreground is not recorded. Separate process names with commas (no .exe, case-insensitive), e.g. keepass,keepassxc.",
   "Plugin_Comp_Desc_ClipboardTabProvider": "Provides the Clipboard tab in the Quick Panel, listing recorded clipboard text entries from newest to oldest.",
   "Plugin_Comp_Desc_ClipboardInstantProvider": "Searches recorded clipboard text history from the search box via the trigger keyword (default cb).",
-  "Plugin_Comp_Desc_ClipboardActionProvider": "Provides actions for clipboard history entries: paste, copy, pin, delete, and opening the source window."
+  "Plugin_Comp_Desc_ClipboardActionProvider": "Provides paste, copy, pin, delete, source-window and clear-history actions for clipboard entries.",
+  "ClipboardHistory_ClearHistory": "Clear history"
 }

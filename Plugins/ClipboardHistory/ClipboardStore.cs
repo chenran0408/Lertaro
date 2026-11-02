@@ -52,6 +52,9 @@ internal sealed class ClipboardStore(string databasePath)
     public Task DeleteAsync(long id, CancellationToken cancellationToken = default) =>
         RunLockedAsync(() => DeleteCore(id), cancellationToken);
 
+    public Task ClearAsync(CancellationToken cancellationToken = default) =>
+        RunLockedAsync(ClearCore, cancellationToken);
+
     public Task TrimAsync(int maxEntries, CancellationToken cancellationToken = default) =>
         RunLockedAsync(() => TrimCore(Math.Max(0, maxEntries)), cancellationToken);
 
@@ -268,6 +271,14 @@ internal sealed class ClipboardStore(string databasePath)
         using var command = connection.CreateCommand();
         command.CommandText = "DELETE FROM clipboard_history WHERE id = @id";
         command.Parameters.AddWithValue("@id", id);
+        command.ExecuteNonQuery();
+    }
+
+    private void ClearCore()
+    {
+        using var connection = OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = "DELETE FROM clipboard_history";
         command.ExecuteNonQuery();
     }
 

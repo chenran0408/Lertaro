@@ -24,5 +24,6 @@
   "ClipboardHistory_Config_ExcludedProcessesDesc": "이 앱이 전면에 있을 때 복사한 텍스트는 기록되지 않습니다. 프로세스 이름을 쉼표로 구분하여 지정하세요(.exe 제외, 대소문자 구분 없음). 예: keepass,keepassxc",
   "Plugin_Comp_Desc_ClipboardTabProvider": "빠른 패널에 클립보드 탭을 제공하며, 기록된 클립보드 텍스트를 최신순으로 표시합니다.",
   "Plugin_Comp_Desc_ClipboardInstantProvider": "검색 상자에서 트리거 단어(기본값 cb)로 기록된 클립보드 텍스트 기록을 검색합니다.",
-  "Plugin_Comp_Desc_ClipboardActionProvider": "클립보드 기록 항목에 붙여넣기, 복사, 고정, 삭제, 원본 창 열기 작업을 제공합니다."
+  "Plugin_Comp_Desc_ClipboardActionProvider": "클립보드 기록에 붙여넣기, 복사, 고정, 삭제, 원본 창 열기, 기록 지우기를 제공합니다.",
+  "ClipboardHistory_ClearHistory": "기록 지우기"
 }
