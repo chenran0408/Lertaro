@@ -149,13 +149,17 @@ internal sealed class ClipboardRuntime : IDisposable
     }
 
     /// <summary>Pastes into the tracked source window and reports whether the panel should close.
-    /// The panel belongs over the window the paste lands in, so success always means "get out of
-    /// the way" -- otherwise the injected Ctrl+V can race the panel's own focus and the paste
-    /// lands wherever the caret ended up instead.</summary>
+    /// The panel closes after pasting so the injected Ctrl+V lands in the window the user was
+    /// typing in -- except for pinned entries: a pin is the user saying "keep this handy", so the
+    /// panel stays up and the same entry can be pasted repeatedly (Win+V, click, Win+V, click)
+    /// without resummoning it every time.</summary>
     internal bool PasteAndClose(long id)
     {
         var pasted = Paste(id);
-        return pasted;
+        if (!pasted) return false;
+        // Read the pin state after the paste: Publish() may have run during it, and the decision
+        // belongs to the entry as it stands now, not as it stood when the row was clicked.
+        return !Entries.FirstOrDefault(entry => entry.Id == id)?.Pinned ?? true;
     }
 
     private async Task PasteAsync(string text, SourceWindow target)
