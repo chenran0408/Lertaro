@@ -29,7 +29,7 @@ internal sealed class ClipboardSearchResult : InstantResultItem, ISearchResult
         ActionArgument = $"clip:{entry.Id}";
         IconData = ClipboardInstantProvider.ClipboardIcon;
         IconColor = "AccentBlue";
-        OnExecuteFunc = () => ClipboardRuntime.Instance.Paste(entry.Id);
+        OnExecuteFunc = () => ClipboardRuntime.Instance.PasteAndClose(entry.Id);
         Metadata = new FileMetadata(0, DateTimeOffset.FromUnixTimeMilliseconds(entry.CreatedAtMs).LocalDateTime,
             DateTimeOffset.FromUnixTimeMilliseconds(entry.LastSeenAtMs).LocalDateTime, DateTime.MinValue);
     }

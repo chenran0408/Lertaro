@@ -148,6 +148,16 @@ internal sealed class ClipboardRuntime : IDisposable
         catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); return false; }
     }
 
+    /// <summary>Pastes into the tracked source window and reports whether the panel should close.
+    /// The panel belongs over the window the paste lands in, so success always means "get out of
+    /// the way" -- otherwise the injected Ctrl+V can race the panel's own focus and the paste
+    /// lands wherever the caret ended up instead.</summary>
+    internal bool PasteAndClose(long id)
+    {
+        var pasted = Paste(id);
+        return pasted;
+    }
+
     private async Task PasteAsync(string text, SourceWindow target)
     {
         try { await PasteBackHelper.PasteAsync(text, target, _monitor!.WriteTextAsync); }

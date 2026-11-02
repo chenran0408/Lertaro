@@ -764,6 +764,7 @@
   "Hotkeys_Tab_Global": "全域",
   "Hotkeys_Tab_PluginActions": "外掛動作",
   "Hotkeys_GroupGlobal": "全域快速鍵",
+  "Hotkeys_GroupClipboard": "剪貼板面板",
   "Hotkeys_GroupQuickNav": "快速導航",
   "Hotkeys_RecorderPlaceholder": "按下快速鍵",
   "Hotkeys_RecorderClear": "清空",
@@ -850,3 +851,4 @@
   "Background_VideoHint": "MP4 影片靜音循環，視窗隱藏或最小化時暫停。",
   "Background_VideoUnavailable": "影片無法播放，已使用主題底色。請選擇可正常播放的 MP4 影片（建議 H.264）。"
 }
+

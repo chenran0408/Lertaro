@@ -764,6 +764,7 @@
   "Hotkeys_Tab_Global": "グローバル",
   "Hotkeys_Tab_PluginActions": "プラグインアクション",
   "Hotkeys_GroupGlobal": "グローバルホットキー",
+  "Hotkeys_GroupClipboard": "クリップボードパネル",
   "Hotkeys_GroupQuickNav": "クイックナビゲーション",
   "Hotkeys_RecorderPlaceholder": "ホットキーを押してください",
   "Hotkeys_RecorderClear": "クリア",
@@ -850,3 +851,4 @@
   "Background_VideoHint": "MP4 動画は無音で繰り返し再生し、ウィンドウを非表示または最小化すると一時停止します。",
   "Background_VideoUnavailable": "動画を再生できないため、テーマの背景を使用します。再生可能な MP4 動画を選択してください（H.264 推奨）。"
 }
+

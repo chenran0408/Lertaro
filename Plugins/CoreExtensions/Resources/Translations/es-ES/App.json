@@ -764,6 +764,7 @@
   "Hotkeys_Tab_Global": "Global",
   "Hotkeys_Tab_PluginActions": "Acciones de Complementos",
   "Hotkeys_GroupGlobal": "Atajos de Teclado Globales",
+  "Hotkeys_GroupClipboard": "Panel del portapapeles",
   "Hotkeys_GroupQuickNav": "Navegación Rápida",
   "Hotkeys_RecorderPlaceholder": "Pulsa un atajo de teclado",
   "Hotkeys_RecorderClear": "Borrar",
@@ -850,3 +851,4 @@
   "Background_VideoHint": "Los vídeos MP4 se repiten sin sonido y se pausan al ocultar o minimizar las ventanas.",
   "Background_VideoUnavailable": "No se puede reproducir el vídeo. Se usa el fondo del tema. Elige un vídeo MP4 compatible (se recomienda H.264)."
 }
+

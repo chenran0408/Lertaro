@@ -166,6 +166,7 @@ public static class SettingsSearchIndex
         new("Hotkeys_QuickNavDoubleClick", "Hotkeys", vm => vm.Hotkeys.SelectedTab = "Global", "TabGlobal/RowQuickNavDoubleClick", "Hotkeys_Tab_Global"),
         new("Hotkeys_QuickNavMiddleClick", "Hotkeys", vm => vm.Hotkeys.SelectedTab = "Global", "TabGlobal/RowQuickNavMiddleClick", "Hotkeys_Tab_Global"),
         new("Hotkeys_QuickNavHotkey", "Hotkeys", vm => vm.Hotkeys.SelectedTab = "Global", "TabGlobal/RowQuickNavHotkey", "Hotkeys_Tab_Global"),
+        new("Hotkeys_GroupClipboard", "Hotkeys", vm => vm.Hotkeys.SelectedTab = "Global", "TabGlobal/RowGroupClipboard", "Hotkeys_Tab_Global"),
         new("Hotkeys_ClipboardPanelHotkey", "Hotkeys", vm => vm.Hotkeys.SelectedTab = "Global", "TabGlobal/RowClipboardPanelHotkey", "Hotkeys_Tab_Global"),
         new("Hotkeys_Tab_PluginActions", "Hotkeys", vm => vm.Hotkeys.SelectedTab = "PluginActions", "TabPluginActions"),
         new("Settings_Blacklist", "Hotkeys", vm => vm.Hotkeys.SelectedTab = "Blacklist", "TabBlacklist"),

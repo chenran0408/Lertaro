@@ -764,6 +764,7 @@
   "Hotkeys_Tab_Global": "전역",
   "Hotkeys_Tab_PluginActions": "플러그인 동작",
   "Hotkeys_GroupGlobal": "전역 단축키",
+  "Hotkeys_GroupClipboard": "클립보드 패널",
   "Hotkeys_GroupQuickNav": "빠른 탐색",
   "Hotkeys_RecorderPlaceholder": "단축키를 누르세요",
   "Hotkeys_RecorderClear": "지우기",
@@ -850,3 +851,4 @@
   "Background_VideoHint": "MP4 동영상은 소리 없이 반복되며 창을 숨기거나 최소화하면 일시 정지됩니다.",
   "Background_VideoUnavailable": "동영상을 재생할 수 없어 테마 배경을 사용합니다. 재생 가능한 MP4 동영상을 선택하세요(H.264 권장)."
 }
+

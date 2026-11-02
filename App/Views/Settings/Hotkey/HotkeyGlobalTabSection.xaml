@@ -96,19 +96,6 @@
         <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding QuickNavigationHotkeyConflictWarning}"
                    Visibility="{Binding QuickNavigationHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
 
-        <Grid x:Name="RowClipboardPanelHotkey" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ClipboardPanelHotkey]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding ClipboardPanelHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                RequireModifier="True" DefaultValue="Win+V"/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding ClipboardPanelHotkeyConflictWarning}"
-                   Visibility="{Binding ClipboardPanelHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-
         <TextBlock x:Name="RowSelectionTitle" Style="{StaticResource SettingsSubHeading}" FontSize="15"
                    Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectionTitle]}"/>
         <TextBlock Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"
@@ -263,6 +250,24 @@
         <local:HotkeyQuickPanelWakeSection x:Name="QuickPanelWakeSection" Margin="0,8,0,0"/>
 
         <Border Style="{StaticResource SettingsGroupDivider}"/>
+
+        <!-- Group: Clipboard Panel. Own group at the end of the tab: it is one hotkey, and the
+             advanced mouse-wake block above it should not push it out of the first screenful. -->
+        <TextBlock x:Name="RowGroupClipboard" Style="{StaticResource SettingsGroupTitle}"
+                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_GroupClipboard]}"/>
+
+        <Grid x:Name="RowClipboardPanelHotkey" Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
+                <ColumnDefinition Width="200"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ClipboardPanelHotkey]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
+            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
+                Value="{Binding ClipboardPanelHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                RequireModifier="True" DefaultValue="Win+V"/>
+        </Grid>
+        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding ClipboardPanelHotkeyConflictWarning}"
+                   Visibility="{Binding ClipboardPanelHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
 
         <!-- Group: Quick Navigation -->
         <TextBlock x:Name="RowGroupQuickNav" Style="{StaticResource SettingsGroupTitle}"

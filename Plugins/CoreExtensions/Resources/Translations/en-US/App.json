@@ -764,6 +764,7 @@
   "Hotkeys_Tab_Global": "Global",
   "Hotkeys_Tab_PluginActions": "Plugin Actions",
   "Hotkeys_GroupGlobal": "Global Hotkeys",
+  "Hotkeys_GroupClipboard": "Clipboard Panel",
   "Hotkeys_GroupQuickNav": "Quick Navigation",
   "Hotkeys_RecorderPlaceholder": "Press a hotkey",
   "Hotkeys_RecorderClear": "Clear",
@@ -928,3 +929,4 @@
   "Background_VideoHint": "MP4 videos loop silently and pause when windows are hidden or minimized.",
   "Background_VideoUnavailable": "The video cannot be played. Using the theme background. Choose a playable MP4 video (H.264 recommended)."
 }
+
