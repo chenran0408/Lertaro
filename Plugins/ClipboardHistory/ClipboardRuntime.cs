@@ -138,7 +138,7 @@ internal sealed class ClipboardRuntime : IDisposable
     internal bool Paste(long id)
     {
         var entry = Entries.FirstOrDefault(entry => entry.Id == id);
-        var target = _targets?.Target;
+        var target = _targets?.Target ?? PasteTargetTracker.ReadExternalForeground();
         try
         {
             if (entry == null || _monitor == null || !PasteBackHelper.CanPaste(target)) return false;

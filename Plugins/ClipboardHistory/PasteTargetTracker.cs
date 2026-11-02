@@ -20,6 +20,15 @@ internal sealed class PasteTargetTracker : IDisposable
 
     internal SourceWindow? Target => _target is { IsAlive: true } target ? target : null;
 
+    // Fallback when the remembered target died while the panel was open: the
+    // window the user came from is gone, but whatever is foreground now (if
+    // external) is the only safe destination left.
+    internal static SourceWindow? ReadExternalForeground()
+    {
+        GetWindowThreadProcessId(GetForegroundWindow(), out var pid);
+        return pid == Environment.ProcessId ? null : SourceWindow.Read(GetForegroundWindow());
+    }
+
     private void Remember(nint hwnd)
     {
         GetWindowThreadProcessId(hwnd, out var pid);

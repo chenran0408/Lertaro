@@ -101,7 +101,7 @@ internal sealed class ClipboardMonitorService : IDisposable
             _suppression.BeginWrite();
             try
             {
-                Clipboard.SetDataObject(text, true);
+                ClipboardWriteRetry.Execute(() => Clipboard.SetDataObject(text, true));
             }
             finally
             {

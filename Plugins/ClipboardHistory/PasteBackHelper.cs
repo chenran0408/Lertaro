@@ -22,13 +22,21 @@ internal static class PasteBackHelper
     {
         if (!CanPaste(target)) return;
         await writeText(text);
-        // Clipboard writes are async. Recheck identity and foreground before sending any keystrokes.
+        // Clipboard writes are async. Recheck identity before sending any keystrokes.
+        // A different window of the same application is still the right destination.
         var foreground = SourceWindow.Read(GetForegroundWindow());
-        if (!target.IsAlive || (foreground != target && foreground?.ProcessId != Environment.ProcessId))
+        if (!target.IsAlive ||
+            (foreground is { } fg && fg.ProcessId != Environment.ProcessId && fg.ProcessId != target.ProcessId))
             throw new InvalidOperationException("Paste target changed.");
         if (GetForegroundWindow() != target.Handle && !SetForegroundWindow(target.Handle))
-            throw new Win32Exception(Marshal.GetLastWin32Error());
-        if (GetForegroundWindow() != target.Handle) throw new InvalidOperationException("Paste target is not focused.");
+        {
+            // Focus restoration can lose the race with the closing panel; give
+            // the target one short window to become foreground before failing.
+            await Task.Delay(100);
+            if (GetForegroundWindow() != target.Handle) SetForegroundWindow(target.Handle);
+        }
+        if (GetForegroundWindow() != target.Handle)
+            throw new InvalidOperationException("Paste target is not focused.");
 
         var inputs = BuildInputs();
         try
