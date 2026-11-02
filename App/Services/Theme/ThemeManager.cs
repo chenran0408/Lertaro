@@ -27,16 +27,17 @@ public class ThemeManager
 
     private ThemeManager() => PluginSdk.Services.ThemeService.IsDarkThemeFunc = () => _activeTheme?.IsDark ?? false;
 
-    // Color preset packs paint over the sampled GlassDesk surface, so the host now exposes only
-    // GlassDesk's two palette modes. Installed theme-pack files are not removed; their colors are
-    // no longer selectable or applied.
-    public IEnumerable<PluginSdk.Abstractions.ITheme> GetAvailableThemes() => GlassDeskThemes;
+    public IEnumerable<PluginSdk.Abstractions.ITheme> GetAvailableThemes() => PluginManager.Instance.ThemeProviders
+            .SelectMany(p => PluginPerformanceMonitor.Measure(p, () => p.GetThemes()?.ToList() ?? new List<PluginSdk.Abstractions.ITheme>()))
+            .Concat(GlassDeskThemes)
+            .GroupBy(t => t.Id)
+            .Select(g => g.First());
 
     public void Initialize(string preferredThemeId)
     {
         var settings = UserSettings.Load();
         var themeIds = new[] { preferredThemeId, settings.Theme, settings.LightThemeId, settings.DarkThemeId };
-        List<PluginSdk.Abstractions.ITheme> legacyThemes = themeIds.Any(NeedsLegacyThemeLookup)
+        var legacyThemes = themeIds.Any(NeedsLegacyThemeLookup)
             ? GetLegacyThemes().ToList() : [];
         var activeMode = ResolveGlassDeskMode(preferredThemeId, SystemThemeWatcher.IsSystemLight ? "Light" : "Dark", legacyThemes);
         var storedMode = ResolveGlassDeskMode(settings.Theme, "Light", legacyThemes);
