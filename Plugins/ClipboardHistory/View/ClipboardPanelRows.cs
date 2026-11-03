@@ -37,13 +37,10 @@ internal static class ClipboardPanelRows
         _ => true,
     };
 
-    /// <summary>Empty query matches everything; otherwise the preview or the full content must
-    /// fuzzy-match (the panel passes the host's own matcher, so Chinese pinyin queries work).</summary>
-    public static bool MatchesQuery(ClipboardEntry entry, string query, Func<string, string, bool> isMatch)
-    {
-        if (query.Length == 0) return true;
-        return isMatch(entry.PlainPreview, query) || (entry.Content.Length > 0 && isMatch(entry.Content, query));
-    }
+    /// <summary>Empty query matches everything; otherwise the shared search predicate decides
+    /// (preview, content or source process, through the caller's fuzzy matcher).</summary>
+    public static bool MatchesQuery(ClipboardEntry entry, string query, Func<string, string, bool> isMatch) =>
+        ClipboardSearchSupport.Matches(entry, query, isMatch);
 
     /// <summary>Filters and orders the visible rows (pinned first, then the store's newest-first),
     /// then groups them: one header for the pinned section, date headers for the rest. Store order

@@ -148,15 +148,14 @@ internal sealed class ClipboardRuntime : IDisposable
         finally { _gate.Release(); }
     }
 
+    /// <summary>Filters the published snapshot in memory with the host's fuzzy matcher. The old
+    /// path blocked on SQLite FTS from the sync query API, which stalled the search box; the
+    /// snapshot is already in memory, capped by MaxEntries, and never touches disk.</summary>
     internal IReadOnlyList<ClipboardEntry> Search(string term)
     {
-        if (_store == null || _stopping || !_ready.IsCompletedSuccessfully) return [];
-        try { return _store.SearchAsync(term).GetAwaiter().GetResult(); }
-        catch (Exception ex)
-        {
-            LogFailure(ex);
-            return [];
-        }
+        var entries = Entries;
+        if (entries.Count == 0 || !_ready.IsCompletedSuccessfully) return [];
+        return entries.Where(entry => ClipboardSearchSupport.Matches(entry, term, FuzzyMatchService.IsMatch)).ToArray();
     }
 
     private void Publish(IReadOnlyList<ClipboardEntry> entries)
