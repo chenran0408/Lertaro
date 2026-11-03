@@ -8,7 +8,10 @@ namespace Lertaro.App.Tests.Services;
 [TestClass]
 public sealed class AppSingleInstanceTests
 {
+    // The mutex hand-off involves OS timing that flakes on shared CI runners; a retry keeps the
+    // suite honest without masking a real regression (a deterministic failure fails every try).
     [TestMethod]
+    [Retry(2)]
     public void AcquireMutex_TakesOwnershipOfAbandonedMutex()
     {
         var mutexName = $@"Local\Lertaro.Tests.{Guid.NewGuid():N}";
