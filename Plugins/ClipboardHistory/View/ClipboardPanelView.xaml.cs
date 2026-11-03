@@ -68,6 +68,9 @@ public partial class ClipboardPanelView : UserControl
             window.Top = top;
             _window = window;
             _instance = view;
+            // A copy made while the panel was closed shows up the moment the panel is summoned
+            // again -- no background refresh machinery needed for a summon-and-paste surface.
+            window.Activated += (_, _) => _ = view.ReloadAsync();
             _ = view.ReloadAsync();
             window.Show();
         }

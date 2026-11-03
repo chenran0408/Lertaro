@@ -13,6 +13,7 @@ export const navSchema = [
       { id: 'ugSpaceAnalyzer', slug: 'user-guide/space-analyzer' },
       { id: 'ugInstantAnswers', slug: 'user-guide/instant-answers' },
       { id: 'ugContentSearch', slug: 'user-guide/content-search' },
+      { id: 'ugClipboardHistory', slug: 'user-guide/clipboard-history' },
       { id: 'ugCli', slug: 'user-guide/cli' },
       { id: 'ugUriProtocol', slug: 'user-guide/uri-protocol' },
       { id: 'ugFileManagerSupport', slug: 'user-guide/file-manager-support' },
