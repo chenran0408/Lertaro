@@ -216,6 +216,7 @@ public sealed class ClipboardTextReaderTests
         }
 
         public bool GlobalUnlock(nint hMem) { UnlockCalls++; return true; }
+        public uint RegisterClipboardFormat(string formatName) => 49742u;
         public uint DragQueryFileCount(nint hDrop) => 0;
         public int DragQueryFileName(nint hDrop, uint index, char[] buffer) => 0;
     }

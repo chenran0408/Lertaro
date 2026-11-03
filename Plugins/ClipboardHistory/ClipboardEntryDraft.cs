@@ -17,7 +17,8 @@ internal sealed record ClipboardEntryDraft(
     string ImagePath = "",
     int ImageWidth = 0,
     int ImageHeight = 0,
-    string ImageHashHex = "")
+    string ImageHashHex = "",
+    string Html = "")
 {
     public byte[] ComputeHash()
     {

@@ -12,6 +12,9 @@ internal interface IClipboardNative
     public const int CfDib = 8;
     public const int CfDibV5 = 17;
 
+    /// <summary>Registered format carrying the browser/Office HTML flavor ("HTML Format").</summary>
+    public const string HtmlFormatName = "HTML Format";
+
     uint GetClipboardSequenceNumber();
     nint GetClipboardOwner();
     uint GetWindowThreadProcessId(nint hWnd, out int processId);
@@ -24,6 +27,8 @@ internal interface IClipboardNative
     nuint GlobalSize(nint hMem); // SIZE_T
     nint GlobalLock(nint hMem);
     bool GlobalUnlock(nint hMem);
+
+    uint RegisterClipboardFormat(string formatName);
 
     /// <summary>DragQueryFileW with index 0xFFFFFFFF: the number of paths in the HDROP.</summary>
     uint DragQueryFileCount(nint hDrop);
@@ -54,6 +59,8 @@ internal sealed class Win32ClipboardNative : IClipboardNative
     public nuint GlobalSize(nint hMem) => GlobalSizeNative(hMem);
     public nint GlobalLock(nint hMem) => GlobalLockNative(hMem);
     public bool GlobalUnlock(nint hMem) => GlobalUnlockNative(hMem) != 0;
+
+    public uint RegisterClipboardFormat(string formatName) => RegisterClipboardFormatNative(formatName);
 
     public uint DragQueryFileCount(nint hDrop) => DragQueryFileNative(hDrop, 0xFFFFFFFFu, null, 0);
     public int DragQueryFileName(nint hDrop, uint index, char[] buffer) => (int)DragQueryFileNative(hDrop, index, buffer, (uint)buffer.Length);
@@ -93,6 +100,9 @@ internal sealed class Win32ClipboardNative : IClipboardNative
 
     [DllImport("kernel32.dll", EntryPoint = "GlobalUnlock", SetLastError = true)]
     private static extern nint GlobalUnlockNative(nint hMem);
+
+    [DllImport("user32.dll", EntryPoint = "RegisterClipboardFormatW", SetLastError = true)]
+    private static extern uint RegisterClipboardFormatNative(string formatName);
 
     [DllImport("shell32.dll", EntryPoint = "DragQueryFileW", SetLastError = true)]
     private static extern uint DragQueryFileNative(nint dropHandle, uint fileIndex, char[]? fileName, uint bufferLength);

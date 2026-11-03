@@ -1,9 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Windows;
 using System.Windows.Interop;
-using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Lertaro.PluginSdk;
 
@@ -22,6 +20,7 @@ internal sealed class ClipboardMonitorService : IDisposable
     private readonly Func<ClipboardCaptureOptions> _readOptions;
     private readonly IClipboardNative _native = new Win32ClipboardNative();
     private readonly ClipboardWriteSuppression _suppression = new();
+    private readonly ClipboardWriter _writer;
     private readonly Thread _thread;
     private readonly TaskCompletionSource _pumpReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -34,6 +33,7 @@ internal sealed class ClipboardMonitorService : IDisposable
     {
         _onCapture = onCapture;
         _readOptions = readOptions;
+        _writer = new ClipboardWriter(_native, _suppression, () => _dispatcher, () => _pumpReady.Task);
         _thread = new Thread(RunPump) { IsBackground = true, Name = "Lertaro.ClipboardHistory.Monitor" };
         _thread.SetApartmentState(ApartmentState.STA);
         _thread.Start();
@@ -87,55 +87,12 @@ internal sealed class ClipboardMonitorService : IDisposable
         });
     }
 
-    // Runs on the STA pump. The exception from a busy clipboard propagates to
-    // the awaiting caller, which owns user-facing error handling.
-    public Task WriteTextAsync(string text) =>
-        WriteDataObjectAsync(() => ClipboardWriteRetry.Execute(() => Clipboard.SetDataObject(text, true)));
-
-    /// <summary>Writes a file path list back to the clipboard (the Copy action for a FilePaths row).</summary>
-    public Task WriteFilesAsync(IReadOnlyList<string> paths)
-    {
-        var list = new System.Collections.Specialized.StringCollection();
-        list.AddRange(paths.ToArray());
-        return WriteDataObjectAsync(() => ClipboardWriteRetry.Execute(() => Clipboard.SetFileDropList(list)));
-    }
-
-    /// <summary>Writes an image from disk back to the clipboard (the Copy action for an Image row).</summary>
-    public Task WriteImageAsync(string imageFilePath) => WriteDataObjectAsync(() =>
-    {
-        var bitmap = new BitmapImage();
-        bitmap.BeginInit();
-        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-        bitmap.UriSource = new Uri(imageFilePath, UriKind.Absolute);
-        bitmap.EndInit();
-        bitmap.Freeze();
-        ClipboardWriteRetry.Execute(() => Clipboard.SetImage(bitmap));
-    });
-
-    private Task WriteDataObjectAsync(Action write)
-    {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        _pumpReady.Task.GetAwaiter().GetResult();
-        return _dispatcher!.InvokeAsync(() =>
-        {
-            var before = _native.GetClipboardSequenceNumber();
-            // Scoped suppression covers the notifications WPF raises reentrantly
-            // inside SetDataObject; EndWrite runs even when a busy clipboard
-            // throws so the scope can never stay latched.
-            _suppression.BeginWrite();
-            try
-            {
-                write();
-            }
-            finally
-            {
-                var after = _native.GetClipboardSequenceNumber();
-                _native.GetWindowThreadProcessId(_native.GetClipboardOwner(), out var ownerProcess);
-                if (ownerProcess == Environment.ProcessId) _suppression.EndWrite(before, after);
-                else _suppression.Clear();
-            }
-        }).Task;
-    }
+    // Write-backs live in ClipboardWriter, which owns the suppression scope and the STA pump
+    // invocation; the monitor forwards so callers keep one surface.
+    public Task WriteTextAsync(string text) => _writer.WriteTextAsync(text);
+    public Task WriteFilesAsync(IReadOnlyList<string> paths) => _writer.WriteFilesAsync(paths);
+    public Task WriteImageAsync(string imageFilePath) => _writer.WriteImageAsync(imageFilePath);
+    public Task WriteTextWithHtmlAsync(string text, string html) => _writer.WriteTextWithHtmlAsync(text, html);
 
     public void Dispose()
     {
@@ -231,7 +188,12 @@ internal sealed class ClipboardMonitorService : IDisposable
         ProcessIdentity identity, int processId)
     {
         var text = ReadSnapshot(options.MaxTextLength, sequence, owner);
-        return string.IsNullOrEmpty(text) ? null : ClipboardCapture.FromText(text, identity, processId, identity.MainWindowHandle);
+        if (string.IsNullOrEmpty(text)) return null;
+
+        // HTML rides along when the source offers it; its absence or a size cap never blocks the
+        // text capture. A changed clipboard under the HTML read only drops the flavor, not the row.
+        var html = _source == null ? null : new ClipboardHtmlReader(_native, _source.Handle).Read(sequence, owner);
+        return ClipboardCapture.FromText(text, identity, processId, identity.MainWindowHandle, html ?? string.Empty);
     }
 
     private ClipboardCapture? ReadFileCapture(uint sequence, nint owner, ProcessIdentity identity, int processId)

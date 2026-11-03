@@ -146,14 +146,14 @@ internal sealed class ClipboardRuntime : IDisposable
 
     /// <summary>Pastes one entry, or a merged payload built from several selected entries (the
     /// panel's multi-select). Returns false when there is nothing pasteable or the target refuses.</summary>
-    internal bool PasteEntries(IReadOnlyList<ClipboardEntry> entries)
+    internal bool PasteEntries(IReadOnlyList<ClipboardEntry> entries, bool keepFormat = true)
     {
         var merged = entries.Count == 1 ? entries[0] : ClipboardMergeSupport.MergeForPaste(entries);
         var target = _targets?.Target ?? PasteTargetTracker.ReadExternalForeground();
         try
         {
             if (merged == null || _monitor == null || !PasteBackHelper.CanPaste(target)) return false;
-            _ = PasteAsync(merged, target!);
+            _ = PasteAsync(merged, target!, keepFormat);
             return true;
         }
         catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); return false; }
@@ -165,13 +165,7 @@ internal sealed class ClipboardRuntime : IDisposable
         if (entry == null || _monitor == null) return;
         try
         {
-            var write = entry.Kind switch
-            {
-                ClipboardEntryKind.Image => (Func<Task>)(() => _monitor.WriteImageAsync(ImageFilePath(entry))),
-                ClipboardEntryKind.FilePaths => () => _monitor.WriteFilesAsync(entry.PathList),
-                _ => () => _monitor.WriteTextAsync(entry.Content),
-            };
-            await write().ConfigureAwait(false);
+            await WriteEntryAsync(entry, keepFormat: true).ConfigureAwait(false);
         }
         catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); }
     }
@@ -192,20 +186,25 @@ internal sealed class ClipboardRuntime : IDisposable
         return !Entries.FirstOrDefault(entry => entry.Id == id)?.Pinned ?? true;
     }
 
-    private async Task PasteAsync(ClipboardEntry entry, SourceWindow target)
+    private async Task PasteAsync(ClipboardEntry entry, SourceWindow target, bool keepFormat)
     {
         try
         {
-            var writeToClipboard = entry.Kind switch
-            {
-                ClipboardEntryKind.Image => (Func<Task>)(() => _monitor!.WriteImageAsync(ImageFilePath(entry))),
-                ClipboardEntryKind.FilePaths => () => _monitor!.WriteFilesAsync(entry.PathList),
-                _ => () => _monitor!.WriteTextAsync(entry.Content),
-            };
-            await PasteBackHelper.PasteAsync(target, writeToClipboard).ConfigureAwait(false);
+            await PasteBackHelper.PasteAsync(target, () => WriteEntryAsync(entry, keepFormat)).ConfigureAwait(false);
         }
         catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); }
     }
+
+    /// <summary>Writes one entry back to the clipboard. keepFormat sends the captured HTML flavor
+    /// along with the text so rich targets keep their formatting; plain text strips it.</summary>
+    private Task WriteEntryAsync(ClipboardEntry entry, bool keepFormat) => entry.Kind switch
+    {
+        ClipboardEntryKind.Image => _monitor!.WriteImageAsync(ImageFilePath(entry)),
+        ClipboardEntryKind.FilePaths => _monitor!.WriteFilesAsync(entry.PathList),
+        _ => keepFormat && entry.Html.Length > 0
+            ? _monitor!.WriteTextWithHtmlAsync(entry.Content, entry.Html)
+            : _monitor!.WriteTextAsync(entry.Content),
+    };
 
     internal void Copy(long id) => _ = CopyAsync(id);
 

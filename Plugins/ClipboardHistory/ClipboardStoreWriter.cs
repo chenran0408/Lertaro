@@ -124,9 +124,9 @@ internal static class ClipboardStoreWriter
         insert.Transaction = transaction;
         insert.CommandText = """
             INSERT INTO clipboard_history
-                (content, plain_preview, content_sha256, source_process, source_window_title, pinned, seen_count, created_at_ms, last_seen_at_ms, kind, image_path, image_width, image_height)
+                (content, plain_preview, content_sha256, source_process, source_window_title, pinned, seen_count, created_at_ms, last_seen_at_ms, kind, image_path, image_width, image_height, html)
             VALUES
-                (@content, @preview, @hash, @sourceProcess, @sourceWindowTitle, 0, 1, @stamp, @stamp, @kind, @imagePath, @imageWidth, @imageHeight)
+                (@content, @preview, @hash, @sourceProcess, @sourceWindowTitle, 0, 1, @stamp, @stamp, @kind, @imagePath, @imageWidth, @imageHeight, @html)
             RETURNING id
             """;
         insert.Parameters.AddWithValue("@content", content);
@@ -139,9 +139,10 @@ internal static class ClipboardStoreWriter
         insert.Parameters.AddWithValue("@imagePath", draft.ImagePath);
         insert.Parameters.AddWithValue("@imageWidth", draft.ImageWidth);
         insert.Parameters.AddWithValue("@imageHeight", draft.ImageHeight);
+        insert.Parameters.AddWithValue("@html", draft.Html);
         var id = (long)insert.ExecuteScalar()!;
         return new ClipboardEntry(id, content, preview, sourceProcess, sourceWindowTitle, false, 1, stamp, stamp,
-            draft.Kind, draft.ImagePath, draft.ImageWidth, draft.ImageHeight);
+            draft.Kind, draft.ImagePath, draft.ImageWidth, draft.ImageHeight, draft.Html);
     }
 
     /// <summary>Deletes unpinned rows beyond the cap and, when <paramref name="retentionDays"/> is

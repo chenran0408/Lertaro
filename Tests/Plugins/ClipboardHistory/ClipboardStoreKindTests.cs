@@ -189,6 +189,36 @@ public sealed class ClipboardStoreKindTests
     }
 
     [TestMethod]
+    public async Task AddAsync_TextWithHtml_StoresAndReadsBackTheFlavor()
+    {
+        var store = CreateStore();
+        await store.InitializeAsync();
+        var html = "Version:0.9\r\nStartHTML:0\r\nEndHTML:60\r\n<html><body><b>bold</b></body></html>";
+
+        var entry = await store.AddAsync(
+            new ClipboardEntryDraft(ClipboardEntryKind.Text, "bold") { Html = html },
+            "Word", "Doc", 500, 1000000);
+
+        Assert.IsNotNull(entry);
+        Assert.AreEqual(html, entry.Html);
+        var entries = await store.GetEntriesAsync();
+        Assert.AreEqual(html, entries.Single().Html);
+    }
+
+    [TestMethod]
+    public async Task AddAsync_TextWithoutHtml_HtmlStaysEmpty()
+    {
+        var store = CreateStore();
+        await store.InitializeAsync();
+
+        var entry = await store.AddAsync(new ClipboardEntryDraft(ClipboardEntryKind.Text, "plain"),
+            "Notepad", "Doc", 500, 1000000);
+
+        Assert.IsNotNull(entry);
+        Assert.AreEqual(string.Empty, entry.Html);
+    }
+
+    [TestMethod]
     public async Task InitializeAsync_PreKindDatabase_MigratesInPlaceAndKeepsRows()
     {
         // A database exactly as 6.3.x created it: text-only schema, one row, no kind columns.

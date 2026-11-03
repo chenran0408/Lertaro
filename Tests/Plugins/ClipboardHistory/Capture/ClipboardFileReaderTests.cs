@@ -102,6 +102,7 @@ public sealed class ClipboardFileReaderTests
         public nuint GlobalSize(nint hMem) => 0;
         public nint GlobalLock(nint hMem) => 0;
         public bool GlobalUnlock(nint hMem) => true;
+        public uint RegisterClipboardFormat(string formatName) => 49742u;
         public uint DragQueryFileCount(nint hDrop) => (uint)Paths.Count;
         public int DragQueryFileName(nint hDrop, uint index, char[] buffer)
         {

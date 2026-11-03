@@ -18,11 +18,12 @@ internal sealed record ClipboardCapture(
     string SourceWindowTitle,
     int SourceProcessId,
     long SourceProcessStartedAtTicks,
-    nint SourceWindow)
+    nint SourceWindow,
+    string Html = "")
 {
-    public static ClipboardCapture FromText(string text, ProcessIdentity identity, int processId, nint sourceWindow) =>
+    public static ClipboardCapture FromText(string text, ProcessIdentity identity, int processId, nint sourceWindow, string html = "") =>
         new(ClipboardEntryKind.Text, text, [], [], 0, 0,
-            identity.ProcessName, identity.WindowTitle, processId, identity.StartedAtUtcTicks, sourceWindow);
+            identity.ProcessName, identity.WindowTitle, processId, identity.StartedAtUtcTicks, sourceWindow, html);
 
     public static ClipboardCapture FromFiles(IReadOnlyList<string> paths, ProcessIdentity identity, int processId, nint sourceWindow) =>
         new(ClipboardEntryKind.FilePaths, string.Empty, paths, [], 0, 0,

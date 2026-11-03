@@ -251,11 +251,11 @@ public partial class ClipboardPanelView : UserControl
         // Multi-select pastes the merged payload (texts joined by line breaks, file paths unioned).
         if (selected.Count > 1)
         {
-            if (ClipboardRuntime.Instance.PasteEntries(selected) && _window != null)
+            if (ClipboardRuntime.Instance.PasteEntries(selected, keepFormat: !plainText) && _window != null)
                 _window.Close();
             return;
         }
-        PasteAndMaybeClose(selected[0].Id);
+        PasteAndMaybeClose(selected[0].Id, plainText);
     }
 
     /// <summary>Every selected row's entry, in display order (headers are not selectable).</summary>
@@ -272,11 +272,11 @@ public partial class ClipboardPanelView : UserControl
         PasteAndMaybeClose(selectable[oneBased - 1]);
     }
 
-    private void PasteAndMaybeClose(long id)
+    private void PasteAndMaybeClose(long id, bool plainText = false)
     {
         // Pinned rows keep the panel open (the pin means "use repeatedly"); everything else closes
         // so the injected Ctrl+V lands in the window the user was typing in.
-        if (ClipboardRuntime.Instance.PasteAndClose(id) && _window != null)
+        if (ClipboardRuntime.Instance.PasteEntries([_entryById[id]], keepFormat: !plainText) && _window != null)
             _window.Close();
     }
 
