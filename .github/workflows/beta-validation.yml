@@ -9,8 +9,7 @@ on:
   push:
     branches:
       - main
-      - fix/explorer-locate-hang
-      - codex/v5.10.1-input-performance-glass
+      - beta
 
 jobs:
   quality:
