@@ -16,7 +16,7 @@ public sealed class ThemeManagerModeTests
     }
 
     [STATestMethod]
-    public void AvailableThemesAreOnlythe shell glassLightAndDarkModes()
+    public void AvailableThemesAreOnlyBuiltInLightAndDarkModes()
     {
         var themes = ThemeManager.Instance.GetAvailableThemes().ToArray();
 
