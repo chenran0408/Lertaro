@@ -74,7 +74,7 @@ public class UserSettings
     public bool GlassEffectsEnabled { get; set; } = true;
     public BackgroundSettings Background { get; set; } = new();
     public bool ThemeFollowSystem { get; set; } = false;
-    // Empty means "unset". The selected palette is now limited to GlassDesk Light/Dark modes;
+    // Empty means "unset". The selected palette is now limited to the built-in Light/Dark modes;
     // retired custom preset IDs are migrated during ThemeManager initialization.
     public string LightThemeId { get; set; } = string.Empty;
     public string DarkThemeId { get; set; } = string.Empty;

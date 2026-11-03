@@ -60,7 +60,7 @@
         <surface:BackgroundSurface UseTransparentBase="True" />
 
 
-    <!-- GlassDesk owns the panel fill, edge, shadow, and corner clip; this border only hosts the card content. -->
+    <!-- the shell glass owns the panel fill, edge, shadow, and corner clip; this border only hosts the card content. -->
     <Border x:Name="Surface" Background="Transparent">
         <Grid>
             <Grid.ColumnDefinitions>
@@ -126,7 +126,7 @@
 
             <!-- Drawn once, on arrival, and faded out: the accent rim is what tells a card that has just come in
                  from one that has merely been sitting there. Last child so it paints over the content, no fill so
-                 it cannot catch a click meant for the body. Its corner radius follows the GlassDesk window clip. -->
+                 it cannot catch a click meant for the body. Its corner radius follows the the shell glass window clip. -->
             <Border x:Name="ArrivalRim" Grid.ColumnSpan="2" Opacity="0" IsHitTestVisible="False"
                     BorderThickness="2" BorderBrush="{DynamicResource AccentBlue}"
                     Margin="-1" CornerRadius="{Binding PanelCornerRadius, RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}}"/>

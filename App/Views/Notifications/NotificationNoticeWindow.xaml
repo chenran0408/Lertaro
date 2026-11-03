@@ -24,7 +24,7 @@
         <surface:BackgroundSurface UseTransparentBase="True" />
 
 
-    <!-- The material, edge, shadow, and corner clip are painted by GlassDesk; the text stays clear so the
+    <!-- The material, edge, shadow, and corner clip are painted by the shell glass; the text stays clear so the
          optical backdrop remains visible. -->
     <Border x:Name="Surface" Height="36" Padding="12,0" Background="Transparent"
             BorderThickness="0">

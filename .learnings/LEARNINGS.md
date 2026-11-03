@@ -3,7 +3,7 @@
 Corrections, insights, and knowledge gaps captured during development.
 
 
-## 2026-10-28: GlassDesk preview lifecycle
+## 2026-10-28: the shell glass preview lifecycle
 
 - A live WPF glass sample can continue background rendering after the capture runner finishes; count and CPU-check only the scratch sample processes and explicitly shut down the sample app after capture. The optical surface also exposes `SetPerformanceSleeping` for idle preview state.
 

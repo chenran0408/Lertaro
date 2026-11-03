@@ -6,7 +6,7 @@
 
 `Directory.Packages.props` owns the versions of all 14 directly referenced NuGet packages. The initial migration covers 38 projects (5 production projects and 33 test projects), including ClipboardHistory. Package versions are unchanged. Add a `PackageVersion` there and a versionless `PackageReference` in the consuming project. NuGet rejects inline versions and `VersionOverride`.
 
-GlassDesk uses its existing, nearer `Directory.*` files under `Vendor/GlassDesk`; it keeps its own build and package policy.
+the shell glass uses its existing, nearer `Directory.*` files under `Vendor/the shell glass`; it keeps its own build and package policy.
 
 ## Warning cleanup
 

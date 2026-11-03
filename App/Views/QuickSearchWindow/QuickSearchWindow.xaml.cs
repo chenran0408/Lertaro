@@ -32,7 +32,7 @@ public partial class QuickSearchWindow : Lertaro.App.Views.Controls.AppWindow, I
     private bool _isInActionsMode;
     private Action? _scaleChangedHandler;
     internal QuickSearchKeywordHistoryController KeywordHistoryController { get; }
-    // GlassDesk draws the visible surface to the top-level window boundary; the content layout inset
+    // the shell glass draws the visible surface to the top-level window boundary; the content layout inset
     // does not reduce the visible material bounds used by Quick Look positioning.
     public Thickness VisibleContentInset => new(0);
     public QuickSearchWindow()

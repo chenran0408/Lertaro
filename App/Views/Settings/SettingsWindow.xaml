@@ -28,7 +28,7 @@
         <surface:BackgroundSurface UseTransparentBase="True" />
 
 
-    <!-- Match GlassDesk's settings window: one content border follows the same panel geometry as the
+    <!-- Match the shell's settings window: one content border follows the same panel geometry as the
          GlassWindow surface, rather than drawing a second inset rounded frame over the glass. -->
     <Border Background="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelBackgroundBrush}"
             BorderThickness="0"

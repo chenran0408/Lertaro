@@ -46,7 +46,7 @@
                          grab was a sliver beside the logo, which is why the window could only be moved by
                          aiming at its top-left corner (issue #195).
 
-                         Transparent remains hit-testable while letting the GlassDesk surface show through. -->
+                         Transparent remains hit-testable while letting the the shell glass surface show through. -->
                     <Grid x:Name="HeaderDragArea" Background="Transparent" MouseLeftButtonDown="Header_MouseLeftButtonDown">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>

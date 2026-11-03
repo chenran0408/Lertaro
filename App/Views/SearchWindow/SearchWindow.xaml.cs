@@ -27,7 +27,7 @@ public partial class SearchWindow : Lertaro.App.Views.Controls.AppWindow, ISearc
     private readonly SearchWindowChromeHandler _chromeHandler;
     private readonly SearchWindowInputHandler _inputHandler;
     private readonly ShellMenuPresenter _menuPresenter;
-    // GlassDesk's visible glass surface fills the top-level window, so Quick Look docks to the full bounds.
+    // the main window's glass surface fills the top-level window, so Quick Look docks to the full bounds.
     public Thickness VisibleContentInset => new(0);
 
     // Whether to reopen the preview once this window has a first result to show it for. Applied then

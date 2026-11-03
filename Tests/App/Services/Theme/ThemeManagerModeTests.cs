@@ -16,7 +16,7 @@ public sealed class ThemeManagerModeTests
     }
 
     [STATestMethod]
-    public void AvailableThemesAreOnlyGlassDeskLightAndDarkModes()
+    public void AvailableThemesAreOnlythe shell glassLightAndDarkModes()
     {
         var themes = ThemeManager.Instance.GetAvailableThemes().ToArray();
 
@@ -30,17 +30,17 @@ public sealed class ThemeManagerModeTests
     {
         var legacy = new[] { new FakeTheme("old-preset", isDark: true) };
 
-        Assert.AreEqual("Dark", ThemeManager.ResolveGlassDeskMode("old-preset", "Light", legacy));
-        Assert.AreEqual("Light", ThemeManager.ResolveGlassDeskMode("old-preset", "Dark",
+        Assert.AreEqual("Dark", ThemeManager.ResolveThemeMode("old-preset", "Light", legacy));
+        Assert.AreEqual("Light", ThemeManager.ResolveThemeMode("old-preset", "Dark",
             new[] { new FakeTheme("old-preset", isDark: false) }));
     }
 
     [STATestMethod]
     public void LegacyThemeModeFallsBackToRecognizedSuffixThenRequestedMode()
     {
-        Assert.AreEqual("Dark", ThemeManager.ResolveGlassDeskMode("RetiredPresetDark", "Light", []));
-        Assert.AreEqual("Light", ThemeManager.ResolveGlassDeskMode("RetiredPresetLight", "Dark", []));
-        Assert.AreEqual("Dark", ThemeManager.ResolveGlassDeskMode("UnknownPreset", "Dark", []));
-        Assert.AreEqual("Light", ThemeManager.ResolveGlassDeskMode("UnknownPreset", "other", []));
+        Assert.AreEqual("Dark", ThemeManager.ResolveThemeMode("RetiredPresetDark", "Light", []));
+        Assert.AreEqual("Light", ThemeManager.ResolveThemeMode("RetiredPresetLight", "Dark", []));
+        Assert.AreEqual("Dark", ThemeManager.ResolveThemeMode("UnknownPreset", "Dark", []));
+        Assert.AreEqual("Light", ThemeManager.ResolveThemeMode("UnknownPreset", "other", []));
     }
 }

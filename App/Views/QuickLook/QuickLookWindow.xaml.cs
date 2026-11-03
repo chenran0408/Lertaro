@@ -13,7 +13,7 @@ namespace Lertaro.App.Views.QuickLook;
 
 public partial class QuickLookWindow : Lertaro.App.Views.Controls.AppWindow
 {
-    // GlassDesk's visible glass surface fills the top-level window, so preview positioning uses its
+    // the main window's glass surface fills the top-level window, so preview positioning uses its
     // complete bounds without adding or subtracting a second card margin.
     public const double ContentMargin = 0;
 

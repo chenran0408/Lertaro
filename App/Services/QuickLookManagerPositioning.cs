@@ -55,7 +55,7 @@ public partial class QuickLookManager
     }
 
     // Externally-rendered previews own their own window and content geometry. Keep the established extra
-    // docking room for those providers; GlassDesk-managed QuickLook uses its complete visible window bounds.
+    // docking room for those providers; the main-window QuickLook uses its complete visible window bounds.
     private const double ExternalDockExtraGap = 0;
     private const double ExternalDockExtraWidth = 80;
 
@@ -83,7 +83,7 @@ public partial class QuickLookManager
         catch { }
     }
 
-    // Visible* describes the GlassDesk window's full glass surface. ContentMargin is zero for this window,
+    // Visible* describes the main window's full glass surface. ContentMargin is zero for this window,
     // so its outer WPF bounds currently match Visible*; the explicit Outer* values keep positioning math
     // clear while NotifyExternalBounds passes the chosen panel bounds to a separate provider.
     private readonly struct TargetRect

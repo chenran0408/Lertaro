@@ -5,7 +5,7 @@ namespace Lertaro.Core;
 public enum BackgroundKind { Theme = 0, Solid = 1, Gradient = 2, Image = 3, Material = 4 }
 
 // Keep retired color-preset fields in the data contract so old settings can still be read. Solid
-// and Gradient are normalized to Theme because their opaque fills cover GlassDesk's sampled glass.
+// and Gradient are normalized to Theme because their opaque fills cover sampled glass surfaces.
 public enum WindowMaterial { Mica = 0, Acrylic = 1, LiquidGlass = 2 }
 public enum GlassLevel { Frosted = 0, LightRefraction = 1, StrongRefraction = 2 }
 

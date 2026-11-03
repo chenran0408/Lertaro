@@ -106,7 +106,7 @@ Use a distinct name such as `$hostDir`; check both source and destination remain
 
 ### Summary
 
-The isolated GlassDesk capture script expected a diagnostics JSON at an output path, but the app did not create that file there. The runner exited with an error; its `finally` block sent WM_CLOSE and waited for process exit.
+The isolated the shell glass capture script expected a diagnostics JSON at an output path, but the app did not create that file there. The runner exited with an error; its `finally` block sent WM_CLOSE and waited for process exit.
 
 ### Resolution
 
@@ -121,7 +121,7 @@ The app exports `preview-backdrop-diagnostic.json` under its isolated `Data` dir
 
 ### Summary
 
-Computer Use timed out while requesting approval to launch the isolated GlassDesk preview. A fresh app-list query confirmed it did not launch.
+Computer Use timed out while requesting approval to launch the isolated the shell glass preview. A fresh app-list query confirmed it did not launch.
 
 ### Resolution
 
@@ -136,7 +136,7 @@ No repeat launch was attempted in this turn; the UI runner path needs an availab
 
 ### Summary
 
-The isolated GlassDesk preview had no usable `Process.CloseMainWindow()` route; the runner timed out waiting for exit and intentionally did not force-terminate it.
+The isolated the shell glass preview had no usable `Process.CloseMainWindow()` route; the runner timed out waiting for exit and intentionally did not force-terminate it.
 
 ### Resolution
 
@@ -798,8 +798,8 @@ Bind process samples by numeric process ID and avoid PowerShell automatic variab
 - 5 秒只读 System.Runtime counters：GC live heap 约 **21.8 MiB**，其中 LOH **17.4 MiB**；GC committed 约 **94.4 MiB**（不是 live 对象大小）。主 App Private Bytes 约343 MB，GC live heap约为其6.4%。SearchableItemCache gauges 为0；ShellIconHelper gauge与 LiquidGlassSurface 的运行态 renderer buffers没有从这个生产实例读出。此次没有 heap dump，也未关闭/重启 App。结论：当前数字不能把主进程较大的非 GC 余量归因给某个玻璃数组；下一项内存改动先做源代码归因，并只在找到可以实测的保留对象/缓存后实施。
 - Beta11 CPU 候选（尚未提交/发布）：
   - `AndroidLiquidGlassRenderer` 缓存 Green/Alpha 共用的像素采样分解；同机 Release 320k 像素基准 p50 **13.57 → 12.78 ms（快5.8%）**，p95中位数 **13.92 → 13.26 ms**，像素 SHA-256不变，0 B/frame，renderer专用测试 **6/6** 通过。
-  - WGC 紧密行距 readback 将逐行复制合为一次；1920×1080 isolated Release测试测得中位数 **11.60 → 8.75 ms（1.33倍）**，紧密与填充行距逐字节一致，`GlassDesk.UI` Release构建通过，隔离测试 **1/1**。
-  - 以旧 WPR采样占比估算，两项全进程 CPU 收益上限约 **3.3%**；该值是跨实验外推，不是新 Beta实测。修改文件为 `Vendor/GlassDesk/src/GlassDesk.UI/Controls/AndroidLiquidGlassRenderer.cs`、`Vendor/GlassDesk/src/GlassDesk.UI/CaptureCompatibility/WgcWindowCapture.cs` 和新增 readback 测试。整个 App 测试项目本机仍受 Rust 原生依赖缺少 `link.exe` 阻挡；候选完整测试/安装 smoke 需由 Beta validation CI确认。
+  - WGC 紧密行距 readback 将逐行复制合为一次；1920×1080 isolated Release测试测得中位数 **11.60 → 8.75 ms（1.33倍）**，紧密与填充行距逐字节一致，`the shell glass.UI` Release构建通过，隔离测试 **1/1**。
+  - 以旧 WPR采样占比估算，两项全进程 CPU 收益上限约 **3.3%**；该值是跨实验外推，不是新 Beta实测。修改文件为 `Vendor/the shell glass/src/the shell glass.UI/Controls/AndroidLiquidGlassRenderer.cs`、`Vendor/the shell glass/src/the shell glass.UI/CaptureCompatibility/WgcWindowCapture.cs` 和新增 readback 测试。整个 App 测试项目本机仍受 Rust 原生依赖缺少 `link.exe` 阻挡；候选完整测试/安装 smoke 需由 Beta validation CI确认。
 - 用户已允许替换安装。下一步完成内存源代码归因并复核候选变更，推送后等待双架构测试/安装 smoke，再发布并替换安装 Beta；当前只运行 Beta10，Beta11尚未发布，性能目标未完成。
 @ | Add-Content -LiteralPath 'D:\CODEX\Tasks\2026-10-27\new-chat-3\outputs\Lertaro-performance-optimization-plan-2026-10-29.md'
 @'
@@ -973,7 +973,7 @@ For multi-process sampling, collect snapshots into typed objects and format the 
 **Area**: tests
 
 ### Summary
-A parallel App test build stopped on two GlassDesk vendor compiler errors while a first-display implementation was being edited.
+A parallel App test build stopped on two the shell glass vendor compiler errors while a first-display implementation was being edited.
 
 ### Error
 - `BackdropRecovery.cs:48`: unresolved `DisplayService`.
@@ -981,10 +981,10 @@ A parallel App test build stopped on two GlassDesk vendor compiler errors while 
 
 ### Context
 - The audit agent did not modify or revert these files.
-- Other build/test agents were asked to pause App builds until the GlassDesk owner diagnoses and repairs them.
+- Other build/test agents were asked to pause App builds until the the shell glass owner diagnoses and repairs them.
 
 ### Suggested Fix
-Inspect the concurrent GlassDesk diff, correct only the responsible change, then rerun the bounded App build and report whether it passes.
+Inspect the concurrent the shell glass diff, correct only the responsible change, then rerun the bounded App build and report whether it passes.
 
 ---
 ## [ERR-20261029-011] live sample output directory
@@ -1115,7 +1115,7 @@ App Release build reached the native index store but could not invoke the config
 
 ### Context
 - `dotnet build App/App.csproj -c Release` using the existing D-drive .NET SDK.
-- .NET projects restored and GlassDesk dependencies compiled before the native Rust build failed.
+- .NET projects restored and the shell glass dependencies compiled before the native Rust build failed.
 - No app C# or XAML compile diagnostic was emitted before this prerequisite failure.
 
 ### Suggested Fix
@@ -1156,7 +1156,7 @@ Review the current settings card style resource and test assumptions in the main
 A direct `Get-Content` lookup used the wrong location for BackgroundContinuityTests.
 
 ### Context
-- The file is under `Tests/App/Views/Controls`, not `Tests/App/GlassDesk`.
+- The file is under `Tests/App/Views/Controls`, not `Tests/App/the shell glass`.
 - No source changed from the failed lookup.
 
 ### Suggested Fix
@@ -1271,7 +1271,7 @@ Use the exact asset link from the official downloads page, then verify its Authe
 **Area**: tooling
 
 ### Summary
-A task-staged App publish failed with NETSDK1152 because GlassDesk.UI and the SDK reference pack publish the same Windows SDK reference assemblies.
+A task-staged App publish failed with NETSDK1152 because the shell glass.UI and the SDK reference pack publish the same Windows SDK reference assemblies.
 
 ### Resolution
 Use the repository's established ErrorOnDuplicatePublishOutputFiles=false publish property for these combined App outputs. No packaged or installed files were changed.
@@ -2076,7 +2076,8 @@ Collect verification rows in variables and format them after the `try/finally` b
 
 ---
 
-- 2026-10-30: Initial codebase-memory skill lookup used the wrong path (0/...); corrected to C:\Users\28892\.codex\skills\codebase-memory\SKILL.md.
+- 2026-10-30: Initial codebase-memory skill lookup used the wrong path (
+0/...); corrected to C:\Users\28892\.codex\skills\codebase-memory\SKILL.md.
 
 - 2026-10-30: App test build found CS0104 in SearchWindow.xaml.cs because Button was ambiguous with System.Windows.Forms.Button; use the fully qualified WPF Button dependency property.
 
