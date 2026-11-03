@@ -43,7 +43,8 @@ jobs:
         with:
           target: ${{ matrix.rust_target }}
       - name: Test native index store
-        run: cargo test --locked --target ${{ matrix.rust_target }} --manifest-path Core\NativeIndexStore\Cargo.toml
+        shell: pwsh
+        run: cargo test --locked --target ${{ matrix.rust_target }} --manifest-path Core/NativeIndexStore/Cargo.toml
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
