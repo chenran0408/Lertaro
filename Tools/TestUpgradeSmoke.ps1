@@ -1,11 +1,14 @@
 param(
     [Parameter(Mandatory=$true)][string]$PackageDirectory,
-    [Parameter(Mandatory=$true)][string]$Architecture
+    [Parameter(Mandatory=$true)][string]$Architecture,
+    # The release the upgrade starts from; bump alongside the version in the workflow call.
+    [string]$PreviousRelease = 'v6.3.5',
+    [string]$PreviousVersion = '6.3.5'
 )
 $ErrorActionPreference = 'Stop'
 $suffix = if ($Architecture -eq 'Arm64') { '-arm64' } else { '' }
 $install = Join-Path $env:RUNNER_TEMP 'Lertaro-Beta-Upgrade-Smoke'
-$oldSetup = Join-Path $env:RUNNER_TEMP "Lertaro-beta7-Setup$suffix.exe"
+$oldSetup = Join-Path $env:RUNNER_TEMP "Lertaro-old-Setup$suffix.exe"
 $newZip = Join-Path (Resolve-Path -LiteralPath $PackageDirectory).Path "Lertaro-Portable$suffix.zip"
 $stage = Join-Path $install ('update-payload\' + [Guid]::NewGuid().ToString('N'))
 $app = Join-Path $install 'Lertaro.App.exe'
@@ -24,13 +27,13 @@ try {
 
 $installed = $false
 try {
-    $url = "https://github.com/chenran0408/Lertaro/releases/download/v5.10.0-beta7/Lertaro-Setup$suffix.exe"
+    $url = "https://github.com/chenran0408/Lertaro/releases/download/$PreviousRelease/Lertaro-Setup$suffix.exe"
     Invoke-WebRequest -Uri $url -OutFile $oldSetup
     $setup = Start-Process -FilePath $oldSetup -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',"/DIR=$install") -PassThru
-    if (!$setup.WaitForExit(480000)) { $setup.Kill(); throw 'beta7 installer timed out.' }
-    if ($setup.ExitCode -ne 0) { throw "beta7 installer failed: $($setup.ExitCode)" }
+    if (!$setup.WaitForExit(480000)) { $setup.Kill(); throw 'previous-release installer timed out.' }
+    if ($setup.ExitCode -ne 0) { throw "previous-release installer failed: $($setup.ExitCode)" }
     $installed = $true
-    if (!(Test-Path -LiteralPath $app) -or (Get-Item $app).VersionInfo.ProductVersion -notlike '5.10.0-beta7*') {
+    if (!(Test-Path -LiteralPath $app) -or (Get-Item $app).VersionInfo.ProductVersion -notlike ("$PreviousVersion*")) {
         throw 'beta7 app was not installed.'
     }
     $serviceExe = Join-Path $install 'Lertaro.Service.exe'
