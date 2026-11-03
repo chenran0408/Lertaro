@@ -23,6 +23,15 @@ internal sealed class ClipboardRuntime : IDisposable
     private Task _ready = Task.CompletedTask;
     private bool _started;
     private volatile bool _stopping;
+    private static long _pausedUntilMs;
+
+    /// <summary>One-click capture pause from the panel: the monitor's options read this, so a
+    /// paused recorder behaves exactly like a disabled one except no setting changes.</summary>
+    internal static bool IsCapturePaused() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < Volatile.Read(ref _pausedUntilMs);
+
+    internal static void PauseCaptureFor(TimeSpan duration) =>
+        Volatile.Write(ref _pausedUntilMs,
+            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (long)duration.TotalMilliseconds);
 
     internal IReadOnlyList<ClipboardEntry> Entries => Volatile.Read(ref _entries);
 
@@ -47,7 +56,8 @@ internal sealed class ClipboardRuntime : IDisposable
         _imagesDirectory = Path.Combine(root, "images");
         _store = new ClipboardStore(Path.Combine(root, "clipboard-history.db"), _imagesDirectory);
         _monitor = new ClipboardMonitorService(Captured, () => new ClipboardCaptureOptions(
-            ClipboardSettings.Enabled && !_stopping, ClipboardSettings.MaxTextLength, ClipboardSettings.ExcludedProcesses));
+            ClipboardSettings.Enabled && !_stopping && !IsCapturePaused(),
+            ClipboardSettings.MaxTextLength, ClipboardSettings.ExcludedProcesses));
         try { _targets = new PasteTargetTracker(); }
         catch (Exception ex) { LogFailure(ex); }
         PluginSettingsService.SettingChanged += SettingChanged;

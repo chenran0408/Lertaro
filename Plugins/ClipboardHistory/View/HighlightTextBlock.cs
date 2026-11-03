@@ -17,13 +17,11 @@ public sealed class HighlightTextBlock : TextBlock
         nameof(Query), typeof(string), typeof(HighlightTextBlock),
         new PropertyMetadata(string.Empty, OnTextChanged));
 
-    static HighlightTextBlock()
-    {
+    static HighlightTextBlock() =>
         // Hook the inherited Text property so XAML binding keeps its normal storage; the hook only
         // re-renders the runs.
         TextProperty.OverrideMetadata(typeof(HighlightTextBlock),
             new FrameworkPropertyMetadata(string.Empty, OnTextChanged));
-    }
 
     public string Query
     {

@@ -48,6 +48,7 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+        <!-- This grid is the inner content; the outer content grid below splits list|preview. -->
 
         <!-- Search: every keystroke re-filters the loaded history. -->
         <Border Grid.Row="0" CornerRadius="8" Margin="10,10,10,6"
@@ -70,19 +71,34 @@
             </Grid>
         </Border>
 
-        <!-- Filter chips: scope the list to one entry kind or the pinned set. -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="12,2,10,6">
-            <RadioButton x:Name="TabAll" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs"
-                         IsChecked="True" Checked="Tab_Checked"/>
-            <RadioButton x:Name="TabText" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs" Checked="Tab_Checked"/>
-            <RadioButton x:Name="TabImage" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs" Checked="Tab_Checked"/>
-            <RadioButton x:Name="TabFiles" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs" Checked="Tab_Checked"/>
-            <RadioButton x:Name="TabFavorites" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs" Checked="Tab_Checked"/>
-        </StackPanel>
+        <!-- Filter chips: scope the list to one entry kind or the pinned set; the sort toggle
+             flips between newest-first and most-copied-first. -->
+        <DockPanel Grid.Row="1" Margin="12,2,10,6">
+            <ToggleButton x:Name="SortToggle" DockPanel.Dock="Right" Content="⇅" FontSize="12" Padding="7,3"
+                          BorderThickness="0" Background="Transparent" Cursor="Hand" ToolTipService.ShowOnDisabled="True"
+                          Click="SortToggle_Click"/>
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="TabAll" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs"
+                             IsChecked="True" Checked="Tab_Checked"/>
+                <RadioButton x:Name="TabText" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs" Checked="Tab_Checked"/>
+                <RadioButton x:Name="TabImage" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs" Checked="Tab_Checked"/>
+                <RadioButton x:Name="TabFiles" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs" Checked="Tab_Checked"/>
+                <RadioButton x:Name="TabFavorites" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs" Checked="Tab_Checked"/>
+            </StackPanel>
+        </DockPanel>
 
+        <!-- Row 2: list on the left, a preview pane on the right showing the selected entry's
+             full text, large image or path list. -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="300"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition x:Name="PreviewColumn" Width="300"/>
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0">
         <!-- The list: group headers are non-selectable rows in the same list, so keyboard
              navigation and the 1~9 quick paste walk one flat sequence. -->
-        <ListBox x:Name="Lst" Grid.Row="2" Margin="6,0,6,6" BorderThickness="0" Background="Transparent"
+        <ListBox x:Name="Lst" Margin="6,0,6,6" BorderThickness="0" Background="Transparent"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  VirtualizingPanel.IsVirtualizing="True"
                  VirtualizingPanel.VirtualizationMode="Recycling"
@@ -140,10 +156,31 @@
             </ListBox.Resources>
         </ListBox>
 
-        <!-- Empty state shown when no row survives the tab and the query. -->
-        <TextBlock x:Name="EmptyText" Grid.Row="2" TextAlignment="Center" VerticalAlignment="Center"
-                   Margin="20" Opacity="0.6" FontSize="13" Foreground="{DynamicResource TextSecondary}"
-                   Visibility="Collapsed"/>
+            <!-- Empty state shown when no row survives the tab and the query. -->
+            <TextBlock x:Name="EmptyText" TextAlignment="Center" VerticalAlignment="Center"
+                       Margin="20" Opacity="0.6" FontSize="13" Foreground="{DynamicResource TextSecondary}"
+                       Visibility="Collapsed"/>
+            </Grid>
+
+            <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                          Background="Transparent" ResizeBehavior="CurrentAndNext" ResizeDirection="Columns"/>
+            <Border x:Name="PreviewHost" Grid.Column="2" Margin="0,0,6,6" CornerRadius="6" Padding="8"
+                    Background="{DynamicResource ControlBackground}"
+                    BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock x:Name="PreviewTitle" Grid.Row="0" FontSize="11" Opacity="0.65"
+                               Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <Grid x:Name="PreviewContent"/>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
 
         <Border Grid.Row="3" Padding="10,5" BorderThickness="0,1,0,0"
                 BorderBrush="{DynamicResource ControlBorderBrush}">

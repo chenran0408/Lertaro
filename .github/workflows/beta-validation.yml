@@ -58,6 +58,19 @@ jobs:
       - name: Test clipboard history
         if: success() || failure()
         run: dotnet test Tests/Plugins/ClipboardHistory/ClipboardHistory.csproj -c Release -r ${{ matrix.rid }} --logger "console;verbosity=normal" -v quiet
+      - name: Test remaining plugins (observe first, enforce once green)
+        if: success() || failure()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $featured = @('CoreExtensions', 'ClipboardHistory')
+          Get-ChildItem "Tests/Plugins/*/*.csproj" |
+            Where-Object { $featured -notcontains $_.Directory.Name } |
+            ForEach-Object {
+              Write-Host "::group::$($_.Directory.Name)"
+              dotnet test $_.FullName -c Release -r "${{ matrix.rid }}" -p:RustIndexStoreTarget="${{ matrix.rust_target }}" --logger "console;verbosity=quiet"
+              Write-Host "::endgroup::"
+            }
 
   package:
     needs: quality

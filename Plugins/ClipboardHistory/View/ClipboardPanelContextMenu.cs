@@ -19,9 +19,12 @@ internal sealed class ClipboardPanelContextMenu
     private readonly Action<string> _copyText;
     private readonly Action _saveImageAs;
     private readonly Action _clearHistory;
+    private readonly Action _togglePreview;
+    private readonly Action _togglePause;
 
     public ClipboardPanelContextMenu(Action paste, Action copy, Action togglePin, Action delete,
-        Action openSource, Action<string> copyText, Action saveImageAs, Action clearHistory)
+        Action openSource, Action<string> copyText, Action saveImageAs, Action clearHistory,
+        Action togglePreview, Action togglePause)
     {
         _paste = paste;
         _copy = copy;
@@ -31,6 +34,8 @@ internal sealed class ClipboardPanelContextMenu
         _copyText = copyText;
         _saveImageAs = saveImageAs;
         _clearHistory = clearHistory;
+        _togglePreview = togglePreview;
+        _togglePause = togglePause;
     }
 
     public ContextMenu Build(ClipboardEntry entry)
@@ -62,6 +67,11 @@ internal sealed class ClipboardPanelContextMenu
         var source = Item("ClipboardHistory_OpenSource", (_, _) => _openSource());
         source.IsEnabled = ClipboardRuntime.Instance.CanOpenSource(entry.Id);
         menu.Items.Add(source);
+        menu.Items.Add(new Separator());
+        menu.Items.Add(Item(
+            ClipboardRuntime.IsCapturePaused() ? "ClipboardHistory_PanelResumeCapture" : "ClipboardHistory_PanelPauseCapture",
+            (_, _) => _togglePause()));
+        menu.Items.Add(Item("ClipboardHistory_PanelTogglePreview", (_, _) => _togglePreview()));
         menu.Items.Add(Item("ClipboardHistory_ClearHistory", (_, _) => _clearHistory()));
         return menu;
     }

@@ -53,5 +53,11 @@
   "ClipboardHistory_PanelCopyPathWsl": "Copy as WSL path",
   "ClipboardHistory_PanelSaveImageAs": "Save image as…",
   "ClipboardHistory_PanelClearConfirm": "Delete the entire clipboard history, including stored images? This cannot be undone.",
-  "ClipboardHistory_PanelSelectedMerge": "{0} selected — Enter pastes them merged"
+  "ClipboardHistory_PanelSelectedMerge": "{0} selected — Enter pastes them merged",
+  "ClipboardHistory_PanelPreviewText": "Text",
+  "ClipboardHistory_PanelPreviewFiles": "Files",
+  "ClipboardHistory_PanelPauseCapture": "Pause capture (10 min)",
+  "ClipboardHistory_PanelResumeCapture": "Resume capture",
+  "ClipboardHistory_PanelTogglePreview": "Show/hide preview",
+  "ClipboardHistory_PanelPausedUntil": "Capture paused until {0}"
 }

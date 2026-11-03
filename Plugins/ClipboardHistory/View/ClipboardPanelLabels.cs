@@ -29,6 +29,14 @@ internal static class ClipboardPanelLabels
 
     public static string Empty() => TranslationService.Get("ClipboardHistory_PanelEmpty");
 
+    public static string PreviewTextTitle() => TranslationService.Get("ClipboardHistory_PanelPreviewText");
+
+    public static string PreviewFilesTitle() => TranslationService.Get("ClipboardHistory_PanelPreviewFiles");
+
+    public static string PreviewHidden() => TranslationService.Get("ClipboardHistory_PanelPreviewHidden");
+
+    public static string PausedUntil(string time) => TranslationService.Format("ClipboardHistory_PanelPausedUntil", time);
+
     /// <summary>The date-group header: today, yesterday, or the local date.</summary>
     public static string DateGroup(long lastSeenMs)
     {

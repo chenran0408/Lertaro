@@ -75,6 +75,25 @@ public sealed class ClipboardPanelRowsTests
     }
 
     [TestMethod]
+    public void Sort_ByFrequency_PinnedFirstThenMostCopied()
+    {
+        var entries = new List<ClipboardEntry>
+        {
+            Text("seen1", 1, seen: 1),
+            Text("seen5", 2, seen: 5),
+            Text("pinned seen1", 3, pinned: true, seen: 1),
+        };
+
+        var byRecency = ClipboardPanelRows.Sort(entries, byFrequency: false);
+        Assert.AreEqual(1, byRecency[0].Id); // store order preserved
+
+        var byFrequency = ClipboardPanelRows.Sort(entries, byFrequency: true);
+        Assert.AreEqual(3, byFrequency[0].Id); // pinned still first
+        Assert.AreEqual(2, byFrequency[1].Id); // then highest seen count
+        Assert.AreEqual(1, byFrequency[2].Id);
+    }
+
+    [TestMethod]
     public void SelectableIds_SkipsHeadersAndKeepsDisplayOrder()
     {
         var items = new List<ClipboardPanelItem>

@@ -53,5 +53,11 @@
   "ClipboardHistory_PanelCopyPathWsl": "複製為 WSL 路徑",
   "ClipboardHistory_PanelSaveImageAs": "圖片另存為…",
   "ClipboardHistory_PanelClearConfirm": "刪除全部剪貼簿歷史（包括已保存的圖片）？此操作無法復原。",
-  "ClipboardHistory_PanelSelectedMerge": "已選 {0} 條 — Enter 將合併貼上"
+  "ClipboardHistory_PanelSelectedMerge": "已選 {0} 條 — Enter 將合併貼上",
+  "ClipboardHistory_PanelPreviewText": "文字",
+  "ClipboardHistory_PanelPreviewFiles": "檔案",
+  "ClipboardHistory_PanelPauseCapture": "暫停擷取（10 分鐘）",
+  "ClipboardHistory_PanelResumeCapture": "恢復擷取",
+  "ClipboardHistory_PanelTogglePreview": "顯示/隱藏預覽",
+  "ClipboardHistory_PanelPausedUntil": "擷取已暫停至 {0}"
 }

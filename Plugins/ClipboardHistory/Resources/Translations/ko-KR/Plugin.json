@@ -53,5 +53,11 @@
   "ClipboardHistory_PanelCopyPathWsl": "WSL 경로로 복사",
   "ClipboardHistory_PanelSaveImageAs": "이미지 다른 이름으로 저장…",
   "ClipboardHistory_PanelClearConfirm": "클립보드 기록 전체(저장된 이미지 포함)를 삭제할까요? 되돌릴 수 없습니다.",
-  "ClipboardHistory_PanelSelectedMerge": "{0}개 선택 — Enter로 병합 붙여넣기"
+  "ClipboardHistory_PanelSelectedMerge": "{0}개 선택 — Enter로 병합 붙여넣기",
+  "ClipboardHistory_PanelPreviewText": "텍스트",
+  "ClipboardHistory_PanelPreviewFiles": "파일",
+  "ClipboardHistory_PanelPauseCapture": "기록 일시 중지(10분)",
+  "ClipboardHistory_PanelResumeCapture": "기록 재개",
+  "ClipboardHistory_PanelTogglePreview": "미리보기 전환",
+  "ClipboardHistory_PanelPausedUntil": "{0}까지 기록 일시 중지"
 }

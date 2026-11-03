@@ -18,7 +18,7 @@ function themeConfigFor(locale, built) {
   return {
     nav: built.nav,
     sidebar: built.sidebar,
-    socialLinks: [{ icon: 'github', link: 'https://github.com/Lertaro/Lertaro' }],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/chenran0408/Lertaro' }],
     outline: { label: t.outlineLabel },
     docFooter: { prev: t.docFooterPrev, next: t.docFooterNext },
     sidebarMenuLabel: t.sidebarMenuLabel,

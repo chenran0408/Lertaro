@@ -53,5 +53,11 @@
   "ClipboardHistory_PanelCopyPathWsl": "Copiar como ruta WSL",
   "ClipboardHistory_PanelSaveImageAs": "Guardar imagen como…",
   "ClipboardHistory_PanelClearConfirm": "¿Eliminar todo el historial del portapapeles, incluidas las imágenes guardadas? No se puede deshacer.",
-  "ClipboardHistory_PanelSelectedMerge": "{0} seleccionadas — Entrar pega combinado"
+  "ClipboardHistory_PanelSelectedMerge": "{0} seleccionadas — Entrar pega combinado",
+  "ClipboardHistory_PanelPreviewText": "Texto",
+  "ClipboardHistory_PanelPreviewFiles": "Archivos",
+  "ClipboardHistory_PanelPauseCapture": "Pausar captura (10 min)",
+  "ClipboardHistory_PanelResumeCapture": "Reanudar captura",
+  "ClipboardHistory_PanelTogglePreview": "Mostrar/ocultar vista previa",
+  "ClipboardHistory_PanelPausedUntil": "Captura en pausa hasta {0}"
 }

@@ -4,7 +4,9 @@ name: Deploy VitePress site to Pages Repo
 
 on:
   push:
-    branches: [main]
+    branches:
+      - beta
+      - main
     paths:
       - 'Site/**'
       - 'PluginSdk/**'

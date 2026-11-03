@@ -53,5 +53,11 @@
   "ClipboardHistory_PanelCopyPathWsl": "复制为 WSL 路径",
   "ClipboardHistory_PanelSaveImageAs": "图片另存为…",
   "ClipboardHistory_PanelClearConfirm": "删除全部剪贴板历史（包括已保存的图片）？此操作不可撤销。",
-  "ClipboardHistory_PanelSelectedMerge": "已选 {0} 条 — Enter 将合并粘贴"
+  "ClipboardHistory_PanelSelectedMerge": "已选 {0} 条 — Enter 将合并粘贴",
+  "ClipboardHistory_PanelPreviewText": "文本",
+  "ClipboardHistory_PanelPreviewFiles": "文件",
+  "ClipboardHistory_PanelPauseCapture": "暂停采集（10 分钟）",
+  "ClipboardHistory_PanelResumeCapture": "恢复采集",
+  "ClipboardHistory_PanelTogglePreview": "显示/隐藏预览",
+  "ClipboardHistory_PanelPausedUntil": "采集已暂停至 {0}"
 }

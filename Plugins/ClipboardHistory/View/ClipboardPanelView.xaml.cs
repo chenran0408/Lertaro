@@ -27,6 +27,8 @@ public partial class ClipboardPanelView : UserControl
     private List<ClipboardPanelItem> _items = [];
     private Dictionary<long, ClipboardEntry> _entryById = [];
     private readonly ClipboardPanelContextMenu _contextMenu;
+    private bool _byFrequency;
+    private bool _previewVisible = true;
     private bool _loading;
 
     public ClipboardPanelView()
@@ -41,7 +43,9 @@ public partial class ClipboardPanelView : UserControl
             () => SelectedEntries().ToList().ForEach(entry => ClipboardRuntime.Instance.OpenSource(entry.Id)),
             text => _ = ClipboardRuntime.Instance.CopyTextAsync(text),
             SaveSelectedImageAs,
-            ClearHistoryWithConfirm);
+            ClearHistoryWithConfirm,
+            TogglePreview,
+            TogglePauseCapture);
         TranslationService.CultureChanged += OnCultureChanged;
     }
 
@@ -71,13 +75,16 @@ public partial class ClipboardPanelView : UserControl
         {
             var view = new ClipboardPanelView();
             var window = new PluginWindow(
-                ClipboardPanelLabels.Title(), 470, 640, PluginWindowMode.Window);
+                ClipboardPanelLabels.Title(), view.StoredWidth(), view.StoredHeight(), PluginWindowMode.Window);
+            view._previewVisible = ClipboardPanelViewSettings.PreviewVisible();
+            if (!view._previewVisible) view.PreviewColumn.Width = new GridLength(0);
             window.ShowFooter = false;
             window.ContentHostControl.VerticalContentAlignment = VerticalAlignment.Stretch;
             window.ContentHostControl.HorizontalContentAlignment = HorizontalAlignment.Stretch;
             window.ContentHostControl.Content = view;
             window.Closed += (_, _) =>
             {
+                ClipboardPanelViewSettings.Save(window.Width, window.Height, view._previewVisible);
                 _window = null;
                 _instance = null;
             };
@@ -95,6 +102,7 @@ public partial class ClipboardPanelView : UserControl
         }
 
         if (_window.WindowState == WindowState.Minimized) _window.WindowState = WindowState.Normal;
+        _instance.SearchBox.Text = string.Empty;
         _ = _instance.ReloadAsync();
         _window.Activate();
         _instance.SearchBox.Focus();
@@ -109,6 +117,16 @@ public partial class ClipboardPanelView : UserControl
         });
 
     internal IReadOnlyList<ClipboardEntry> Entries { get; private set; } = [];
+
+    /// <summary>Saved window size, honored once at window creation.</summary>
+    internal double StoredWidth() => Math.Max(420, ClipboardPanelViewSettings.Width());
+    internal double StoredHeight() => Math.Max(420, ClipboardPanelViewSettings.Height());
+
+    private void SortToggle_Click(object sender, RoutedEventArgs e)
+    {
+        _byFrequency = SortToggle.IsChecked == true;
+        RebuildRows(Entries);
+    }
 
     private async Task ReloadAsync()
     {
@@ -138,6 +156,7 @@ public partial class ClipboardPanelView : UserControl
     private void RebuildRows(IReadOnlyList<ClipboardEntry> entries)
     {
         var query = SearchBox.Text.Trim();
+        entries = ClipboardPanelRows.Sort(entries, _byFrequency);
         _items = ClipboardPanelRows.Build(
             entries, _tab, query, FuzzyMatchService.IsMatch,
             ClipboardPanelLabels.Subtitle,
@@ -208,6 +227,22 @@ public partial class ClipboardPanelView : UserControl
         if (Lst.SelectedItem is ClipboardPanelItem { IsHeader: true })
             SelectFirstRow();
         UpdateHintBar();
+        UpdatePreview();
+    }
+
+    /// <summary>The preview pane mirrors the selection; a header-only selection clears it.</summary>
+    private void UpdatePreview()
+    {
+        if (!_previewVisible) return;
+        var entry = SelectedEntry();
+        PreviewTitle.Text = entry is null ? string.Empty : ClipboardPanelLabels.Subtitle(entry);
+        ClipboardPanelPreview.Apply(PreviewContent, PreviewTitle, entry, ImagesDirectory());
+    }
+
+    private static string ImagesDirectory()
+    {
+        var directory = UserDataService.GetUserDataDirectory() ?? string.Empty;
+        return Path.Combine(directory, "ClipboardHistory", "images");
     }
 
     /// <summary>The hint bar doubles as the multi-select status line: with more than one row
@@ -218,6 +253,23 @@ public partial class ClipboardPanelView : UserControl
         HintBar.Text = selected > 1
             ? string.Format(TranslationService.Get("ClipboardHistory_PanelSelectedMerge"), selected)
             : ClipboardPanelLabels.HintBar();
+    }
+
+    /// <summary>Collapses or restores the preview column; the choice persists across summons.</summary>
+    private void TogglePreview()
+    {
+        _previewVisible = !_previewVisible;
+        PreviewColumn.Width = _previewVisible ? new GridLength(300) : new GridLength(0);
+        if (_previewVisible) UpdatePreview();
+    }
+
+    /// <summary>Toggles a 10-minute capture pause straight from the panel, no settings trip.</summary>
+    private void TogglePauseCapture()
+    {
+        if (ClipboardRuntime.IsCapturePaused())
+            ClipboardRuntime.PauseCaptureFor(TimeSpan.Zero);
+        else
+            ClipboardRuntime.PauseCaptureFor(TimeSpan.FromMinutes(10));
     }
 
     private void ClearHistoryWithConfirm()
@@ -325,7 +377,7 @@ public partial class ClipboardPanelView : UserControl
 
     private static string ImageFilePathFor(ClipboardEntry entry)
     {
-        var directory = PluginSdk.Services.UserDataService.GetUserDataDirectory() ?? string.Empty;
+        var directory = UserDataService.GetUserDataDirectory() ?? string.Empty;
         return Path.Combine(directory, "ClipboardHistory", "images", entry.ImagePath);
     }
 

@@ -53,5 +53,11 @@
   "ClipboardHistory_PanelCopyPathWsl": "WSL パスとしてコピー",
   "ClipboardHistory_PanelSaveImageAs": "画像に名前を付けて保存…",
   "ClipboardHistory_PanelClearConfirm": "クリップボード履歴（保存済み画像を含む）をすべて削除しますか？元に戻せません。",
-  "ClipboardHistory_PanelSelectedMerge": "{0} 件選択中 — Enter で結合して貼り付け"
+  "ClipboardHistory_PanelSelectedMerge": "{0} 件選択中 — Enter で結合して貼り付け",
+  "ClipboardHistory_PanelPreviewText": "テキスト",
+  "ClipboardHistory_PanelPreviewFiles": "ファイル",
+  "ClipboardHistory_PanelPauseCapture": "記録を一時停止（10分）",
+  "ClipboardHistory_PanelResumeCapture": "記録を再開",
+  "ClipboardHistory_PanelTogglePreview": "プレビュー表示切替",
+  "ClipboardHistory_PanelPausedUntil": "記録は {0} まで一時停止中"
 }

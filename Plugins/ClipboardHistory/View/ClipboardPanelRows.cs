@@ -29,6 +29,19 @@ internal sealed record ClipboardPanelGroup(string Label, IReadOnlyList<Clipboard
 /// </summary>
 internal static class ClipboardPanelRows
 {
+    /// <summary>Orders entries for display: pinned first, then either most-recently-captured
+    /// (the default) or most-copied (frequency). Stable on ties via Id, matching the store.</summary>
+    public static List<ClipboardEntry> Sort(IReadOnlyList<ClipboardEntry> entries, bool byFrequency)
+    {
+        if (!byFrequency) return entries.ToList();
+        return entries
+            .OrderByDescending(entry => entry.Pinned)
+            .ThenByDescending(entry => entry.SeenCount)
+            .ThenByDescending(entry => entry.LastSeenAtMs)
+            .ThenByDescending(entry => entry.Id)
+            .ToList();
+    }
+
     public static bool MatchesTab(ClipboardEntry entry, ClipboardPanelTab tab) => tab switch
     {
         ClipboardPanelTab.Text => entry.Kind == ClipboardEntryKind.Text,

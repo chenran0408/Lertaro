@@ -58,6 +58,7 @@ When interacting with this repository, performing code modification, compilation
 
 5. **Code File Line Limit (Modularization & Decoupling)**
     - All `.cs` and `.xaml` code files are recommended to stay **under 300 lines**.
+      > 口径说明：CI 的硬门禁是 `Tools/TestSourceSize.ps1` 的 32,768 字节 ratchet（存量文件记录在 source-size-baseline.json），300 行是代码评审推荐值而非门禁。两者目标一致：控制文件规模只减不增。
     - Before every compilation/build, check the line counts of the modified files. If any file exceeds 300 lines, evaluate whether it should be split. If the benefit of splitting is too low, leave it unsplit.
     - Do not use partial classes or partial views as a shortcut to bypass this limit. When splitting is warranted, perform structural decoupling by extracting clean helper classes, using C# extension methods, or grouping logical subcomponents into subfolders.
 
