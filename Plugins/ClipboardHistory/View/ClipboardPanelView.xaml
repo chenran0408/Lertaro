@@ -86,6 +86,7 @@
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  VirtualizingPanel.IsVirtualizing="True"
                  VirtualizingPanel.VirtualizationMode="Recycling"
+                 SelectionMode="Extended"
                  SelectionChanged="Lst_SelectionChanged"
                  MouseDoubleClick="Lst_MouseDoubleClick">
             <ListBox.ItemContainerStyle>

@@ -45,5 +45,7 @@
   "ClipboardHistory_PanelYesterday": "昨天",
   "ClipboardHistory_PanelEmpty": "這裡還是空的——去複製點東西吧。",
   "ClipboardHistory_OpenPanel": "開啟剪貼簿面板",
-  "ClipboardHistory_OpenPanelDesc": "搜尋、釘選並重新貼上你複製過的一切"
+  "ClipboardHistory_OpenPanelDesc": "搜尋、釘選並重新貼上你複製過的一切",
+  "ClipboardHistory_Config_SystemClipboardLabel": "開啟 Windows 剪貼簿設定",
+  "ClipboardHistory_Config_SystemClipboardDesc": "系統內建剪貼簿歷史佔用 Win+V 時，面板熱鍵可能失效。在這裡關閉系統功能，讓 Lertaro 面板接管該按鍵。"
 }

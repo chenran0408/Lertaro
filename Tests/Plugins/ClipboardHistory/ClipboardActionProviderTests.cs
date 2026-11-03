@@ -50,7 +50,7 @@ public sealed class ClipboardActionProviderTests
             var items = provider.GetMenuItems([new ClipboardSearchResult(entry)], IntPtr.Zero).ToArray();
 
             Assert.HasCount(6, items);
-            Assert.AreEqual(6u, items[^1].CommandId);
+            Assert.AreEqual((uint)ClipboardActionProvider.MenuCommand.ClearHistory, items[^1].CommandId);
             Assert.AreEqual("ClipboardHistory_ClearHistory", items[^1].Text);
             Assert.IsNotNull(items[^1].OnExecute);
         }

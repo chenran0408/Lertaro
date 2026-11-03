@@ -167,14 +167,19 @@ internal sealed class ClipboardRuntime : IDisposable
         SearchRefreshService.RefreshIfMatches(query => TriggerWord.TryMatch(query, ClipboardSettings.TriggerKeyword, out _));
     }
 
-    internal bool Paste(long id)
+    internal bool Paste(long id) =>
+        PasteEntries(Entries.Where(entry => entry.Id == id).Take(1).ToArray());
+
+    /// <summary>Pastes one entry, or a merged payload built from several selected entries (the
+    /// panel's multi-select). Returns false when there is nothing pasteable or the target refuses.</summary>
+    internal bool PasteEntries(IReadOnlyList<ClipboardEntry> entries)
     {
-        var entry = Entries.FirstOrDefault(entry => entry.Id == id);
+        var merged = entries.Count == 1 ? entries[0] : ClipboardMergeSupport.MergeForPaste(entries);
         var target = _targets?.Target ?? PasteTargetTracker.ReadExternalForeground();
         try
         {
-            if (entry == null || _monitor == null || !PasteBackHelper.CanPaste(target)) return false;
-            _ = PasteAsync(entry, target!);
+            if (merged == null || _monitor == null || !PasteBackHelper.CanPaste(target)) return false;
+            _ = PasteAsync(merged, target!);
             return true;
         }
         catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); return false; }

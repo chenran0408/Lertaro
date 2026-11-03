@@ -45,5 +45,7 @@
   "ClipboardHistory_PanelYesterday": "昨日",
   "ClipboardHistory_PanelEmpty": "まだ何もありません。何かコピーしてください。",
   "ClipboardHistory_OpenPanel": "クリップボードパネルを開く",
-  "ClipboardHistory_OpenPanelDesc": "コピーした内容を検索・ピン留め・再貼り付け"
+  "ClipboardHistory_OpenPanelDesc": "コピーした内容を検索・ピン留め・再貼り付け",
+  "ClipboardHistory_Config_SystemClipboardLabel": "Windows のクリップボード設定を開く",
+  "ClipboardHistory_Config_SystemClipboardDesc": "Windows 標準のクリップボード履歴が Win+V を占有している間は、パネルのホットキーが効かないことがあります。ここでシステム機能をオフにすると、Lertaro のパネルがこのキーを引き継ぎます。"
 }

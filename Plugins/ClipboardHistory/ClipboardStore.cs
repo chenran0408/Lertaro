@@ -141,23 +141,20 @@ internal sealed class ClipboardStore(string databasePath, string imagesDirectory
         ClipboardEntry entry;
         if (existing != null)
         {
+            // Promotion updates the stamp and count but keeps the FIRST capture's source: "where did
+            // this come from" should answer the origin, not whoever re-copied it most recently.
             using var update = connection.CreateCommand();
             update.Transaction = transaction;
             update.CommandText = """
                 UPDATE clipboard_history
-                SET seen_count = seen_count + 1, last_seen_at_ms = @stamp,
-                    source_process = @sourceProcess, source_window_title = @sourceWindowTitle
+                SET seen_count = seen_count + 1, last_seen_at_ms = @stamp
                 WHERE id = @id
                 """;
             update.Parameters.AddWithValue("@stamp", stamp);
-            update.Parameters.AddWithValue("@sourceProcess", sourceProcess);
-            update.Parameters.AddWithValue("@sourceWindowTitle", sourceWindowTitle);
             update.Parameters.AddWithValue("@id", existing.Id);
             update.ExecuteNonQuery();
             entry = existing with
             {
-                SourceProcess = sourceProcess,
-                SourceWindowTitle = sourceWindowTitle,
                 SeenCount = existing.SeenCount + 1,
                 LastSeenAtMs = stamp,
             };

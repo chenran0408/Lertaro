@@ -45,5 +45,7 @@
   "ClipboardHistory_PanelYesterday": "Yesterday",
   "ClipboardHistory_PanelEmpty": "Nothing here yet — copy something.",
   "ClipboardHistory_OpenPanel": "Open clipboard panel",
-  "ClipboardHistory_OpenPanelDesc": "Search, pin and re-paste everything you have copied"
+  "ClipboardHistory_OpenPanelDesc": "Search, pin and re-paste everything you have copied",
+  "ClipboardHistory_Config_SystemClipboardLabel": "Open Windows clipboard settings",
+  "ClipboardHistory_Config_SystemClipboardDesc": "While Windows' own clipboard history owns Win+V, the panel hotkey can dead-fire. Turn the system feature off here so Lertaro's panel takes over the key."
 }

@@ -1,3 +1,4 @@
+using Lertaro.PluginSdk;
 using Lertaro.PluginSdk.Abstractions;
 using Lertaro.PluginSdk.Services;
 
@@ -114,7 +115,32 @@ internal static class ClipboardSettings
                 DescriptionKey = "ClipboardHistory_Config_ExcludedProcessesDesc",
                 FieldType = ConfigFieldType.Text,
                 DefaultValue = DefaultExcludedProcesses
+            },
+            // Win+V is owned by Windows' own clipboard history while that feature is on, so the
+            // wake hotkey can dead-fire. This button sends the user to the one switch that frees
+            // the combination; the plugin panel replaces everything the system panel did.
+            new PluginConfigField
+            {
+                Key = "OpenSystemClipboardSettings",
+                LabelKey = "ClipboardHistory_Config_SystemClipboardLabel",
+                DescriptionKey = "ClipboardHistory_Config_SystemClipboardDesc",
+                FieldType = ConfigFieldType.Button,
+                DefaultValue = string.Empty,
+                OnClick = OpenSystemClipboardSettings
             }
         ]
     };
+
+    internal static void OpenSystemClipboardSettings()
+    {
+        try
+        {
+            using var process = System.Diagnostics.Process.Start(
+                new System.Diagnostics.ProcessStartInfo("ms-settings:clipboard") { UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or System.IO.FileNotFoundException)
+        {
+            Logger.Log($"[ClipboardHistory] Could not open ms-settings:clipboard: {ex.GetType().Name}", LogLevel.Warn);
+        }
+    }
 }

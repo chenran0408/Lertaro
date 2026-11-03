@@ -7,6 +7,18 @@ namespace Lertaro.Plugins.ClipboardHistory;
 
 public sealed class ClipboardActionProvider : IDynamicActionProvider
 {
+    /// <summary>Stable command ids: the menu is built from this table and dispatch reads the same
+    /// constants, so adding or reordering an item can never silently shift what an id executes.</summary>
+    internal enum MenuCommand
+    {
+        Paste = 101,
+        Copy = 102,
+        TogglePin = 103,
+        Delete = 104,
+        OpenSource = 105,
+        ClearHistory = 106,
+    }
+
     public string GroupName => TranslationService.Get("ClipboardHistory_MenuGroup");
     public bool CanProvideForInstantResults => true;
     public bool CanProvide(IReadOnlyList<ISearchResult> results) => TryGetId(results, out _);
@@ -17,40 +29,48 @@ public sealed class ClipboardActionProvider : IDynamicActionProvider
         var runtime = ClipboardRuntime.Instance;
         var entry = runtime.Entries.FirstOrDefault(entry => entry.Id == id);
         if (entry == null) yield break;
-        string[] keys = ["Paste", "Copy", entry.Pinned ? "Unpin" : "Pin", "Delete", "OpenSource", "ClearHistory"];
-        string[] shortcuts = ["P", "C", "T", "D", "O", "A"];
-        for (uint command = 1; command <= keys.Length; command++)
+
+        var items = new (MenuCommand Command, string Key, string Shortcut)[]
         {
-            var captured = command;
+            (MenuCommand.Paste, "Paste", "P"),
+            (MenuCommand.Copy, "Copy", "C"),
+            (MenuCommand.TogglePin, entry.Pinned ? "Unpin" : "Pin", "T"),
+            (MenuCommand.Delete, "Delete", "D"),
+            (MenuCommand.OpenSource, "OpenSource", "O"),
+            (MenuCommand.ClearHistory, "ClearHistory", "A"),
+        };
+        foreach (var (command, key, shortcut) in items)
+        {
             yield return new DynamicMenuItem
             {
-                CommandId = command,
-                Text = TranslationService.Get("ClipboardHistory_" + keys[command - 1]),
-                ShortcutHint = shortcuts[command - 1],
-                IsDisabled = command == 5 && !runtime.CanOpenSource(id),
-                OnExecute = () => Execute(id, captured)
+                CommandId = (uint)command,
+                Text = TranslationService.Get("ClipboardHistory_" + key),
+                ShortcutHint = shortcut,
+                IsDisabled = command == MenuCommand.OpenSource && !runtime.CanOpenSource(id),
+                OnExecute = () => Execute(id, command)
             };
         }
     }
 
     public void ExecuteCommand(IReadOnlyList<ISearchResult> results, uint commandId, nint ownerHwnd)
     {
-        if (TryGetId(results, out var id)) Execute(id, commandId);
+        if (TryGetId(results, out var id) && Enum.IsDefined((MenuCommand)commandId))
+            Execute(id, (MenuCommand)commandId);
     }
 
     public void ClearSession() { }
 
-    private static void Execute(long id, uint command)
+    private static void Execute(long id, MenuCommand command)
     {
         var runtime = ClipboardRuntime.Instance;
         switch (command)
         {
-            case 1: runtime.Paste(id); break;
-            case 2: runtime.Copy(id); break;
-            case 3: runtime.TogglePin(id); break;
-            case 4: runtime.Delete(id); break;
-            case 5: runtime.OpenSource(id); break;
-            case 6: runtime.ClearHistory(); break;
+            case MenuCommand.Paste: runtime.Paste(id); break;
+            case MenuCommand.Copy: runtime.Copy(id); break;
+            case MenuCommand.TogglePin: runtime.TogglePin(id); break;
+            case MenuCommand.Delete: runtime.Delete(id); break;
+            case MenuCommand.OpenSource: runtime.OpenSource(id); break;
+            case MenuCommand.ClearHistory: runtime.ClearHistory(); break;
         }
     }
 

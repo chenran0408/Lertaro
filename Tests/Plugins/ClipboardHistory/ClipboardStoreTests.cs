@@ -90,7 +90,10 @@ public sealed class ClipboardStoreTests
         Assert.IsNotNull(second);
         Assert.AreEqual(first.Id, second.Id);
         Assert.AreEqual(2L, second.SeenCount);
-        Assert.AreEqual("AppB", second.SourceProcess);
+        // Promotion keeps the FIRST capture's source: "where did this come from" answers the
+        // origin, not whoever re-copied it most recently.
+        Assert.AreEqual("AppA", second.SourceProcess);
+        Assert.IsGreaterThan(first.LastSeenAtMs, second.LastSeenAtMs);
         var entries = await store.GetEntriesAsync();
         Assert.HasCount(1, entries);
     }

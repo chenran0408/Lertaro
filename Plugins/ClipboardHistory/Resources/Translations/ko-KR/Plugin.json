@@ -45,5 +45,7 @@
   "ClipboardHistory_PanelYesterday": "어제",
   "ClipboardHistory_PanelEmpty": "아직 비어 있습니다. 무언가를 복사해 보세요.",
   "ClipboardHistory_OpenPanel": "클립보드 패널 열기",
-  "ClipboardHistory_OpenPanelDesc": "복사한 내용을 검색, 고정하고 다시 붙여넣기"
+  "ClipboardHistory_OpenPanelDesc": "복사한 내용을 검색, 고정하고 다시 붙여넣기",
+  "ClipboardHistory_Config_SystemClipboardLabel": "Windows 클립보드 설정 열기",
+  "ClipboardHistory_Config_SystemClipboardDesc": "Windows 기본 클립보드 기록이 Win+V를 점유하는 동안에는 패널 단축키가 작동하지 않을 수 있습니다. 여기서 시스템 기능을 끄면 Lertaro 패널이 이 키를 대신 사용합니다."
 }

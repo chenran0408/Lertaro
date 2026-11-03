@@ -45,5 +45,7 @@
   "ClipboardHistory_PanelYesterday": "Ayer",
   "ClipboardHistory_PanelEmpty": "Aún no hay nada: copia algo.",
   "ClipboardHistory_OpenPanel": "Abrir el panel del portapapeles",
-  "ClipboardHistory_OpenPanelDesc": "Busca, fija y vuelve a pegar todo lo que has copiado"
+  "ClipboardHistory_OpenPanelDesc": "Busca, fija y vuelve a pegar todo lo que has copiado",
+  "ClipboardHistory_Config_SystemClipboardLabel": "Abrir la configuración del portapapeles de Windows",
+  "ClipboardHistory_Config_SystemClipboardDesc": "Mientras el historial del portapapeles de Windows posea Win+V, la tecla del panel puede no responder. Desactive la función del sistema aquí para que el panel de Lertaro la use."
 }

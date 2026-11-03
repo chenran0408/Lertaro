@@ -24,6 +24,7 @@ public partial class ClipboardPanelView : UserControl
 
     private ClipboardPanelTab _tab = ClipboardPanelTab.All;
     private List<ClipboardPanelItem> _items = [];
+    private Dictionary<long, ClipboardEntry> _entryById = [];
     private bool _loading;
 
     public ClipboardPanelView()
@@ -121,6 +122,7 @@ public partial class ClipboardPanelView : UserControl
             entry => ClipboardPanelLabels.DateGroup(entry.LastSeenAtMs),
             ClipboardPanelLabels.PinnedGroup());
         var selectedId = SelectedId();
+        _entryById = entries.ToDictionary(entry => entry.Id);
         Lst.ItemsSource = _items;
         ClipboardPanelLabels.SetEmpty(this, _items.Count == 0);
         ClearSearchButton.Visibility = query.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -240,9 +242,25 @@ public partial class ClipboardPanelView : UserControl
 
     private void PasteSelected(bool plainText)
     {
-        if (Lst.SelectedItem is not ClipboardPanelItem { IsRow: true } item) return;
-        PasteAndMaybeClose(item.Id);
+        var selected = SelectedEntries();
+        if (selected.Count == 0) return;
+
+        // Multi-select pastes the merged payload (texts joined by line breaks, file paths unioned).
+        if (selected.Count > 1)
+        {
+            if (ClipboardRuntime.Instance.PasteEntries(selected) && _window != null)
+                _window.Close();
+            return;
+        }
+        PasteAndMaybeClose(selected[0].Id);
     }
+
+    /// <summary>Every selected row's entry, in display order (headers are not selectable).</summary>
+    private List<ClipboardEntry> SelectedEntries() =>
+        Lst.SelectedItems.OfType<ClipboardPanelItem>()
+            .Where(item => item.IsRow && _entryById.TryGetValue(item.Id, out _))
+            .Select(item => _entryById[item.Id])
+            .ToList();
 
     private void PasteByIndex(int oneBased)
     {
