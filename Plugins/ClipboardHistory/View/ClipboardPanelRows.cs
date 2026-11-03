@@ -12,7 +12,8 @@ internal sealed record ClipboardPanelItem(
     string Subtitle,
     ClipboardEntryKind Kind,
     string ImagePath,
-    bool Pinned)
+    bool Pinned,
+    string Query = "")
 {
     public static ClipboardPanelItem Header(string text) => new(true, text, 0, string.Empty, string.Empty,
         ClipboardEntryKind.Text, string.Empty, false);
@@ -69,7 +70,7 @@ internal static class ClipboardPanelRows
                 items.Add(ClipboardPanelItem.Header(label));
             }
             items.Add(new ClipboardPanelItem(false, string.Empty, entry.Id, entry.PlainPreview,
-                subtitle(entry), entry.Kind, entry.ImagePath, entry.Pinned));
+                subtitle(entry), entry.Kind, entry.ImagePath, entry.Pinned, query));
         }
         return items;
     }

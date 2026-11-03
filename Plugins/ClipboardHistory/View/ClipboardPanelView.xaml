@@ -88,7 +88,8 @@
                  VirtualizingPanel.VirtualizationMode="Recycling"
                  SelectionMode="Extended"
                  SelectionChanged="Lst_SelectionChanged"
-                 MouseDoubleClick="Lst_MouseDoubleClick">
+                 MouseDoubleClick="Lst_MouseDoubleClick"
+                 ContextMenuOpening="Lst_ContextMenuOpening">
             <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -117,8 +118,8 @@
                                            Source="{Binding ImagePath, Converter={StaticResource ThumbnailSource}}"/>
                                 </Border>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Title}" FontSize="12.5" TextTrimming="CharacterEllipsis"
-                                               Foreground="{DynamicResource TextPrimary}"/>
+                                    <local:HighlightTextBlock Text="{Binding Title}" Query="{Binding Query}"
+                                               FontSize="12.5" Foreground="{DynamicResource TextPrimary}"/>
                                     <TextBlock Text="{Binding Subtitle}" FontSize="10.5" Opacity="0.65"
                                                Foreground="{DynamicResource TextSecondary}"
                                                TextTrimming="CharacterEllipsis" Margin="0,1,0,0"/>

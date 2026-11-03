@@ -159,6 +159,14 @@ internal sealed class ClipboardRuntime : IDisposable
         catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); return false; }
     }
 
+    /// <summary>Writes an arbitrary text to the clipboard (path-format copies for file entries).</summary>
+    internal async Task CopyTextAsync(string text)
+    {
+        if (_monitor == null) return;
+        try { await _monitor.WriteTextAsync(text).ConfigureAwait(false); }
+        catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); }
+    }
+
     internal async Task CopyAsync(long id)
     {
         var entry = Entries.FirstOrDefault(entry => entry.Id == id);

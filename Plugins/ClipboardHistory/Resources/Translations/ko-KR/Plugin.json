@@ -47,5 +47,11 @@
   "ClipboardHistory_OpenPanel": "클립보드 패널 열기",
   "ClipboardHistory_OpenPanelDesc": "복사한 내용을 검색, 고정하고 다시 붙여넣기",
   "ClipboardHistory_Config_SystemClipboardLabel": "Windows 클립보드 설정 열기",
-  "ClipboardHistory_Config_SystemClipboardDesc": "Windows 기본 클립보드 기록이 Win+V를 점유하는 동안에는 패널 단축키가 작동하지 않을 수 있습니다. 여기서 시스템 기능을 끄면 Lertaro 패널이 이 키를 대신 사용합니다."
+  "ClipboardHistory_Config_SystemClipboardDesc": "Windows 기본 클립보드 기록이 Win+V를 점유하는 동안에는 패널 단축키가 작동하지 않을 수 있습니다. 여기서 시스템 기능을 끄면 Lertaro 패널이 이 키를 대신 사용합니다.",
+  "ClipboardHistory_PanelCopyPath": "경로 복사",
+  "ClipboardHistory_PanelCopyPathQuoted": "따옴표 경로로 복사",
+  "ClipboardHistory_PanelCopyPathWsl": "WSL 경로로 복사",
+  "ClipboardHistory_PanelSaveImageAs": "이미지 다른 이름으로 저장…",
+  "ClipboardHistory_PanelClearConfirm": "클립보드 기록 전체(저장된 이미지 포함)를 삭제할까요? 되돌릴 수 없습니다.",
+  "ClipboardHistory_PanelSelectedMerge": "{0}개 선택 — Enter로 병합 붙여넣기"
 }

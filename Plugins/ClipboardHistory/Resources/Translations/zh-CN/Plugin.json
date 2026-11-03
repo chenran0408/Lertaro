@@ -47,5 +47,11 @@
   "ClipboardHistory_OpenPanel": "打开剪贴板面板",
   "ClipboardHistory_OpenPanelDesc": "搜索、置顶并重新粘贴你复制过的一切",
   "ClipboardHistory_Config_SystemClipboardLabel": "打开 Windows 剪贴板设置",
-  "ClipboardHistory_Config_SystemClipboardDesc": "系统自带剪贴板历史占用 Win+V 时，面板热键可能失效。在这里关闭系统功能，让 Lertaro 面板接管该按键。"
+  "ClipboardHistory_Config_SystemClipboardDesc": "系统自带剪贴板历史占用 Win+V 时，面板热键可能失效。在这里关闭系统功能，让 Lertaro 面板接管该按键。",
+  "ClipboardHistory_PanelCopyPath": "复制路径",
+  "ClipboardHistory_PanelCopyPathQuoted": "复制带引号路径",
+  "ClipboardHistory_PanelCopyPathWsl": "复制为 WSL 路径",
+  "ClipboardHistory_PanelSaveImageAs": "图片另存为…",
+  "ClipboardHistory_PanelClearConfirm": "删除全部剪贴板历史（包括已保存的图片）？此操作不可撤销。",
+  "ClipboardHistory_PanelSelectedMerge": "已选 {0} 条 — Enter 将合并粘贴"
 }

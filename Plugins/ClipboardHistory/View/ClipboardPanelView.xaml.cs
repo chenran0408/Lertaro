@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -25,12 +26,22 @@ public partial class ClipboardPanelView : UserControl
     private ClipboardPanelTab _tab = ClipboardPanelTab.All;
     private List<ClipboardPanelItem> _items = [];
     private Dictionary<long, ClipboardEntry> _entryById = [];
+    private readonly ClipboardPanelContextMenu _contextMenu;
     private bool _loading;
 
     public ClipboardPanelView()
     {
         InitializeComponent();
         ClipboardPanelLabels.ApplyTo(this);
+        _contextMenu = new ClipboardPanelContextMenu(
+            () => PasteSelected(plainText: false),
+            () => SelectedEntries().ToList().ForEach(entry => _ = ClipboardRuntime.Instance.CopyAsync(entry.Id)),
+            TogglePinSelected,
+            DeleteSelected,
+            () => SelectedEntries().ToList().ForEach(entry => ClipboardRuntime.Instance.OpenSource(entry.Id)),
+            text => _ = ClipboardRuntime.Instance.CopyTextAsync(text),
+            SaveSelectedImageAs,
+            ClearHistoryWithConfirm);
         TranslationService.CultureChanged += OnCultureChanged;
     }
 
@@ -46,6 +57,14 @@ public partial class ClipboardPanelView : UserControl
             // The hotkey IPC lands on a non-UI thread; marshal and wait, because the caller's
             // fallback decision needs to know whether the panel actually opened.
             return app.Dispatcher.Invoke(() => TryShow());
+        }
+
+        // Toggle: the wake key pressed while the panel is up closes it. Activating an already
+        // focused window reads as a dead key to the user.
+        if (_window is { IsVisible: true })
+        {
+            _window.Close();
+            return true;
         }
 
         if (_window == null || _instance == null)
@@ -130,6 +149,7 @@ public partial class ClipboardPanelView : UserControl
         ClipboardPanelLabels.SetEmpty(this, _items.Count == 0);
         ClearSearchButton.Visibility = query.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         RestoreSelection(selectedId);
+        UpdateHintBar();
     }
 
     private long SelectedId() => Lst.SelectedItem is ClipboardPanelItem { IsRow: true } item ? item.Id : 0;
@@ -187,6 +207,51 @@ public partial class ClipboardPanelView : UserControl
     {
         if (Lst.SelectedItem is ClipboardPanelItem { IsHeader: true })
             SelectFirstRow();
+        UpdateHintBar();
+    }
+
+    /// <summary>The hint bar doubles as the multi-select status line: with more than one row
+    /// selected it says so, because "paste" now means "paste merged" and that must be legible.</summary>
+    private void UpdateHintBar()
+    {
+        var selected = Lst.SelectedItems.OfType<ClipboardPanelItem>().Count(item => item.IsRow);
+        HintBar.Text = selected > 1
+            ? string.Format(TranslationService.Get("ClipboardHistory_PanelSelectedMerge"), selected)
+            : ClipboardPanelLabels.HintBar();
+    }
+
+    private void ClearHistoryWithConfirm()
+    {
+        var result = PluginMessageBoxService.Show(
+            TranslationService.Get("ClipboardHistory_PanelClearConfirm"),
+            TranslationService.Get("ClipboardHistory_PluginName"),
+            MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+        if (result != MessageBoxResult.Yes) return;
+        ClipboardRuntime.Instance.ClearHistory();
+        _ = ReloadAsync();
+    }
+
+    /// <summary>Saves the selected image row's PNG to a user-chosen file.</summary>
+    private void SaveSelectedImageAs()
+    {
+        var entry = SelectedEntries().FirstOrDefault(item => item.Kind == ClipboardEntryKind.Image);
+        if (entry == null) return;
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = $"clipboard-{DateTime.Now:yyyyMMdd-HHmmss}.png",
+            Filter = "PNG|*.png",
+            DefaultExt = ".png",
+        };
+        if (dialog.ShowDialog() != true) return;
+        try
+        {
+            File.Copy(ImageFilePathFor(entry), dialog.FileName, overwrite: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            PasteBackHelper.Notify("ClipboardHistory_PasteFailed");
+        }
     }
 
     private void Lst_MouseDoubleClick(object sender, MouseButtonEventArgs e) => PasteSelected(plainText: false);
@@ -256,6 +321,26 @@ public partial class ClipboardPanelView : UserControl
             return;
         }
         PasteAndMaybeClose(selected[0].Id, plainText);
+    }
+
+    private static string ImageFilePathFor(ClipboardEntry entry)
+    {
+        var directory = PluginSdk.Services.UserDataService.GetUserDataDirectory() ?? string.Empty;
+        return Path.Combine(directory, "ClipboardHistory", "images", entry.ImagePath);
+    }
+
+    private ClipboardEntry? SelectedEntry() =>
+        SelectedEntries() is [var single] ? single : null;
+
+    private void Lst_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        var entry = SelectedEntry();
+        if (entry == null)
+        {
+            e.Handled = true;
+            return;
+        }
+        Lst.ContextMenu = _contextMenu.Build(entry);
     }
 
     /// <summary>Every selected row's entry, in display order (headers are not selectable).</summary>

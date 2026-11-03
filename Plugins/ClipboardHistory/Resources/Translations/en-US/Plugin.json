@@ -47,5 +47,11 @@
   "ClipboardHistory_OpenPanel": "Open clipboard panel",
   "ClipboardHistory_OpenPanelDesc": "Search, pin and re-paste everything you have copied",
   "ClipboardHistory_Config_SystemClipboardLabel": "Open Windows clipboard settings",
-  "ClipboardHistory_Config_SystemClipboardDesc": "While Windows' own clipboard history owns Win+V, the panel hotkey can dead-fire. Turn the system feature off here so Lertaro's panel takes over the key."
+  "ClipboardHistory_Config_SystemClipboardDesc": "While Windows' own clipboard history owns Win+V, the panel hotkey can dead-fire. Turn the system feature off here so Lertaro's panel takes over the key.",
+  "ClipboardHistory_PanelCopyPath": "Copy path",
+  "ClipboardHistory_PanelCopyPathQuoted": "Copy as quoted path",
+  "ClipboardHistory_PanelCopyPathWsl": "Copy as WSL path",
+  "ClipboardHistory_PanelSaveImageAs": "Save image as…",
+  "ClipboardHistory_PanelClearConfirm": "Delete the entire clipboard history, including stored images? This cannot be undone.",
+  "ClipboardHistory_PanelSelectedMerge": "{0} selected — Enter pastes them merged"
 }
