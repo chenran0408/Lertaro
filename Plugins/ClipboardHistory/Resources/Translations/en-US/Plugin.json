@@ -1,6 +1,6 @@
 {
   "ClipboardHistory_PluginName": "Clipboard History",
-  "ClipboardHistory_PluginDesc": "Keeps a history of the plain text you copy on this machine; everything stays local. Type the trigger keyword (default \"cb\") plus a search term in the search box to find past entries and paste one back with a single click.",
+  "ClipboardHistory_PluginDesc": "Keeps a history of the text, images and copied files on this machine; everything stays local. Type the trigger keyword (default \"cb\") plus a search term in the search box to find past entries and paste one back with a single click.",
   "ClipboardHistory_TabName": "Clipboard",
   "ClipboardHistory_MenuGroup": "Clipboard",
   "ClipboardHistory_Paste": "Paste",
@@ -25,5 +25,11 @@
   "Plugin_Comp_Desc_ClipboardTabProvider": "Provides the Clipboard tab in the Quick Panel, listing recorded clipboard text entries from newest to oldest.",
   "Plugin_Comp_Desc_ClipboardInstantProvider": "Searches recorded clipboard text history from the search box via the trigger keyword (default cb).",
   "Plugin_Comp_Desc_ClipboardActionProvider": "Provides paste, copy, pin, delete, source-window and clear-history actions for clipboard entries.",
-  "ClipboardHistory_ClearHistory": "Clear history"
+  "ClipboardHistory_ClearHistory": "Clear history",
+  "ClipboardHistory_Config_RetentionLabel": "Keep history for",
+  "ClipboardHistory_Config_RetentionDesc": "Unpinned entries older than this are removed automatically. Pinned entries are kept as long as the history exists.",
+  "ClipboardHistory_Config_Retention1": "1 day",
+  "ClipboardHistory_Config_Retention7": "7 days",
+  "ClipboardHistory_Config_Retention30": "30 days",
+  "ClipboardHistory_Config_RetentionForever": "Forever"
 }

@@ -18,10 +18,10 @@ internal static class PasteBackHelper
         return false;
     }
 
-    internal static async Task PasteAsync(string text, SourceWindow target, Func<string, Task> writeText)
+    internal static async Task PasteAsync(SourceWindow target, Func<Task> writeToClipboard)
     {
         if (!CanPaste(target)) return;
-        await writeText(text);
+        await writeToClipboard();
         // Clipboard writes are async. Recheck identity before sending any keystrokes.
         // A different window of the same application is still the right destination.
         var foreground = SourceWindow.Read(GetForegroundWindow());

@@ -8,12 +8,14 @@ public sealed class ClipboardStoreTests
     private static readonly string TempRoot = Path.Combine(Path.GetTempPath(), "LertaroClipboardTests");
 
     private string _databasePath = string.Empty;
+    private string _imagesDirectory = string.Empty;
 
     [TestInitialize]
     public void Initialize()
     {
         Directory.CreateDirectory(TempRoot);
         _databasePath = Path.Combine(TempRoot, $"clipboard-store-{Guid.NewGuid():N}.db");
+        _imagesDirectory = Path.Combine(TempRoot, $"clipboard-images-{Guid.NewGuid():N}");
     }
 
     [TestCleanup]
@@ -27,7 +29,12 @@ public sealed class ClipboardStoreTests
         }
     }
 
-    private ClipboardStore CreateStore() => new(_databasePath);
+    private ClipboardStore CreateStore() => new(_databasePath, _imagesDirectory);
+
+    // Text helper: the store's AddAsync takes a draft; nearly every test here records plain text.
+    private static Task<ClipboardEntry?> AddText(ClipboardStore store, string text, string process = "App",
+        string title = "Title", int maxEntries = 500, int maxTextLength = 1000000) =>
+        store.AddAsync(new ClipboardEntryDraft(ClipboardEntryKind.Text, text), process, title, maxEntries, maxTextLength);
 
     [TestMethod]
     public async Task PreviewFlattensUnicodeLineSeparatorsWithoutChangingStoredText()
@@ -35,7 +42,7 @@ public sealed class ClipboardStoreTests
         var store = CreateStore();
         await store.InitializeAsync();
         const string text = "first\u2028second\u2029third\u0085last";
-        var entry = await store.AddAsync(text, "editor", "Document", 500, 1000000);
+        var entry = await AddText(store, text, "editor", "Document", 500, 1000000);
         Assert.IsNotNull(entry);
         Assert.AreEqual(text, entry.Content);
         Assert.AreEqual("first second third last", entry.PlainPreview);
@@ -55,7 +62,7 @@ public sealed class ClipboardStoreTests
         var store = CreateStore();
         await store.InitializeAsync();
 
-        var entry = await store.AddAsync("hello", "Notepad", "Untitled - Notepad", maxEntries: 500, maxTextLength: 1000000);
+        var entry = await AddText(store, "hello", "Notepad", "Untitled - Notepad", maxEntries: 500, maxTextLength: 1000000);
 
         Assert.IsNotNull(entry);
         var entries = await store.GetEntriesAsync();
@@ -76,8 +83,8 @@ public sealed class ClipboardStoreTests
         var store = CreateStore();
         await store.InitializeAsync();
 
-        var first = await store.AddAsync("same text", "AppA", "TitleA", 500, 1000000);
-        var second = await store.AddAsync("same text", "AppB", "TitleB", 500, 1000000);
+        var first = await AddText(store, "same text", "AppA", "TitleA", 500, 1000000);
+        var second = await AddText(store, "same text", "AppB", "TitleB", 500, 1000000);
 
         Assert.IsNotNull(first);
         Assert.IsNotNull(second);
@@ -94,9 +101,9 @@ public sealed class ClipboardStoreTests
         var store = CreateStore();
         await store.InitializeAsync();
 
-        var first = await store.AddAsync("alpha", "App", "Title", 500, 1000000);
-        var second = await store.AddAsync("beta", "App", "Title", 500, 1000000);
-        var promoted = await store.AddAsync("alpha", "App", "Title", 500, 1000000);
+        var first = await AddText(store, "alpha", "App", "Title", 500, 1000000);
+        var second = await AddText(store, "beta", "App", "Title", 500, 1000000);
+        var promoted = await AddText(store, "alpha", "App", "Title", 500, 1000000);
 
         Assert.IsNotNull(first);
         Assert.IsNotNull(second);
@@ -115,7 +122,7 @@ public sealed class ClipboardStoreTests
         await store.InitializeAsync();
         var text = new string('a', 999) + "😀😀😀";
 
-        var entry = await store.AddAsync(text, "App", "Title", 500, maxTextLength: 1000);
+        var entry = await AddText(store, text, "App", "Title", 500, maxTextLength: 1000);
 
         Assert.IsNotNull(entry);
         Assert.IsLessThanOrEqualTo(1000, entry.Content.Length);
@@ -134,7 +141,7 @@ public sealed class ClipboardStoreTests
             .Append(new string('x', 300)).Append("\r\n").Append(new string('y', 300)).Append('\t').Append("end")
             .ToString();
 
-        var entry = await store.AddAsync(text, "App", "Title", 500, 1000000);
+        var entry = await AddText(store, text, "App", "Title", 500, 1000000);
 
         Assert.IsNotNull(entry);
         Assert.HasCount(200, entry.PlainPreview.ToCharArray());
@@ -151,7 +158,7 @@ public sealed class ClipboardStoreTests
         await store.InitializeAsync();
 
         for (var i = 0; i < 5; i++)
-            await store.AddAsync($"text {i}", "App", "Title", maxEntries: 3, 1000000);
+            await AddText(store, $"text {i}", "App", "Title", maxEntries: 3, 1000000);
 
         var entries = await store.GetEntriesAsync();
         Assert.HasCount(3, entries);
@@ -167,12 +174,12 @@ public sealed class ClipboardStoreTests
         var store = CreateStore();
         await store.InitializeAsync();
         for (var i = 0; i < 5; i++)
-            await store.AddAsync($"text {i}", "App", "Title", 500, 1000000);
+            await AddText(store, $"text {i}", "App", "Title", 500, 1000000);
         var entries = await store.GetEntriesAsync();
         var oldest = entries.Single(entry => entry.Content == "text 0");
 
         await store.SetPinnedAsync(oldest.Id, pinned: true);
-        await store.TrimAsync(maxEntries: 3);
+        await store.TrimAsync(maxEntries: 3, retentionDays: 0);
 
         var trimmed = await store.GetEntriesAsync();
         // The pinned row survives on top of the three newest unpinned rows.
@@ -187,7 +194,7 @@ public sealed class ClipboardStoreTests
     {
         var store = CreateStore();
         await store.InitializeAsync();
-        var entry = await store.AddAsync("pin me", "App", "Title", 500, 1000000);
+        var entry = await AddText(store, "pin me", "App", "Title", 500, 1000000);
 
         await store.SetPinnedAsync(entry!.Id, pinned: true);
         var pinned = (await store.GetEntriesAsync()).Single(item => item.Id == entry.Id);
@@ -203,8 +210,8 @@ public sealed class ClipboardStoreTests
     {
         var store = CreateStore();
         await store.InitializeAsync();
-        var kept = await store.AddAsync("kept", "App", "Title", 500, 1000000);
-        var removed = await store.AddAsync("removed", "App", "Title", 500, 1000000);
+        var kept = await AddText(store, "kept", "App", "Title", 500, 1000000);
+        var removed = await AddText(store, "removed", "App", "Title", 500, 1000000);
 
         await store.DeleteAsync(removed!.Id);
 
@@ -218,9 +225,9 @@ public sealed class ClipboardStoreTests
     {
         var store = CreateStore();
         await store.InitializeAsync();
-        var first = await store.AddAsync("first", "App", "Title", 500, 1000000);
+        var first = await AddText(store, "first", "App", "Title", 500, 1000000);
         await store.SetPinnedAsync(first!.Id, true);
-        await store.AddAsync("second", "App", "Title", 500, 1000000);
+        await AddText(store, "second", "App", "Title", 500, 1000000);
 
         await store.ClearAsync();
 
@@ -233,9 +240,9 @@ public sealed class ClipboardStoreTests
     {
         var store = CreateStore();
         await store.InitializeAsync();
-        var older = await store.AddAsync("alpha older", "App", "Title", 500, 1000000);
-        var newer = await store.AddAsync("alpha newer", "App", "Title", 500, 1000000);
-        var pinned = await store.AddAsync("alpha pinned", "App", "Title", 500, 1000000);
+        var older = await AddText(store, "alpha older", "App", "Title", 500, 1000000);
+        var newer = await AddText(store, "alpha newer", "App", "Title", 500, 1000000);
+        var pinned = await AddText(store, "alpha pinned", "App", "Title", 500, 1000000);
         await store.SetPinnedAsync(pinned!.Id, true);
 
         var results = await store.SearchAsync("alpha");
@@ -248,8 +255,8 @@ public sealed class ClipboardStoreTests
     {
         var store = CreateStore();
         await store.InitializeAsync();
-        var shortTerm = await store.AddAsync("C# / C++ _100%", "App", "Title", 500, 1000000);
-        var other = await store.AddAsync("unrelated", "App", "Title", 500, 1000000);
+        var shortTerm = await AddText(store, "C# / C++ _100%", "App", "Title", 500, 1000000);
+        var other = await AddText(store, "unrelated", "App", "Title", 500, 1000000);
 
         var shortResults = await store.SearchAsync("C#");
         var specialResults = await store.SearchAsync("_100%");
@@ -264,7 +271,7 @@ public sealed class ClipboardStoreTests
     {
         var store = CreateStore();
         await store.InitializeAsync();
-        var entry = await store.AddAsync("alpha older", "App", "Title", 500, 1000000);
+        var entry = await AddText(store, "alpha older", "App", "Title", 500, 1000000);
 
         var results = await store.SearchAsync("lph");
 
@@ -276,7 +283,7 @@ public sealed class ClipboardStoreTests
     {
         var store = CreateStore();
         await store.InitializeAsync();
-        var entry = await store.AddAsync("剪贴板文本", "App", "Title", 500, 1000000);
+        var entry = await AddText(store, "剪贴板文本", "App", "Title", 500, 1000000);
 
         var results = await store.SearchAsync("贴板");
 
@@ -288,8 +295,8 @@ public sealed class ClipboardStoreTests
     {
         var store = CreateStore();
         await store.InitializeAsync();
-        var removed = await store.AddAsync("remove-me", "App", "Title", 500, 1000000);
-        await store.AddAsync("keep-me", "App", "Title", 500, 1000000);
+        var removed = await AddText(store, "remove-me", "App", "Title", 500, 1000000);
+        await AddText(store, "keep-me", "App", "Title", 500, 1000000);
         await store.DeleteAsync(removed!.Id);
         Assert.IsEmpty(await store.SearchAsync("remove-me"));
 
@@ -305,7 +312,7 @@ public sealed class ClipboardStoreTests
     {
         var firstStore = CreateStore();
         await firstStore.InitializeAsync();
-        var expected = await firstStore.AddAsync("persisted text", "App", "Title", 500, 1000000);
+        var expected = await AddText(firstStore, "persisted text", "App", "Title", 500, 1000000);
 
         var reopened = CreateStore();
         await reopened.InitializeAsync();
@@ -332,7 +339,7 @@ public sealed class ClipboardStoreTests
         Assert.HasCount(1, Directory.GetFiles(TempRoot, Path.GetFileName(_databasePath) + ".corrupt-*"));
 
         // The rebuilt database is usable: an add lands and reads back.
-        var entry = await store.AddAsync("after recovery", "App", "Title", 500, 1000000);
+        var entry = await AddText(store, "after recovery", "App", "Title", 500, 1000000);
         Assert.IsNotNull(entry);
         Assert.HasCount(1, await store.GetEntriesAsync());
     }

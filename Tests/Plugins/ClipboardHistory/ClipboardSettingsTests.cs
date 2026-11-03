@@ -87,11 +87,11 @@ public sealed class ClipboardSettingsTests
     }
 
     [TestMethod]
-    public void CreateSchema_DeclaresAllFiveFieldsWithExpectedTypesAndDefaults()
+    public void CreateSchema_DeclaresAllFieldsWithExpectedTypesAndDefaults()
     {
         var fields = ClipboardSettings.CreateSchema().Fields;
 
-        Assert.HasCount(5, fields);
+        Assert.HasCount(6, fields);
         Assert.AreEqual(ConfigFieldType.Boolean, Field(fields, "Enabled").FieldType);
         Assert.AreEqual(true, Field(fields, "Enabled").DefaultValue);
         Assert.AreEqual(ConfigFieldType.Text, Field(fields, "TriggerKeyword").FieldType);
@@ -102,6 +102,8 @@ public sealed class ClipboardSettingsTests
         Assert.AreEqual(1000000, Field(fields, "MaxTextLength").DefaultValue);
         Assert.AreEqual(ConfigFieldType.Text, Field(fields, "ExcludedProcesses").FieldType);
         Assert.AreEqual("keepass,keepassxc,1password,bitwarden,enpass", Field(fields, "ExcludedProcesses").DefaultValue);
+        Assert.AreEqual(ConfigFieldType.Choice, Field(fields, "RetentionDays").FieldType);
+        Assert.AreEqual("30", Field(fields, "RetentionDays").DefaultValue);
     }
 
     [TestMethod]

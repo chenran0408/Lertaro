@@ -1,6 +1,6 @@
 {
   "ClipboardHistory_PluginName": "Historial del portapapeles",
-  "ClipboardHistory_PluginDesc": "Guarda un historial del texto sin formato que copias en este equipo; todo permanece en local. Escribe la palabra clave (por defecto \"cb\") más un término de búsqueda en el cuadro de búsqueda para encontrar entradas anteriores y pegarlas con un clic.",
+  "ClipboardHistory_PluginDesc": "Guarda un historial del texto, las imágenes y los archivos que copias en este equipo; todo permanece local. Escribe la palabra clave (por defecto \"cb\") más un término de búsqueda en el cuadro de búsqueda para encontrar entradas anteriores y pegarlas de nuevo con un clic.",
   "ClipboardHistory_TabName": "Portapapeles",
   "ClipboardHistory_MenuGroup": "Portapapeles",
   "ClipboardHistory_Paste": "Pegar",
@@ -25,5 +25,11 @@
   "Plugin_Comp_Desc_ClipboardTabProvider": "Proporciona la pestaña del portapapeles en el panel rápido, mostrando las entradas de texto registradas de la más reciente a la más antigua.",
   "Plugin_Comp_Desc_ClipboardInstantProvider": "Busca en el historial de texto del portapapeles desde el cuadro de búsqueda mediante la palabra clave (por defecto cb).",
   "Plugin_Comp_Desc_ClipboardActionProvider": "Proporciona acciones de pegar, copiar, anclar, eliminar, abrir la ventana de origen y borrar el historial.",
-  "ClipboardHistory_ClearHistory": "Borrar historial"
+  "ClipboardHistory_ClearHistory": "Borrar historial",
+  "ClipboardHistory_Config_RetentionLabel": "Conservar el historial durante",
+  "ClipboardHistory_Config_RetentionDesc": "Las entradas sin fijar anteriores a este plazo se eliminan automáticamente. Las fijadas se conservan mientras exista el historial.",
+  "ClipboardHistory_Config_Retention1": "1 día",
+  "ClipboardHistory_Config_Retention7": "7 días",
+  "ClipboardHistory_Config_Retention30": "30 días",
+  "ClipboardHistory_Config_RetentionForever": "Para siempre"
 }

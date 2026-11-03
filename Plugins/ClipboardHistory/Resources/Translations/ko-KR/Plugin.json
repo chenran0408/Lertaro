@@ -1,6 +1,6 @@
 {
   "ClipboardHistory_PluginName": "클립보드 기록",
-  "ClipboardHistory_PluginDesc": "이 PC에서 복사한 일반 텍스트 클립보드 기록을 자동으로 저장합니다. 데이터는 로컬에만 보관됩니다. 검색 상자에 트리거 단어(기본값 cb)와 검색어를 입력하면 기록을 검색하고 한 번의 클릭으로 다시 붙여넣을 수 있습니다.",
+  "ClipboardHistory_PluginDesc": "이 컴퓨터에서 복사한 텍스트, 이미지, 파일 기록을 저장합니다. 모든 데이터는 로컬에 보관됩니다. 검색 상자에 트리거 단어(기본값 \"cb\")와 검색어를 입력하면 과거 항목을 찾아 클릭 한 번으로 다시 붙여넣을 수 있습니다.",
   "ClipboardHistory_TabName": "클립보드",
   "ClipboardHistory_MenuGroup": "클립보드",
   "ClipboardHistory_Paste": "붙여넣기",
@@ -25,5 +25,11 @@
   "Plugin_Comp_Desc_ClipboardTabProvider": "빠른 패널에 클립보드 탭을 제공하며, 기록된 클립보드 텍스트를 최신순으로 표시합니다.",
   "Plugin_Comp_Desc_ClipboardInstantProvider": "검색 상자에서 트리거 단어(기본값 cb)로 기록된 클립보드 텍스트 기록을 검색합니다.",
   "Plugin_Comp_Desc_ClipboardActionProvider": "클립보드 기록에 붙여넣기, 복사, 고정, 삭제, 원본 창 열기, 기록 지우기를 제공합니다.",
-  "ClipboardHistory_ClearHistory": "기록 지우기"
+  "ClipboardHistory_ClearHistory": "기록 지우기",
+  "ClipboardHistory_Config_RetentionLabel": "기록 보관 기간",
+  "ClipboardHistory_Config_RetentionDesc": "이 기간이 지난 고정되지 않은 항목은 자동으로 삭제됩니다. 고정된 항목은 기록이 존재하는 동안 유지됩니다.",
+  "ClipboardHistory_Config_Retention1": "1일",
+  "ClipboardHistory_Config_Retention7": "7일",
+  "ClipboardHistory_Config_Retention30": "30일",
+  "ClipboardHistory_Config_RetentionForever": "영구"
 }

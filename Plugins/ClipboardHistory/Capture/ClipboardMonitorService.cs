@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Lertaro.PluginSdk;
 
@@ -88,7 +89,30 @@ internal sealed class ClipboardMonitorService : IDisposable
 
     // Runs on the STA pump. The exception from a busy clipboard propagates to
     // the awaiting caller, which owns user-facing error handling.
-    public Task WriteTextAsync(string text)
+    public Task WriteTextAsync(string text) =>
+        WriteDataObjectAsync(() => ClipboardWriteRetry.Execute(() => Clipboard.SetDataObject(text, true)));
+
+    /// <summary>Writes a file path list back to the clipboard (the Copy action for a FilePaths row).</summary>
+    public Task WriteFilesAsync(IReadOnlyList<string> paths)
+    {
+        var list = new System.Collections.Specialized.StringCollection();
+        list.AddRange(paths.ToArray());
+        return WriteDataObjectAsync(() => ClipboardWriteRetry.Execute(() => Clipboard.SetFileDropList(list)));
+    }
+
+    /// <summary>Writes an image from disk back to the clipboard (the Copy action for an Image row).</summary>
+    public Task WriteImageAsync(string imageFilePath) => WriteDataObjectAsync(() =>
+    {
+        var bitmap = new BitmapImage();
+        bitmap.BeginInit();
+        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+        bitmap.UriSource = new Uri(imageFilePath, UriKind.Absolute);
+        bitmap.EndInit();
+        bitmap.Freeze();
+        ClipboardWriteRetry.Execute(() => Clipboard.SetImage(bitmap));
+    });
+
+    private Task WriteDataObjectAsync(Action write)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         _pumpReady.Task.GetAwaiter().GetResult();
@@ -101,7 +125,7 @@ internal sealed class ClipboardMonitorService : IDisposable
             _suppression.BeginWrite();
             try
             {
-                ClipboardWriteRetry.Execute(() => Clipboard.SetDataObject(text, true));
+                write();
             }
             finally
             {
@@ -183,21 +207,48 @@ internal sealed class ClipboardMonitorService : IDisposable
             if (identity == null) return; // unreadable identity: skip conservatively
             if (ClipboardExclusionList.IsExcluded(options.ExcludedProcesses, identity.Value.ProcessName)) return;
 
-            var text = ReadSnapshot(options.MaxTextLength, sequence, owner);
-            if (string.IsNullOrEmpty(text)) return;
+            // One update yields exactly one capture, tried in the order users mean it: a text copy
+            // that also carries a bitmap (Excel, browsers) is a text copy; a bare drop is files; a
+            // bare bitmap is an image.
+            var capture = ReadTextCapture(options, sequence, owner, identity.Value, processId)
+                ?? ReadFileCapture(sequence, owner, identity.Value, processId)
+                ?? ReadImageCapture(sequence, owner, identity.Value, processId);
+            if (capture == null) return;
 
             // Re-check after the (possibly slow) read so a disable that happens
             // while an update is in flight still prevents the callback.
             if (!_readOptions().Enabled) return;
             if (!IsStillClipboardOwner(owner, processId)) return;
-            _onCapture(new ClipboardCapture(
-                text, identity.Value.ProcessName, identity.Value.WindowTitle,
-                processId, identity.Value.StartedAtUtcTicks, identity.Value.MainWindowHandle));
+            _onCapture(capture);
         }
         catch (Exception ex)
         {
             LogFailure(ex, "capture");
         }
+    }
+
+    private ClipboardCapture? ReadTextCapture(ClipboardCaptureOptions options, uint sequence, nint owner,
+        ProcessIdentity identity, int processId)
+    {
+        var text = ReadSnapshot(options.MaxTextLength, sequence, owner);
+        return string.IsNullOrEmpty(text) ? null : ClipboardCapture.FromText(text, identity, processId, identity.MainWindowHandle);
+    }
+
+    private ClipboardCapture? ReadFileCapture(uint sequence, nint owner, ProcessIdentity identity, int processId)
+    {
+        if (_source == null || !_native.IsClipboardFormatAvailable(IClipboardNative.CfHDrop)) return null;
+        var paths = new ClipboardFileReader(_native, _source.Handle).Read(sequence, owner);
+        return paths is not { Count: > 0 } ? null : ClipboardCapture.FromFiles(paths, identity, processId, identity.MainWindowHandle);
+    }
+
+    private ClipboardCapture? ReadImageCapture(uint sequence, nint owner, ProcessIdentity identity, int processId)
+    {
+        var hasBitmap = _native.IsClipboardFormatAvailable(IClipboardNative.CfBitmap) ||
+                        _native.IsClipboardFormatAvailable(IClipboardNative.CfDib) ||
+                        _native.IsClipboardFormatAvailable(IClipboardNative.CfDibV5);
+        if (!hasBitmap) return null;
+        var payload = new ClipboardImageReader(_native).Read(sequence, owner);
+        return payload == null ? null : ClipboardCapture.FromImage(payload.Png, payload.Width, payload.Height, identity, processId, identity.MainWindowHandle);
     }
 
     private string? ReadSnapshot(int maxTextLength, uint sequence, nint owner)

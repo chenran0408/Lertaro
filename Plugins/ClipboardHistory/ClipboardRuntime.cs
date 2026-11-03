@@ -17,6 +17,7 @@ internal sealed class ClipboardRuntime : IDisposable
     private readonly ConcurrentDictionary<long, SourceWindow> _sources = new();
     private ClipboardEntry[] _entries = [];
     private ClipboardStore? _store;
+    private string? _imagesDirectory;
     private ClipboardMonitorService? _monitor;
     private PasteTargetTracker? _targets;
     private Task _ready = Task.CompletedTask;
@@ -42,7 +43,9 @@ internal sealed class ClipboardRuntime : IDisposable
             Logger.Log("[ClipboardHistory] User data directory is unavailable.", LogLevel.Error);
             return;
         }
-        _store = new ClipboardStore(Path.Combine(directory, "ClipboardHistory", "clipboard-history.db"));
+        var root = Path.Combine(directory, "ClipboardHistory");
+        _imagesDirectory = Path.Combine(root, "images");
+        _store = new ClipboardStore(Path.Combine(root, "clipboard-history.db"), _imagesDirectory);
         _monitor = new ClipboardMonitorService(Captured, () => new ClipboardCaptureOptions(
             ClipboardSettings.Enabled && !_stopping, ClipboardSettings.MaxTextLength, ClipboardSettings.ExcludedProcesses));
         try { _targets = new PasteTargetTracker(); }
@@ -56,8 +59,9 @@ internal sealed class ClipboardRuntime : IDisposable
     {
         try
         {
+            Directory.CreateDirectory(_imagesDirectory!);
             await _store!.InitializeAsync().ConfigureAwait(false);
-            await _store.TrimAsync(ClipboardSettings.MaxEntries).ConfigureAwait(false);
+            await _store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays).ConfigureAwait(false);
             Publish(await _store.GetEntriesAsync().ConfigureAwait(false));
             if (!_stopping && ClipboardSettings.Enabled) _monitor!.Start();
         }
@@ -72,9 +76,9 @@ internal sealed class ClipboardRuntime : IDisposable
             if (ClipboardSettings.Enabled) _monitor?.Start();
             else _monitor?.Stop();
         }
-        if (key == "MaxEntries") _ = MutateAsync(async store =>
+        if (key is "MaxEntries" or "RetentionDays") _ = MutateAsync(async store =>
         {
-            await store.TrimAsync(ClipboardSettings.MaxEntries).ConfigureAwait(false);
+            await store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays).ConfigureAwait(false);
             Publish(await store.GetEntriesAsync().ConfigureAwait(false));
         });
     }
@@ -85,12 +89,41 @@ internal sealed class ClipboardRuntime : IDisposable
         _ = MutateAsync(async store =>
         {
             if (!ClipboardSettings.Enabled) return;
-            var entry = await store.AddAsync(capture.Text, capture.SourceProcess, capture.SourceWindowTitle,
+            var draft = await BuildDraftAsync(capture).ConfigureAwait(false);
+            if (draft == null) return;
+            var entry = await store.AddAsync(draft, capture.SourceProcess, capture.SourceWindowTitle,
                 ClipboardSettings.MaxEntries, ClipboardSettings.MaxTextLength).ConfigureAwait(false);
             if (entry == null) return;
             _sources[entry.Id] = new SourceWindow(capture.SourceWindow, capture.SourceProcessId, capture.SourceProcessStartedAtTicks);
             Publish(ClipEntries(Entries.Where(item => item.Id != entry.Id).Append(entry), ClipboardSettings.MaxEntries));
         });
+    }
+
+    /// <summary>Turns a capture into a store draft, writing image pixels to their content-addressed
+    /// file first (the file name is the PNG's own SHA-256, so a dedup hit names the same file the
+    /// store keeps and a rejected insert leaves nothing to clean up).</summary>
+    private async Task<ClipboardEntryDraft?> BuildDraftAsync(ClipboardCapture capture)
+    {
+        if (capture.Kind == ClipboardEntryKind.Text)
+            return new ClipboardEntryDraft(ClipboardEntryKind.Text, capture.Text);
+        if (capture.Kind == ClipboardEntryKind.FilePaths)
+            return new ClipboardEntryDraft(ClipboardEntryKind.FilePaths, string.Join("\n", capture.FilePaths));
+
+        try
+        {
+            var hashHex = ClipboardStoreSupport.HashToHex(System.Security.Cryptography.SHA256.HashData(capture.ImagePng));
+            var fileName = hashHex + ".png";
+            var filePath = Path.Combine(_imagesDirectory!, fileName);
+            if (!File.Exists(filePath))
+                await Task.Run(() => File.WriteAllBytes(filePath, capture.ImagePng)).ConfigureAwait(false);
+            return new ClipboardEntryDraft(ClipboardEntryKind.Image, string.Empty,
+                fileName, capture.ImageWidth, capture.ImageHeight, hashHex);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            LogFailure(ex);
+            return null;
+        }
     }
 
     // Mirror the store's unpinned cap without rereading every saved text on each clipboard update.
@@ -142,7 +175,7 @@ internal sealed class ClipboardRuntime : IDisposable
         try
         {
             if (entry == null || _monitor == null || !PasteBackHelper.CanPaste(target)) return false;
-            _ = PasteAsync(entry.Content, target!);
+            _ = PasteAsync(entry, target!);
             return true;
         }
         catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); return false; }
@@ -152,9 +185,20 @@ internal sealed class ClipboardRuntime : IDisposable
     {
         var entry = Entries.FirstOrDefault(entry => entry.Id == id);
         if (entry == null || _monitor == null) return;
-        try { await _monitor.WriteTextAsync(entry.Content); }
+        try
+        {
+            var write = entry.Kind switch
+            {
+                ClipboardEntryKind.Image => (Func<Task>)(() => _monitor.WriteImageAsync(ImageFilePath(entry))),
+                ClipboardEntryKind.FilePaths => () => _monitor.WriteFilesAsync(entry.PathList),
+                _ => () => _monitor.WriteTextAsync(entry.Content),
+            };
+            await write().ConfigureAwait(false);
+        }
         catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); }
     }
+
+    private string ImageFilePath(ClipboardEntry entry) => Path.Combine(_imagesDirectory!, entry.ImagePath);
 
     /// <summary>Pastes into the tracked source window and reports whether the panel should close.
     /// The panel closes after pasting so the injected Ctrl+V lands in the window the user was
@@ -170,9 +214,18 @@ internal sealed class ClipboardRuntime : IDisposable
         return !Entries.FirstOrDefault(entry => entry.Id == id)?.Pinned ?? true;
     }
 
-    private async Task PasteAsync(string text, SourceWindow target)
+    private async Task PasteAsync(ClipboardEntry entry, SourceWindow target)
     {
-        try { await PasteBackHelper.PasteAsync(text, target, _monitor!.WriteTextAsync); }
+        try
+        {
+            var writeToClipboard = entry.Kind switch
+            {
+                ClipboardEntryKind.Image => (Func<Task>)(() => _monitor!.WriteImageAsync(ImageFilePath(entry))),
+                ClipboardEntryKind.FilePaths => () => _monitor!.WriteFilesAsync(entry.PathList),
+                _ => () => _monitor!.WriteTextAsync(entry.Content),
+            };
+            await PasteBackHelper.PasteAsync(target, writeToClipboard).ConfigureAwait(false);
+        }
         catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); }
     }
 
@@ -182,7 +235,7 @@ internal sealed class ClipboardRuntime : IDisposable
     {
         if (Entries.FirstOrDefault(entry => entry.Id == id) is not { } entry) return;
         await store.SetPinnedAsync(id, !entry.Pinned).ConfigureAwait(false);
-        await store.TrimAsync(ClipboardSettings.MaxEntries).ConfigureAwait(false);
+        await store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays).ConfigureAwait(false);
         Publish(await store.GetEntriesAsync().ConfigureAwait(false));
     });
 

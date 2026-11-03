@@ -12,6 +12,7 @@ internal static class ClipboardSettings
 
     private const string DefaultTriggerKeyword = "cb";
     private const string DefaultExcludedProcesses = "keepass,keepassxc,1password,bitwarden,enpass";
+    private const string DefaultRetentionDays = "30";
     private const int DefaultMaxEntries = 500;
     private const int DefaultMaxTextLength = 1000000;
 
@@ -35,6 +36,18 @@ internal static class ClipboardSettings
     public static int MaxTextLength => Math.Clamp(
         PluginSettingsService.GetSetting(PluginId, "MaxTextLength", DefaultMaxTextLength),
         1, DefaultMaxTextLength);
+
+    /// <summary>Days an unpinned entry survives; 0 keeps everything. Only the whitelisted values the
+    /// schema offers are honored, so a hand-edited value falls back to the default rather than
+    /// silently switching retention off.</summary>
+    public static int RetentionDays
+    {
+        get
+        {
+            var raw = PluginSettingsService.GetSetting(PluginId, "RetentionDays", DefaultRetentionDays)?.ToString();
+            return raw is "1" or "7" or "30" or "0" ? int.Parse(raw) : int.Parse(DefaultRetentionDays);
+        }
+    }
 
     public static string ExcludedProcesses =>
         PluginSettingsService.GetSetting(PluginId, "ExcludedProcesses", DefaultExcludedProcesses);
@@ -78,6 +91,21 @@ internal static class ClipboardSettings
                 DescriptionKey = "ClipboardHistory_Config_MaxTextLengthDesc",
                 FieldType = ConfigFieldType.Integer,
                 DefaultValue = DefaultMaxTextLength
+            },
+            new PluginConfigField
+            {
+                Key = "RetentionDays",
+                LabelKey = "ClipboardHistory_Config_RetentionLabel",
+                DescriptionKey = "ClipboardHistory_Config_RetentionDesc",
+                FieldType = ConfigFieldType.Choice,
+                DefaultValue = DefaultRetentionDays,
+                ChoiceOptions =
+                [
+                    new PluginConfigChoice { Value = "1", LabelKey = "ClipboardHistory_Config_Retention1" },
+                    new PluginConfigChoice { Value = "7", LabelKey = "ClipboardHistory_Config_Retention7" },
+                    new PluginConfigChoice { Value = "30", LabelKey = "ClipboardHistory_Config_Retention30" },
+                    new PluginConfigChoice { Value = "0", LabelKey = "ClipboardHistory_Config_RetentionForever" }
+                ]
             },
             new PluginConfigField
             {

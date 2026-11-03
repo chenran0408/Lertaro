@@ -26,7 +26,11 @@ internal sealed class ClipboardDatabase(string databasePath)
             pinned INTEGER NOT NULL DEFAULT 0,
             seen_count INTEGER NOT NULL DEFAULT 1,
             created_at_ms INTEGER NOT NULL,
-            last_seen_at_ms INTEGER NOT NULL
+            last_seen_at_ms INTEGER NOT NULL,
+            kind INTEGER NOT NULL DEFAULT 0,
+            image_path TEXT NOT NULL DEFAULT '',
+            image_width INTEGER NOT NULL DEFAULT 0,
+            image_height INTEGER NOT NULL DEFAULT 0
         );
         CREATE INDEX IF NOT EXISTS idx_clipboard_last_seen ON clipboard_history(pinned DESC, last_seen_at_ms DESC);
         CREATE INDEX IF NOT EXISTS idx_clipboard_sha ON clipboard_history(content_sha256);
@@ -50,6 +54,17 @@ internal sealed class ClipboardDatabase(string databasePath)
         END;
         """;
 
+    // Columns added after the text-only schema. Existing databases created by 6.3.x lack them;
+    // EnsureSchema adds any that PRAGMA table_info does not list, with the same defaults the CREATE
+    // above spells out, so a pre-kind database migrates in place and in order.
+    private static readonly (string Name, string Sql)[] AddedColumns =
+    [
+        ("kind", "ALTER TABLE clipboard_history ADD COLUMN kind INTEGER NOT NULL DEFAULT 0"),
+        ("image_path", "ALTER TABLE clipboard_history ADD COLUMN image_path TEXT NOT NULL DEFAULT ''"),
+        ("image_width", "ALTER TABLE clipboard_history ADD COLUMN image_width INTEGER NOT NULL DEFAULT 0"),
+        ("image_height", "ALTER TABLE clipboard_history ADD COLUMN image_height INTEGER NOT NULL DEFAULT 0"),
+    ];
+
     internal SqliteConnection OpenConnection()
     {
         var builder = new SqliteConnectionStringBuilder
@@ -71,6 +86,7 @@ internal sealed class ClipboardDatabase(string databasePath)
         using var command = connection.CreateCommand();
         command.CommandText = SchemaSql;
         command.ExecuteNonQuery();
+        MigrateAddedColumns(connection);
 
         using var consistency = connection.CreateCommand();
         consistency.CommandText = """
@@ -81,6 +97,26 @@ internal sealed class ClipboardDatabase(string databasePath)
             using var rebuild = connection.CreateCommand();
             rebuild.CommandText = "INSERT INTO clipboard_history_fts(clipboard_history_fts) VALUES ('rebuild')";
             rebuild.ExecuteNonQuery();
+        }
+    }
+
+    private static void MigrateAddedColumns(SqliteConnection connection)
+    {
+        var present = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        using (var pragma = connection.CreateCommand())
+        {
+            pragma.CommandText = "PRAGMA table_info(clipboard_history)";
+            using var reader = pragma.ExecuteReader();
+            while (reader.Read())
+                present.Add(reader.GetString(1));
+        }
+
+        foreach (var (name, sql) in AddedColumns)
+        {
+            if (present.Contains(name)) continue;
+            using var alter = connection.CreateCommand();
+            alter.CommandText = sql;
+            alter.ExecuteNonQuery();
         }
     }
 

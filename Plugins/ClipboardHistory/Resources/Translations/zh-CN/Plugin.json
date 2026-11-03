@@ -1,6 +1,6 @@
 {
   "ClipboardHistory_PluginName": "剪贴板历史",
-  "ClipboardHistory_PluginDesc": "自动记录本机复制的纯文本剪贴板历史，数据仅保存在本地。在搜索框输入触发词（默认 cb）加关键词，即可搜索历史并一键回贴。",
+  "ClipboardHistory_PluginDesc": "记录本机的文本、图片和复制的文件历史；数据全部保存在本地。在搜索框输入触发词（默认 \"cb\"）加搜索词即可找到历史条目，单击即可重新粘贴。",
   "ClipboardHistory_TabName": "剪贴板",
   "ClipboardHistory_MenuGroup": "剪贴板",
   "ClipboardHistory_Paste": "粘贴",
@@ -25,5 +25,11 @@
   "Plugin_Comp_Desc_ClipboardTabProvider": "在快速面板中提供剪贴板标签页，按时间从新到旧列出已记录的剪贴板文本。",
   "Plugin_Comp_Desc_ClipboardInstantProvider": "在搜索框中通过触发词（默认 cb）检索已记录的剪贴板文本历史。",
   "Plugin_Comp_Desc_ClipboardActionProvider": "为剪贴板历史条目提供粘贴、复制、置顶、删除、打开来源窗口和清空历史等操作。",
-  "ClipboardHistory_ClearHistory": "清空历史"
+  "ClipboardHistory_ClearHistory": "清空历史",
+  "ClipboardHistory_Config_RetentionLabel": "历史保留时长",
+  "ClipboardHistory_Config_RetentionDesc": "超过该时长的未置顶条目会自动清除；置顶条目在历史存在期间一直保留。",
+  "ClipboardHistory_Config_Retention1": "1 天",
+  "ClipboardHistory_Config_Retention7": "7 天",
+  "ClipboardHistory_Config_Retention30": "30 天",
+  "ClipboardHistory_Config_RetentionForever": "永久"
 }

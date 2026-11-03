@@ -1,14 +1,15 @@
 using System.IO;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.Data.Sqlite;
 
 namespace Lertaro.Plugins.ClipboardHistory;
 
 /// <summary>
-/// SQLite-backed clipboard history storage. Owns dedup (same text merges into one row and is
-/// promoted back to the top with a monotonically increasing LastSeenAtMs), text truncation, the
-/// unpinned entry cap (pins are exempt) and corruption recovery on initialization.
+/// SQLite-backed clipboard history storage for all entry kinds. Owns dedup (the same content
+/// re-captured merges into its row and is promoted back to the top with a monotonically increasing
+/// LastSeenAtMs), text truncation, the unpinned entry cap, the retention window and corruption
+/// recovery on initialization. Image pixels live as content-addressed PNG files under
+/// <paramref name="imagesDirectory"/>; the store keeps rows in sync with those files by unlinking
+/// the PNG of every row it deletes.
 /// </summary>
 /// <remarks>
 /// Microsoft.Data.Sqlite is synchronous, so every operation runs on the thread pool via Task.Run
@@ -17,15 +18,13 @@ namespace Lertaro.Plugins.ClipboardHistory;
 /// IDisposable on the store itself, and pooling is off so no pooled connection keeps the database
 /// file open (corruption recovery must be able to rename it aside).
 /// </remarks>
-internal sealed class ClipboardStore(string databasePath)
+internal sealed class ClipboardStore(string databasePath, string imagesDirectory)
 {
-    private const int PreviewLength = 200;
-
     // Column order shared by every SELECT; MapEntry depends on it.
     private const string EntryColumns =
-        "id, content, plain_preview, source_process, source_window_title, pinned, seen_count, created_at_ms, last_seen_at_ms";
+        "id, content, plain_preview, source_process, source_window_title, pinned, seen_count, created_at_ms, last_seen_at_ms, kind, image_path, image_width, image_height";
     private const string SearchEntryColumns =
-        "h.id, h.content, h.plain_preview, h.source_process, h.source_window_title, h.pinned, h.seen_count, h.created_at_ms, h.last_seen_at_ms";
+        "h.id, h.content, h.plain_preview, h.source_process, h.source_window_title, h.pinned, h.seen_count, h.created_at_ms, h.last_seen_at_ms, h.kind, h.image_path, h.image_width, h.image_height";
 
     private readonly ClipboardDatabase _database = new(databasePath);
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -33,10 +32,10 @@ internal sealed class ClipboardStore(string databasePath)
     public Task InitializeAsync(CancellationToken cancellationToken = default) =>
         RunLockedAsync(InitializeCore, cancellationToken);
 
-    public Task<ClipboardEntry?> AddAsync(string content, string sourceProcess, string sourceWindowTitle,
+    public Task<ClipboardEntry?> AddAsync(ClipboardEntryDraft draft, string sourceProcess, string sourceWindowTitle,
         int maxEntries, int maxTextLength, CancellationToken cancellationToken = default) =>
         RunLockedAsync(
-            () => AddCore(content, sourceProcess ?? string.Empty, sourceWindowTitle ?? string.Empty,
+            () => AddCore(draft, sourceProcess ?? string.Empty, sourceWindowTitle ?? string.Empty,
                 maxEntries, maxTextLength),
             cancellationToken);
 
@@ -55,8 +54,8 @@ internal sealed class ClipboardStore(string databasePath)
     public Task ClearAsync(CancellationToken cancellationToken = default) =>
         RunLockedAsync(ClearCore, cancellationToken);
 
-    public Task TrimAsync(int maxEntries, CancellationToken cancellationToken = default) =>
-        RunLockedAsync(() => TrimCore(Math.Max(0, maxEntries)), cancellationToken);
+    public Task TrimAsync(int maxEntries, int retentionDays, CancellationToken cancellationToken = default) =>
+        RunLockedAsync(() => TrimCore(Math.Max(0, maxEntries), Math.Max(0, retentionDays)), cancellationToken);
 
     // The serialization shell shared by every public API: hold the gate, run the synchronous SQLite
     // work on the thread pool, always release. Split out purely to keep this file under the per-file
@@ -104,16 +103,18 @@ internal sealed class ClipboardStore(string databasePath)
 
     private SqliteConnection OpenConnection() => _database.OpenConnection();
 
-    private ClipboardEntry? AddCore(string content, string sourceProcess, string sourceWindowTitle,
+    private ClipboardEntry? AddCore(ClipboardEntryDraft draft, string sourceProcess, string sourceWindowTitle,
         int maxEntries, int maxTextLength)
     {
         maxEntries = Math.Max(0, maxEntries);
-        maxTextLength = Math.Max(0, maxTextLength);
-        var truncated = TruncateAtCharBoundary(content, maxTextLength);
-        if (truncated.Length == 0) return null;
+        var content = draft.Kind == ClipboardEntryKind.Text
+            ? ClipboardStoreSupport.TruncateText(draft.Content, maxTextLength)
+            : ClipboardStoreSupport.BuildContent(draft);
+        if (draft.Kind == ClipboardEntryKind.Text && content.Length == 0) return null;
+        if (draft.Kind == ClipboardEntryKind.Image && string.IsNullOrEmpty(draft.ImagePath)) return null;
 
-        var preview = BuildPreview(truncated);
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(truncated));
+        var preview = ClipboardStoreSupport.BuildPreview(draft with { Content = content });
+        var hash = draft.ComputeHash();
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         using var connection = OpenConnection();
@@ -131,9 +132,8 @@ internal sealed class ClipboardStore(string databasePath)
         {
             select.Transaction = transaction;
             select.CommandText =
-                $"SELECT {EntryColumns} FROM clipboard_history WHERE content_sha256 = @hash AND content = @content ORDER BY id LIMIT 1";
+                $"SELECT {EntryColumns} FROM clipboard_history WHERE content_sha256 = @hash ORDER BY id LIMIT 1";
             select.Parameters.AddWithValue("@hash", hash);
-            select.Parameters.AddWithValue("@content", truncated);
             using var reader = select.ExecuteReader();
             existing = reader.Read() ? MapEntry(reader) : null;
         }
@@ -168,22 +168,27 @@ internal sealed class ClipboardStore(string databasePath)
             insert.Transaction = transaction;
             insert.CommandText = """
                 INSERT INTO clipboard_history
-                    (content, plain_preview, content_sha256, source_process, source_window_title, pinned, seen_count, created_at_ms, last_seen_at_ms)
+                    (content, plain_preview, content_sha256, source_process, source_window_title, pinned, seen_count, created_at_ms, last_seen_at_ms, kind, image_path, image_width, image_height)
                 VALUES
-                    (@content, @preview, @hash, @sourceProcess, @sourceWindowTitle, 0, 1, @stamp, @stamp)
+                    (@content, @preview, @hash, @sourceProcess, @sourceWindowTitle, 0, 1, @stamp, @stamp, @kind, @imagePath, @imageWidth, @imageHeight)
                 RETURNING id
                 """;
-            insert.Parameters.AddWithValue("@content", truncated);
+            insert.Parameters.AddWithValue("@content", content);
             insert.Parameters.AddWithValue("@preview", preview);
             insert.Parameters.AddWithValue("@hash", hash);
             insert.Parameters.AddWithValue("@sourceProcess", sourceProcess);
             insert.Parameters.AddWithValue("@sourceWindowTitle", sourceWindowTitle);
             insert.Parameters.AddWithValue("@stamp", stamp);
+            insert.Parameters.AddWithValue("@kind", (int)draft.Kind);
+            insert.Parameters.AddWithValue("@imagePath", draft.ImagePath);
+            insert.Parameters.AddWithValue("@imageWidth", draft.ImageWidth);
+            insert.Parameters.AddWithValue("@imageHeight", draft.ImageHeight);
             var id = (long)insert.ExecuteScalar()!;
-            entry = new ClipboardEntry(id, truncated, preview, sourceProcess, sourceWindowTitle, false, 1, stamp, stamp);
+            entry = new ClipboardEntry(id, content, preview, sourceProcess, sourceWindowTitle, false, 1, stamp, stamp,
+                draft.Kind, draft.ImagePath, draft.ImageWidth, draft.ImageHeight);
         }
 
-        TrimUnpinned(connection, transaction, maxEntries);
+        TrimUnpinned(connection, transaction, maxEntries, 0);
         transaction.Commit();
 
         // With MaxEntries 0 a new unpinned row is trimmed away in the same transaction; only report
@@ -268,46 +273,102 @@ internal sealed class ClipboardStore(string databasePath)
     private void DeleteCore(long id)
     {
         using var connection = OpenConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = "DELETE FROM clipboard_history WHERE id = @id";
-        command.Parameters.AddWithValue("@id", id);
-        command.ExecuteNonQuery();
+        using var transaction = connection.BeginTransaction();
+        var images = DeleteWhere(connection, transaction, "id = @id", ("@id", id));
+        transaction.Commit();
+        UnlinkImages(images);
     }
 
     private void ClearCore()
     {
         using var connection = OpenConnection();
-        using var command = connection.CreateCommand();
-        command.CommandText = "DELETE FROM clipboard_history";
-        command.ExecuteNonQuery();
+        using var transaction = connection.BeginTransaction();
+        var images = DeleteWhere(connection, transaction, "1 = 1");
+        transaction.Commit();
+        UnlinkImages(images);
     }
 
-    private void TrimCore(int maxEntries)
+    private void TrimCore(int maxEntries, int retentionDays)
     {
         using var connection = OpenConnection();
         using var transaction = connection.BeginTransaction();
-        TrimUnpinned(connection, transaction, maxEntries);
+        TrimUnpinned(connection, transaction, maxEntries, retentionDays);
         transaction.Commit();
     }
 
-    private static void TrimUnpinned(SqliteConnection connection, SqliteTransaction transaction, int maxEntries)
+    /// <summary>Deletes unpinned rows beyond the cap and, when <paramref name="retentionDays"/> is
+    /// positive, unpinned rows not seen within the window. Returns the image file names of the
+    /// deleted rows so the caller can unlink them after the transaction commits.</summary>
+    private static List<string> TrimUnpinned(SqliteConnection connection, SqliteTransaction transaction,
+        int maxEntries, int retentionDays)
+    {
+        var cutoff = retentionDays > 0
+            ? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - retentionDays * 86_400_000L
+            : long.MinValue;
+
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        // Pinned entries are exempt from both the cap and the retention window: the cap applies to
+        // the unpinned rows only, of which the newest by (LastSeenAtMs, Id) are kept. Tie-breaking
+        // by Id is total, so two rows that share a millisecond never both fall outside the cap
+        // while an older one survives.
+        command.CommandText = """
+            DELETE FROM clipboard_history
+            WHERE pinned = 0 AND (
+                last_seen_at_ms < @cutoff OR id NOT IN (
+                    SELECT id FROM clipboard_history
+                    WHERE pinned = 0
+                    ORDER BY last_seen_at_ms DESC, id DESC
+                    LIMIT @maxEntries
+                )
+            )
+            RETURNING image_path
+            """;
+        command.Parameters.AddWithValue("@cutoff", cutoff);
+        command.Parameters.AddWithValue("@maxEntries", maxEntries);
+
+        var images = new List<string>();
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var path = reader.GetString(0);
+            if (path.Length > 0) images.Add(path);
+        }
+        return images;
+    }
+
+    /// <summary>Deletes matching rows and returns their image file names. The caller commits before
+    /// unlinking: a crash between commit and unlink leaves an orphan file (cleaned by the runtime's
+    /// sweep) but never a row pointing at a missing file.</summary>
+    private static List<string> DeleteWhere(SqliteConnection connection, SqliteTransaction transaction,
+        string where, params (string Name, object Value)[] parameters)
     {
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        // Pinned entries are exempt from the cap: it applies to the unpinned rows only, of which
-        // the newest by (LastSeenAtMs, Id) are kept. Tie-breaking by Id is total, so two rows that
-        // share a millisecond never both fall outside the cap while an older one survives.
-        command.CommandText = """
-            DELETE FROM clipboard_history
-            WHERE pinned = 0 AND id NOT IN (
-                SELECT id FROM clipboard_history
-                WHERE pinned = 0
-                ORDER BY last_seen_at_ms DESC, id DESC
-                LIMIT @maxEntries
-            )
-            """;
-        command.Parameters.AddWithValue("@maxEntries", maxEntries);
-        command.ExecuteNonQuery();
+        command.CommandText = $"DELETE FROM clipboard_history WHERE {where} RETURNING image_path";
+        foreach (var (name, value) in parameters)
+            command.Parameters.AddWithValue(name, value);
+
+        var images = new List<string>();
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var path = reader.GetString(0);
+            if (path.Length > 0) images.Add(path);
+        }
+        return images;
+    }
+
+    private void UnlinkImages(List<string> fileNames)
+    {
+        foreach (var fileName in fileNames)
+        {
+            try { File.Delete(Path.Combine(imagesDirectory, fileName)); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Orphaned pixels are cosmetic; the row is already gone. Nothing worth failing for.
+            }
+        }
     }
 
     private static ClipboardEntry MapEntry(SqliteDataReader reader) => new(
@@ -319,29 +380,9 @@ internal sealed class ClipboardStore(string databasePath)
         reader.GetBoolean(5),
         reader.GetInt64(6),
         reader.GetInt64(7),
-        reader.GetInt64(8));
-
-    private static string BuildPreview(string content)
-    {
-        var trimmed = content.AsSpan().Trim();
-        var length = Math.Min(trimmed.Length, PreviewLength);
-        if (length > 0 && char.IsHighSurrogate(trimmed[length - 1])) length--;
-        var preview = trimmed[..length].ToString();
-        return string.Create(preview.Length, preview, (output, text) =>
-        {
-            for (var index = 0; index < text.Length; index++)
-                output[index] = char.IsWhiteSpace(text[index]) ? ' ' : text[index];
-        });
-    }
-
-    private static string TruncateAtCharBoundary(string text, int maxLength)
-    {
-        if (maxLength <= 0) return string.Empty;
-        if (text.Length <= maxLength) return text;
-        // A cut landing between the halves of a surrogate pair backs off one char so the stored
-        // text never ends in a lone high surrogate.
-        var end = maxLength;
-        if (char.IsHighSurrogate(text[end - 1])) end--;
-        return text[..end];
-    }
+        reader.GetInt64(8),
+        (ClipboardEntryKind)reader.GetInt64(9),
+        reader.GetString(10),
+        reader.GetInt32(11),
+        reader.GetInt32(12));
 }

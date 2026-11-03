@@ -7,6 +7,10 @@ namespace Lertaro.Plugins.ClipboardHistory.Capture;
 internal interface IClipboardNative
 {
     public const int CfUnicodeText = 13;
+    public const int CfHDrop = 15;
+    public const int CfBitmap = 2;
+    public const int CfDib = 8;
+    public const int CfDibV5 = 17;
 
     uint GetClipboardSequenceNumber();
     nint GetClipboardOwner();
@@ -20,6 +24,13 @@ internal interface IClipboardNative
     nuint GlobalSize(nint hMem); // SIZE_T
     nint GlobalLock(nint hMem);
     bool GlobalUnlock(nint hMem);
+
+    /// <summary>DragQueryFileW with index 0xFFFFFFFF: the number of paths in the HDROP.</summary>
+    uint DragQueryFileCount(nint hDrop);
+
+    /// <summary>DragQueryFileW for one path; returns characters written, or 0 when it did not fit
+    /// or the index is out of range.</summary>
+    int DragQueryFileName(nint hDrop, uint index, char[] buffer);
 }
 
 internal sealed class Win32ClipboardNative : IClipboardNative
@@ -42,7 +53,10 @@ internal sealed class Win32ClipboardNative : IClipboardNative
     public nint GetClipboardData(int format) => GetClipboardDataNative(format);
     public nuint GlobalSize(nint hMem) => GlobalSizeNative(hMem);
     public nint GlobalLock(nint hMem) => GlobalLockNative(hMem);
-    public bool GlobalUnlock(nint hMem) => GlobalUnlockNative(hMem);
+    public bool GlobalUnlock(nint hMem) => GlobalUnlockNative(hMem) != 0;
+
+    public uint DragQueryFileCount(nint hDrop) => DragQueryFileNative(hDrop, 0xFFFFFFFFu, null, 0);
+    public int DragQueryFileName(nint hDrop, uint index, char[] buffer) => (int)DragQueryFileNative(hDrop, index, buffer, (uint)buffer.Length);
 
     [DllImport("user32.dll", EntryPoint = "GetClipboardSequenceNumber")]
     private static extern uint GetClipboardSequenceNumberNative();
@@ -78,5 +92,8 @@ internal sealed class Win32ClipboardNative : IClipboardNative
     private static extern nint GlobalLockNative(nint hMem);
 
     [DllImport("kernel32.dll", EntryPoint = "GlobalUnlock", SetLastError = true)]
-    private static extern bool GlobalUnlockNative(nint hMem);
+    private static extern nint GlobalUnlockNative(nint hMem);
+
+    [DllImport("shell32.dll", EntryPoint = "DragQueryFileW", SetLastError = true)]
+    private static extern uint DragQueryFileNative(nint dropHandle, uint fileIndex, char[]? fileName, uint bufferLength);
 }
