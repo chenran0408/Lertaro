@@ -31,5 +31,19 @@
   "ClipboardHistory_Config_Retention1": "1 day",
   "ClipboardHistory_Config_Retention7": "7 days",
   "ClipboardHistory_Config_Retention30": "30 days",
-  "ClipboardHistory_Config_RetentionForever": "Forever"
+  "ClipboardHistory_Config_RetentionForever": "Forever",
+  "ClipboardHistory_PanelTitle": "Clipboard",
+  "ClipboardHistory_PanelTabAll": "All",
+  "ClipboardHistory_PanelTabText": "Text",
+  "ClipboardHistory_PanelTabImage": "Images",
+  "ClipboardHistory_PanelTabFiles": "Files",
+  "ClipboardHistory_PanelTabFavorites": "★ Favorites",
+  "ClipboardHistory_PanelSearchWatermark": "Search clipboard history…",
+  "ClipboardHistory_PanelHint": "Enter Paste   ·   Ctrl+Enter Paste as text   ·   Del Delete   ·   Ctrl+P Pin   ·   1~9 Quick paste   ·   Esc Close",
+  "ClipboardHistory_PanelPinnedGroup": "★ Pinned",
+  "ClipboardHistory_PanelToday": "Today",
+  "ClipboardHistory_PanelYesterday": "Yesterday",
+  "ClipboardHistory_PanelEmpty": "Nothing here yet — copy something.",
+  "ClipboardHistory_OpenPanel": "Open clipboard panel",
+  "ClipboardHistory_OpenPanelDesc": "Search, pin and re-paste everything you have copied"
 }

@@ -134,6 +134,19 @@ public sealed partial class QuickPanelManager : IDisposable
             Core.Logger.Log("[QuickPanel] Clipboard history plugin is not available, so not opening the clipboard panel.", Core.LogLevel.Debug);
             return;
         }
+        // The dedicated panel is the Win+V surface; the Quick Panel clipboard tab is the fallback
+        // for when the plugin cannot host its window. The static TryOpenPanel is resolved by name
+        // because the host does not reference plugin assemblies.
+        try
+        {
+            var openPanel = provider.GetType().GetMethod("TryOpenPanel",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            if (openPanel?.Invoke(null, null) is true) return;
+        }
+        catch (Exception ex)
+        {
+            Core.Logger.Log($"[QuickPanel] Dedicated clipboard panel failed to open, falling back: {ex.GetType().Name}", Core.LogLevel.Warn);
+        }
         Show(host, process, QuickPanelPluginTabs.ComponentId(provider));
     }
 

@@ -31,5 +31,19 @@
   "ClipboardHistory_Config_Retention1": "1일",
   "ClipboardHistory_Config_Retention7": "7일",
   "ClipboardHistory_Config_Retention30": "30일",
-  "ClipboardHistory_Config_RetentionForever": "영구"
+  "ClipboardHistory_Config_RetentionForever": "영구",
+  "ClipboardHistory_PanelTitle": "클립보드",
+  "ClipboardHistory_PanelTabAll": "전체",
+  "ClipboardHistory_PanelTabText": "텍스트",
+  "ClipboardHistory_PanelTabImage": "이미지",
+  "ClipboardHistory_PanelTabFiles": "파일",
+  "ClipboardHistory_PanelTabFavorites": "★ 즐겨찾기",
+  "ClipboardHistory_PanelSearchWatermark": "클립보드 기록 검색…",
+  "ClipboardHistory_PanelHint": "Enter 붙여넣기   ·   Ctrl+Enter 텍스트로 붙여넣기   ·   Del 삭제   ·   Ctrl+P 고정   ·   1~9 빠른 붙여넣기   ·   Esc 닫기",
+  "ClipboardHistory_PanelPinnedGroup": "★ 고정됨",
+  "ClipboardHistory_PanelToday": "오늘",
+  "ClipboardHistory_PanelYesterday": "어제",
+  "ClipboardHistory_PanelEmpty": "아직 비어 있습니다. 무언가를 복사해 보세요.",
+  "ClipboardHistory_OpenPanel": "클립보드 패널 열기",
+  "ClipboardHistory_OpenPanelDesc": "복사한 내용을 검색, 고정하고 다시 붙여넣기"
 }

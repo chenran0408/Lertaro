@@ -13,9 +13,23 @@ public sealed class ClipboardInstantProvider : IInstantResultProvider
     {
         if (!ClipboardSettings.Enabled || !TriggerWord.TryMatch(query, ClipboardSettings.TriggerKeyword, out var term))
             return [];
-        return ClipboardRuntime.Instance.Search(term)
-            .Select(entry => (InstantResultItem)new ClipboardSearchResult(entry)).ToArray();
+        // The dedicated panel row leads; the rows under it are the same results the panel would
+        // show for the typed term, so a quick "cb <term>" search still works from the main box.
+        return [PanelRow(), .. ClipboardRuntime.Instance.Search(term)
+            .Select(entry => (InstantResultItem)new ClipboardSearchResult(entry))];
     }
+
+    private static InstantResultItem PanelRow() => new()
+    {
+        Title = TranslationService.Get("ClipboardHistory_OpenPanel"),
+        Description = TranslationService.Get("ClipboardHistory_OpenPanelDesc"),
+        IconData = ClipboardIcon,
+        IconColor = "AccentBlue",
+        ActionType = "None",
+        // True so the launcher hides itself and hands foreground to the panel rather than
+        // restoring whatever was behind it, which would immediately deactivate the new window.
+        OnExecuteFunc = () => View.ClipboardPanelView.TryShow(),
+    };
 
     public bool[]? GetHighlightMask(string text, string query)
     {

@@ -8,6 +8,11 @@ public sealed class ClipboardTabProvider : IQuickPanelTabProvider
 {
     public string Name => TranslationService.Get("ClipboardHistory_TabName");
 
+    /// <summary>Opens the dedicated panel. The host's Win+V wake path calls this through reflection
+    /// (it cannot reference this assembly); a false return sends that path to the Quick Panel tab
+    /// fallback, which happens when there is no UI thread to host the window.</summary>
+    public static bool TryOpenPanel() => View.ClipboardPanelView.TryShow();
+
     public async Task<IReadOnlyList<ISearchResult>> GetEntriesAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

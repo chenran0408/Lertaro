@@ -31,5 +31,19 @@
   "ClipboardHistory_Config_Retention1": "1 día",
   "ClipboardHistory_Config_Retention7": "7 días",
   "ClipboardHistory_Config_Retention30": "30 días",
-  "ClipboardHistory_Config_RetentionForever": "Para siempre"
+  "ClipboardHistory_Config_RetentionForever": "Para siempre",
+  "ClipboardHistory_PanelTitle": "Portapapeles",
+  "ClipboardHistory_PanelTabAll": "Todo",
+  "ClipboardHistory_PanelTabText": "Texto",
+  "ClipboardHistory_PanelTabImage": "Imágenes",
+  "ClipboardHistory_PanelTabFiles": "Archivos",
+  "ClipboardHistory_PanelTabFavorites": "★ Favoritos",
+  "ClipboardHistory_PanelSearchWatermark": "Buscar en el historial del portapapeles…",
+  "ClipboardHistory_PanelHint": "Entrar Pegar   ·   Ctrl+Entrar Pegar como texto   ·   Supr Eliminar   ·   Ctrl+P Fijar   ·   1~9 Pegado rápido   ·   Esc Cerrar",
+  "ClipboardHistory_PanelPinnedGroup": "★ Fijados",
+  "ClipboardHistory_PanelToday": "Hoy",
+  "ClipboardHistory_PanelYesterday": "Ayer",
+  "ClipboardHistory_PanelEmpty": "Aún no hay nada: copia algo.",
+  "ClipboardHistory_OpenPanel": "Abrir el panel del portapapeles",
+  "ClipboardHistory_OpenPanelDesc": "Busca, fija y vuelve a pegar todo lo que has copiado"
 }

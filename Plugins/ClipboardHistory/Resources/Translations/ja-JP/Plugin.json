@@ -31,5 +31,19 @@
   "ClipboardHistory_Config_Retention1": "1 日",
   "ClipboardHistory_Config_Retention7": "7 日",
   "ClipboardHistory_Config_Retention30": "30 日",
-  "ClipboardHistory_Config_RetentionForever": "無期限"
+  "ClipboardHistory_Config_RetentionForever": "無期限",
+  "ClipboardHistory_PanelTitle": "クリップボード",
+  "ClipboardHistory_PanelTabAll": "すべて",
+  "ClipboardHistory_PanelTabText": "テキスト",
+  "ClipboardHistory_PanelTabImage": "画像",
+  "ClipboardHistory_PanelTabFiles": "ファイル",
+  "ClipboardHistory_PanelTabFavorites": "★ お気に入り",
+  "ClipboardHistory_PanelSearchWatermark": "クリップボード履歴を検索…",
+  "ClipboardHistory_PanelHint": "Enter 貼り付け   ·   Ctrl+Enter テキストで貼り付け   ·   Del 削除   ·   Ctrl+P ピン留め   ·   1~9 クイック貼り付け   ·   Esc 閉じる",
+  "ClipboardHistory_PanelPinnedGroup": "★ ピン留め",
+  "ClipboardHistory_PanelToday": "今日",
+  "ClipboardHistory_PanelYesterday": "昨日",
+  "ClipboardHistory_PanelEmpty": "まだ何もありません。何かコピーしてください。",
+  "ClipboardHistory_OpenPanel": "クリップボードパネルを開く",
+  "ClipboardHistory_OpenPanelDesc": "コピーした内容を検索・ピン留め・再貼り付け"
 }

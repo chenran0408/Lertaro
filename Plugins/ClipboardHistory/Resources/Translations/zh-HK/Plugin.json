@@ -31,5 +31,19 @@
   "ClipboardHistory_Config_Retention1": "1 天",
   "ClipboardHistory_Config_Retention7": "7 天",
   "ClipboardHistory_Config_Retention30": "30 天",
-  "ClipboardHistory_Config_RetentionForever": "永久"
+  "ClipboardHistory_Config_RetentionForever": "永久",
+  "ClipboardHistory_PanelTitle": "剪貼簿",
+  "ClipboardHistory_PanelTabAll": "全部",
+  "ClipboardHistory_PanelTabText": "文字",
+  "ClipboardHistory_PanelTabImage": "圖片",
+  "ClipboardHistory_PanelTabFiles": "檔案",
+  "ClipboardHistory_PanelTabFavorites": "★ 收藏",
+  "ClipboardHistory_PanelSearchWatermark": "搜尋剪貼簿歷史…",
+  "ClipboardHistory_PanelHint": "Enter 貼上   ·   Ctrl+Enter 按文字貼上   ·   Del 刪除   ·   Ctrl+P 釘選   ·   1~9 快捷貼上   ·   Esc 關閉",
+  "ClipboardHistory_PanelPinnedGroup": "★ 已釘選",
+  "ClipboardHistory_PanelToday": "今天",
+  "ClipboardHistory_PanelYesterday": "昨天",
+  "ClipboardHistory_PanelEmpty": "這裡還是空的——去複製點東西吧。",
+  "ClipboardHistory_OpenPanel": "開啟剪貼簿面板",
+  "ClipboardHistory_OpenPanelDesc": "搜尋、釘選並重新貼上你複製過的一切"
 }
