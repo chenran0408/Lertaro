@@ -89,7 +89,7 @@ internal sealed class ClipboardRuntime : IDisposable
         _ = MutateAsync(async store =>
         {
             if (!ClipboardSettings.Enabled) return;
-            var draft = await BuildDraftAsync(capture).ConfigureAwait(false);
+            var draft = await ClipboardImageIngest.BuildDraftAsync(capture, _imagesDirectory!).ConfigureAwait(false);
             if (draft == null) return;
             var entry = await store.AddAsync(draft, capture.SourceProcess, capture.SourceWindowTitle,
                 ClipboardSettings.MaxEntries, ClipboardSettings.MaxTextLength).ConfigureAwait(false);
@@ -99,32 +99,6 @@ internal sealed class ClipboardRuntime : IDisposable
         });
     }
 
-    /// <summary>Turns a capture into a store draft, writing image pixels to their content-addressed
-    /// file first (the file name is the PNG's own SHA-256, so a dedup hit names the same file the
-    /// store keeps and a rejected insert leaves nothing to clean up).</summary>
-    private async Task<ClipboardEntryDraft?> BuildDraftAsync(ClipboardCapture capture)
-    {
-        if (capture.Kind == ClipboardEntryKind.Text)
-            return new ClipboardEntryDraft(ClipboardEntryKind.Text, capture.Text);
-        if (capture.Kind == ClipboardEntryKind.FilePaths)
-            return new ClipboardEntryDraft(ClipboardEntryKind.FilePaths, string.Join("\n", capture.FilePaths));
-
-        try
-        {
-            var hashHex = ClipboardStoreSupport.HashToHex(System.Security.Cryptography.SHA256.HashData(capture.ImagePng));
-            var fileName = hashHex + ".png";
-            var filePath = Path.Combine(_imagesDirectory!, fileName);
-            if (!File.Exists(filePath))
-                await Task.Run(() => File.WriteAllBytes(filePath, capture.ImagePng)).ConfigureAwait(false);
-            return new ClipboardEntryDraft(ClipboardEntryKind.Image, string.Empty,
-                fileName, capture.ImageWidth, capture.ImageHeight, hashHex);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            LogFailure(ex);
-            return null;
-        }
-    }
 
     // Mirror the store's unpinned cap without rereading every saved text on each clipboard update.
     internal static ClipboardEntry[] ClipEntries(IEnumerable<ClipboardEntry> entries, int maxEntries)
@@ -306,20 +280,4 @@ internal sealed class ClipboardRuntime : IDisposable
 
     // Exception messages can contain SQL values or paths. Keep clipboard data out of the host log.
     private static void LogFailure(Exception ex) => Logger.Log($"[ClipboardHistory] {ex.GetType().Name} (0x{ex.HResult:X8}).", LogLevel.Error);
-}
-
-internal static class SourceWindowFocus
-{
-    internal static void Focus(nint hwnd)
-    {
-        if (IsIconic(hwnd)) ShowWindow(hwnd, 9);
-        SetForegroundWindow(hwnd);
-    }
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool ShowWindow(nint hwnd, int command);
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool IsIconic(nint hwnd);
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool SetForegroundWindow(nint hwnd);
 }

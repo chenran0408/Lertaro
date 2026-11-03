@@ -8,8 +8,12 @@ namespace Lertaro.Plugins.ClipboardHistory;
 /// and corruption recovery. Split out purely to keep ClipboardStore under the per-file line limit;
 /// it has no state of its own and only touches the database file it is constructed with.
 /// </summary>
-internal sealed class ClipboardDatabase(string databasePath)
+internal sealed class ClipboardDatabase(string databasePath, string imagesDirectory)
 {
+    /// <summary>Where content-addressed image files live; the writer unlinks deleted rows' files
+    /// here, so the plumbing travels with the connection factory that owns the database path.</summary>
+    public string ImagesDirectory { get; } = imagesDirectory;
+
     // Primary result codes under which a database file is proven corrupt; every other error
     // (locked file, disk full, bad path, ...) must propagate to the caller untouched.
     internal const int SqliteCorrupt = 11;

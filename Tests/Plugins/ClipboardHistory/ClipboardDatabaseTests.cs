@@ -13,7 +13,7 @@ public sealed class ClipboardDatabaseTests
         try
         {
             foreach (var suffix in suffixes) File.WriteAllText(path + suffix, "fixture" + suffix);
-            new ClipboardDatabase(path).MoveCorruptDatabaseAside();
+            new ClipboardDatabase(path, Path.Combine(Path.GetDirectoryName(path)!, "images")).MoveCorruptDatabaseAside();
             var files = Directory.GetFiles(folder);
             Assert.HasCount(4, files);
             foreach (var suffix in suffixes)
