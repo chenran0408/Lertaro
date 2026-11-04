@@ -3,7 +3,6 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using Lertaro.App.Helpers;
-using Lertaro.App.Services;
 using Lertaro.App.Views.QuickSearchWindow.Helpers;
 using Lertaro.Core;
 
@@ -71,17 +70,14 @@ public static class AppWindowManager
         });
     }
 
-    private static async void ShowSettingsWindowPrepared(SettingsWindow window, bool focusSearch)
-    {
-        await WindowPresentationHelper.ShowAsync(window, () =>
-        {
-            if (!window.IsVisible) window.Show();
-            if (window.WindowState == WindowState.Minimized)
-                window.WindowState = WindowState.Normal;
-            window.Activate();
-            if (focusSearch) window.FocusSearchBox();
-        });
-    }
+    private static async void ShowSettingsWindowPrepared(SettingsWindow window, bool focusSearch) => await WindowPresentationHelper.ShowAsync(window, () =>
+                                                                                                          {
+                                                                                                              if (!window.IsVisible) window.Show();
+                                                                                                              if (window.WindowState == WindowState.Minimized)
+                                                                                                                  window.WindowState = WindowState.Normal;
+                                                                                                              window.Activate();
+                                                                                                              if (focusSearch) window.FocusSearchBox();
+                                                                                                          });
 
     public static void ShowQuickLaunchItemEditor(string path)
         => QuickLaunchItemEditor.Show(path);

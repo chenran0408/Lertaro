@@ -1,7 +1,6 @@
 using Lertaro.App.Services.Plugin;
 using Lertaro.App.ViewModels.Search.Mapping;
 using Lertaro.Core;
-using Lertaro.Core.SearchIndex;
 using Lertaro.PluginSdk.Abstractions.Plugins;
 
 namespace Lertaro.App.ViewModels.Search.Dispatch;

@@ -121,7 +121,7 @@ public static class MarqueeBehavior
         SizeChangedEventHandler sizeChangedHandler = (s, e) => UpdateMarqueeAnimation(element, isActive);
         var sizeParent = VisualTreeHelper.GetParent(element) as FrameworkElement;
         element.SizeChanged += sizeChangedHandler;
-        if (sizeParent != null) sizeParent.SizeChanged += sizeChangedHandler;
+        sizeParent?.SizeChanged += sizeChangedHandler;
 
         var state = new MarqueeState
         {
@@ -148,7 +148,7 @@ public static class MarqueeBehavior
             if (state.SizeChangedHandler != null)
             {
                 element.SizeChanged -= state.SizeChangedHandler;
-                if (state.SizeParent != null) state.SizeParent.SizeChanged -= state.SizeChangedHandler;
+                state.SizeParent?.SizeChanged -= state.SizeChangedHandler;
             }
             if (state.WatchedContainer != null && state.Handler != null)
             {

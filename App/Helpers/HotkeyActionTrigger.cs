@@ -101,10 +101,7 @@ public static class HotkeyActionTrigger
     /// key a specific built-in action happens to default to, so a user who rebinds e.g.
     /// DeleteFileAction to a different bare key still gets that override recognized here too.
     /// </summary>
-    public static bool HasBareKeyActionHotkey(Key key)
-    {
-        return HasBareKeyActionHotkey(key, UserSettings.Load());
-    }
+    public static bool HasBareKeyActionHotkey(Key key) => HasBareKeyActionHotkey(key, UserSettings.Load());
 
     internal static bool HasBareKeyActionHotkey(Key key, UserSettings settings)
     {

@@ -32,11 +32,7 @@ public class SearchWindowChromeHandler
         }
     }
 
-    public void HandleStateChanged()
-    {
-        _window.BtnMaximize?.Content = _window.WindowState == WindowState.Maximized ? "\uE923" : "\uE922";
-
-    }
+    public void HandleStateChanged() => _window.BtnMaximize?.Content = _window.WindowState == WindowState.Maximized ? "\uE923" : "\uE922";
 
     public void Minimize() => _window.WindowState = WindowState.Minimized;
 

@@ -11,7 +11,7 @@ using Lertaro.App.Views.Controls.Results;
 using Lertaro.PluginSdk.Abstractions.Plugins.Preview;
 namespace Lertaro.App.Views.QuickLook;
 
-public partial class QuickLookWindow : Lertaro.App.Views.Controls.AppWindow
+public partial class QuickLookWindow : Controls.AppWindow
 {
     // the main window's glass surface fills the top-level window, so preview positioning uses its
     // complete bounds without adding or subtracting a second card margin.

@@ -32,10 +32,7 @@ public static class SearchInputHelper
     private static readonly ConditionalWeakTable<ISearchWindow, PendingDoubleTapActionState> PendingDoubleTapActions = new();
     private const uint DoubleTapWindowMilliseconds = 320;
 
-    public static bool IsQuickLookKey(System.Windows.Input.KeyEventArgs e)
-    {
-        return WpfUiHelper.MatchesHotkey(UserSettings.Load().Hotkeys.QuickLookHotkey, e);
-    }
+    public static bool IsQuickLookKey(System.Windows.Input.KeyEventArgs e) => WpfUiHelper.MatchesHotkey(UserSettings.Load().Hotkeys.QuickLookHotkey, e);
 
     // Shared by SearchWindow/QuickSearchWindow/InlineSearchWindow's own Right-arrow-opens-Actions check,
     // so it only fires when Right would otherwise be a no-op for the caret (not moving it or collapsing a
@@ -342,8 +339,7 @@ public static class SearchInputHelper
         if (!HotkeyActionTrigger.HasDoubleTapBareKeyActionHotkey(Key.Enter, settings))
             return false;
 
-        var selected = window.LstResults.SelectedItem as AppSearchResult;
-        if (selected == null || menuPresenter?.CanShowActionsMenu(new[] { selected }) != true)
+        if (window.LstResults.SelectedItem is not AppSearchResult selected || menuPresenter?.CanShowActionsMenu(new[] { selected }) != true)
             return false;
 
         var state = PendingDoubleTapActions.GetValue(window, static _ => new PendingDoubleTapActionState());

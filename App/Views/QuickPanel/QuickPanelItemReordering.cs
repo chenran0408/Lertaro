@@ -181,8 +181,7 @@ internal static class QuickPanelItemReordering
                 group.PlaceInGrid(selected.Length > 1 ? selected : new[] { item.FullPath }, slot);
                 grid!.PreviewPlacement(group.GridSlots);
                 list.UpdateLayout();
-                var landing = list.ItemContainerGenerator.ContainerFromItem(item) as ListBoxItem;
-                if (landing != null && ghost != null && ghostMotion != null && overlay != null)
+                if (list.ItemContainerGenerator.ContainerFromItem(item) is ListBoxItem landing && ghost != null && ghostMotion != null && overlay != null)
                 {
                     landing.Opacity = 0;
                     landing.IsHitTestVisible = false;
@@ -230,7 +229,7 @@ internal static class QuickPanelItemReordering
 
         void ResetVisual()
         {
-            if (ghostSource != null) ghostSource.Opacity = 1;
+            ghostSource?.Opacity = 1;
             if (ghost != null && overlay != null) overlay.Children.Remove(ghost);
             ghost = null;
             ghostMotion = null;

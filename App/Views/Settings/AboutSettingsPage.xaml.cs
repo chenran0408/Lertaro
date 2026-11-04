@@ -10,7 +10,6 @@ using Brushes = System.Windows.Media.Brushes;
 using Lertaro.App.Services.Update;
 
 using Lertaro.App.Services.Theme;
-using Lertaro.App.Services.Tray;
 using Lertaro.Core.Services.Search;
 namespace Lertaro.App.Views.Settings;
 
@@ -41,13 +40,7 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
         }
     }
 
-    public string AppVersion
-    {
-        get
-        {
-            return string.Format(TranslationManager.Instance["About_Version"], UpdateVersion.Current);
-        }
-    }
+    public string AppVersion => string.Format(TranslationManager.Instance["About_Version"], UpdateVersion.Current);
 
     public string CoreVersion
     {
@@ -274,7 +267,7 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
         var guidance = string.Format(
             TranslationManager.Instance[installerInstall ? "About_ManualInstallSetup" : "About_ManualInstallZip"],
             filePath);
-        var dialog = new Views.Controls.Dialogs.UpdateDialogWindow(
+        var dialog = new Controls.Dialogs.UpdateDialogWindow(
             TranslationManager.Instance["About_CheckUpdate"], guidance, showNeverPrompt: false);
         dialog.SetButtons(
             installerInstall ? TranslationManager.Instance["About_RunInstaller"] : TranslationManager.Instance["About_OpenFolder"],
@@ -283,11 +276,11 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
 
         switch (dialog.Result)
         {
-            case Views.Controls.Dialogs.UpdateDialogResult.Primary when installerInstall:
+            case Controls.Dialogs.UpdateDialogResult.Primary when installerInstall:
                 TryLaunchInstaller(filePath);
                 break;
-            case Views.Controls.Dialogs.UpdateDialogResult.Secondary when installerInstall:
-            case Views.Controls.Dialogs.UpdateDialogResult.Primary:
+            case Controls.Dialogs.UpdateDialogResult.Secondary when installerInstall:
+            case Controls.Dialogs.UpdateDialogResult.Primary:
                 OpenContainingFolder(filePath);
                 break;
         }
@@ -324,10 +317,7 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
         }
     }
 
-    private void BtnGoToPage_Click(object sender, RoutedEventArgs e)
-    {
-        Helpers.UrlLauncher.Open(_latestRelease?.HtmlUrl ?? UpdateChecker.ReleasesPageUrl);
-    }
+    private void BtnGoToPage_Click(object sender, RoutedEventArgs e) => Helpers.UrlLauncher.Open(_latestRelease?.HtmlUrl ?? UpdateChecker.ReleasesPageUrl);
 
     private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
     {

@@ -54,7 +54,7 @@ public sealed class QuickPanelWakeSettingsViewModel : ViewModelBase, IDisposable
             OnPropertyChanged(nameof(StopTestLabel));
         }, _dispatcher);
         _testTimer.Stop();
-        if (_client != null) _client.OnQuickPanelWakeTestResult += HandleResult;
+        _client?.OnQuickPanelWakeTestResult += HandleResult;
         TranslationManager.Instance.PropertyChanged += LanguageChanged;
         _parent.PropertyChanged += ParentChanged;
         Validate();
@@ -216,7 +216,7 @@ public sealed class QuickPanelWakeSettingsViewModel : ViewModelBase, IDisposable
     {
         if (_disposed) return;
         StopTest(); _disposed = true;
-        if (_client != null) _client.OnQuickPanelWakeTestResult -= HandleResult;
+        _client?.OnQuickPanelWakeTestResult -= HandleResult;
         TranslationManager.Instance.PropertyChanged -= LanguageChanged;
         _parent.PropertyChanged -= ParentChanged;
         MouseWhitelist.Items.CollectionChanged -= WhitelistChanged;

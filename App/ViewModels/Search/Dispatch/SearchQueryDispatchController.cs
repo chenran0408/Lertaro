@@ -6,7 +6,6 @@ using Lertaro.App.ViewModels.Service;
 using Lertaro.Core.SearchIndex;
 using Lertaro.Core.SearchIndex.Query;
 using Lertaro.App.ViewModels.Search.Mapping;
-using Lertaro.PluginSdk.Abstractions.Plugins;
 
 using SearchWindowType = Lertaro.PluginSdk.Abstractions.SearchWindowType;
 namespace Lertaro.App.ViewModels.Search.Dispatch;
@@ -355,10 +354,7 @@ internal sealed class SearchQueryDispatchController
         _applyFiltersAndRender(extendsContent, 0);
     }
 
-    private void QueueTokenDispatch(List<AppSearchResult> resultsSnapshot, IReadOnlyList<string> tokensSnapshot, bool extendsContent)
-    {
-        _tokenDispatchWork.Queue(new TokenDispatchRequest(resultsSnapshot, tokensSnapshot, extendsContent));
-    }
+    private void QueueTokenDispatch(List<AppSearchResult> resultsSnapshot, IReadOnlyList<string> tokensSnapshot, bool extendsContent) => _tokenDispatchWork.Queue(new TokenDispatchRequest(resultsSnapshot, tokensSnapshot, extendsContent));
 
     public void PerformSearch(string query)
     {

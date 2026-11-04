@@ -19,7 +19,7 @@ using Lertaro.App.Services.Theme;
 using Lertaro.App.Services.ShellMenu.Presenter;
 using Lertaro.App.Helpers.Visuals;
 namespace Lertaro.App;
-public partial class SearchWindow : Lertaro.App.Views.Controls.AppWindow, ISearchWindow, IHasVisibleContentInset
+public partial class SearchWindow : Views.Controls.AppWindow, ISearchWindow, IHasVisibleContentInset
 {
     public const double FilterSidebarWidth = 236;
 
@@ -210,7 +210,7 @@ public partial class SearchWindow : Lertaro.App.Views.Controls.AppWindow, ISearc
     {
         SidebarColumn.Width = new GridLength(_isFilterPanelVisible ? FilterSidebarWidth : 0);
         SearchSidebar.Visibility = _isFilterPanelVisible ? Visibility.Visible : Visibility.Collapsed;
-        BtnToggleFilters.SetResourceReference(System.Windows.Controls.Button.BackgroundProperty,
+        BtnToggleFilters.SetResourceReference(BackgroundProperty,
             _isFilterPanelVisible ? "SidebarSelected" : "Transparent");
         BtnToggleFilters.ToolTip = TranslationManager.Instance[
             _isFilterPanelVisible ? "Search_HideFiltersTooltip" : "Search_ShowFiltersTooltip"];

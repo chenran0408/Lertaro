@@ -14,7 +14,7 @@ namespace Lertaro.App.Views.Controls.Dialogs;
 // user at runtime (e.g. "name this before adding it") using the exact same field schema/rendering
 // the real Settings -> Plugins -> Configure dialog uses (FieldRowTemplate.xaml, merged in the XAML),
 // without ever reading from or writing to that plugin's actual persisted settings.
-public partial class PluginFieldPromptWindow : Lertaro.App.Views.Controls.AppWindow
+public partial class PluginFieldPromptWindow : AppWindow
 {
     private PluginFieldPromptWindow(string title, List<PluginConfigFieldViewModel> fieldViewModels)
     {

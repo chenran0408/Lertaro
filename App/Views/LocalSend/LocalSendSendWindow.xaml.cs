@@ -9,7 +9,7 @@ using WpfKeyEventArgs = System.Windows.Input.KeyEventArgs;
 
 namespace Lertaro.App.Views.LocalSend;
 
-public partial class LocalSendSendWindow : Lertaro.App.Views.Controls.AppWindow
+public partial class LocalSendSendWindow : Controls.AppWindow
 {
     private readonly LocalSendSendViewModel _vm;
     private CancelSource _cancelSource;

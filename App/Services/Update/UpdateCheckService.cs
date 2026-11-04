@@ -2,9 +2,6 @@ using System.Windows;
 using Lertaro.Core;
 using Lertaro.Core.Services.Update;
 using Application = System.Windows.Application;
-using MessageBox = Lertaro.App.Views.Controls.Dialogs.CustomMessageBox;
-
-using Lertaro.App.Services.Tray;
 namespace Lertaro.App.Services.Update;
 
 /// <summary>

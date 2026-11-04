@@ -10,7 +10,7 @@ using Lertaro.Core.Services.LocalSend.Models;
 using Lertaro.PluginSdk.Helpers;
 using System.Windows.Threading;
 namespace Lertaro.App.Views.LocalSend;
-public partial class LocalSendReceiveWindow : Lertaro.App.Views.Controls.AppWindow
+public partial class LocalSendReceiveWindow : Controls.AppWindow
 {
     private readonly LocalSendUploadRequestArgs _requestArgs;
     private readonly Stopwatch _stopwatch = new();

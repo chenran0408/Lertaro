@@ -39,7 +39,7 @@ public sealed class BackgroundSurface : Grid
             ThemeManager.Instance.ThemeChanged -= Refresh;
             ThemeManager.Instance.ThemeChanged += Refresh;
             _host = Window.GetWindow(this);
-            if (_host != null) _host.StateChanged += OnWindowStateChanged;
+            _host?.StateChanged += OnWindowStateChanged;
             Refresh();
         };
         Unloaded += (_, _) =>
@@ -47,7 +47,7 @@ public sealed class BackgroundSurface : Grid
             BackgroundManager.Changed -= Refresh;
             ThemeManager.Instance.ThemeChanged -= Refresh;
             ++_generation;
-            if (_host != null) _host.StateChanged -= OnWindowStateChanged;
+            _host?.StateChanged -= OnWindowStateChanged;
             _host = null;
             _video.Release(this);
             if (_image.Background is DrawingBrush) { _image.Background = null; _loadedPath = null; }

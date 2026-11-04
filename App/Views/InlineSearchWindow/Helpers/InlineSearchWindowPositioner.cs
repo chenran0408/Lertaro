@@ -375,7 +375,7 @@ public class InlineSearchWindowPositioner
     internal static double CalculateDialogWidth(double targetWindowWidth) => Math.Min(DefaultWindowWidth, CalculateDockedWidth(targetWindowWidth));
 
     internal static bool TryPositionOutsideDialog(Core.Hook.ExplorerTracker.RECT host,
-        System.Drawing.Rectangle work, double width, double height, double margin, out System.Windows.Point point)
+        Rectangle work, double width, double height, double margin, out System.Windows.Point point)
     {
         point = default;
         if (height > work.Height || width > work.Width || width <= 0 || height <= 0) return false;

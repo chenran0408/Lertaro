@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Interop;
-using Lertaro.App.Services;
 
 using Application = System.Windows.Application;
 
@@ -85,10 +84,7 @@ internal static class OwnedDialog
     /// A close that ignores cancellation -- the application shutting down -- is not covered, and cannot
     /// be: at that point the process is going away with the dialog and everything else.
     /// </remarks>
-    public static void ShowModal(Window dialog)
-    {
-        ShowModalNow(dialog);
-    }
+    public static void ShowModal(Window dialog) => ShowModalNow(dialog);
 
     private static void ShowModalNow(Window dialog)
     {

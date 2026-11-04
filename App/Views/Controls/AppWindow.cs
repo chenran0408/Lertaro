@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Media;
 using MediaBrush = System.Windows.Media.Brush;
 using MediaBrushes = System.Windows.Media.Brushes;
 

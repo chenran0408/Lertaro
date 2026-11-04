@@ -1,7 +1,6 @@
 using System.Windows;
 using System.Windows.Media.Animation;
 using Lertaro.App.Helpers.Visuals;
-using Lertaro.App.Services;
 using Lertaro.App.Views.Notifications;
 using Lertaro.Core;
 using Lertaro.PluginSdk.Abstractions;
@@ -94,7 +93,7 @@ internal sealed class NotificationWindowManager(
             window.ContentRendered += (_, _) => Restack(animated: true);
         }
 
-        if (window is Lertaro.App.Views.Controls.AppWindow glassWindow)
+        if (window is Views.Controls.AppWindow glassWindow)
             await WindowPresentationHelper.ShowAsync(glassWindow, Show,
                 () => _runners.TryGetValue(runner.Item, out var current) && ReferenceEquals(current, runner));
         else
@@ -179,7 +178,7 @@ internal sealed class NotificationWindowManager(
             if (isCurrent()) window.Visibility = Visibility.Visible;
         }
 
-        if (window is Lertaro.App.Views.Controls.AppWindow glassWindow)
+        if (window is Views.Controls.AppWindow glassWindow)
             return WindowPresentationHelper.ShowAsync(glassWindow, Show, isCurrent);
         Show();
         return Task.CompletedTask;

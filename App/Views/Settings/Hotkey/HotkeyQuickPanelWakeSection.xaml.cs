@@ -12,15 +12,15 @@ public partial class HotkeyQuickPanelWakeSection : System.Windows.Controls.UserC
         Unloaded += (_, _) =>
         {
             StopTest();
-            if (_wakeSettings != null) _wakeSettings.PropertyChanged -= ShowStatus;
+            _wakeSettings?.PropertyChanged -= ShowStatus;
             _wakeSettings = null;
         };
     }
     private void BindStatus()
     {
-        if (_wakeSettings != null) _wakeSettings.PropertyChanged -= ShowStatus;
+        _wakeSettings?.PropertyChanged -= ShowStatus;
         _wakeSettings = (DataContext as ViewModels.Settings.HotkeySettingsViewModel)?.QuickPanelWake;
-        if (_wakeSettings != null) _wakeSettings.PropertyChanged += ShowStatus;
+        _wakeSettings?.PropertyChanged += ShowStatus;
     }
     private void ShowStatus(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {

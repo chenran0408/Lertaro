@@ -56,61 +56,58 @@ internal sealed class InlineSearchWindowCreationSupport
         Logger.Log($"[InlineSearchPerformance] Window creation took {System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds:F1}ms before first-display preparation.", LogLevel.Debug);
     }
 
-    private async Task ShowPreparedWindowAsync(InlineSearchWindow window, Core.Hook.ExplorerTracker tracker)
-    {
-        await WindowPresentationHelper.ShowAsync(window, () =>
-        {
-            window.Show();
-            _manager.KeyboardHook.IsInlineSearchVisible = true;
-            _manager.KeyboardHook.IsInlineWindowOnScreen = true;
-            _manager.MouseHook.Start();
-            window.ViewModel.EnsureServiceMonitoringActive();
-            _manager.PrepareInputHandoff(window);
+    private async Task ShowPreparedWindowAsync(InlineSearchWindow window, ExplorerTracker tracker) => await WindowPresentationHelper.ShowAsync(window, () =>
+                                                                                                           {
+                                                                                                               window.Show();
+                                                                                                               _manager.KeyboardHook.IsInlineSearchVisible = true;
+                                                                                                               _manager.KeyboardHook.IsInlineWindowOnScreen = true;
+                                                                                                               _manager.MouseHook.Start();
+                                                                                                               window.ViewModel.EnsureServiceMonitoringActive();
+                                                                                                               _manager.PrepareInputHandoff(window);
 
-        var foreground = ExplorerNativeHooks.GetForegroundWindow();
-        var isTextInputFocused = foreground != IntPtr.Zero && InputFocusEvaluator.IsForegroundTextInputFocused(foreground);
-        if ((!isTextInputFocused || _manager.HasPendingInput) && !tracker.IsActiveWindowDialog)
-        {
-            if (window.ActivateAndFocusSearchBox())
-            {
-                _manager.KeyboardHook.IsInlineSearchVisible = false;
-                _manager.KeyboardHook.Stop();
-                _manager.CompleteInputHandoff(window);
-            }
-            else
-            {
-                window.Dispatcher.BeginInvoke(new Action(() =>
+                                                                                                               var foreground = ExplorerNativeHooks.GetForegroundWindow();
+                                                                                                               var isTextInputFocused = foreground != IntPtr.Zero && InputFocusEvaluator.IsForegroundTextInputFocused(foreground);
+                                                                                                               if ((!isTextInputFocused || _manager.HasPendingInput) && !tracker.IsActiveWindowDialog)
+                                                                                                               {
+                                                                                                                   if (window.ActivateAndFocusSearchBox())
+                                                                                                                   {
+                                                                                                                       _manager.KeyboardHook.IsInlineSearchVisible = false;
+                                                                                                                       _manager.KeyboardHook.Stop();
+                                                                                                                       _manager.CompleteInputHandoff(window);
+                                                                                                                   }
+                                                                                                                   else
+                                                                                                                   {
+                                                                                                                       window.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        if (_manager.Window != window || !window.IsVisible) return;
+                        var foregroundNow = ExplorerNativeHooks.GetForegroundWindow();
+                        if (foregroundNow != tracker.ActiveHwnd && foregroundNow != new System.Windows.Interop.WindowInteropHelper(window).Handle)
+                        {
+                            _manager.CompleteInputHandoff(null);
+                            return;
+                        }
+                        if (window.ActivateAndFocusSearchBox())
+                        {
+                            _manager.KeyboardHook.IsInlineSearchVisible = false;
+                            _manager.KeyboardHook.Stop();
+                            _manager.CompleteInputHandoff(window);
+                        }
+                        else _manager.CompleteInputHandoff(null);
+                    }), DispatcherPriority.Input);
+                                                                                                                   }
+                                                                                                               }
+                                                                                                               else
+                                                                                                               {
+                                                                                                                   var dialogHwnd = tracker.ActiveHwnd;
+                                                                                                                   window.Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    if (_manager.Window != window || !window.IsVisible) return;
-                    var foregroundNow = ExplorerNativeHooks.GetForegroundWindow();
-                    if (foregroundNow != tracker.ActiveHwnd && foregroundNow != new System.Windows.Interop.WindowInteropHelper(window).Handle)
-                    {
-                        _manager.CompleteInputHandoff(null);
-                        return;
-                    }
-                    if (window.ActivateAndFocusSearchBox())
-                    {
-                        _manager.KeyboardHook.IsInlineSearchVisible = false;
-                        _manager.KeyboardHook.Stop();
-                        _manager.CompleteInputHandoff(window);
-                    }
-                    else _manager.CompleteInputHandoff(null);
+                    if (dialogHwnd == IntPtr.Zero) return;
+                    ExplorerNativeHooks.SetForegroundWindow(dialogHwnd);
+                    var editBox = ExplorerNativeHooks.FindSubEditBox(dialogHwnd);
+                    if (editBox != IntPtr.Zero) ExplorerNativeHooks.SetFocus(editBox);
                 }), DispatcherPriority.Input);
-            }
-        }
-        else
-        {
-            var dialogHwnd = tracker.ActiveHwnd;
-            window.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                if (dialogHwnd == IntPtr.Zero) return;
-                ExplorerNativeHooks.SetForegroundWindow(dialogHwnd);
-                var editBox = ExplorerNativeHooks.FindSubEditBox(dialogHwnd);
-                if (editBox != IntPtr.Zero) ExplorerNativeHooks.SetFocus(editBox);
-            }), DispatcherPriority.Input);
-        }
+                                                                                                               }
 
-            Logger.Log($"[InlineSearchManager] Created and shown new InlineSearchWindow. Scope: {window.ViewModel.SearchScope}", LogLevel.Debug);
-        }, () => ReferenceEquals(_manager.Window, window) && _manager.ExplorerTracker.ActiveHwnd == tracker.ActiveHwnd);
-    }
+                                                                                                               Logger.Log($"[InlineSearchManager] Created and shown new InlineSearchWindow. Scope: {window.ViewModel.SearchScope}", LogLevel.Debug);
+                                                                                                           }, () => ReferenceEquals(_manager.Window, window) && _manager.ExplorerTracker.ActiveHwnd == tracker.ActiveHwnd);
 }

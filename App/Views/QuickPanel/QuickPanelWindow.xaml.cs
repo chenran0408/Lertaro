@@ -9,7 +9,7 @@ namespace Lertaro.App.Views.QuickPanel;
 // The panel itself: one workspace's sources, docked to the bottom-right of whatever window is in
 // front. Lifecycle, the hotkey and the docking maths all live in QuickPanelManager, and what is shown
 // comes from QuickPanelViewModel; this file is only the window's own input handling.
-public partial class QuickPanelWindow : Lertaro.App.Views.Controls.AppWindow,
+public partial class QuickPanelWindow : Controls.AppWindow,
     PluginSdk.Abstractions.IPluginSearchWindow,
     Services.AppWindow.IHasVisibleContentInset
 {

@@ -1,5 +1,3 @@
-using System.Windows;
-
 namespace Lertaro.App.Services.Update;
 
 /// <summary>
@@ -17,15 +15,9 @@ public static class UpdateOutcomeState
     internal static bool HasTransition(string? lastSeenVersion, string currentVersion)
         => !string.IsNullOrWhiteSpace(lastSeenVersion) && lastSeenVersion != currentVersion;
 
-    public static void Report(string previousVersion, string currentVersion)
-    {
-        Summary = string.Format(TranslationManager.Instance["About_UpdateSucceeded"], previousVersion, currentVersion);
-    }
+    public static void Report(string previousVersion, string currentVersion) => Summary = string.Format(TranslationManager.Instance["About_UpdateSucceeded"], previousVersion, currentVersion);
 
     /// <summary>Clears the summary once it has been displayed, so it does not outlive its meaning
     /// within a long-running session. Not persisted: the transition is reported once.</summary>
-    public static void Consume()
-    {
-        Summary = null;
-    }
+    public static void Consume() => Summary = null;
 }

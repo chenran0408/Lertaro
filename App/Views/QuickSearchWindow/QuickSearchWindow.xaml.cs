@@ -18,7 +18,7 @@ using Lertaro.App.Services.Theme;
 using Lertaro.App.Services.ShellMenu.Presenter;
 using Lertaro.App.Helpers.Visuals;
 namespace Lertaro.App;
-public partial class QuickSearchWindow : Lertaro.App.Views.Controls.AppWindow, ISearchWindow, IHasVisibleContentInset
+public partial class QuickSearchWindow : Views.Controls.AppWindow, ISearchWindow, IHasVisibleContentInset
 {
     private readonly QuickSearchViewModel _viewModel;
     private TrayIconService? _trayService;

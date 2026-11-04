@@ -14,7 +14,7 @@ namespace Lertaro.App.Views.Notifications;
 /// Position 1: one card in the bottom-right stack. The window is the card; the stack's layout is the
 /// service's business, not this window's.
 /// </summary>
-public partial class NotificationCardWindow : Lertaro.App.Views.Controls.AppWindow
+public partial class NotificationCardWindow : Controls.AppWindow
 {
     // Long enough to be noticed as "the new one", short enough that a card still on screen for twenty seconds is
     // not wearing it. Not tuned against anything: it is a legibility choice, not a measurement.

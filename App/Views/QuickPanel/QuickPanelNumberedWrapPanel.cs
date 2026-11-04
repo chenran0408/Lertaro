@@ -69,11 +69,11 @@ internal sealed class QuickPanelNumberedWrapPanel : System.Windows.Controls.Pane
         for (var row = 0; row < rows; row++)
         {
             var text = NumberText(row + 1, digits);
-            context.DrawText(text, new System.Windows.Point(_gutterWidth - text.Width - 8, row * height + (iconHeight - text.Height) / 2));
+            context.DrawText(text, new Point(_gutterWidth - text.Width - 8, row * height + (iconHeight - text.Height) / 2));
         }
     }
 
-    internal int SlotAt(System.Windows.Point point)
+    internal int SlotAt(Point point)
     {
         if (_columns <= 0 || _slotWidth <= 0 || point.X < _gutterWidth || point.X >= _gutterWidth + _columns * _slotWidth || point.Y < 0 || point.Y >= ActualHeight) return -1;
         return (int)(point.Y / CellHeight()) * _columns + Math.Min(_columns - 1, (int)((point.X - _gutterWidth) / _slotWidth));

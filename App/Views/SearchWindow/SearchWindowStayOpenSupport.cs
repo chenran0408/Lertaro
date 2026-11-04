@@ -1,4 +1,3 @@
-using System.Windows.Input;
 using Lertaro.App.Helpers;
 using Lertaro.Core;
 

@@ -67,7 +67,7 @@ internal sealed class InlineSearchFocusSupport
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Lertaro.Core.Logger.Log($"[InlineSearch] IME state unavailable: {ex.Message}", Lertaro.Core.LogLevel.Debug);
+                    Core.Logger.Log($"[InlineSearch] IME state unavailable: {ex.Message}", Core.LogLevel.Debug);
                 }
                 var targetIme = InlineSearchWindowNativeMethods.ImmGetDefaultIMEWnd(new System.Windows.Interop.WindowInteropHelper(_window).Handle);
                 if (targetIme != IntPtr.Zero)

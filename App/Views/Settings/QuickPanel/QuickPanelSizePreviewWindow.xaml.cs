@@ -4,7 +4,7 @@ using Lertaro.App.ViewModels.Settings.QuickPanel;
 
 namespace Lertaro.App.Views.Settings.QuickPanel;
 
-public partial class QuickPanelSizePreviewWindow : Lertaro.App.Views.Controls.AppWindow
+public partial class QuickPanelSizePreviewWindow : Controls.AppWindow
 {
     private QuickPanelWindowSizeSettingsViewModel? _model;
 
