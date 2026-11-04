@@ -1,5 +1,4 @@
 using System.Text;
-using Lertaro.PluginSdk.Registries;
 using Lertaro.PluginSdk.Abstractions.Plugins.WindowAdapters;
 namespace Lertaro.Core.Hook;
 
