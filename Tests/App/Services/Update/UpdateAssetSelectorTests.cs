@@ -89,4 +89,48 @@ public sealed class UpdateAssetSelectorTests
         Assert.IsNull(Pick(Architecture.X64));
         Assert.IsNull(UpdateAssetSelector.SelectPortableZip<Asset>(null, a => a.Name, Architecture.X64));
     }
+
+    // --- SelectSetup ---
+
+    private static Asset? SelectSetupFor(string[] names, Architecture arch)
+        => UpdateAssetSelector.SelectSetup(Array.ConvertAll(names, n => new Asset(n)), a => a.Name, arch);
+
+    [TestMethod]
+    public void SelectSetup_X64MatchesTheUnsuffixedName()
+    {
+        var asset = SelectSetupFor(["Lertaro-Setup.exe", "Lertaro-Setup-arm64.exe"], Architecture.X64);
+        Assert.IsNotNull(asset);
+        Assert.AreEqual("Lertaro-Setup.exe", asset!.Name);
+    }
+
+    [TestMethod]
+    public void SelectSetup_Arm64MatchesTheSuffixedName()
+    {
+        var asset = SelectSetupFor(["Lertaro-Setup.exe", "Lertaro-Setup-arm64.exe"], Architecture.Arm64);
+        Assert.IsNotNull(asset);
+        Assert.AreEqual("Lertaro-Setup-arm64.exe", asset!.Name);
+    }
+
+    [TestMethod]
+    public void SelectSetup_NeverReturnsThePortableZip()
+    {
+        var asset = SelectSetupFor(["Lertaro-Setup.exe", "Lertaro-Portable.zip"], Architecture.X64);
+        Assert.IsNotNull(asset);
+        Assert.AreEqual("Lertaro-Setup.exe", asset!.Name);
+    }
+
+    [TestMethod]
+    public void SelectSetup_MissingSetupForArchitecture_ReturnsNull()
+    {
+        Assert.IsNull(SelectSetupFor(["Lertaro-Setup.exe"], Architecture.Arm64));
+        Assert.IsNull(SelectSetupFor([], Architecture.X64));
+        Assert.IsNull(UpdateAssetSelector.SelectSetup<Asset>(null, a => a.Name, Architecture.X64));
+    }
+
+    [TestMethod]
+    public void SelectSetup_NameCaseInsensitive()
+    {
+        var asset = SelectSetupFor(["lertaro-setup.exe"], Architecture.X64);
+        Assert.IsNotNull(asset);
+    }
 }

@@ -522,7 +522,7 @@
   "About_Checking": "正在檢查更新...",
   "About_UpToDate": "當前已是最新版本",
   "About_NewVersionAvailable": "檢測到新版本 {0}，可以更新。",
-  "About_NewVersionAvailablePrompt": "檢測到新版本 {0}，可以更新。點選“確定”前往“關於”頁面進行自動更新。",
+  "About_NewVersionAvailablePrompt": "發現新版本 {0}。是否開啟關於頁下載？",
   "About_CheckUpdateNull": "檢查更新失敗：API未返回任何資料。請確認最新版本是否已在 GitHub 釋出。",
   "About_CheckUpdateError": "檢查更新失敗，出現異常：\n{0}\n\n堆疊資訊：\n{1}",
   "About_CheckUpdateErrorTitle": "更新錯誤",
@@ -849,6 +849,17 @@
   "MouseWake_WhitelistHint": "預設只允許桌面。其他程式需加入下方白名單；全域和快速面板黑名單仍優先生效。此白名單不限制鍵盤快捷鍵。",
   "MouseWake_OtherApps": "額外允許的程式（選用）",
   "Background_VideoHint": "MP4 影片靜音循環，視窗隱藏或最小化時暫停。",
-  "Background_VideoUnavailable": "影片無法播放，已使用主題底色。請選擇可正常播放的 MP4 影片（建議 H.264）。"
+  "Background_VideoUnavailable": "影片無法播放，已使用主題底色。請選擇可正常播放的 MP4 影片（建議 H.264）。",
+  "About_ActionDownload": "下載更新",
+  "About_NeverPromptAgain": "不再自動提示更新",
+  "About_ManualInstallSetup": "更新已下載：\n{0}\n\n執行安裝程式即可升級，安裝過程中 Lertaro 會由安裝程式關閉。",
+  "About_ManualInstallZip": "更新已下載：\n{0}\n\n可攜版升級方法：結束 Lertaro，將壓縮檔解壓縮覆蓋到 Lertaro 資料夾（取代現有檔案）。",
+  "About_RunInstaller": "執行安裝程式",
+  "About_OpenFolder": "開啟所在資料夾",
+  "About_Later": "關閉",
+  "About_OpenAboutPage": "開啟關於頁",
+  "About_UpdateSucceeded": "已從 {0} 更新到 {1}。",
+  "About_Downloaded": "更新已下載，可隨時執行安裝程式。",
+  "About_LaunchFailed": "無法啟動安裝程式，請開啟所在資料夾手動執行。",
+  "About_AutoCheckSwitch": "啟動時自動檢查更新"
 }
-

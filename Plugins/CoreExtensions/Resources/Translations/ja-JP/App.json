@@ -522,7 +522,7 @@
   "About_Checking": "アップデートを確認しています...",
   "About_UpToDate": "現在、最新バージョンです。",
   "About_NewVersionAvailable": "新しいバージョン {0} が利用可能です。",
-  "About_NewVersionAvailablePrompt": "新しいバージョン {0} が利用可能です。「OK」をクリックすると「バージョン情報」ページを開いて自動アップデートを実行します。",
+  "About_NewVersionAvailablePrompt": "新バージョン {0} があります。バージョン情報ページを開いてダウンロードしますか？",
   "About_CheckUpdateNull": "アップデートの確認に失敗しました: API が null を返しました。最新リリースが GitHub に公開されているかご確認ください。",
   "About_CheckUpdateError": "アップデートの確認中に例外が発生しました:\n{0}\n\nスタックトレース:\n{1}",
   "About_CheckUpdateErrorTitle": "アップデートエラー",
@@ -849,6 +849,17 @@
   "MouseWake_WhitelistHint": "初期設定ではデスクトップのみ許可します。他のアプリは下に追加してください。全体とクイックパネルのブロックリストが優先されます。キーボードショートカットには影響しません。",
   "MouseWake_OtherApps": "追加で許可するアプリ（任意）",
   "Background_VideoHint": "MP4 動画は無音で繰り返し再生し、ウィンドウを非表示または最小化すると一時停止します。",
-  "Background_VideoUnavailable": "動画を再生できないため、テーマの背景を使用します。再生可能な MP4 動画を選択してください（H.264 推奨）。"
+  "Background_VideoUnavailable": "動画を再生できないため、テーマの背景を使用します。再生可能な MP4 動画を選択してください（H.264 推奨）。",
+  "About_ActionDownload": "更新をダウンロード",
+  "About_NeverPromptAgain": "今後は更新を自動的に通知しない",
+  "About_ManualInstallSetup": "更新をダウンロードしました：\n{0}\n\nインストーラーを実行するとアップグレードされます。インストール中、Lertaro はインストーラーによって終了されます。",
+  "About_ManualInstallZip": "更新をダウンロードしました：\n{0}\n\nポータブル版のアップグレード方法：Lertaro を終了し、このアーカイブを Lertaro フォルダーへ上書き展開してください。",
+  "About_RunInstaller": "インストーラーを実行",
+  "About_OpenFolder": "フォルダーを開く",
+  "About_Later": "閉じる",
+  "About_OpenAboutPage": "バージョン情報を開く",
+  "About_UpdateSucceeded": "{0} から {1} に更新しました。",
+  "About_Downloaded": "更新のダウンロード完了。いつでもインストーラーを実行できます。",
+  "About_LaunchFailed": "インストーラーを起動できませんでした。フォルダーを開いて手動で実行してください。",
+  "About_AutoCheckSwitch": "起動時に更新を自動チェックする"
 }
-

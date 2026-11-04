@@ -4,6 +4,16 @@ using Lertaro.Plugins.ClipboardHistory.View;
 [TestClass]
 public sealed class ClipboardPanelTextTests
 {
+    [TestInitialize]
+    public void SetUp() =>
+        Lertaro.PluginSdk.Services.TranslationService.LookupFunc = key => key switch
+        {
+            "ClipboardHistory_TimeNow" => "NOW",
+            "ClipboardHistory_TimeMinutesAgo" => "{0} MIN",
+            "ClipboardHistory_TimeHoursAgo" => "{0} H",
+            "ClipboardHistory_PanelYesterday" => "YDA",
+            _ => "[" + key + "]",
+        };
     [TestMethod]
     public void Split_NullOrAbsentMask_YieldsOnePlainSegment()
     {
@@ -60,6 +70,51 @@ public sealed class ClipboardPanelTextTests
     {
         Assert.AreEqual("\"C:\\a.txt\"\r\n\"C:\\b b.txt\"",
             ClipboardPanelText.QuotedPaths([@"C:\a.txt", @"C:\b b.txt"]));
+    }
+
+    // RelativeTime reads its wording through TranslationService; the tests swap in a fixed
+    // lookup so the thresholds are asserted against known words instead of locale files.
+    private static readonly DateTimeOffset ClockNow = new(2026, 11, 4, 18, 0, 0, DateTimeOffset.Now.Offset);
+
+    [TestMethod]
+    public void RelativeTime_UnderAMinute_SaysJustNow()
+    {
+        Assert.AreEqual("NOW", ClipboardPanelLabels.RelativeTime(ClockNow.AddSeconds(-30), ClockNow));
+    }
+
+    [TestMethod]
+    public void RelativeTime_UnderAnHour_ReportsWholeMinutes()
+    {
+        Assert.AreEqual("5 MIN", ClipboardPanelLabels.RelativeTime(ClockNow.AddMinutes(-5), ClockNow));
+        Assert.AreEqual("59 MIN", ClipboardPanelLabels.RelativeTime(ClockNow.AddMinutes(-59), ClockNow));
+    }
+
+    [TestMethod]
+    public void RelativeTime_SameDay_ReportsWholeHours()
+    {
+        Assert.AreEqual("3 H", ClipboardPanelLabels.RelativeTime(ClockNow.AddHours(-3), ClockNow));
+    }
+
+    [TestMethod]
+    public void RelativeTime_Yesterday_FallsBackToClockTime()
+    {
+        var yesterday = ClockNow.AddDays(-1);
+        Assert.AreEqual("YDA " + yesterday.ToString("HH:mm"),
+            ClipboardPanelLabels.RelativeTime(yesterday, ClockNow));
+    }
+
+    [TestMethod]
+    public void RelativeTime_Older_ShortDate()
+    {
+        var older = ClockNow.AddDays(-9);
+        Assert.AreEqual(older.ToString("MM/dd HH:mm"),
+            ClipboardPanelLabels.RelativeTime(older, ClockNow));
+    }
+
+    [TestMethod]
+    public void RelativeTime_FutureTimestamp_ClampsToJustNow()
+    {
+        Assert.AreEqual("NOW", ClipboardPanelLabels.RelativeTime(ClockNow.AddMinutes(-(-30)), ClockNow));
     }
 
     [TestMethod]

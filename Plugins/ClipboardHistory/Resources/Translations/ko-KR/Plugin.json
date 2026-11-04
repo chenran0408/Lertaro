@@ -59,5 +59,8 @@
   "ClipboardHistory_PanelPauseCapture": "기록 일시 중지(10분)",
   "ClipboardHistory_PanelResumeCapture": "기록 재개",
   "ClipboardHistory_PanelTogglePreview": "미리보기 전환",
-  "ClipboardHistory_PanelPausedUntil": "{0}까지 기록 일시 중지"
+  "ClipboardHistory_PanelPausedUntil": "{0}까지 기록 일시 중지",
+  "ClipboardHistory_TimeNow": "방금",
+  "ClipboardHistory_TimeMinutesAgo": "{0}분 전",
+  "ClipboardHistory_TimeHoursAgo": "{0}시간 전"
 }

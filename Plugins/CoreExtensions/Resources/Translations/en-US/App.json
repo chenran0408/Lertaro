@@ -522,7 +522,7 @@
   "About_Checking": "Checking for updates...",
   "About_UpToDate": "You are running the latest version.",
   "About_NewVersionAvailable": "New version {0} is available.",
-  "About_NewVersionAvailablePrompt": "New version {0} is available. Click OK to open the About page and perform auto-update.",
+  "About_NewVersionAvailablePrompt": "New version {0} is available. Open the About page to download it?",
   "About_CheckUpdateNull": "Failed to check update: API returned null. Please verify if latest release is published on GitHub.",
   "About_CheckUpdateError": "Update check failed with exception:\n{0}\n\nStack:\n{1}",
   "About_CheckUpdateErrorTitle": "Update Error",
@@ -927,6 +927,17 @@
   "About_UpdateBusy": "Update checks are temporarily busy. Try later or open the download page.",
   "About_UpdateUnavailable": "Unable to check for updates. Check your connection or open the download page.",
   "Background_VideoHint": "MP4 videos loop silently and pause when windows are hidden or minimized.",
-  "Background_VideoUnavailable": "The video cannot be played. Using the theme background. Choose a playable MP4 video (H.264 recommended)."
+  "Background_VideoUnavailable": "The video cannot be played. Using the theme background. Choose a playable MP4 video (H.264 recommended).",
+  "About_ActionDownload": "Download Update",
+  "About_NeverPromptAgain": "Never automatically prompt for updates again",
+  "About_ManualInstallSetup": "The update has been downloaded:\n{0}\n\nRun the installer to upgrade. Lertaro will be closed by the installer while it applies the update.",
+  "About_ManualInstallZip": "The update has been downloaded:\n{0}\n\nTo upgrade the portable version: exit Lertaro, then extract this archive over your Lertaro folder (replace existing files).",
+  "About_RunInstaller": "Run Installer",
+  "About_OpenFolder": "Open Folder",
+  "About_Later": "Close",
+  "About_OpenAboutPage": "Open About Page",
+  "About_UpdateSucceeded": "Updated from {0} to {1}.",
+  "About_Downloaded": "Update downloaded. Run the installer when ready.",
+  "About_LaunchFailed": "The installer could not be started. Open its folder and run it manually.",
+  "About_AutoCheckSwitch": "Automatically check for updates on startup"
 }
-

@@ -30,10 +30,21 @@ public static class UpdateCheckService
         {
             // Delay slightly to ensure app is fully initialized and main window is up
             await Task.Delay(3000);
+            UpdateArtifactCleanup.Run();
             var settings = UserSettings.Load();
-            // Before the check and outside its gate: a silent update that failed on the PREVIOUS run has to be
-            // reported whether or not this user wants release checks, and whether or not one is due.
-            ReportLastSilentUpdateAttempt(settings);
+
+            // Version-transition verdict: the previous run recorded its version, so a difference
+            // means the user completed a manual update and deserves the one-line confirmation the
+            // old flow never gave. Recorded and persisted before anything else can fail; shown on
+            // the About page. LastSeenVersion empty means first run -- recorded silently.
+            if (UpdateOutcomeState.HasTransition(settings.LastSeenVersion, UpdateVersion.Current))
+                UpdateOutcomeState.Report(settings.LastSeenVersion, UpdateVersion.Current);
+            if (settings.LastSeenVersion != UpdateVersion.Current)
+            {
+                settings.LastSeenVersion = UpdateVersion.Current;
+                _ = settings.Save();
+            }
+
             if (!settings.AutoCheckUpdates)
                 return;
 
@@ -50,113 +61,30 @@ public static class UpdateCheckService
                 return;
             }
 
-            // The silent path asks for nothing. Checking the box is the consent, and a dialog reading
-            // "press OK to run the silent update" is both the contradiction the user reported and the only
-            // thing standing between them and the update. A package that fails signature verification still
-            // says so -- that one is a security warning, not a confirmation.
-            //
-            // Checked before anything is downloaded because installing is the service's job now: an install
-            // with no service registered at this path (a portable one, above all) could not apply an update
-            // at all, and finding that out after pulling a full release zip every startup is not a
-            // behaviour worth having.
-            var zipAsset = UpdateAssetSelector.SelectPortableZip(release.Assets, a => a.Name);
-            if (zipAsset is not null && ShouldUseSilentUpdate(settings,
-                ServiceInstallManager.IsInstalledAtCurrentPath(), assetAvailable: true))
-            {
-                // No dispatcher hop: the download is a long-running stream whose continuations have no
-                // business on the UI thread, and CustomMessageBox already marshals the one dialog it may
-                // show. StartSilentUpdateAsync only returns true once the updater is running, and the
-                // updater needs these files unlocked, so leaving is the last step here.
-                //
-                // The progress goes to SilentUpdateState rather than to a window, because there is no
-                // window at this point -- but the user can open one, and "no dialogs" is not the same
-                // promise as "nothing to see".
-                var downloadingFormat = TranslationManager.Instance["About_Downloading"];
-                var progress = new Action<double>(p =>
-                    SilentUpdateState.Report(string.Format(downloadingFormat, (int)(p * 100))));
-
-                if (await UpdateInstaller.Instance.StartSilentUpdateAsync(zipAsset.BrowserDownloadUrl, progress))
-                {
-                    // StartSilentUpdateAsync returns true only after the service has launched the updater.
-                    // Record the attempt here so downloads, signature failures, and service refusals remain
-                    // immediately retryable instead of entering a 24-hour cooldown.
-                    RememberFailedAttempt(settings, release.TagName, DateTimeOffset.UtcNow);
-                    if (!settings.Save())
-                        Logger.Log("[App] Could not persist the silent-update retry marker.", LogLevel.Warn);
-                    SilentUpdateState.Report(TranslationManager.Instance["About_Success"]);
-                    TrayCleanExitHelper.CleanExit("automatic update", stopService: false);
-                }
-                else
-                {
-                    // Nothing is running, so nothing should be claimed to be running. The release remains
-                    // immediately retryable because the failure happened before updater handoff.
-                    SilentUpdateState.Report(null);
-                }
-                return;
-            }
-
-            // No silent update running: either it isn't enabled, or there is no release for this
-            // architecture to install, in which case the About page is where the user can read why.
+            // The download itself is a user action now: the About page downloads the setup and the
+            // user runs it. A startup check only announces the release, so a network hiccup during a
+            // 100 MB pull can no longer leave an app half-updated and a service stopped.
             _ = Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
-                var promptFormat = TranslationManager.Instance["About_NewVersionAvailablePrompt"];
-                var prompt = string.Format(promptFormat, release.TagName);
-                var title = TranslationManager.Instance["About_CheckUpdate"];
-                var result = MessageBox.Show(prompt, title, MessageBoxButton.OKCancel, MessageBoxImage.Information);
-                if (ShouldOpenAbout(result)) App.ShowSettingsWindow("About");
+                var promptText = string.Format(
+                    TranslationManager.Instance["About_NewVersionAvailablePrompt"], release.TagName);
+                var dialog = new Views.Controls.Dialogs.UpdateDialogWindow(
+                    TranslationManager.Instance["About_CheckUpdate"], promptText, showNeverPrompt: true);
+                dialog.SetButtons(TranslationManager.Instance["About_OpenAboutPage"]);
+                dialog.ShowDialog();
+                if (dialog.NeverPromptAgain)
+                {
+                    settings.AutoCheckUpdates = false;
+                    _ = settings.Save();
+                }
+                if (dialog.Result == Views.Controls.Dialogs.UpdateDialogResult.Primary)
+                    App.ShowSettingsWindow("About");
             }));
         }
         catch (Exception ex)
         {
             Logger.Log($"[App] Background startup update check failed: {ex.Message}", LogLevel.Warn);
         }
-    }
-
-    /// <summary>
-    /// Shows what the previous silent update said about itself, once.
-    /// </summary>
-    /// <remarks>
-    /// The updater script writes its verdict beside the installation and nothing read it, so an update that
-    /// died between the App exiting and the files being replaced looked exactly like nothing having happened
-    /// (issue #354: the App quit, waited, and was still the old version, with a lock file and a payload left
-    /// behind). Shown once per verdict rather than per launch, because the file cannot be deleted from here --
-    /// an installation directory is closed to Users for writing -- so the marker lives in user settings. The
-    /// marker is advanced before the dialog, so a crash while showing it does not repeat it forever.
-    /// </remarks>
-    private static void ReportLastSilentUpdateAttempt(UserSettings settings)
-    {
-        var result = UpdateResult.ReadIfPresent(AppContext.BaseDirectory);
-        if (result == null) return;
-
-        var shouldReport = ShouldReportFailure(result, settings.LastReportedUpdateResultUtcTicks, DateTimeOffset.UtcNow);
-        settings.LastReportedUpdateResultUtcTicks = Math.Max(settings.LastReportedUpdateResultUtcTicks, result.Time.UtcTicks);
-        _ = settings.Save();
-
-        if (!shouldReport) return;
-        Logger.Log($"[App] The last silent update reported '{result.Status}': {result.Message}", LogLevel.Warn);
-
-        var text = TranslationManager.Instance["About_Failed"] + "\n\n" + (result.Message ?? result.Status);
-        if (!string.IsNullOrWhiteSpace(result.RecoveryDirectory)) text += "\n" + result.RecoveryDirectory;
-        _ = Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
-            MessageBox.Show(text, TranslationManager.Instance["About_CheckUpdate"], MessageBoxButton.OK, MessageBoxImage.Warning)));
-    }
-
-    /// <summary>
-    /// Whether a verdict is news for this user: a failure, not one already shown, and not so old that saying
-    /// it now would describe a different installation.
-    /// </summary>
-    /// <remarks>
-    /// A verdict dated in the future is skipped rather than treated as the newest thing ever seen, for the
-    /// same reason <see cref="UpdateRelaunchMarker"/> gives: a clock that moved backwards must not turn an old
-    /// note into a fresh one.
-    /// </remarks>
-    internal static bool ShouldReportFailure(UpdateResult? result, long lastReportedUtcTicks, DateTimeOffset now)
-    {
-        if (result == null || result.Succeeded) return false;
-        if (result.Time.UtcTicks <= lastReportedUtcTicks) return false;
-
-        var age = now - result.Time;
-        return age >= TimeSpan.Zero && age <= UpdateResult.FreshFor;
     }
 
     // A release tag ("v1.2.3") counts as newer only if it parses as a version strictly greater than
@@ -168,14 +96,6 @@ public static class UpdateCheckService
     }
 
     internal static bool ShouldOpenAbout(MessageBoxResult result) => result == MessageBoxResult.OK;
-
-    /// <summary>
-    /// The service, not the interactive App, owns the privileged file replacement. A standard user can
-    /// therefore use silent updates once this installation has a service at its current path; portable
-    /// installs still take the visible/manual path because they have no privileged updater to hand off to.
-    /// </summary>
-    internal static bool ShouldUseSilentUpdate(UserSettings settings, bool serviceInstalled, bool assetAvailable)
-        => settings.AutoSilentUpdate && serviceInstalled && assetAvailable;
 
     /// <summary>
     /// Whether this release is still being left alone after a failed install. Only the release it failed on

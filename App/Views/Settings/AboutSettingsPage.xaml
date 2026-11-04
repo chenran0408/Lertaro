@@ -135,32 +135,23 @@
                                 Click="BtnCheckUpdate_Click" MinWidth="120"/>
                     </Grid>
 
-                    <!-- What a background silent update is doing, when this page is opened during one.
-                         Collapsed while nothing is running, so the card is unchanged for everyone who never
-                         turns the feature on. -->
-                    <TextBlock Text="{Binding Source={x:Static update:SilentUpdateState.Current}, Path=Text}"
-                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap" Margin="0,12,0,0">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Source={x:Static update:SilentUpdateState.Current}, Path=IsActive}"
-                                                 Value="True">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                    <!-- Version-transition verdict, shown once after the user completed a manual update -->
+                    <TextBlock x:Name="TxtUpdateOutcome" Margin="0,12,0,0" TextWrapping="Wrap" Visibility="Collapsed"
+                               Foreground="{DynamicResource AccentBlue}"/>
+
+                    <!-- Auto-check switch: same field the update prompt's checkbox writes -->
+                    <CheckBox x:Name="ChkAutoCheckUpdates" Margin="0,12,0,0"
+                              Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_AutoCheckSwitch]}"
+                              Checked="ChkAutoCheckUpdates_Changed" Unchecked="ChkAutoCheckUpdates_Changed"/>
 
                     <!-- Update Progress Bar -->
                     <ProgressBar x:Name="PbUpdate" Margin="0,12,0,0" Visibility="Collapsed"/>
 
                     <!-- Actions when new version found -->
                     <StackPanel x:Name="SpUpdateActions" Orientation="Horizontal" Margin="0,12,0,0" Visibility="Collapsed">
-                        <Button x:Name="BtnAutoUpdate" Style="{StaticResource PrimarySettingsButton}"
-                                 Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_ActionUpdate]}"
-                                 Click="BtnAutoUpdate_Click" Margin="0,0,12,0" MinWidth="130"/>
+                        <Button x:Name="BtnDownloadUpdate" Style="{StaticResource PrimarySettingsButton}"
+                                 Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_ActionDownload]}"
+                                 Click="BtnDownloadUpdate_Click" Margin="0,0,12,0" MinWidth="130"/>
                         <Button x:Name="BtnGoToPage" Style="{StaticResource SettingsButton}"
                                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_ActionPage]}"
                                  Click="BtnGoToPage_Click" MinWidth="130"/>

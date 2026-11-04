@@ -31,6 +31,10 @@ public class UserSettings
     public bool EnableKeywordHistory { get; set; } = true;
     public bool StartWithWindows { get; set; } = true;
     public bool AutoCheckUpdates { get; set; } = true;
+
+    /// <summary>The App version recorded the last time the App started. When it differs from the
+    /// running version, the About page reports "updated from X to Y" once and this field advances.</summary>
+    public string LastSeenVersion { get; set; } = string.Empty;
     public bool AutoSilentUpdate { get; set; } = false;
     // Bookkeeping rather than a preference: the release tag whose last startup install attempt failed, and
     // when. Without it a startup that cannot update (service not running, download failed) re-downloads a

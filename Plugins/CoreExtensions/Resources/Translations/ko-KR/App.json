@@ -522,7 +522,7 @@
   "About_Checking": "업데이트를 확인하는 중...",
   "About_UpToDate": "현재 최신 버전을 사용하고 있습니다.",
   "About_NewVersionAvailable": "새 버전 {0}을(를) 사용할 수 있습니다.",
-  "About_NewVersionAvailablePrompt": "새 버전 {0}을(를) 사용할 수 있습니다. 확인을 클릭하면 정보 페이지를 열고 자동 업데이트를 진행합니다.",
+  "About_NewVersionAvailablePrompt": "새 버전 {0}이(가) 있습니다. 정보 페이지를 열어 다운로드할까요?",
   "About_CheckUpdateNull": "업데이트 확인 실패: API가 null을 반환했습니다. GitHub에 최신 릴리스가 게시되어 있는지 확인하세요.",
   "About_CheckUpdateError": "업데이트 확인 중 예외가 발생했습니다:\n{0}\n\n스택:\n{1}",
   "About_CheckUpdateErrorTitle": "업데이트 오류",
@@ -849,6 +849,17 @@
   "MouseWake_WhitelistHint": "기본적으로 바탕 화면만 허용합니다. 다른 앱은 아래에 추가하세요. 전체 및 빠른 패널 차단 목록이 우선하며, 키보드 단축키에는 영향을 주지 않습니다.",
   "MouseWake_OtherApps": "추가로 허용할 앱 (선택)",
   "Background_VideoHint": "MP4 동영상은 소리 없이 반복되며 창을 숨기거나 최소화하면 일시 정지됩니다.",
-  "Background_VideoUnavailable": "동영상을 재생할 수 없어 테마 배경을 사용합니다. 재생 가능한 MP4 동영상을 선택하세요(H.264 권장)."
+  "Background_VideoUnavailable": "동영상을 재생할 수 없어 테마 배경을 사용합니다. 재생 가능한 MP4 동영상을 선택하세요(H.264 권장).",
+  "About_ActionDownload": "업데이트 다운로드",
+  "About_NeverPromptAgain": "다시는 업데이트를 자동으로 알리지 않기",
+  "About_ManualInstallSetup": "업데이트가 다운로드되었습니다:\n{0}\n\n설치 프로그램을 실행하면 업그레이드됩니다. 설치 중 Lertaro는 설치 프로그램이 종료합니다.",
+  "About_ManualInstallZip": "업데이트가 다운로드되었습니다:\n{0}\n\n포터블 버전 업그레이드 방법: Lertaro를 종료한 뒤 이 압축 파일을 Lertaro 폴더에 덮어써서 압축 해제하세요.",
+  "About_RunInstaller": "설치 프로그램 실행",
+  "About_OpenFolder": "폴더 열기",
+  "About_Later": "닫기",
+  "About_OpenAboutPage": "정보 페이지 열기",
+  "About_UpdateSucceeded": "{0}에서 {1}로 업데이트했습니다.",
+  "About_Downloaded": "업데이트 다운로드 완료. 준비되면 설치 프로그램을 실행하세요.",
+  "About_LaunchFailed": "설치 프로그램을 시작할 수 없습니다. 폴더를 열어 수동으로 실행하세요.",
+  "About_AutoCheckSwitch": "시작 시 업데이트 자동 확인"
 }
-

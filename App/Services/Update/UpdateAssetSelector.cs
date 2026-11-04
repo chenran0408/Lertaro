@@ -85,6 +85,36 @@ internal static class UpdateAssetSelector
         return match;
     }
 
+    /// <summary>
+    /// The setup executable matching <paramref name="architecture"/>, or null when the release has
+    /// none. Names follow the release pipeline: <c>Lertaro-Setup.exe</c> for x64,
+    /// <c>Lertaro-Setup-arm64.exe</c> for ARM64.
+    /// </summary>
+    public static TAsset? SelectSetup<TAsset>(IEnumerable<TAsset>? assets, Func<TAsset, string> nameOf)
+        where TAsset : class
+        => SelectSetup(assets, nameOf, RuntimeInformation.ProcessArchitecture);
+
+    public static TAsset? SelectSetup<TAsset>(IEnumerable<TAsset>? assets, Func<TAsset, string> nameOf,
+        Architecture architecture)
+        where TAsset : class
+    {
+        var suffix = SuffixFor(architecture);
+        if (assets == null || suffix == null)
+            return null;
+
+        var expected = "Lertaro-Setup" + suffix + ".exe";
+        TAsset? match = null;
+        foreach (var asset in assets)
+        {
+            if (!string.Equals(nameOf(asset), expected, StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (match != null)
+                return null;
+            match = asset;
+        }
+        return match;
+    }
+
     private static bool HasArchitectureSuffix(string stem)
     {
         foreach (var architecture in Enum.GetValues<Architecture>())

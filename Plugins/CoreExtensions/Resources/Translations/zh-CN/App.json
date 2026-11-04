@@ -522,7 +522,7 @@
   "About_Checking": "正在检查更新...",
   "About_UpToDate": "当前已是最新版本",
   "About_NewVersionAvailable": "检测到新版本 {0}，可以更新。",
-  "About_NewVersionAvailablePrompt": "检测到新版本 {0}，可以更新。点击“确定”前往“关于”页面进行自动更新。",
+  "About_NewVersionAvailablePrompt": "发现新版本 {0}。是否打开关于页下载？",
   "About_CheckUpdateNull": "检查更新失败：API未返回任何数据。请确认最新版本是否已在 GitHub 发布。",
   "About_CheckUpdateError": "检查更新失败，出现异常：\n{0}\n\n堆栈信息：\n{1}",
   "About_CheckUpdateErrorTitle": "更新错误",
@@ -927,6 +927,17 @@
   "About_UpdateBusy": "检查更新暂时繁忙，请稍后再试，或前往下载页手动更新。",
   "About_UpdateUnavailable": "暂时无法检查更新，请检查网络，或前往下载页手动更新。",
   "Background_VideoHint": "MP4 视频静音循环，窗口隐藏或最小化时暂停。",
-  "Background_VideoUnavailable": "视频无法播放，已使用主题底色。请选择可正常播放的 MP4 视频（推荐 H.264）。"
+  "Background_VideoUnavailable": "视频无法播放，已使用主题底色。请选择可正常播放的 MP4 视频（推荐 H.264）。",
+  "About_ActionDownload": "下载更新",
+  "About_NeverPromptAgain": "不再自动提示更新",
+  "About_ManualInstallSetup": "更新已下载：\n{0}\n\n运行安装程序即可升级，安装过程中 Lertaro 会由安装程序关闭。",
+  "About_ManualInstallZip": "更新已下载：\n{0}\n\n便携版升级方法：退出 Lertaro，将压缩包解压覆盖到 Lertaro 文件夹（替换现有文件）。",
+  "About_RunInstaller": "运行安装程序",
+  "About_OpenFolder": "打开所在文件夹",
+  "About_Later": "关闭",
+  "About_OpenAboutPage": "打开关于页",
+  "About_UpdateSucceeded": "已从 {0} 更新到 {1}。",
+  "About_Downloaded": "更新已下载，可随时运行安装程序。",
+  "About_LaunchFailed": "无法启动安装程序，请打开所在文件夹手动运行。",
+  "About_AutoCheckSwitch": "启动时自动检查更新"
 }
-

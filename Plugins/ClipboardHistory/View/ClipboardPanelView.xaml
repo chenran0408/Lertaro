@@ -123,7 +123,7 @@
                                    Margin="8,8,0,2" Opacity="0.65"
                                    Visibility="{Binding IsHeader, Converter={StaticResource BoolToVis}}"/>
                         <!-- Entry row. -->
-                        <Border x:Name="RowBorder" CornerRadius="6" Padding="8,6" Margin="2,1"
+                        <Border x:Name="RowBorder" CornerRadius="6" Padding="10,7" Margin="2,1"
                                 Visibility="{Binding IsRow, Converter={StaticResource BoolToVis}}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -147,6 +147,11 @@
                     </Grid>
                     <DataTemplate.Triggers>
                         <DataTrigger Binding="{Binding IsHeader}" Value="True">
+                            <Setter TargetName="ThumbBox" Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                        <!-- Text and file rows carry no thumbnail: collapse the box instead of
+                             leaving an empty gray square, which is the tell of an unpolished list. -->
+                        <DataTrigger Binding="{Binding ImagePath}" Value="">
                             <Setter TargetName="ThumbBox" Property="Visibility" Value="Collapsed"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">

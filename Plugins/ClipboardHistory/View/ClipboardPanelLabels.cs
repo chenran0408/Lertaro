@@ -47,12 +47,25 @@ internal static class ClipboardPanelLabels
         return local.ToString("yyyy/MM/dd");
     }
 
-    /// <summary>The row subtitle's time half: clock time for anything recent enough to share a date
-    /// with now, otherwise the short date. The group header already carries the date for old rows.</summary>
-    public static string RowTime(long lastSeenMs)
+    /// <summary>The row subtitle's time half, relative like every mature clipboard tool: 刚刚 /
+    /// N分钟前 / N小时前 inside the last day, then the clock time for anything on a previous day
+    /// (the group header already carries that date).</summary>
+    public static string RowTime(long lastSeenMs) => RelativeTime(
+        DateTimeOffset.FromUnixTimeMilliseconds(lastSeenMs), DateTimeOffset.Now);
+
+    /// <summary>Pure relative-time formatting over an injected clock so the thresholds are testable.</summary>
+    public static string RelativeTime(DateTimeOffset local, DateTimeOffset now)
     {
-        var local = DateTimeOffset.FromUnixTimeMilliseconds(lastSeenMs).LocalDateTime;
-        return local.Date == DateTime.Today ? local.ToString("HH:mm") : local.ToString("MM/dd HH:mm");
+        var elapsed = now - local;
+        if (elapsed < TimeSpan.Zero) elapsed = TimeSpan.Zero;
+        if (elapsed.TotalMinutes < 1) return TranslationService.Get("ClipboardHistory_TimeNow");
+        if (elapsed.TotalHours < 1)
+            return TranslationService.Format("ClipboardHistory_TimeMinutesAgo", (int)elapsed.TotalMinutes);
+        if (local.Date == now.LocalDateTime.Date)
+            return TranslationService.Format("ClipboardHistory_TimeHoursAgo", (int)elapsed.TotalHours);
+        return local.Date == now.LocalDateTime.Date.AddDays(-1)
+            ? TranslationService.Get("ClipboardHistory_PanelYesterday") + " " + local.ToString("HH:mm")
+            : local.ToString("MM/dd HH:mm");
     }
 
     public static string Subtitle(ClipboardEntry entry)

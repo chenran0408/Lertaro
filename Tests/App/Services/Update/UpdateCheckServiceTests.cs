@@ -10,6 +10,14 @@ namespace Lertaro.App.Tests.Services.Update;
 [TestClass]
 public sealed class UpdateCheckServiceTests
 {
+    // Cooldown fixtures shared by the IsInCooldown tests.
+    private static readonly DateTimeOffset FailureTime = new(2026, 9, 24, 12, 0, 0, TimeSpan.Zero);
+
+    private static UserSettings SettingsThatJustFailedOn(string tag) => new()
+    {
+        LastFailedUpdateTag = tag,
+        LastFailedUpdateUtcTicks = FailureTime.UtcTicks
+    };
     [TestMethod]
     public void IsNewerVersion_TagGreaterThanCurrent_ReturnsTrue()
     {
@@ -48,52 +56,6 @@ public sealed class UpdateCheckServiceTests
     }
 
     [TestMethod]
-    public void IsNewerVersion_NullCurrentVersion_TreatsAnyParsedVersionAsNewer() =>
-        Assert.IsTrue(UpdateCheckService.IsNewerVersion("v1.0.0", null, out _));
-
-    // What the previous silent update said about itself: issue #354 is an update that failed and reported
-    // nothing, so these pin down exactly which verdicts are worth putting in front of the user.
-    private static UpdateResult Verdict(string status, DateTimeOffset time) => new() { Status = status, Time = time, Message = "denied" };
-    private static readonly DateTimeOffset Now = new(2026, 10, 12, 12, 0, 0, TimeSpan.Zero);
-
-    [TestMethod]
-    public void ShouldReportFailure_AFreshFailure_IsReported()
-    {
-        var result = Verdict("failed", Now.AddHours(-1));
-
-        Assert.IsTrue(UpdateCheckService.ShouldReportFailure(result, lastReportedUtcTicks: 0, Now));
-    }
-
-    [TestMethod]
-    public void ShouldReportFailure_OneAlreadyShown_IsNotShownAgain()
-    {
-        var result = Verdict("failed", Now.AddHours(-1));
-
-        Assert.IsFalse(UpdateCheckService.ShouldReportFailure(result, result.Time.UtcTicks, Now));
-        Assert.IsFalse(UpdateCheckService.ShouldReportFailure(result, result.Time.UtcTicks + 1, Now));
-    }
-
-    [TestMethod]
-    public void ShouldReportFailure_SuccessfulVerdict_IsNotAFailure()
-    {
-        var result = Verdict("success", Now.AddHours(-1));
-
-        Assert.IsFalse(UpdateCheckService.ShouldReportFailure(result, 0, Now));
-    }
-
-    [TestMethod]
-    public void ShouldReportFailure_NoVerdictAtAll_IsNothingToSay() => Assert.IsFalse(UpdateCheckService.ShouldReportFailure(null, 0, Now));
-
-    // An install directory can hold a verdict from months ago; describing it now would be describing a
-    // different installation. A future-dated one is refused for the reason the relaunch marker gives.
-    [TestMethod]
-    public void ShouldReportFailure_AncientOrFutureDated_IsSkipped()
-    {
-        Assert.IsFalse(UpdateCheckService.ShouldReportFailure(Verdict("failed", Now.AddDays(-30)), 0, Now));
-        Assert.IsFalse(UpdateCheckService.ShouldReportFailure(Verdict("failed", Now.AddMinutes(5)), 0, Now));
-    }
-
-    [TestMethod]
     public void IsNewerVersion_PatchVersionDifferenceOnly_IsDetected() =>
         Assert.IsTrue(UpdateCheckService.IsNewerVersion("v1.0.1", new Version(1, 0, 0), out _));
 
@@ -111,32 +73,6 @@ public sealed class UpdateCheckServiceTests
     [DataRow(MessageBoxResult.None)]
     public void ShouldOpenAbout_NonOkResult_ReturnsFalse(MessageBoxResult result) =>
         Assert.IsFalse(UpdateCheckService.ShouldOpenAbout(result));
-
-    [TestMethod]
-    public void ShouldUseSilentUpdate_UsesServiceAndMatchingAssetWithoutAdminRequirement()
-    {
-        var settings = new UserSettings { AutoSilentUpdate = true };
-
-        Assert.IsTrue(UpdateCheckService.ShouldUseSilentUpdate(settings, serviceInstalled: true, assetAvailable: true));
-        Assert.IsFalse(UpdateCheckService.ShouldUseSilentUpdate(settings, serviceInstalled: false, assetAvailable: true));
-        Assert.IsFalse(UpdateCheckService.ShouldUseSilentUpdate(settings, serviceInstalled: true, assetAvailable: false));
-    }
-
-    [TestMethod]
-    public void ShouldUseSilentUpdate_DisabledSettingStaysManual()
-    {
-        var settings = new UserSettings { AutoSilentUpdate = false };
-
-        Assert.IsFalse(UpdateCheckService.ShouldUseSilentUpdate(settings, serviceInstalled: true, assetAvailable: true));
-    }
-
-    private static readonly DateTimeOffset FailureTime = new(2026, 9, 24, 12, 0, 0, TimeSpan.Zero);
-
-    private static UserSettings SettingsThatJustFailedOn(string tag) => new()
-    {
-        LastFailedUpdateTag = tag,
-        LastFailedUpdateUtcTicks = FailureTime.UtcTicks
-    };
 
     [TestMethod]
     public void IsInCooldown_SameReleaseWithinWindow_IsCooledDown() =>

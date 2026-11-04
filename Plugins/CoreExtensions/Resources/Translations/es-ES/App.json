@@ -522,7 +522,7 @@
   "About_Checking": "Buscando actualizaciones...",
   "About_UpToDate": "Estás usando la última versión.",
   "About_NewVersionAvailable": "Hay disponible una nueva versión {0}.",
-  "About_NewVersionAvailablePrompt": "Hay disponible una nueva versión {0}. Haz clic en Aceptar para abrir la página Acerca de y realizar la actualización automática.",
+  "About_NewVersionAvailablePrompt": "Nueva versión {0} disponible. ¿Abrir la página Acerca de para descargarla?",
   "About_CheckUpdateNull": "Error al comprobar la actualización: la API devolvió un valor nulo. Verifica si la última versión está publicada en GitHub.",
   "About_CheckUpdateError": "La comprobación de actualizaciones falló con una excepción:\n{0}\n\nPila:\n{1}",
   "About_CheckUpdateErrorTitle": "Error de Actualización",
@@ -849,6 +849,17 @@
   "MouseWake_WhitelistHint": "Solo se permite el escritorio por defecto. Añade otras aplicaciones abajo. Las listas de bloqueo global y del panel tienen prioridad. Esta lista no limita los atajos de teclado.",
   "MouseWake_OtherApps": "Otras aplicaciones permitidas (opcional)",
   "Background_VideoHint": "Los vídeos MP4 se repiten sin sonido y se pausan al ocultar o minimizar las ventanas.",
-  "Background_VideoUnavailable": "No se puede reproducir el vídeo. Se usa el fondo del tema. Elige un vídeo MP4 compatible (se recomienda H.264)."
+  "Background_VideoUnavailable": "No se puede reproducir el vídeo. Se usa el fondo del tema. Elige un vídeo MP4 compatible (se recomienda H.264).",
+  "About_ActionDownload": "Descargar actualización",
+  "About_NeverPromptAgain": "No volver a avisarme de actualizaciones automáticamente",
+  "About_ManualInstallSetup": "La actualización se ha descargado:\n{0}\n\nEjecute el instalador para actualizar. Lertaro será cerrado por el instalador durante el proceso.",
+  "About_ManualInstallZip": "La actualización se ha descargado:\n{0}\n\nPara actualizar la versión portátil: cierre Lertaro y extraiga este archivo sobre su carpeta de Lertaro (reemplazando los archivos existentes).",
+  "About_RunInstaller": "Ejecutar instalador",
+  "About_OpenFolder": "Abrir carpeta",
+  "About_Later": "Cerrar",
+  "About_OpenAboutPage": "Abrir la página Acerca de",
+  "About_UpdateSucceeded": "Actualizado de {0} a {1}.",
+  "About_Downloaded": "Actualización descargada. Ejecute el instalador cuando quiera.",
+  "About_LaunchFailed": "No se pudo iniciar el instalador. Abra su carpeta y ejecútelo manualmente.",
+  "About_AutoCheckSwitch": "Buscar actualizaciones automáticamente al iniciar"
 }
-
