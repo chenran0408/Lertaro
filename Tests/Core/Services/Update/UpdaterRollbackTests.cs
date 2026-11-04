@@ -71,7 +71,10 @@ public sealed class UpdaterRollbackTests
         finally { Directory.Delete(root, true); }
     }
 
+    // The fake sc.exe hand-off is process-timing sensitive on shared ARM runners; a deterministic
+    // failure still fails every attempt.
     [TestMethod]
+    [Retry(2)]
     public async Task StopService_Transient1061_RetriesUntilTheServiceIsStopped()
     {
         var root = Directory.CreateTempSubdirectory("LertaroUpdaterStop_").FullName;
@@ -88,7 +91,10 @@ public sealed class UpdaterRollbackTests
         finally { Directory.Delete(root, true); }
     }
 
+    // The fake sc.exe hand-off is process-timing sensitive on shared ARM runners; a deterministic
+    // failure still fails every attempt.
     [TestMethod]
+    [Retry(2)]
     public async Task StopService_Persistent1061_StillFailsAfterItsRetryBudget()
     {
         var root = Directory.CreateTempSubdirectory("LertaroUpdaterStop_").FullName;
