@@ -10,8 +10,7 @@ namespace Lertaro.App.Services.Update;
 /// <summary>
 /// Startup update-check flow: checks GitHub for a new release and, depending on settings, either downloads
 /// and installs it without asking anything (auto-silent-update enabled, service installed at this path) or
-/// prompts the user to open the About page. A release that failed to install is left alone for
-/// <see cref="UpdateRetryCooldown"/> rather than retried on every launch.
+/// prompts the user to open the About page.
 /// </summary>
 /// <remarks>
 /// Extracted out of App.OnStartup so that startup sequencing there doesn't carry this feature's own
@@ -19,9 +18,6 @@ namespace Lertaro.App.Services.Update;
 /// </remarks>
 public static class UpdateCheckService
 {
-    /// <summary>How long a release whose startup install failed is left alone before it is tried again.</summary>
-    internal static readonly TimeSpan UpdateRetryCooldown = TimeSpan.FromHours(24);
-
     public static void RunOnStartupAsync() => _ = Task.Run(RunAsync);
 
     private static async Task RunAsync()
@@ -54,12 +50,6 @@ public static class UpdateCheckService
 
             if (!UpdateVersion.IsNewer(release.TagName, UpdateVersion.Current))
                 return;
-
-            if (IsInCooldown(settings, release.TagName, DateTimeOffset.UtcNow))
-            {
-                Logger.Log($"[App] Update to {release.TagName} is cooling down after a failed attempt.", LogLevel.Debug);
-                return;
-            }
 
             // The download itself is a user action now: the About page downloads the setup and the
             // user runs it. A startup check only announces the release, so a network hiccup during a
@@ -97,30 +87,5 @@ public static class UpdateCheckService
 
     internal static bool ShouldOpenAbout(MessageBoxResult result) => result == MessageBoxResult.OK;
 
-    /// <summary>
-    /// Whether this release is still being left alone after a failed install. Only the release it failed on
-    /// is cooled down, so a newer one published afterwards is offered straight away.
-    /// </summary>
-    internal static bool IsInCooldown(UserSettings settings, string tagName, DateTimeOffset now)
-    {
-        var ticks = settings.LastFailedUpdateUtcTicks;
 
-        // Anything outside the range DateTimeOffset accepts is treated as no failure recorded: the settings
-        // file is plain JSON a user can edit, and throwing here would park updates with nothing to show.
-        if (settings.LastFailedUpdateTag != tagName || ticks <= 0 || ticks > DateTime.MaxValue.Ticks)
-            return false;
-
-        var failedAt = new DateTimeOffset(ticks, TimeSpan.Zero);
-
-        // `now > failedAt` also handles a clock that has moved backwards since the failure (an NTP
-        // correction, a dead CMOS battery): a failure recorded in the future is a stale one, not a reason
-        // to wait out its cooldown.
-        return now > failedAt && now - failedAt < UpdateRetryCooldown;
-    }
-
-    internal static void RememberFailedAttempt(UserSettings settings, string tagName, DateTimeOffset now)
-    {
-        settings.LastFailedUpdateTag = tagName;
-        settings.LastFailedUpdateUtcTicks = now.UtcTicks;
-    }
 }

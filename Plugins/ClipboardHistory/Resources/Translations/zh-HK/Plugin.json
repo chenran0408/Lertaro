@@ -59,7 +59,6 @@
   "ClipboardHistory_PanelPauseCapture": "暫停擷取（10 分鐘）",
   "ClipboardHistory_PanelResumeCapture": "恢復擷取",
   "ClipboardHistory_PanelTogglePreview": "顯示/隱藏預覽",
-  "ClipboardHistory_PanelPausedUntil": "擷取已暫停至 {0}",
   "ClipboardHistory_TimeNow": "剛剛",
   "ClipboardHistory_TimeMinutesAgo": "{0} 分鐘前",
   "ClipboardHistory_TimeHoursAgo": "{0} 小時前"

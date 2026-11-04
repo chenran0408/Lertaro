@@ -17,7 +17,6 @@ internal static class GeneralSettingsApplier
         UserSettings userSettings,
         bool startWithWindows,
         bool autoCheckUpdates,
-        bool autoSilentUpdate,
         bool enableHardwareAcceleration,
         bool enableFuzzyMatch,
         bool orFirstPrecedence,
@@ -35,7 +34,6 @@ internal static class GeneralSettingsApplier
 
         userSettings.StartWithWindows = startWithWindows;
         userSettings.AutoCheckUpdates = autoCheckUpdates;
-        userSettings.AutoSilentUpdate = autoSilentUpdate;
         userSettings.EnableHardwareAcceleration = enableHardwareAcceleration;
         userSettings.EnableFuzzyMatch = enableFuzzyMatch;
         userSettings.OrFirstPrecedence = orFirstPrecedence;

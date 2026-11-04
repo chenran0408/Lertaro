@@ -66,11 +66,6 @@
                            IsChecked="{Binding General.AutoCheckUpdates, Mode=TwoWay}"
                            Margin="0,4"/>
 
-                <CheckBox x:Name="RowAutoSilentUpdate" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_AutoSilentUpdate]}"
-                           IsChecked="{Binding General.AutoSilentUpdate, Mode=TwoWay}"
-                           IsEnabled="{Binding General.IsAutoSilentUpdateEnabled}"
-                           Margin="0,4"/>
-
                 <CheckBox x:Name="RowHardwareAcceleration" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_HardwareAcceleration]}"
                            IsChecked="{Binding General.EnableHardwareAcceleration, Mode=TwoWay}"
                            Margin="0,4"/>

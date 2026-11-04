@@ -17,7 +17,6 @@ public class GeneralSettingsViewModel : ViewModelBase
     // instant preview) only commits to _userSettings when Apply() runs (Settings window's Apply/OK).
     private bool _startWithWindows;
     private bool _autoCheckUpdates;
-    private bool _autoSilentUpdate;
     private bool _enableHardwareAcceleration;
     private bool _enableFuzzyMatch;
     private bool _orFirstPrecedence;
@@ -57,7 +56,6 @@ public class GeneralSettingsViewModel : ViewModelBase
 
         _startWithWindows = userSettings.StartWithWindows;
         _autoCheckUpdates = userSettings.AutoCheckUpdates;
-        _autoSilentUpdate = userSettings.AutoSilentUpdate;
         _enableHardwareAcceleration = userSettings.EnableHardwareAcceleration;
         _enableFuzzyMatch = userSettings.EnableFuzzyMatch;
         _orFirstPrecedence = userSettings.OrFirstPrecedence;
@@ -144,15 +142,7 @@ public class GeneralSettingsViewModel : ViewModelBase
     public bool AutoCheckUpdates
     {
         get => _autoCheckUpdates;
-        set { if (SetProperty(ref _autoCheckUpdates, value)) OnPropertyChanged(nameof(IsAutoSilentUpdateEnabled)); }
-    }
-
-    public bool IsAutoSilentUpdateEnabled => AutoCheckUpdates;
-
-    public bool AutoSilentUpdate
-    {
-        get => _autoSilentUpdate;
-        set => SetProperty(ref _autoSilentUpdate, value);
+        set => SetProperty(ref _autoCheckUpdates, value);
     }
 
     public bool EnableHardwareAcceleration
@@ -251,7 +241,6 @@ public class GeneralSettingsViewModel : ViewModelBase
         _userSettings,
         _startWithWindows,
         _autoCheckUpdates,
-        _autoSilentUpdate,
         _enableHardwareAcceleration,
         _enableFuzzyMatch,
         _orFirstPrecedence,

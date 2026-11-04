@@ -59,7 +59,6 @@
   "ClipboardHistory_PanelPauseCapture": "記録を一時停止（10分）",
   "ClipboardHistory_PanelResumeCapture": "記録を再開",
   "ClipboardHistory_PanelTogglePreview": "プレビュー表示切替",
-  "ClipboardHistory_PanelPausedUntil": "記録は {0} まで一時停止中",
   "ClipboardHistory_TimeNow": "たった今",
   "ClipboardHistory_TimeMinutesAgo": "{0} 分前",
   "ClipboardHistory_TimeHoursAgo": "{0} 時間前"

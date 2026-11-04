@@ -59,7 +59,6 @@
   "ClipboardHistory_PanelPauseCapture": "Pause capture (10 min)",
   "ClipboardHistory_PanelResumeCapture": "Resume capture",
   "ClipboardHistory_PanelTogglePreview": "Show/hide preview",
-  "ClipboardHistory_PanelPausedUntil": "Capture paused until {0}",
   "ClipboardHistory_TimeNow": "Just now",
   "ClipboardHistory_TimeMinutesAgo": "{0} min ago",
   "ClipboardHistory_TimeHoursAgo": "{0} h ago"
