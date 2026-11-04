@@ -44,3 +44,20 @@ jobs:
         run: dotnet test Tests/Tools/SourceSize/SourceSize.csproj -c Release -v quiet
       - name: Build strict projects
         run: dotnet build Tools/CompactionBenchmark/CompactionBenchmark.csproj -c Release -p:EnableRustIndexStoreBuild=false -v quiet
+      - name: Verify dotnet format style (core projects)
+        shell: pwsh
+        # Ratchet: the shipped core projects are format-clean since the repo-wide sweep; plugins
+        # join this list as they get their own pass. A new warning fails the job instead of
+        # silently accumulating again.
+        run: |
+          $projects = @('App/App.csproj', 'Core/Core.csproj', 'PluginSdk/PluginSdk.csproj',
+                        'Service/Service.csproj', 'Cli/Cli.csproj', 'TaskbarHost/TaskbarHost.csproj')
+          $failed = @()
+          foreach ($project in $projects) {
+            $output = dotnet format style $project --verify-no-changes 2>&1 | Out-String
+            if ($LASTEXITCODE -ne 0) { $failed += "$project`n$output" }
+          }
+          if ($failed.Count -gt 0) {
+            Write-Error "dotnet format style found issues:`n$($failed -join "`n`n")"
+            exit 1
+          }
