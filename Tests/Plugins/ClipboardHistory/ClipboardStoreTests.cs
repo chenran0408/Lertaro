@@ -398,4 +398,25 @@ public sealed class ClipboardStoreTests
         await store.SetNoteAsync(424242, "ghost");
         Assert.IsEmpty(await store.GetEntriesAsync());
     }
+
+    [TestMethod]
+    public async Task PasteCount_Increments_AndPersistsAcrossReopen()
+    {
+        var store = CreateStore();
+        await store.InitializeAsync();
+        var entry = await AddText(store, "pasted a lot", "App", "Title", 500, 1000000);
+        Assert.IsNotNull(entry);
+        Assert.AreEqual(0, entry.PasteCount); // new captures start unpasted
+
+        await store.IncrementPasteCountAsync(entry.Id);
+        await store.IncrementPasteCountAsync(entry.Id);
+        await store.IncrementPasteCountAsync(entry.Id);
+
+        var reopened = CreateStore();
+        await reopened.InitializeAsync();
+        var entries = await reopened.GetEntriesAsync();
+        Assert.HasCount(1, entries);
+        Assert.AreEqual(3, entries[0].PasteCount);
+        Assert.AreEqual(1, entries[0].SeenCount); // captures are a separate tally
+    }
 }

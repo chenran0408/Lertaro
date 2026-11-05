@@ -43,6 +43,9 @@ internal sealed class ClipboardStore(string databasePath, string imagesDirectory
     public Task SetNoteAsync(long id, string note, CancellationToken cancellationToken = default) =>
         RunLockedAsync(() => SetNoteCore(id, note ?? string.Empty), cancellationToken);
 
+    public Task IncrementPasteCountAsync(long id, CancellationToken cancellationToken = default) =>
+        RunLockedAsync(() => IncrementPasteCountCore(id), cancellationToken);
+
     public Task DeleteAsync(long id, CancellationToken cancellationToken = default) =>
         RunLockedAsync(() => ClipboardStoreWriter.Delete(_database, id), cancellationToken);
 
@@ -114,6 +117,15 @@ internal sealed class ClipboardStore(string databasePath, string imagesDirectory
         // never cost a rebuild, and promotion/deletion keep their existing semantics untouched.
         command.CommandText = "UPDATE clipboard_history SET note = @note WHERE id = @id";
         command.Parameters.AddWithValue("@note", note);
+        command.Parameters.AddWithValue("@id", id);
+        command.ExecuteNonQuery();
+    }
+
+    private void IncrementPasteCountCore(long id)
+    {
+        using var connection = _database.OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = "UPDATE clipboard_history SET paste_count = paste_count + 1 WHERE id = @id";
         command.Parameters.AddWithValue("@id", id);
         command.ExecuteNonQuery();
     }

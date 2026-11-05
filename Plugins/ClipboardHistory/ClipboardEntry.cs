@@ -35,6 +35,8 @@ internal enum ClipboardEntryKind
 /// source offered no HTML flavor); the keep-format paste writes it back with the text.</param>
 /// <param name="Note">The user's own annotation for this entry (CopyQ-style), edited in the
 /// preview pane. Participates in panel search; never affects dedup or paste.</param>
+/// <param name="PasteCount">How many times this entry was pasted from the panel. Captures count in
+/// <see cref="SeenCount"/>; the frequency sort uses both summed, so "most used" means used.</param>
 internal sealed record ClipboardEntry(
     long Id,
     string Content,
@@ -50,7 +52,8 @@ internal sealed record ClipboardEntry(
     int ImageWidth = 0,
     int ImageHeight = 0,
     string Html = "",
-    string Note = "")
+    string Note = "",
+    long PasteCount = 0)
 {
     /// <summary>The individual paths behind a FilePaths entry, in stored order. Returns empty for
     /// other kinds. ponytail: split on demand instead of a stored list column -- the join is the

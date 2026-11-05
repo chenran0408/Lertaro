@@ -36,7 +36,8 @@ internal sealed class ClipboardDatabase(string databasePath, string imagesDirect
             image_width INTEGER NOT NULL DEFAULT 0,
             image_height INTEGER NOT NULL DEFAULT 0,
             html TEXT NOT NULL DEFAULT '',
-            note TEXT NOT NULL DEFAULT ''
+            note TEXT NOT NULL DEFAULT '',
+            paste_count INTEGER NOT NULL DEFAULT 0
         );
         CREATE INDEX IF NOT EXISTS idx_clipboard_last_seen ON clipboard_history(pinned DESC, last_seen_at_ms DESC);
         CREATE INDEX IF NOT EXISTS idx_clipboard_sha ON clipboard_history(content_sha256);
@@ -71,6 +72,7 @@ internal sealed class ClipboardDatabase(string databasePath, string imagesDirect
         ("image_height", "ALTER TABLE clipboard_history ADD COLUMN image_height INTEGER NOT NULL DEFAULT 0"),
         ("html", "ALTER TABLE clipboard_history ADD COLUMN html TEXT NOT NULL DEFAULT ''"),
         ("note", "ALTER TABLE clipboard_history ADD COLUMN note TEXT NOT NULL DEFAULT ''"),
+        ("paste_count", "ALTER TABLE clipboard_history ADD COLUMN paste_count INTEGER NOT NULL DEFAULT 0"),
     ];
 
     internal SqliteConnection OpenConnection()

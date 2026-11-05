@@ -155,7 +155,9 @@ internal sealed class ClipboardRuntime : IDisposable
         PasteEntries(Entries.Where(entry => entry.Id == id).Take(1).ToArray());
 
     /// <summary>Pastes one entry, or a merged payload built from several selected entries (the
-    /// panel's multi-select). Returns false when there is nothing pasteable or the target refuses.</summary>
+    /// panel's multi-select). Returns false when there is nothing pasteable or the target refuses.
+    /// Accepted pastes count toward the entry's paste tally -- the frequency sort means "used",
+    /// and a capture-only tally never told the truth about that.</summary>
     internal bool PasteEntries(IReadOnlyList<ClipboardEntry> entries, bool keepFormat = true)
     {
         var merged = entries.Count == 1 ? entries[0] : ClipboardMergeSupport.MergeForPaste(entries);
@@ -163,10 +165,25 @@ internal sealed class ClipboardRuntime : IDisposable
         try
         {
             if (merged == null || _monitor == null || !PasteBackHelper.CanPaste(target)) return false;
+            CountPastes(entries);
             _ = PasteAsync(merged, target!, keepFormat);
             return true;
         }
         catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); return false; }
+    }
+
+    private void CountPastes(IReadOnlyList<ClipboardEntry> entries)
+    {
+        if (entries.Count == 0) return;
+        _ = MutateAsync(async store =>
+        {
+            foreach (var entry in entries)
+                await store.IncrementPasteCountAsync(entry.Id).ConfigureAwait(false);
+            var ids = entries.Select(entry => entry.Id).ToHashSet();
+            Publish(Entries.Select(item => ids.Contains(item.Id)
+                ? item with { PasteCount = item.PasteCount + 1 }
+                : item).ToArray());
+        });
     }
 
     /// <summary>Writes an arbitrary text to the clipboard (path-format copies for file entries).</summary>

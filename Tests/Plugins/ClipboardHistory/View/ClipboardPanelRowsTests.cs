@@ -94,6 +94,27 @@ public sealed class ClipboardPanelRowsTests
     }
 
     [TestMethod]
+    public void Sort_ByFrequency_CountsPastesWithCaptures()
+    {
+        // Two captures vs one capture + three pastes: "most used" ranks the pasted row first,
+        // because the frequency toggle is about how often the entry is actually used.
+        var entries = new List<ClipboardEntry>
+        {
+            Text("captured twice", 1, seen: 2),
+            Text("captured once, pasted thrice", 2, seen: 1),
+        };
+        entries[1] = entries[1] with { PasteCount = 3 };
+
+        var byFrequency = ClipboardPanelRows.Sort(entries, byFrequency: true);
+        Assert.AreEqual(2, byFrequency[0].Id);
+        Assert.AreEqual(1, byFrequency[1].Id);
+
+        // Recency ignores the paste tally entirely.
+        var byRecency = ClipboardPanelRows.Sort(entries, byFrequency: false);
+        Assert.AreEqual(1, byRecency[0].Id); // store order preserved
+    }
+
+    [TestMethod]
     public void SelectableIds_SkipsHeadersAndKeepsDisplayOrder()
     {
         var items = new List<ClipboardPanelItem>

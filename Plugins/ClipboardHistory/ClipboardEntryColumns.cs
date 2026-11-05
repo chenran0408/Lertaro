@@ -9,9 +9,9 @@ namespace Lertaro.Plugins.ClipboardHistory;
 internal static class ClipboardEntryColumns
 {
     public const string EntryColumns =
-        "id, content, plain_preview, source_process, source_window_title, pinned, seen_count, created_at_ms, last_seen_at_ms, kind, image_path, image_width, image_height, html, note";
+        "id, content, plain_preview, source_process, source_window_title, pinned, seen_count, created_at_ms, last_seen_at_ms, kind, image_path, image_width, image_height, html, note, paste_count";
     public const string SearchEntryColumns =
-        "h.id, h.content, h.plain_preview, h.source_process, h.source_window_title, h.pinned, h.seen_count, h.created_at_ms, h.last_seen_at_ms, h.kind, h.image_path, h.image_width, h.image_height, h.html, h.note";
+        "h.id, h.content, h.plain_preview, h.source_process, h.source_window_title, h.pinned, h.seen_count, h.created_at_ms, h.last_seen_at_ms, h.kind, h.image_path, h.image_width, h.image_height, h.html, h.note, h.paste_count";
 
     public static ClipboardEntry Map(SqliteDataReader reader) => new(
         reader.GetInt64(0),
@@ -28,5 +28,6 @@ internal static class ClipboardEntryColumns
         reader.GetInt32(11),
         reader.GetInt32(12),
         reader.GetString(13),
-        reader.GetString(14));
+        reader.GetString(14),
+        reader.GetInt64(15));
 }
