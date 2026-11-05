@@ -59,6 +59,10 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
     private int _anchor = -1;
     private bool _extending;
 
+    // The row the selection should land on after a delete takes the current one away; consumed by
+    // the view's RestoreSelection and cleared there.
+    internal long _selectAfterReload;
+
     /// <summary>Ends any in-flight Shift+arrow extension: the next one re-seeds from whatever the
     /// list currently shows. Rebuilds and mouse presses call this.</summary>
     public void EndKeyboardSelection()
@@ -149,6 +153,14 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
     public void DeleteSelected()
     {
         if (view.Lst.SelectedItem is not ClipboardPanelItem { IsRow: true } item) return;
+        // Remember where the user was: after the reload the deleted id is gone, and without this
+        // the selection would jump back to the very top of the list.
+        var items = view._items;
+        var index = items.IndexOf(item);
+        for (var next = index + 1; next < items.Count && _selectAfterReload == 0; next++)
+            if (items[next].IsRow) _selectAfterReload = items[next].Id;
+        for (var prev = index - 1; prev >= 0 && _selectAfterReload == 0; prev--)
+            if (items[prev].IsRow) _selectAfterReload = items[prev].Id;
         ClipboardRuntime.Instance.Delete(item.Id);
         _ = view.ReloadAsync();
     }

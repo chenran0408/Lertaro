@@ -98,6 +98,13 @@ internal sealed class ClipboardDatabase(string databasePath, string imagesDirect
         command.ExecuteNonQuery();
         MigrateAddedColumns(connection);
 
+        // Write-ahead logging keeps the frequent targeted writes (notes, paste tallies) cheap, and
+        // lets readers proceed while a write commits. The -wal/-shm sidecars are already part of
+        // the corruption-recovery rename set, so recovery semantics are unchanged.
+        using var journal = connection.CreateCommand();
+        journal.CommandText = "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;";
+        journal.ExecuteNonQuery();
+
         using var consistency = connection.CreateCommand();
         consistency.CommandText = """
             SELECT (SELECT COUNT(*) FROM clipboard_history_fts) <> (SELECT COUNT(*) FROM clipboard_history)

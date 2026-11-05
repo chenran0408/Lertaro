@@ -219,15 +219,19 @@ public partial class ClipboardPanelView : UserControl
 
     private void RestoreSelection(long id)
     {
-        if (id != 0)
+        long target = id;
+        if (target == 0) target = _actions._selectAfterReload;
+        if (target != 0)
         {
-            var index = _items.FindIndex(item => item.Id == id);
+            var index = _items.FindIndex(item => item.Id == target);
             if (index >= 0)
             {
+                _actions._selectAfterReload = 0;
                 Lst.SelectedIndex = index;
                 return;
             }
         }
+        _actions._selectAfterReload = 0;
         SelectFirstRow();
     }
 
