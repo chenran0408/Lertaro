@@ -12,6 +12,8 @@ internal static class ClipboardPanelViewSettings
     private const string WidthKey = "PanelWidth";
     private const string HeightKey = "PanelHeight";
     private const string PreviewKey = "PanelPreviewVisible";
+    private const string LastTabKey = "PanelLastTab";
+    private const string SortKey = "PanelSortByFrequency";
     private const double DefaultWidth = 780;
     private const double DefaultHeight = 620;
     private const double MaxSide = 2000;
@@ -22,6 +24,26 @@ internal static class ClipboardPanelViewSettings
 
     public static bool PreviewVisible() =>
         PluginSettingsService.GetSetting(ClipboardSettings.PluginId, PreviewKey, true);
+
+    /// <summary>The tab the panel reopens on (mature managers reopen where you left off). Clamped
+    /// to the known range -- a stale or hand-edited value falls back to All.</summary>
+    public static int LastTab()
+    {
+        try { return Math.Clamp(Convert.ToInt32(PluginSettingsService.GetSetting(ClipboardSettings.PluginId, LastTabKey, 0)), 0, 4); }
+        catch (Exception ex) when (ex is FormatException or InvalidCastException or OverflowException)
+        {
+            return 0;
+        }
+    }
+
+    public static void SaveLastTab(int tab) =>
+        PluginSettingsService.SetSetting(ClipboardSettings.PluginId, LastTabKey, tab);
+
+    public static bool SortByFrequency() =>
+        PluginSettingsService.GetSetting(ClipboardSettings.PluginId, SortKey, false);
+
+    public static void SaveSortByFrequency(bool byFrequency) =>
+        PluginSettingsService.SetSetting(ClipboardSettings.PluginId, SortKey, byFrequency);
 
     public static void Save(double width, double height, bool previewVisible)
     {

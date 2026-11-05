@@ -43,6 +43,27 @@ public partial class ClipboardPanelView : UserControl
         ClipboardPanelLabels.ApplyTo(this);
         _actions = new ClipboardPanelActions(this);
         TranslationService.CultureChanged += OnCultureChanged;
+        // Reopen where the user left off: tab and sort direction survive summons and restarts.
+        SortToggle.IsChecked = ClipboardPanelViewSettings.SortByFrequency();
+        ApplyStoredTab();
+    }
+
+    private void ApplyStoredTab()
+    {
+        var target = (ClipboardPanelTab)ClipboardPanelViewSettings.LastTab() switch
+        {
+            ClipboardPanelTab.Text => TabText,
+            ClipboardPanelTab.Image => TabImage,
+            ClipboardPanelTab.Files => TabFiles,
+            ClipboardPanelTab.Favorites => TabFavorites,
+            _ => TabAll,
+        };
+        if (target.IsChecked != true) target.IsChecked = true; // fires Tab_Checked
+        _tab = target == TabText ? ClipboardPanelTab.Text
+            : target == TabImage ? ClipboardPanelTab.Image
+            : target == TabFiles ? ClipboardPanelTab.Files
+            : target == TabFavorites ? ClipboardPanelTab.Favorites
+            : ClipboardPanelTab.All;
     }
 
     /// <summary>Opens the panel near the cursor, or brings the existing one to the front. True when
@@ -92,15 +113,15 @@ public partial class ClipboardPanelView : UserControl
             _window = window;
             _instance = view;
             // A copy made while the panel was closed shows up the moment the panel is summoned
-            // again -- no background refresh machinery needed for a summon-and-paste surface.
+            // again -- no background refresh machinery needed for a summon-and-paste surface. The
+            // activation handler is the single reload path: Show/Activate fire it, so no direct
+            // call here (it used to double- and triple-load the store on every open).
             window.Activated += (_, _) => _ = view.ReloadAsync();
-            _ = view.ReloadAsync();
             window.Show();
         }
 
         if (_window.WindowState == WindowState.Minimized) _window.WindowState = WindowState.Normal;
         _instance.SearchBox.Text = string.Empty;
-        _ = _instance.ReloadAsync();
         _window.Activate();
         _instance.SearchBox.Focus();
         return true;
@@ -125,27 +146,44 @@ public partial class ClipboardPanelView : UserControl
     internal double StoredWidth() => Math.Max(420, ClipboardPanelViewSettings.Width());
     internal double StoredHeight() => Math.Max(420, ClipboardPanelViewSettings.Height());
 
-    private void SortToggle_Click(object sender, RoutedEventArgs e) =>
+    private void SortToggle_Click(object sender, RoutedEventArgs e)
+    {
+        ClipboardPanelViewSettings.SaveSortByFrequency(SortToggle.IsChecked == true);
         RebuildRows(Entries);
+    }
 
     internal async Task ReloadAsync()
     {
-        _loading = true;
+        // Single-flight with a trailing coalesce: overlapping triggers (rapid re-activation,
+        // a delete landing mid-load) collapse into one trailing reload instead of racing rebuilds.
+        if (_reloading) { _reloadQueued = true; return; }
+        _reloading = true;
         try
         {
-            Entries = await ClipboardRuntime.Instance.GetEntriesAsync(CancellationToken.None).ConfigureAwait(true);
+            do
+            {
+                _reloadQueued = false;
+                // _loading keeps SearchBox_TextChanged from rebuilding against the previous
+                // snapshot while the fetch is in flight; the fetch's own rebuild covers it.
+                _loading = true;
+                try
+                {
+                    Entries = await ClipboardRuntime.Instance.GetEntriesAsync(CancellationToken.None).ConfigureAwait(true);
+                }
+                catch (Exception)
+                {
+                    Entries = [];
+                }
+                _loading = false;
+                RebuildRows(Entries);
+            }
+            while (_reloadQueued);
         }
-        catch (Exception)
-        {
-            Entries = [];
-        }
-        finally
-        {
-            _loading = false;
-        }
-
-        RebuildRows(Entries);
+        finally { _reloading = false; }
     }
+
+    private bool _reloading;
+    private bool _reloadQueued;
 
     private ClipboardPanelTab CurrentTab() =>
         TabText.IsChecked == true ? ClipboardPanelTab.Text
@@ -215,6 +253,7 @@ public partial class ClipboardPanelView : UserControl
     {
         if (_instance == null) return;
         _tab = CurrentTab();
+        ClipboardPanelViewSettings.SaveLastTab((int)_tab);
         RebuildRows(Entries);
     }
 

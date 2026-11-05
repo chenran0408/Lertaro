@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.IO;
 using System.Windows.Data;
@@ -15,12 +16,20 @@ public sealed class ThumbnailImageSourceConverter(string imagesDirectory) : IVal
 {
     public const int DecodeWidth = 88; // 2x the 44-dip thumbnail box for HiDPI crispness
 
+    // Decoded thumbnails are cached per full path: the store's PNG names are content-addressed
+    // (SHA-256), so a decode can never go stale, and every rebuild re-binding the same visible
+    // rows would otherwise re-read and re-decode the same files from disk. Cleared wholesale when
+    // it grows past the cap -- re-decoding a few entries after a clear is merely slow, not wrong.
+    private static readonly ConcurrentDictionary<string, BitmapSource> Cache = new();
+    private const int CacheCap = 256;
+
     public ThumbnailImageSourceConverter() : this(ResolveImagesDirectory()) { }
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not string fileName || fileName.Length == 0) return null;
         var path = Path.Combine(imagesDirectory, fileName);
+        if (Cache.TryGetValue(path, out var cached)) return cached;
         if (!File.Exists(path)) return null;
 
         try
@@ -32,6 +41,8 @@ public sealed class ThumbnailImageSourceConverter(string imagesDirectory) : IVal
             bitmap.UriSource = new Uri(path, UriKind.Absolute);
             bitmap.EndInit();
             bitmap.Freeze();
+            if (Cache.Count >= CacheCap) Cache.Clear();
+            Cache[path] = bitmap;
             return bitmap;
         }
         catch (Exception ex) when (ex is IOException or NotSupportedException or InvalidOperationException)
