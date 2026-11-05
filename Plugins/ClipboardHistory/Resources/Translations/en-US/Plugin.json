@@ -61,5 +61,9 @@
   "ClipboardHistory_PanelTogglePreview": "Show/hide preview",
   "ClipboardHistory_TimeNow": "Just now",
   "ClipboardHistory_TimeMinutesAgo": "{0} min ago",
-  "ClipboardHistory_TimeHoursAgo": "{0} h ago"
+  "ClipboardHistory_TimeHoursAgo": "{0} h ago",
+
+  "ClipboardHistory_PanelNote": "Note",
+  "ClipboardHistory_PanelNotePlaceholder": "Add a note to this entry...",
+  "ClipboardHistory_PanelClearNote": "Clear note"
 }

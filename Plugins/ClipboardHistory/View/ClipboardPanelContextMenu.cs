@@ -15,6 +15,7 @@ internal sealed class ClipboardPanelContextMenu
     private readonly Action _copy;
     private readonly Action _togglePin;
     private readonly Action _delete;
+    private readonly Action _clearNote;
     private readonly Action _openSource;
     private readonly Action<string> _copyText;
     private readonly Action _saveImageAs;
@@ -23,13 +24,14 @@ internal sealed class ClipboardPanelContextMenu
     private readonly Action _togglePause;
 
     public ClipboardPanelContextMenu(Action paste, Action copy, Action togglePin, Action delete,
-        Action openSource, Action<string> copyText, Action saveImageAs, Action clearHistory,
+        Action clearNote, Action openSource, Action<string> copyText, Action saveImageAs, Action clearHistory,
         Action togglePreview, Action togglePause)
     {
         _paste = paste;
         _copy = copy;
         _togglePin = togglePin;
         _delete = delete;
+        _clearNote = clearNote;
         _openSource = openSource;
         _copyText = copyText;
         _saveImageAs = saveImageAs;
@@ -47,6 +49,9 @@ internal sealed class ClipboardPanelContextMenu
         menu.Items.Add(Item(entry.Pinned ? "ClipboardHistory_Unpin" : "ClipboardHistory_Pin", (_, _) => _togglePin()));
         menu.Items.Add(new Separator());
         menu.Items.Add(Item("ClipboardHistory_Delete", (_, _) => _delete()));
+        var clearNote = Item("ClipboardHistory_PanelClearNote", (_, _) => _clearNote());
+        clearNote.IsEnabled = entry.Note.Length > 0;
+        menu.Items.Add(clearNote);
 
         if (entry.Kind == ClipboardEntryKind.FilePaths)
         {

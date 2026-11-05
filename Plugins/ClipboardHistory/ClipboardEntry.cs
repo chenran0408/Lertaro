@@ -33,6 +33,8 @@ internal enum ClipboardEntryKind
 /// <param name="ImageHeight">For Image, the pixel height of the captured bitmap; 0 otherwise.</param>
 /// <param name="Html">For Text, the raw CF_HTML stream captured alongside it (empty when the
 /// source offered no HTML flavor); the keep-format paste writes it back with the text.</param>
+/// <param name="Note">The user's own annotation for this entry (CopyQ-style), edited in the
+/// preview pane. Participates in panel search; never affects dedup or paste.</param>
 internal sealed record ClipboardEntry(
     long Id,
     string Content,
@@ -47,7 +49,8 @@ internal sealed record ClipboardEntry(
     string ImagePath = "",
     int ImageWidth = 0,
     int ImageHeight = 0,
-    string Html = "")
+    string Html = "",
+    string Note = "")
 {
     /// <summary>The individual paths behind a FilePaths entry, in stored order. Returns empty for
     /// other kinds. ponytail: split on demand instead of a stored list column -- the join is the

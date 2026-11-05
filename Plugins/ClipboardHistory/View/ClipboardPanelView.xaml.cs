@@ -31,6 +31,12 @@ public partial class ClipboardPanelView : UserControl
     internal Dictionary<long, ClipboardEntry> _entryById = [];
     internal bool PreviewVisible { get; set; } = true;
 
+    // The preview pane's note editor, tracked so an in-progress edit is flushed before the pane is
+    // rebuilt for another row or the panel closes (LostFocus alone misses both).
+    internal TextBox? NoteEditor;
+    internal long NoteEntryId;
+    internal string NoteAtLoad = string.Empty;
+
     public ClipboardPanelView()
     {
         InitializeComponent();
@@ -57,6 +63,7 @@ public partial class ClipboardPanelView : UserControl
         // focused window reads as a dead key to the user.
         if (_window is { IsVisible: true })
         {
+            _instance?._actions.FlushNote();
             _window.Close();
             return true;
         }
@@ -99,7 +106,11 @@ public partial class ClipboardPanelView : UserControl
         return true;
     }
 
-    internal void ClosePanel() => _window?.Close();
+    internal void ClosePanel()
+    {
+        _actions.FlushNote();
+        _window?.Close();
+    }
 
     private void OnCultureChanged(string _) =>
         Dispatcher.BeginInvoke(() =>

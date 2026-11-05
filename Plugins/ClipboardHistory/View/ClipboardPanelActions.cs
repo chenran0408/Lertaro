@@ -20,6 +20,7 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
             () => SelectedEntries().ToList().ForEach(entry => _ = ClipboardRuntime.Instance.CopyAsync(entry.Id)),
             TogglePinSelected,
             DeleteSelected,
+            ClearSelectedNote,
             () => SelectedEntries().ToList().ForEach(entry => ClipboardRuntime.Instance.OpenSource(entry.Id)),
             text => _ = ClipboardRuntime.Instance.CopyTextAsync(text),
             SaveSelectedImageAs,
@@ -208,8 +209,35 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
     {
         if (!view.PreviewVisible) return;
         var entry = SelectedEntry();
+        FlushNote();
         view.PreviewTitle.Text = entry is null ? string.Empty : ClipboardPanelLabels.Subtitle(entry);
-        ClipboardPanelPreview.Apply(view.PreviewContent, view.PreviewTitle, entry, ImagesDirectory());
+        view.NoteEditor = ClipboardPanelPreview.Apply(view.PreviewContent, view.PreviewTitle, entry, ImagesDirectory(),
+            text => { if (entry != null && text != entry.Note) ClipboardRuntime.Instance.SetNote(entry.Id, text); });
+        view.NoteEntryId = entry?.Id ?? 0;
+        view.NoteAtLoad = entry?.Note ?? string.Empty;
+    }
+
+    /// <summary>Commits an in-progress note edit before the pane is rebuilt (selection change,
+    /// panel close) so typing followed by an immediate click on another row is not lost.</summary>
+    public void FlushNote()
+    {
+        if (view.NoteEditor is not { } editor) return;
+        if (!string.Equals(editor.Text, view.NoteAtLoad, StringComparison.Ordinal))
+            ClipboardRuntime.Instance.SetNote(view.NoteEntryId, editor.Text);
+        view.NoteEditor = null;
+    }
+
+    /// <summary>Context menu: wipes the selected entry's note and reflects it in the open editor
+    /// (the store update still rides SetNote; the editor edit keeps the pane visually honest).</summary>
+    public void ClearSelectedNote()
+    {
+        if (SelectedEntries() is not [var entry]) return;
+        ClipboardRuntime.Instance.SetNote(entry.Id, string.Empty);
+        if (view.NoteEditor is { } editor && view.NoteEntryId == entry.Id)
+        {
+            editor.Text = string.Empty;
+            view.NoteAtLoad = string.Empty;
+        }
     }
 
     /// <summary>The hint bar doubles as the multi-select status line: with more than one row

@@ -7,8 +7,8 @@ public sealed class ClipboardSearchSupportTests
         (text, term) => text.Contains(term, StringComparison.OrdinalIgnoreCase);
 
     private static ClipboardEntry Entry(string preview, string content = "", string process = "Chrome",
-        ClipboardEntryKind kind = ClipboardEntryKind.Text) =>
-        new(1, content, preview, process, "window", false, 1, 0, 0, kind);
+        ClipboardEntryKind kind = ClipboardEntryKind.Text, string note = "") =>
+        new(1, content, preview, process, "window", false, 1, 0, 0, kind, Note: note);
 
     [TestMethod]
     public void EmptyTerm_MatchesEverything()
@@ -32,5 +32,15 @@ public sealed class ClipboardSearchSupportTests
         Assert.IsTrue(ClipboardSearchSupport.Matches(image, "1920", Contains));
         Assert.IsTrue(ClipboardSearchSupport.Matches(image, "snipping", Contains));
         Assert.IsFalse(ClipboardSearchSupport.Matches(image, "photo", Contains));
+    }
+
+    [TestMethod]
+    public void Note_Matches_EvenWhenPreviewAndContentDoNot()
+    {
+        var noted = Entry("jpg blob", "", note: "季度报表的下载链接");
+        Assert.IsTrue(ClipboardSearchSupport.Matches(noted, "季度", Contains));
+        Assert.IsTrue(ClipboardSearchSupport.Matches(noted, "报表", Contains));
+        // The note must not shadow a miss: a term inside nothing matches nothing.
+        Assert.IsFalse(ClipboardSearchSupport.Matches(Entry("hello", note: "meeting notes"), "xyz", Contains));
     }
 }

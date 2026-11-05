@@ -358,4 +358,44 @@ public sealed class ClipboardStoreTests
         await Assert.ThrowsAsync<OperationCanceledException>(
             () => store.GetEntriesAsync(cancellation.Token));
     }
+
+    [TestMethod]
+    public async Task SetNote_PersistsAcrossReopen_AndPromoteKeepsIt()
+    {
+        var store = CreateStore();
+        await store.InitializeAsync();
+        var entry = await AddText(store, "noted content", "App", "Title", 500, 1000000);
+        Assert.IsNotNull(entry);
+
+        await store.SetNoteAsync(entry.Id, "季度报表链接");
+        await store.SetNoteAsync(entry.Id, "quarterly report link");
+
+        // A fresh store over the same files reads the committed note back.
+        var reopened = CreateStore();
+        await reopened.InitializeAsync();
+        var entries = await reopened.GetEntriesAsync();
+        Assert.HasCount(1, entries);
+        Assert.AreEqual("quarterly report link", entries[0].Note);
+
+        // Re-capturing the same content promotes the existing row: the note belongs to the row,
+        // not to one capture, so it must survive.
+        var again = await AddText(reopened, "noted content", "OtherApp", "OtherTitle", 500, 1000000);
+        Assert.IsNotNull(again);
+        Assert.AreEqual(entry.Id, again.Id);
+        Assert.AreEqual(2, again.SeenCount);
+        Assert.AreEqual("quarterly report link", again.Note);
+
+        // Clearing works the same way.
+        await reopened.SetNoteAsync(entry.Id, "");
+        Assert.IsEmpty((await reopened.GetEntriesAsync())[0].Note);
+    }
+
+    [TestMethod]
+    public async Task SetNote_OnMissingId_IsANoOp()
+    {
+        var store = CreateStore();
+        await store.InitializeAsync();
+        await store.SetNoteAsync(424242, "ghost");
+        Assert.IsEmpty(await store.GetEntriesAsync());
+    }
 }

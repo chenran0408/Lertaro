@@ -234,6 +234,15 @@ internal sealed class ClipboardRuntime : IDisposable
         Publish(await store.GetEntriesAsync().ConfigureAwait(false));
     });
 
+    /// <summary>Saves the user's note on an entry (CopyQ-style annotation). A targeted store update
+    /// plus a local snapshot compose -- no full re-read, so the panel's open note editor keeps its
+    /// focus while typing.</summary>
+    internal void SetNote(long id, string note) => _ = MutateAsync(async store =>
+    {
+        await store.SetNoteAsync(id, note).ConfigureAwait(false);
+        Publish(Entries.Select(entry => entry.Id == id ? entry with { Note = note } : entry).ToArray());
+    });
+
     internal void Delete(long id) => _ = MutateAsync(async store =>
     {
         await store.DeleteAsync(id).ConfigureAwait(false);

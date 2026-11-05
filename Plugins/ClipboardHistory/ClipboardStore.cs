@@ -40,6 +40,9 @@ internal sealed class ClipboardStore(string databasePath, string imagesDirectory
     public Task SetPinnedAsync(long id, bool pinned, CancellationToken cancellationToken = default) =>
         RunLockedAsync(() => SetPinnedCore(id, pinned), cancellationToken);
 
+    public Task SetNoteAsync(long id, string note, CancellationToken cancellationToken = default) =>
+        RunLockedAsync(() => SetNoteCore(id, note ?? string.Empty), cancellationToken);
+
     public Task DeleteAsync(long id, CancellationToken cancellationToken = default) =>
         RunLockedAsync(() => ClipboardStoreWriter.Delete(_database, id), cancellationToken);
 
@@ -99,6 +102,18 @@ internal sealed class ClipboardStore(string databasePath, string imagesDirectory
         using var command = connection.CreateCommand();
         command.CommandText = "UPDATE clipboard_history SET pinned = @pinned WHERE id = @id";
         command.Parameters.AddWithValue("@pinned", pinned);
+        command.Parameters.AddWithValue("@id", id);
+        command.ExecuteNonQuery();
+    }
+
+    private void SetNoteCore(long id, string note)
+    {
+        using var connection = _database.OpenConnection();
+        using var command = connection.CreateCommand();
+        // A targeted note update: the FTS sync trigger only reacts to content changes, so notes
+        // never cost a rebuild, and promotion/deletion keep their existing semantics untouched.
+        command.CommandText = "UPDATE clipboard_history SET note = @note WHERE id = @id";
+        command.Parameters.AddWithValue("@note", note);
         command.Parameters.AddWithValue("@id", id);
         command.ExecuteNonQuery();
     }

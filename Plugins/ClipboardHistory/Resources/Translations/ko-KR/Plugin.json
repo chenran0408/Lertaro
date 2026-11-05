@@ -61,5 +61,9 @@
   "ClipboardHistory_PanelTogglePreview": "미리보기 전환",
   "ClipboardHistory_TimeNow": "방금",
   "ClipboardHistory_TimeMinutesAgo": "{0}분 전",
-  "ClipboardHistory_TimeHoursAgo": "{0}시간 전"
+  "ClipboardHistory_TimeHoursAgo": "{0}시간 전",
+
+  "ClipboardHistory_PanelNote": "메모",
+  "ClipboardHistory_PanelNotePlaceholder": "이 항목에 메모 추가…",
+  "ClipboardHistory_PanelClearNote": "메모 지우기"
 }

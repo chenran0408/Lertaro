@@ -61,5 +61,9 @@
   "ClipboardHistory_PanelTogglePreview": "プレビュー表示切替",
   "ClipboardHistory_TimeNow": "たった今",
   "ClipboardHistory_TimeMinutesAgo": "{0} 分前",
-  "ClipboardHistory_TimeHoursAgo": "{0} 時間前"
+  "ClipboardHistory_TimeHoursAgo": "{0} 時間前",
+
+  "ClipboardHistory_PanelNote": "メモ",
+  "ClipboardHistory_PanelNotePlaceholder": "この履歴にメモを追加…",
+  "ClipboardHistory_PanelClearNote": "メモを消去"
 }
