@@ -202,7 +202,7 @@
                         <!-- Keep filters readable without allowing a long plugin label to consume the
                              result area. Labels already use ellipsis/tooltips, so a stable column gives
                              the search list predictable room at the window's minimum size. -->
-                        <ColumnDefinition x:Name="SidebarColumn" Width="{x:Static app:SearchWindow.FilterSidebarWidth}"/>
+                        <ColumnDefinition x:Name="SidebarColumn" Width="{x:Static app:SearchWindow.FilterSidebarColumnWidth}"/>
                         <!-- Content Area -->
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>

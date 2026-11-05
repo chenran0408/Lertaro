@@ -23,6 +23,11 @@ public partial class SearchWindow : Views.Controls.AppWindow, ISearchWindow, IHa
 {
     public const double FilterSidebarWidth = 236;
 
+    // GridLength twin for ColumnDefinition.Width: x:Static hands the boxed double straight to
+    // SetValue, and WPF never type-converts markup-extension values -- a raw 236 against a
+    // GridLength property throws at BAML load and the window fails to open at all.
+    public static readonly GridLength FilterSidebarColumnWidth = new(FilterSidebarWidth);
+
     private readonly SearchViewModel _viewModel;
     private readonly SearchWindowChromeHandler _chromeHandler;
     private readonly SearchWindowInputHandler _inputHandler;
