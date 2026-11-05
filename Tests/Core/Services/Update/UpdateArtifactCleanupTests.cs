@@ -23,7 +23,7 @@ public sealed class UpdateArtifactCleanupTests
     [TestMethod]
     public void CleanInstallDirectory_RemovesPayloadVerdictAndLock()
     {
-        var payload = Path.Combine(_installDir, UpdateApplyRequestHandler.PayloadStagingFolderName, "rollback-abc");
+        var payload = Path.Combine(_installDir, "update-payload", "rollback-abc");
         Directory.CreateDirectory(payload);
         File.WriteAllText(Path.Combine(payload, "Lertaro.App.exe"), "old");
         File.WriteAllText(Path.Combine(_installDir, "update-result.json"), "{}");
@@ -31,7 +31,7 @@ public sealed class UpdateArtifactCleanupTests
 
         UpdateArtifactCleanup.CleanInstallDirectory(_installDir);
 
-        Assert.IsFalse(Directory.Exists(Path.Combine(_installDir, UpdateApplyRequestHandler.PayloadStagingFolderName)));
+        Assert.IsFalse(Directory.Exists(Path.Combine(_installDir, "update-payload")));
         Assert.IsFalse(File.Exists(Path.Combine(_installDir, "update-result.json")));
         Assert.IsFalse(File.Exists(Path.Combine(_installDir, "update.lock")));
     }

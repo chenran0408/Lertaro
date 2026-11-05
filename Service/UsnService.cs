@@ -49,11 +49,6 @@ public class UsnService : ServiceBase
             // The SCM start callback must return promptly. Launching the user's App can involve
             // cross-session token setup, and cleanup may wait for the updater's lock; neither belongs
             // on the service-start critical path.
-            _ = Task.Run(() =>
-            {
-                RelaunchAppAfterUpdate();
-                CompletedUpdatePayloadCleanup.Schedule(AppContext.BaseDirectory);
-            });
             Logger.Log("[UsnService] Service Started successfully.");
         }
         catch (Exception ex)
@@ -97,26 +92,6 @@ public class UsnService : ServiceBase
     /// immediately finds an answer. A duplicate for a user who started the App by hand in the meantime is
     /// answered by the App's own per-session mutex.
     /// </remarks>
-    private static void RelaunchAppAfterUpdate()
-    {
-        if (!UpdateRelaunchMarker.TryTake(out var sessionId, DateTimeOffset.UtcNow))
-            return;
-
-        // Always this install's own App, never a path from the note: see UpdateRelaunchMarker.TryTake.
-        var appExePath = Path.Combine(AppContext.BaseDirectory, "Lertaro.App.exe");
-        if (!File.Exists(appExePath))
-            return;
-
-        if (!SessionProcessLauncher.TryLaunch(sessionId, appExePath, string.Empty, requestElevation: false,
-                detachFromConsole: true, out var pid, out var error))
-        {
-            Logger.Log($"[UsnService] Update finished but the App could not be started: {error}", LogLevel.Error);
-            return;
-        }
-
-        Logger.Log($"[UsnService] Started the updated App (PID {pid}) in session {sessionId}.");
-    }
-
     internal void TestStart() => OnStart(Array.Empty<string>());
     internal void TestStop() => OnStop();
 }

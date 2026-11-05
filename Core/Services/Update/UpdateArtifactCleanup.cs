@@ -32,7 +32,7 @@ public static class UpdateArtifactCleanup
         try
         {
             var temp = Path.GetTempPath();
-            foreach (var dir in Directory.EnumerateDirectories(temp, UpdatePackage.StagingDirPrefix + "*"))
+            foreach (var dir in Directory.EnumerateDirectories(temp, "LertaroUpdate-*"))
             {
                 try { Directory.Delete(dir, recursive: true); }
                 catch (Exception ex) { Logger.Log($"[UpdateCleanup] {dir}: {ex.Message}", LogLevel.Debug); }
@@ -46,7 +46,7 @@ public static class UpdateArtifactCleanup
     /// picks it up.</summary>
     internal static void CleanInstallDirectory(string installDirectory)
     {
-        var payloadRoot = Path.Combine(installDirectory, UpdateApplyRequestHandler.PayloadStagingFolderName);
+        var payloadRoot = Path.Combine(installDirectory, "update-payload");
         if (Directory.Exists(payloadRoot))
             Directory.Delete(payloadRoot, recursive: true);
 
