@@ -12,36 +12,56 @@ namespace Lertaro.Plugins.ClipboardHistory.Capture;
 // pump thread this runs on is STA, which Clipboard requires.
 internal sealed class ClipboardImageReader
 {
-    private readonly IClipboardNative _native;
+    internal const int MaxRetries = 2; // initial attempt plus 2 retries
+    internal const int RetryIntervalMs = 50;
 
-    public ClipboardImageReader(IClipboardNative native) => _native = native;
+    private readonly IClipboardNative _native;
+    private readonly Func<BitmapSource?> _getImage;
+
+    public ClipboardImageReader(IClipboardNative native) : this(native, Clipboard.GetImage) { }
+
+    // Test seam: Clipboard.GetImage is a static WPF call with no native seam to fake, so the
+    // contention path is exercised through this delegate instead of a live clipboard.
+    internal ClipboardImageReader(IClipboardNative native, Func<BitmapSource?> getImage)
+    {
+        _native = native;
+        _getImage = getImage;
+    }
 
     /// <summary>The encoded PNG payload, or null when the clipboard changed under the read, the
     /// bitmap could not be decoded/encoded, or it exceeds the size ceiling.</summary>
     public ClipboardImagePayload? Read(uint expectedSequence, nint expectedOwner)
     {
-        if (_native.GetClipboardSequenceNumber() != expectedSequence ||
-            _native.GetClipboardOwner() != expectedOwner) return null;
-
-        BitmapSource? source;
-        try
+        // GetImage opens the clipboard internally, so a competing reader holding it open throws
+        // for a moment. Retry on the same bounded budget as the text and file readers -- but only
+        // while the snapshot still matches: a changed clipboard is not ours to wait for, the next
+        // WM_CLIPBOARDUPDATE owns that content.
+        for (var attempt = 0; attempt <= MaxRetries; attempt++)
         {
-            source = Clipboard.GetImage();
-        }
-        catch (Exception ex) when (ex is COMException or InvalidOperationException)
-        {
-            return null; // clipboard contended or empty between the availability check and the read
-        }
-        if (source == null) return null;
+            if (attempt > 0) Thread.Sleep(RetryIntervalMs);
+            if (_native.GetClipboardSequenceNumber() != expectedSequence ||
+                _native.GetClipboardOwner() != expectedOwner) return null;
 
-        // Re-check after the (slow) decode: a changed clipboard means the decoded pixels may not
-        // belong to the snapshotted owner, who was already vetted against the exclusion list.
-        if (_native.GetClipboardSequenceNumber() != expectedSequence ||
-            _native.GetClipboardOwner() != expectedOwner) return null;
+            BitmapSource? source;
+            try
+            {
+                source = _getImage();
+            }
+            catch (Exception ex) when (ex is COMException or InvalidOperationException)
+            {
+                continue; // clipboard contended between the availability check and the read
+            }
+            if (source == null) continue;
 
-        if (source.CanFreeze) source.Freeze();
-        var payload = Encode(source);
-        return payload;
+            // Re-check after the (slow) decode: a changed clipboard means the decoded pixels may not
+            // belong to the snapshotted owner, who was already vetted against the exclusion list.
+            if (_native.GetClipboardSequenceNumber() != expectedSequence ||
+                _native.GetClipboardOwner() != expectedOwner) return null;
+
+            if (source.CanFreeze) source.Freeze();
+            return Encode(source);
+        }
+        return null;
     }
 
     private static ClipboardImagePayload? Encode(BitmapSource source)

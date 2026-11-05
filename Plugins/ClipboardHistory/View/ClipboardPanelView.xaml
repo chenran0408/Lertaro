@@ -107,7 +107,8 @@
                  MouseDoubleClick="Lst_MouseDoubleClick"
                  ContextMenuOpening="Lst_ContextMenuOpening"
                  PreviewMouseLeftButtonDown="Lst_PreviewMouseLeftButtonDown"
-                 PreviewMouseMove="Lst_PreviewMouseMove">
+                 PreviewMouseMove="Lst_PreviewMouseMove"
+                 PreviewTextInput="Lst_PreviewTextInput">
             <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>

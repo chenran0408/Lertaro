@@ -240,6 +240,19 @@ public partial class ClipboardPanelView : UserControl
     private void Lst_PreviewMouseMove(object sender, MouseEventArgs e) =>
         _actions.BeginDragIfRequested(e, _dragAnchor);
 
+    // Type-to-search (Maccy/Ditto behavior): once the user starts typing while the list -- not the
+    // search box -- has focus, the keystroke seeds the search box instead of vanishing. Digits
+    // never reach here: the preview-keydown resolver claims 1~9 as quick paste and marks them
+    // handled first, so slot paste keeps precedence over search seeding.
+    private void Lst_PreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (string.IsNullOrEmpty(e.Text)) return;
+        SearchBox.Focus();
+        SearchBox.Text += e.Text;
+        SearchBox.CaretIndex = SearchBox.Text.Length;
+        e.Handled = true;
+    }
+
     private void View_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         var result = ClipboardPanelKeys.Resolve(e.Key, Keyboard.Modifiers, SearchBox.IsKeyboardFocused);
