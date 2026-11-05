@@ -103,4 +103,19 @@ public sealed class ClipboardPanelKeysTests
         Assert.AreEqual(ClipboardPanelAction.None,
             ClipboardPanelKeys.Resolve(Key.Down, ModifierKeys.Control, searchFocused: false).Action);
     }
+
+    [TestMethod]
+    public void Escape_ClearsSearchFirst_ThenCloses()
+    {
+        // Typing state: the first Esc empties the query instead of killing the panel.
+        Assert.AreEqual(ClipboardPanelAction.ClearSearch,
+            ClipboardPanelKeys.Resolve(Key.Escape, ModifierKeys.None, searchFocused: true, searchHasText: true).Action);
+        // Empty box or list focus: Esc closes as before (the default keeps existing callers true).
+        Assert.AreEqual(ClipboardPanelAction.Close,
+            ClipboardPanelKeys.Resolve(Key.Escape, ModifierKeys.None, searchFocused: true, searchHasText: false).Action);
+        Assert.AreEqual(ClipboardPanelAction.Close,
+            ClipboardPanelKeys.Resolve(Key.Escape, ModifierKeys.None, searchFocused: false, searchHasText: true).Action);
+        Assert.AreEqual(ClipboardPanelAction.Close,
+            ClipboardPanelKeys.Resolve(Key.Escape, ModifierKeys.None, searchFocused: true).Action);
+    }
 }

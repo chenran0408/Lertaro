@@ -15,6 +15,7 @@ internal enum ClipboardPanelAction
     PasteSelectedPlainText,
     DeleteSelected,
     TogglePinSelected,
+    ClearSearch,
     Close,
     FocusSearch,
     PasteByIndex,
@@ -32,14 +33,18 @@ internal readonly record struct ClipboardPanelKeyResult(ClipboardPanelAction Act
 /// Digits paste the Nth visible row only while focus is OUT of the search box: in the box they type,
 /// which is why search focus is an input here and not an implementation detail. Bare arrows move the
 /// selection, Shift+arrows extend it (merged multi-paste), Ctrl+A selects the whole view; in the
-/// search box those stay native text behaviors.
+/// search box those stay native text behaviors. Esc mirrors every mainstream manager: first press
+/// clears the search, the next one closes the panel.
 /// </summary>
 internal static class ClipboardPanelKeys
 {
-    public static ClipboardPanelKeyResult Resolve(Key key, ModifierKeys modifiers, bool searchFocused)
+    public static ClipboardPanelKeyResult Resolve(Key key, ModifierKeys modifiers, bool searchFocused,
+        bool searchHasText = false)
     {
         switch (key)
         {
+            case Key.Escape when searchFocused && searchHasText:
+                return ClipboardPanelAction.ClearSearch;
             case Key.Escape:
                 return ClipboardPanelAction.Close;
             case Key.Up when !searchFocused && modifiers == ModifierKeys.None:

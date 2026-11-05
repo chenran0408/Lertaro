@@ -270,7 +270,8 @@ public partial class ClipboardPanelView : UserControl
 
     private void View_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        var result = ClipboardPanelKeys.Resolve(e.Key, Keyboard.Modifiers, SearchBox.IsKeyboardFocused);
+        var result = ClipboardPanelKeys.Resolve(e.Key, Keyboard.Modifiers, SearchBox.IsKeyboardFocused,
+            SearchBox.IsKeyboardFocused && SearchBox.Text.Length > 0);
         switch (result.Action)
         {
             case ClipboardPanelAction.None:
@@ -289,6 +290,11 @@ public partial class ClipboardPanelView : UserControl
                 break;
             case ClipboardPanelAction.SelectAll:
                 _actions.SelectAllRows();
+                break;
+            case ClipboardPanelAction.ClearSearch:
+                // Esc's first press: empty the query, keep the panel up and the caret in the box so
+                // the next keystrokes are a fresh search; the second press falls through to Close.
+                SearchBox.Text = string.Empty;
                 break;
             case ClipboardPanelAction.PasteSelected:
                 _actions.PasteSelected(plainText: false);

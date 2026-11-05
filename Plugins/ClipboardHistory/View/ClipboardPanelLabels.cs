@@ -75,7 +75,10 @@ internal static class ClipboardPanelLabels
     public static string Subtitle(ClipboardEntry entry)
     {
         var source = entry.SourceProcess.Length > 0 ? entry.SourceProcess : "·";
-        return $"{source}  ·  {RowTime(entry.LastSeenAtMs)}  ·  {entry.SeenCount}×";
+        // The pencil tells the user a note exists without opening the preview: the note is
+        // invisible in the row by design, and an annotated row that looks identical to the rest
+        // might as well not have one.
+        return $"{source}  ·  {RowTime(entry.LastSeenAtMs)}  ·  {entry.SeenCount}×{(entry.Note.Length > 0 ? "  ·  ✎" : "")}";
     }
 
     /// <summary>Re-applies every string the panel shows. Called at construction and on a language
