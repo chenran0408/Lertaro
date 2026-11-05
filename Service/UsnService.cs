@@ -6,8 +6,6 @@ using Lertaro.Core.Services;
 using Lertaro.Core.Services.HookLaunch;
 
 using Lertaro.Core.Services.Plugin.Loading;
-
-using Lertaro.Core.Services.Update;
 namespace Lertaro.Service;
 
 public class UsnService : ServiceBase
