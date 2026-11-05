@@ -12,10 +12,12 @@ internal static class ClipboardPanelViewSettings
     private const string WidthKey = "PanelWidth";
     private const string HeightKey = "PanelHeight";
     private const string PreviewKey = "PanelPreviewVisible";
+    private const string PreviewWidthKey = "PanelPreviewWidth";
     private const string LastTabKey = "PanelLastTab";
     private const string SortKey = "PanelSortByFrequency";
     private const double DefaultWidth = 780;
     private const double DefaultHeight = 620;
+    private const double DefaultPreviewWidth = 300;
     private const double MaxSide = 2000;
 
     public static double Width() => Clamp(PluginSettingsService.GetSetting(ClipboardSettings.PluginId, WidthKey, DefaultWidth));
@@ -24,6 +26,20 @@ internal static class ClipboardPanelViewSettings
 
     public static bool PreviewVisible() =>
         PluginSettingsService.GetSetting(ClipboardSettings.PluginId, PreviewKey, true);
+
+    /// <summary>The preview column width the user dragged the splitter to. Clamp is tighter than
+    /// the window's: the pane must keep the list readable at the window's minimum size.</summary>
+    public static double PreviewWidth()
+    {
+        try { return Math.Clamp(Convert.ToDouble(PluginSettingsService.GetSetting(ClipboardSettings.PluginId, PreviewWidthKey, DefaultPreviewWidth)), 180, 600); }
+        catch (Exception ex) when (ex is FormatException or InvalidCastException or OverflowException)
+        {
+            return DefaultPreviewWidth;
+        }
+    }
+
+    public static void SavePreviewWidth(double width) =>
+        PluginSettingsService.SetSetting(ClipboardSettings.PluginId, PreviewWidthKey, Math.Clamp(width, 180, 600));
 
     /// <summary>The tab the panel reopens on (mature managers reopen where you left off). Clamped
     /// to the known range -- a stale or hand-edited value falls back to All.</summary>

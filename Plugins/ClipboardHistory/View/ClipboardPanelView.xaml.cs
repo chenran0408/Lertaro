@@ -95,7 +95,10 @@ public partial class ClipboardPanelView : UserControl
             var window = new PluginWindow(
                 ClipboardPanelLabels.Title(), view.StoredWidth(), view.StoredHeight(), PluginWindowMode.Window);
             view.PreviewVisible = ClipboardPanelViewSettings.PreviewVisible();
-            if (!view.PreviewVisible) view.PreviewColumn.Width = new GridLength(0);
+            if (!view.PreviewVisible)
+                view.PreviewColumn.Width = new GridLength(0);
+            else
+                view.PreviewColumn.Width = new GridLength(ClipboardPanelViewSettings.PreviewWidth());
             window.ShowFooter = false;
             window.ContentHostControl.VerticalContentAlignment = VerticalAlignment.Stretch;
             window.ContentHostControl.HorizontalContentAlignment = HorizontalAlignment.Stretch;
@@ -103,6 +106,7 @@ public partial class ClipboardPanelView : UserControl
             window.Closed += (_, _) =>
             {
                 ClipboardPanelViewSettings.Save(window.Width, window.Height, view.PreviewVisible);
+                if (view.PreviewVisible) ClipboardPanelViewSettings.SavePreviewWidth(view.PreviewColumn.Width.Value);
                 _window = null;
                 _instance = null;
             };
