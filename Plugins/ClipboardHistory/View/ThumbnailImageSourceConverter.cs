@@ -25,6 +25,37 @@ public sealed class ThumbnailImageSourceConverter(string imagesDirectory) : IVal
 
     public ThumbnailImageSourceConverter() : this(ResolveImagesDirectory()) { }
 
+    /// <summary>Decodes a stored PNG into the cache off the UI thread (no-op on cache hit or
+    /// failure), so the first scroll through an image-heavy history finds warm entries instead of
+    /// paying a synchronous disk read plus decode per row.</summary>
+    public static void PrimeCache(string imagesDirectory, IReadOnlyList<string> fileNames)
+    {
+        foreach (var fileName in fileNames)
+        {
+            if (string.IsNullOrEmpty(fileName)) continue;
+            var path = Path.Combine(imagesDirectory, fileName);
+            if (Cache.ContainsKey(path)) continue;
+            try
+            {
+                if (!File.Exists(path)) continue;
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.DecodePixelWidth = DecodeWidth;
+                bitmap.UriSource = new Uri(path, UriKind.Absolute);
+                bitmap.EndInit();
+                bitmap.Freeze();
+                if (Cache.Count >= CacheCap) Cache.Clear();
+                Cache[path] = bitmap;
+            }
+            catch (Exception ex) when (ex is IOException or NotSupportedException or InvalidOperationException)
+            {
+                // The binding path already handles a failed decode by showing the row without a
+                // thumbnail; the preheat must not turn that into a crash off the UI thread.
+            }
+        }
+    }
+
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not string fileName || fileName.Length == 0) return null;
