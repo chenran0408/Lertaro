@@ -74,6 +74,18 @@ internal static class ClipboardStoreWriter
         UnlinkImages(database.ImagesDirectory, images);
     }
 
+    /// <summary>Clears every unpinned row, leaving pinned entries alone: a pin is the user saying
+    /// "keep this", and a bulk clear must not silently break that promise (Maccy behaves the same
+    /// way -- clear-all needs the pinned rows to be unstuck or deleted one by one first).</summary>
+    public static void ClearUnpinned(ClipboardDatabase database)
+    {
+        using var connection = database.OpenConnection();
+        using var transaction = connection.BeginTransaction();
+        var images = DeleteWhere(connection, transaction, "pinned = 0");
+        transaction.Commit();
+        UnlinkImages(database.ImagesDirectory, images);
+    }
+
     public static void Trim(ClipboardDatabase database, int maxEntries, int retentionDays)
     {
         using var connection = database.OpenConnection();

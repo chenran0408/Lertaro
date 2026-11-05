@@ -164,6 +164,10 @@ internal sealed class ClipboardMonitorService : IDisposable
             if (identity == null) return; // unreadable identity: skip conservatively
             if (ClipboardExclusionList.IsExcluded(options.ExcludedProcesses, identity.Value.ProcessName)) return;
 
+            // The owner may have flagged the copy as sensitive itself (password managers do);
+            // honor that marker before any reader opens the clipboard.
+            if (ClipboardSensitivity.ShouldSkip(_native, _source.Handle, sequence, owner)) return;
+
             // One update yields exactly one capture, tried in the order users mean it: a text copy
             // that also carries a bitmap (Excel, browsers) is a text copy; a bare drop is files; a
             // bare bitmap is an image.

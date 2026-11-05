@@ -419,4 +419,23 @@ public sealed class ClipboardStoreTests
         Assert.AreEqual(3, entries[0].PasteCount);
         Assert.AreEqual(1, entries[0].SeenCount); // captures are a separate tally
     }
+
+    [TestMethod]
+    public async Task ClearUnpinned_KeepsPinnedRows_AndTheirImages()
+    {
+        var store = CreateStore();
+        await store.InitializeAsync();
+        var plain = await AddText(store, "plain", "App", "Title", 500, 1000000);
+        var pinnedEntry = await AddText(store, "pinned", "App", "Title", 500, 1000000);
+        Assert.IsNotNull(plain);
+        Assert.IsNotNull(pinnedEntry);
+        await store.SetPinnedAsync(pinnedEntry.Id, true);
+
+        await store.ClearUnpinnedAsync();
+
+        var entries = await store.GetEntriesAsync();
+        Assert.HasCount(1, entries);
+        Assert.AreEqual(pinnedEntry.Id, entries[0].Id);
+        Assert.IsTrue(entries[0].Pinned);
+    }
 }

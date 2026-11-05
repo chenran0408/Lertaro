@@ -52,7 +52,7 @@
   "ClipboardHistory_PanelCopyPathQuoted": "複製帶引號路徑",
   "ClipboardHistory_PanelCopyPathWsl": "複製為 WSL 路徑",
   "ClipboardHistory_PanelSaveImageAs": "圖片另存為…",
-  "ClipboardHistory_PanelClearConfirm": "刪除全部剪貼簿歷史（包括已保存的圖片）？此操作無法復原。",
+  "ClipboardHistory_PanelClearConfirm": "刪除全部未釘選的剪貼簿歷史（包括其中儲存的圖片）？已釘選的項目會保留。此操作無法復原。",
   "ClipboardHistory_PanelSelectedMerge": "已選 {0} 條 — Enter 將合併貼上",
   "ClipboardHistory_PanelPreviewText": "文字",
   "ClipboardHistory_PanelPreviewFiles": "檔案",
@@ -62,7 +62,6 @@
   "ClipboardHistory_TimeNow": "剛剛",
   "ClipboardHistory_TimeMinutesAgo": "{0} 分鐘前",
   "ClipboardHistory_TimeHoursAgo": "{0} 小時前",
-
   "ClipboardHistory_PanelNote": "備註",
   "ClipboardHistory_PanelNotePlaceholder": "為這條記錄新增備註…",
   "ClipboardHistory_PanelClearNote": "清除備註"

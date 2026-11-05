@@ -52,7 +52,7 @@
   "ClipboardHistory_PanelCopyPathQuoted": "Copy as quoted path",
   "ClipboardHistory_PanelCopyPathWsl": "Copy as WSL path",
   "ClipboardHistory_PanelSaveImageAs": "Save image as…",
-  "ClipboardHistory_PanelClearConfirm": "Delete the entire clipboard history, including stored images? This cannot be undone.",
+  "ClipboardHistory_PanelClearConfirm": "Delete all unpinned clipboard history, including stored images? Pinned entries are kept. This cannot be undone.",
   "ClipboardHistory_PanelSelectedMerge": "{0} selected — Enter pastes them merged",
   "ClipboardHistory_PanelPreviewText": "Text",
   "ClipboardHistory_PanelPreviewFiles": "Files",
@@ -62,7 +62,6 @@
   "ClipboardHistory_TimeNow": "Just now",
   "ClipboardHistory_TimeMinutesAgo": "{0} min ago",
   "ClipboardHistory_TimeHoursAgo": "{0} h ago",
-
   "ClipboardHistory_PanelNote": "Note",
   "ClipboardHistory_PanelNotePlaceholder": "Add a note to this entry...",
   "ClipboardHistory_PanelClearNote": "Clear note"

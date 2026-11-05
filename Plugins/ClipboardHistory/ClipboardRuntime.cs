@@ -266,10 +266,13 @@ internal sealed class ClipboardRuntime : IDisposable
         Publish(Entries.Where(entry => entry.Id != id).ToArray());
     });
 
+    /// <summary>Clears the panel's clear-history action: unpinned rows only. Pinned entries
+    /// survive a bulk clear -- the pin's whole promise is surviving trims, clears included;
+    /// removing a pinned entry is a deliberate per-row decision.</summary>
     internal void ClearHistory() => _ = MutateAsync(async store =>
     {
-        await store.ClearAsync().ConfigureAwait(false);
-        Publish([]);
+        await store.ClearUnpinnedAsync().ConfigureAwait(false);
+        Publish(Entries.Where(entry => entry.Pinned).ToArray());
     });
 
     internal bool CanOpenSource(long id) => _sources.TryGetValue(id, out var source) && source.IsAlive;

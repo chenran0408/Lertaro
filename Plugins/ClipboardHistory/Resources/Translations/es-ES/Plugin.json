@@ -52,7 +52,7 @@
   "ClipboardHistory_PanelCopyPathQuoted": "Copiar ruta entrecomillada",
   "ClipboardHistory_PanelCopyPathWsl": "Copiar como ruta WSL",
   "ClipboardHistory_PanelSaveImageAs": "Guardar imagen como…",
-  "ClipboardHistory_PanelClearConfirm": "¿Eliminar todo el historial del portapapeles, incluidas las imágenes guardadas? No se puede deshacer.",
+  "ClipboardHistory_PanelClearConfirm": "¿Eliminar todo el historial no fijado del portapapeles, incluidas las imágenes guardadas? Los elementos fijados se conservan. Esto no se puede deshacer.",
   "ClipboardHistory_PanelSelectedMerge": "{0} seleccionadas — Entrar pega combinado",
   "ClipboardHistory_PanelPreviewText": "Texto",
   "ClipboardHistory_PanelPreviewFiles": "Archivos",
@@ -62,7 +62,6 @@
   "ClipboardHistory_TimeNow": "Ahora mismo",
   "ClipboardHistory_TimeMinutesAgo": "hace {0} min",
   "ClipboardHistory_TimeHoursAgo": "hace {0} h",
-
   "ClipboardHistory_PanelNote": "Nota",
   "ClipboardHistory_PanelNotePlaceholder": "Añadir una nota a este elemento...",
   "ClipboardHistory_PanelClearNote": "Quitar nota"

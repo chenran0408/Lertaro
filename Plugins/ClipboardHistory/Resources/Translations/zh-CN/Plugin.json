@@ -52,7 +52,7 @@
   "ClipboardHistory_PanelCopyPathQuoted": "复制带引号路径",
   "ClipboardHistory_PanelCopyPathWsl": "复制为 WSL 路径",
   "ClipboardHistory_PanelSaveImageAs": "图片另存为…",
-  "ClipboardHistory_PanelClearConfirm": "删除全部剪贴板历史（包括已保存的图片）？此操作不可撤销。",
+  "ClipboardHistory_PanelClearConfirm": "删除全部未置顶的剪贴板历史（包括其中保存的图片）？已置顶的条目会保留。此操作不可撤销。",
   "ClipboardHistory_PanelSelectedMerge": "已选 {0} 条 — Enter 将合并粘贴",
   "ClipboardHistory_PanelPreviewText": "文本",
   "ClipboardHistory_PanelPreviewFiles": "文件",
@@ -62,7 +62,6 @@
   "ClipboardHistory_TimeNow": "刚刚",
   "ClipboardHistory_TimeMinutesAgo": "{0} 分钟前",
   "ClipboardHistory_TimeHoursAgo": "{0} 小时前",
-
   "ClipboardHistory_PanelNote": "备注",
   "ClipboardHistory_PanelNotePlaceholder": "为这条记录添加备注…",
   "ClipboardHistory_PanelClearNote": "清除备注"

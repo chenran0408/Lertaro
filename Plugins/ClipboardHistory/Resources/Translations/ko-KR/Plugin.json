@@ -52,7 +52,7 @@
   "ClipboardHistory_PanelCopyPathQuoted": "따옴표 경로로 복사",
   "ClipboardHistory_PanelCopyPathWsl": "WSL 경로로 복사",
   "ClipboardHistory_PanelSaveImageAs": "이미지 다른 이름으로 저장…",
-  "ClipboardHistory_PanelClearConfirm": "클립보드 기록 전체(저장된 이미지 포함)를 삭제할까요? 되돌릴 수 없습니다.",
+  "ClipboardHistory_PanelClearConfirm": "고정되지 않은 클립보드 기록을 모두 삭제할까요(저장된 이미지 포함)? 고정된 항목은 유지됩니다. 이 작업은 되돌릴 수 없습니다.",
   "ClipboardHistory_PanelSelectedMerge": "{0}개 선택 — Enter로 병합 붙여넣기",
   "ClipboardHistory_PanelPreviewText": "텍스트",
   "ClipboardHistory_PanelPreviewFiles": "파일",
@@ -62,7 +62,6 @@
   "ClipboardHistory_TimeNow": "방금",
   "ClipboardHistory_TimeMinutesAgo": "{0}분 전",
   "ClipboardHistory_TimeHoursAgo": "{0}시간 전",
-
   "ClipboardHistory_PanelNote": "메모",
   "ClipboardHistory_PanelNotePlaceholder": "이 항목에 메모 추가…",
   "ClipboardHistory_PanelClearNote": "메모 지우기"

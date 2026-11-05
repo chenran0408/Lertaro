@@ -52,7 +52,7 @@
   "ClipboardHistory_PanelCopyPathQuoted": "引用符付きパスをコピー",
   "ClipboardHistory_PanelCopyPathWsl": "WSL パスとしてコピー",
   "ClipboardHistory_PanelSaveImageAs": "画像に名前を付けて保存…",
-  "ClipboardHistory_PanelClearConfirm": "クリップボード履歴（保存済み画像を含む）をすべて削除しますか？元に戻せません。",
+  "ClipboardHistory_PanelClearConfirm": "ピン留めされていない履歴をすべて削除します（保存された画像を含む）？ピン留めされた項目は残ります。この操作は元に戻せません。",
   "ClipboardHistory_PanelSelectedMerge": "{0} 件選択中 — Enter で結合して貼り付け",
   "ClipboardHistory_PanelPreviewText": "テキスト",
   "ClipboardHistory_PanelPreviewFiles": "ファイル",
@@ -62,7 +62,6 @@
   "ClipboardHistory_TimeNow": "たった今",
   "ClipboardHistory_TimeMinutesAgo": "{0} 分前",
   "ClipboardHistory_TimeHoursAgo": "{0} 時間前",
-
   "ClipboardHistory_PanelNote": "メモ",
   "ClipboardHistory_PanelNotePlaceholder": "この履歴にメモを追加…",
   "ClipboardHistory_PanelClearNote": "メモを消去"
