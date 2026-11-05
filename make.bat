@@ -163,9 +163,6 @@ echo.
 echo [3/4] Copying portable updater/cleanup files and cleaning PDB files...
 %BUILD_POWERSHELL% -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Tools\PrepareTaskbarBundle.ps1" -OutputDirectory "%OUT%" -CacheDirectory "%ROOT%obj\TaskbarDownloadCache" -Architecture "%ARCH%"
 if errorlevel 1 exit /b 1
-if errorlevel 1 (
-)
-if errorlevel 1 exit /b 1
 copy "%ROOT%portable-updater.bat" "%OUT%\" >nul
 if errorlevel 1 echo [Warning] Failed to copy portable-updater.bat.
 copy "%ROOT%portable-updater.ps1" "%OUT%\" >nul
@@ -175,8 +172,6 @@ if errorlevel 1 echo [Warning] Failed to copy portable-cleanup.bat.
 copy "%ROOT%install-dotnet-runtime.bat" "%OUT%\" >nul
 if errorlevel 1 (
     echo [Warning] Failed to copy install-dotnet-runtime.bat.
-)
-if errorlevel 1 (
 )
 
 :: Preserve the application license in both the installer and portable ZIP.
