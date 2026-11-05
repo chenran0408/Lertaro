@@ -68,4 +68,39 @@ public sealed class ClipboardPanelKeysTests
         Assert.AreEqual(ClipboardPanelAction.None,
             ClipboardPanelKeys.Resolve(Key.Space, ModifierKeys.None, searchFocused: false).Action);
     }
+
+    [TestMethod]
+    public void ShiftArrows_Extend_OnlyFromTheList()
+    {
+        Assert.AreEqual(ClipboardPanelAction.ExtendUp,
+            ClipboardPanelKeys.Resolve(Key.Up, ModifierKeys.Shift, searchFocused: false).Action);
+        Assert.AreEqual(ClipboardPanelAction.ExtendDown,
+            ClipboardPanelKeys.Resolve(Key.Down, ModifierKeys.Shift, searchFocused: false).Action);
+        // In the search box Shift+arrows stay native text selection.
+        Assert.AreEqual(ClipboardPanelAction.None,
+            ClipboardPanelKeys.Resolve(Key.Up, ModifierKeys.Shift, searchFocused: true).Action);
+        Assert.AreEqual(ClipboardPanelAction.None,
+            ClipboardPanelKeys.Resolve(Key.Down, ModifierKeys.Shift, searchFocused: true).Action);
+    }
+
+    [TestMethod]
+    public void CtrlA_SelectsAllRows_OnlyFromTheList()
+    {
+        Assert.AreEqual(ClipboardPanelAction.SelectAll,
+            ClipboardPanelKeys.Resolve(Key.A, ModifierKeys.Control, searchFocused: false).Action);
+        // In the search box Ctrl+A stays the native select-all-text.
+        Assert.AreEqual(ClipboardPanelAction.None,
+            ClipboardPanelKeys.Resolve(Key.A, ModifierKeys.Control, searchFocused: true).Action);
+    }
+
+    [TestMethod]
+    public void PlainArrows_NeedBareArrows_OtherModifiersStayUnbound()
+    {
+        // Shift is claimed by extend, and Ctrl/Alt+arrows have no meaning -- keeping them unbound
+        // prevents a held modifier from silently moving the selection.
+        Assert.AreEqual(ClipboardPanelAction.None,
+            ClipboardPanelKeys.Resolve(Key.Up, ModifierKeys.Control, searchFocused: false).Action);
+        Assert.AreEqual(ClipboardPanelAction.None,
+            ClipboardPanelKeys.Resolve(Key.Down, ModifierKeys.Control, searchFocused: false).Action);
+    }
 }

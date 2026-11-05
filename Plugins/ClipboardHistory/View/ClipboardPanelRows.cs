@@ -92,4 +92,18 @@ internal static class ClipboardPanelRows
     /// paste indexes into this list, and keyboard navigation walks it.</summary>
     public static List<long> SelectableIds(IReadOnlyList<ClipboardPanelItem> items) =>
         items.Where(item => !item.IsHeader).Select(item => item.Id).ToList();
+
+    /// <summary>Display indexes a Shift+arrow extension covers: the rows between the anchor and the
+    /// new cursor (both ends included, order-free), headers skipped. Empty when the cursor lands
+    /// outside the list or on a header.</summary>
+    public static List<int> RowIndexesBetween(int anchor, int cursor, IReadOnlyList<ClipboardPanelItem> items)
+    {
+        if (anchor < 0 || cursor < 0 || anchor >= items.Count || cursor >= items.Count) return [];
+        if (items[cursor].IsHeader) return [];
+        var (from, to) = anchor <= cursor ? (anchor, cursor) : (cursor, anchor);
+        var indexes = new List<int>(to - from + 1);
+        for (var index = from; index <= to; index++)
+            if (!items[index].IsHeader) indexes.Add(index);
+        return indexes;
+    }
 }

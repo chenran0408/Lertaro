@@ -9,7 +9,8 @@ namespace Lertaro.Plugins.ClipboardHistory.View;
 /// The panel's action surface: everything that acts on the selected rows (paste in both formats,
 /// merged multi-paste, delete, pin, copy, source window, path-format copies, save image as) plus
 /// the preview pane, the hint bar, the context menu payload and drag-out. Split from the view for
-/// the per-file line limit; holds no state of its own -- everything reads through the view.
+/// the per-file line limit; the only state it keeps is the keyboard selection cursor for
+/// Shift+arrow extensions -- everything else reads through the view.
 /// </summary>
 internal sealed class ClipboardPanelActions(ClipboardPanelView view)
 {
@@ -45,8 +46,69 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
         while (next >= 0 && next < items.Count && items[next].IsHeader)
             next += delta;
         if (next < 0 || next >= items.Count) return;
+        EndKeyboardSelection();
         view.Lst.SelectedIndex = next;
         view.Lst.ScrollIntoView(view.Lst.SelectedItem);
+    }
+
+    // Keyboard selection state: _cursor is where the next Shift+arrow moves from, _anchor is the
+    // end the extension grows from (WPF's Extended mode exposes no anchor for programmatic
+    // selection, so the panel tracks its own). Rebuilds and mouse presses end the session.
+    private int _cursor = -1;
+    private int _anchor = -1;
+    private bool _extending;
+
+    /// <summary>Ends any in-flight Shift+arrow extension: the next one re-seeds from whatever the
+    /// list currently shows. Rebuilds and mouse presses call this.</summary>
+    public void EndKeyboardSelection()
+    {
+        _extending = false;
+        _cursor = -1;
+        _anchor = -1;
+    }
+
+    /// <summary>Shift+arrow: grow the selection from the anchor to the moved cursor, headers
+    /// skipped, like every mainstream manager's list. A fresh extension seeds the anchor from the
+    /// current selection, so Ctrl+click followed by Shift+arrow behaves natively too.</summary>
+    public void ExtendSelection(int delta)
+    {
+        var items = view._items;
+        if (items.Count == 0) return;
+        if (!_extending)
+        {
+            _cursor = view.Lst.SelectedIndex;
+            if (_cursor < 0 || _cursor >= items.Count || items[_cursor].IsHeader)
+            {
+                MoveSelection(delta);
+                return;
+            }
+            _anchor = _cursor;
+        }
+        var target = _cursor + delta;
+        while (target >= 0 && target < items.Count && items[target].IsHeader)
+            target += delta;
+        if (target < 0 || target >= items.Count) return;
+        var range = ClipboardPanelRows.RowIndexesBetween(_anchor, target, items);
+        if (range.Count == 0) return;
+        view.Lst.SelectedItems.Clear();
+        foreach (var index in range)
+            view.Lst.SelectedItems.Add(items[index]);
+        _cursor = target;
+        _extending = true;
+        view.Lst.ScrollIntoView(items[target]);
+    }
+
+    /// <summary>Ctrl+A: select every row in the current view (headers excluded); collapses back to
+    /// nothing extra when everything is already selected.</summary>
+    public void SelectAllRows()
+    {
+        var rows = view._items.Where(item => item.IsRow).ToList();
+        if (rows.Count == 0) return;
+        var allSelected = view.Lst.SelectedItems.Count == rows.Count;
+        view.Lst.SelectedItems.Clear();
+        if (!allSelected)
+            foreach (var item in rows)
+                view.Lst.SelectedItems.Add(item);
     }
 
     // --- paste ---

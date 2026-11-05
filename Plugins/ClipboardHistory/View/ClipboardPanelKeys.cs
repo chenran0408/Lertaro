@@ -8,6 +8,9 @@ internal enum ClipboardPanelAction
     None,
     MoveUp,
     MoveDown,
+    ExtendUp,
+    ExtendDown,
+    SelectAll,
     PasteSelected,
     PasteSelectedPlainText,
     DeleteSelected,
@@ -27,7 +30,9 @@ internal readonly record struct ClipboardPanelKeyResult(ClipboardPanelAction Act
 /// <summary>
 /// The panel's full keyboard surface, resolved as a pure function so every binding is unit-testable.
 /// Digits paste the Nth visible row only while focus is OUT of the search box: in the box they type,
-/// which is why search focus is an input here and not an implementation detail.
+/// which is why search focus is an input here and not an implementation detail. Bare arrows move the
+/// selection, Shift+arrows extend it (merged multi-paste), Ctrl+A selects the whole view; in the
+/// search box those stay native text behaviors.
 /// </summary>
 internal static class ClipboardPanelKeys
 {
@@ -37,10 +42,16 @@ internal static class ClipboardPanelKeys
         {
             case Key.Escape:
                 return ClipboardPanelAction.Close;
-            case Key.Up when !searchFocused:
+            case Key.Up when !searchFocused && modifiers == ModifierKeys.None:
                 return ClipboardPanelAction.MoveUp;
-            case Key.Down when !searchFocused:
+            case Key.Up when !searchFocused && modifiers == ModifierKeys.Shift:
+                return ClipboardPanelAction.ExtendUp;
+            case Key.Down when !searchFocused && modifiers == ModifierKeys.None:
                 return ClipboardPanelAction.MoveDown;
+            case Key.Down when !searchFocused && modifiers == ModifierKeys.Shift:
+                return ClipboardPanelAction.ExtendDown;
+            case Key.A when !searchFocused && modifiers == ModifierKeys.Control:
+                return ClipboardPanelAction.SelectAll;
             case Key.Enter:
                 return modifiers == ModifierKeys.Control
                     ? ClipboardPanelAction.PasteSelectedPlainText

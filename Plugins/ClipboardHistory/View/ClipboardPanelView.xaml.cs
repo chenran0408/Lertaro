@@ -158,6 +158,7 @@ public partial class ClipboardPanelView : UserControl
         ClipboardPanelLabels.SetEmpty(this, _items.Count == 0);
         ClearSearchButton.Visibility = query.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         RestoreSelection(selectedId);
+        _actions.EndKeyboardSelection();
         _actions.UpdateHintBar();
     }
 
@@ -234,8 +235,11 @@ public partial class ClipboardPanelView : UserControl
 
     private Point _dragAnchor;
 
-    private void Lst_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) =>
+    private void Lst_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _actions.EndKeyboardSelection(); // a mouse press re-seeds any later Shift+arrow extension
         _dragAnchor = e.GetPosition(this);
+    }
 
     private void Lst_PreviewMouseMove(object sender, MouseEventArgs e) =>
         _actions.BeginDragIfRequested(e, _dragAnchor);
@@ -265,6 +269,15 @@ public partial class ClipboardPanelView : UserControl
                 break;
             case ClipboardPanelAction.MoveDown:
                 _actions.MoveSelection(+1);
+                break;
+            case ClipboardPanelAction.ExtendUp:
+                _actions.ExtendSelection(-1);
+                break;
+            case ClipboardPanelAction.ExtendDown:
+                _actions.ExtendSelection(+1);
+                break;
+            case ClipboardPanelAction.SelectAll:
+                _actions.SelectAllRows();
                 break;
             case ClipboardPanelAction.PasteSelected:
                 _actions.PasteSelected(plainText: false);

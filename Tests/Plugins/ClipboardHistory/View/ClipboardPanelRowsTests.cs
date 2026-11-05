@@ -113,4 +113,27 @@ public sealed class ClipboardPanelRowsTests
         Assert.IsTrue(ClipboardPanelRows.MatchesQuery(Text("anything"), "", Contains));
         Assert.IsTrue(ClipboardPanelRows.MatchesQuery(Text(""), "", Contains));
     }
+
+    [TestMethod]
+    public void RowIndexesBetween_SpansAnchorToCursor_SkipsHeaders()
+    {
+        var items = new List<ClipboardPanelItem>
+        {
+            ClipboardPanelItem.Header("pinned"),                             // 0
+            new(false, "", 11, "a", "", ClipboardEntryKind.Text, "", true),  // 1
+            new(false, "", 12, "b", "", ClipboardEntryKind.Text, "", false), // 2
+            ClipboardPanelItem.Header("today"),                              // 3
+            new(false, "", 13, "c", "", ClipboardEntryKind.Text, "", false), // 4
+        };
+
+        CollectionAssert.AreEqual(new[] { 1, 2 }, ClipboardPanelRows.RowIndexesBetween(1, 2, items));
+        // Order-free: growing upwards from the cursor covers the same rows.
+        CollectionAssert.AreEqual(new[] { 1, 2, 4 }, ClipboardPanelRows.RowIndexesBetween(4, 1, items));
+        // A header end (defensive: callers seed the anchor from a row) does not truncate the span.
+        CollectionAssert.AreEqual(new[] { 1, 2, 4 }, ClipboardPanelRows.RowIndexesBetween(0, 4, items));
+        // A cursor on a header or past the list extends nothing.
+        Assert.IsEmpty(ClipboardPanelRows.RowIndexesBetween(1, 3, items));
+        Assert.IsEmpty(ClipboardPanelRows.RowIndexesBetween(1, 9, items));
+        Assert.IsEmpty(ClipboardPanelRows.RowIndexesBetween(-1, 2, items));
+    }
 }
