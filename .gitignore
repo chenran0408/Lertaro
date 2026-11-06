@@ -127,3 +127,7 @@ Site/.vitepress/public/logo.webp
 
 # Claude Code local project state (per-machine, not shared)
 .claude/
+
+# Local agent workspace debris
+/.codebase-memory/
+/work/
