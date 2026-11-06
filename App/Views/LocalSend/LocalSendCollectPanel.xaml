@@ -39,7 +39,7 @@
                     <ListBox ItemsSource="{Binding CollectedItems}" Background="Transparent" BorderThickness="0" Margin="4" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="ListBoxItem">
-                                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
                                 <Setter Property="Background" Value="Transparent"/>
                                 <Setter Property="Template">
                                     <Setter.Value>

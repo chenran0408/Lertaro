@@ -52,7 +52,7 @@
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Margin" Value="0"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
             <Setter Property="LayoutTransform">
                 <Setter.Value>
                     <ScaleTransform ScaleX="{Binding DataContext.LaunchPanelItemScale, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"

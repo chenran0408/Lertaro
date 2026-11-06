@@ -28,7 +28,7 @@
         <Setter Property="Padding" Value="14,8"/>
         <Setter Property="Margin" Value="0"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="ToolTipService.IsEnabled"
                 Value="{Binding IsSidebarCompact, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"/>
@@ -39,7 +39,7 @@
                         <!-- Left accent bar for selected item -->
                         <Rectangle x:Name="AccentBar" Width="3" HorizontalAlignment="Left"
                                    RadiusX="1.5" RadiusY="1.5" Fill="Transparent" Margin="0,4"/>
-                        <Border x:Name="ItemBorder" CornerRadius="7"
+                        <Border x:Name="ItemBorder" CornerRadius="{StaticResource CornerRadiusControl}"
                                 Background="Transparent" Padding="{TemplateBinding Padding}" Margin="8,2,8,2">
                             <ContentPresenter x:Name="ContentPresenterHost"
                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"

@@ -17,7 +17,7 @@
         <Setter Property="Padding" Value="16,11"/>
         <Setter Property="Margin" Value="0"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -26,7 +26,7 @@
                         <!-- Left accent bar for selected item -->
                         <Rectangle x:Name="AccentBar" Width="3" HorizontalAlignment="Left"
                                    RadiusX="1.5" RadiusY="1.5" Fill="Transparent" Margin="0,4"/>
-                        <Border x:Name="ItemBorder" CornerRadius="7"
+                        <Border x:Name="ItemBorder" CornerRadius="{StaticResource CornerRadiusControl}"
                                 Background="Transparent" Padding="{TemplateBinding Padding}" Margin="8,2,8,2">
                             <ContentPresenter/>
                         </Border>
@@ -57,7 +57,7 @@
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Margin" Value="0"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -66,7 +66,7 @@
                         <!-- Left accent bar for a checked item -->
                         <Rectangle x:Name="AccentBar" Width="3" HorizontalAlignment="Left"
                                    RadiusX="1.5" RadiusY="1.5" Fill="Transparent" Margin="0,4"/>
-                        <Border x:Name="ItemBorder" CornerRadius="7"
+                        <Border x:Name="ItemBorder" CornerRadius="{StaticResource CornerRadiusControl}"
                                 Background="Transparent" Padding="16,11" Margin="8,2,8,2">
                             <ContentPresenter/>
                         </Border>
@@ -98,7 +98,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
         <!-- Clicking this button immediately hides it (HasSelection flips to false), and WPF moves
              keyboard focus off a focused element that just lost visibility: landing focus somewhere
              further down the sidebar makes the ScrollViewer auto-scroll to bring it into view. Matches
@@ -127,7 +127,7 @@
         <Setter Property="Margin" Value="0"/>
         <Setter Property="Height" Value="{x:Static services:UiMetrics.ListItemHeight}"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListViewItem">

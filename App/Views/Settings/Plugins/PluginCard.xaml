@@ -219,7 +219,7 @@
                             <Style TargetType="ListBoxItem">
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                                 <Setter Property="Padding" Value="0"/>
-                                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="ListBoxItem">

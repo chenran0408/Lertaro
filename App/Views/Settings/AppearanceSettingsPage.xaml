@@ -26,7 +26,7 @@
                 <!-- Not Focusable="False": ListBoxItem's own click-to-select handling ties into focus
                      acquisition, so disabling it silently breaks mouse selection. Suppressing just the
                      focus visual (the dotted rectangle) is enough to get the "no chrome" look. -->
-                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
                 <!-- Selecting a ListBoxItem (by click, or programmatically when a mode card switches
                      SelectedThemeId) raises RequestBringIntoView. This ListBox has no ScrollViewer of
                      its own (see ThemeCardListBox's Template below), so that request bubbles straight up

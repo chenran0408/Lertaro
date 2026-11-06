@@ -4,7 +4,7 @@
     <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     <Style x:Key="QuickPanelGroupToggleStyle" TargetType="ToggleButton">
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         <Setter Property="Template">
             <Setter.Value>

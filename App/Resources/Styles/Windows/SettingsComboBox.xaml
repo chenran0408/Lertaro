@@ -115,7 +115,7 @@
                                     Background="{DynamicResource MenuBackground}"
                                     BorderBrush="{DynamicResource MenuBorderBrush}"
                                     BorderThickness="1"
-                                    CornerRadius="7"
+                                    CornerRadius="{StaticResource CornerRadiusControl}"
                                     SnapsToDevicePixels="True">
                                 <ScrollViewer MaxHeight="180" Padding="4">
                                     <ItemsPresenter/>

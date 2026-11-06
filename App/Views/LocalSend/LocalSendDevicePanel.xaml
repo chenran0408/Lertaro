@@ -17,7 +17,7 @@
                 <ListBox x:Name="DeviceList" ItemsSource="{Binding DiscoveredDevices}" SelectionMode="Multiple" SelectionChanged="DeviceList_SelectionChanged" Background="Transparent" BorderThickness="0" Margin="4" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ListBox.ItemContainerStyle>
                         <Style TargetType="ListBoxItem">
-                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                            <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
                             <Setter Property="Background" Value="Transparent"/>
                             <Setter Property="Template">
                                 <Setter.Value>
