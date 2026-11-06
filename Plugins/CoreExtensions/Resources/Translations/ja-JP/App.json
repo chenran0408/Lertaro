@@ -937,5 +937,21 @@
   "Wake_Undo": "このグループの変更を元に戻す",
   "Wake_UnsetKey": "キー未設定",
   "Wake_Manage": "ショートカットを管理",
-  "Hotkeys_ClipboardQuickPasteSlots": "グローバルクイック貼り付け（Ctrl+Win+1～9 で N 番目を直接貼り付け）"
+  "Hotkeys_ClipboardQuickPasteSlots": "グローバルクイック貼り付け（Ctrl+Win+1～9 で N 番目を直接貼り付け）",
+  "Onboarding_Title": "Lertaro へようこそ",
+  "Tray_Onboarding": "使い方ガイド…",
+  "Onboarding_Skip": "ガイドをスキップ",
+  "Onboarding_Back": "戻る",
+  "Onboarding_Next": "次へ",
+  "Onboarding_Done": "はじめる",
+  "Onboarding_Step1Title": "はじめまして、Lertaro です",
+  "Onboarding_Step1Body": "ローカル完結のグローバル検索＆ランチャー：ファイル・アプリ・設定・クリップボードに一発で届きます。よく使う 4 つの機能を 30 秒で。",
+  "Onboarding_Step2Title": "呼び出して、打って、見つかる",
+  "Onboarding_Step2Body": "下のホットキーで検索ボックスを呼び出し、ファイル名・アプリ名・キーワードを入力して Enter。スタートメニューを探す必要はもうありません。",
+  "Onboarding_Step3Title": "クリップボード履歴、Win+V",
+  "Onboarding_Step3Body": "コピーしたテキスト・スクリーンショット・ファイルは自動で記録。下のホットキーでパネルを開き、検索してどんな項目も再貼り付け。",
+  "Onboarding_Step4Title": "もっと速く：グローバルクイック貼り付け",
+  "Onboarding_Step4Body": "パネル不要。Ctrl+Win+1～9 で履歴の N 番目を直接貼り付け。ピン留めした項目は常に先頭です。",
+  "Onboarding_Step5Title": "あなた好りに",
+  "Onboarding_Step5Body": "テーマ、ホットキー、除外フォルダ、トリガーワード…すべて調整可能。「はじめる」の後も、トレイメニューからいつでもこのガイドを開けます。"
 }

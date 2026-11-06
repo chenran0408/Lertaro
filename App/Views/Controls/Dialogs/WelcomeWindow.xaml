@@ -1,0 +1,54 @@
+<appWindow:AppWindow x:Class="Lertaro.App.Views.Controls.Dialogs.WelcomeWindow"
+             xmlns:appWindow="clr-namespace:Lertaro.App.Views.Controls"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:services="clr-namespace:Lertaro.App.Services"
+             Title="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Onboarding_Title]}"
+             Width="560" SizeToContent="Height" MaxWidth="560"
+             WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+             Background="{DynamicResource ContentBg}" AllowsTransparency="False"
+             WindowStyle="None"
+             ShowInTaskbar="False"
+             TextElement.Foreground="{Binding RelativeSource={RelativeSource Self}, Path=ForegroundBrush}"
+             BorderBrush="{Binding RelativeSource={RelativeSource Self}, Path=PanelBorderBrush}" BorderThickness="1">
+
+    <StackPanel Margin="28,20,28,22">
+        <!-- Step glyph in an accent disc: one stable visual anchor per page. -->
+        <Border Width="64" Height="64" CornerRadius="32" HorizontalAlignment="Center"
+                Background="{DynamicResource AccentBlue}" Margin="0,4,0,14">
+            <TextBlock x:Name="StepGlyph" Text="&#xE80F;" FontFamily="{DynamicResource AppIconFontFamily}"
+                       FontSize="28" Foreground="{DynamicResource PrimaryButtonText}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+
+        <TextBlock x:Name="StepTitle" FontSize="20" FontWeight="SemiBold"
+                   Foreground="{DynamicResource TextPrimary}" TextAlignment="Center"
+                   HorizontalAlignment="Center" TextWrapping="Wrap"/>
+        <TextBlock x:Name="StepBody" FontSize="14" Foreground="{DynamicResource TextSecondary}"
+                   TextAlignment="Center" TextWrapping="Wrap" Margin="8,10,8,0"
+                   MinHeight="84" VerticalAlignment="Top"/>
+
+        <!-- Step dots: the active one stretches wide, pager style. -->
+        <StackPanel x:Name="Dots" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+
+        <Grid Margin="0,18,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Button x:Name="SkipButton" Grid.Column="0" Style="{StaticResource SettingsButton}"
+                    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Onboarding_Skip]}"
+                    Click="Skip_Click"/>
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <Button x:Name="BackButton" Style="{StaticResource SettingsButton}" Margin="0"
+                        Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Onboarding_Back]}"
+                        Click="Back_Click"/>
+                <Button x:Name="NextButton" Style="{StaticResource PrimarySettingsButton}"
+                        Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Onboarding_Next]}"
+                        Click="Next_Click"/>
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</appWindow:AppWindow>

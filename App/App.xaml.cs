@@ -332,6 +332,12 @@ public partial class App : Application
                 UriRouter.Route(e.Args[0]);
         }), System.Windows.Threading.DispatcherPriority.Loaded);
 
+        // Listary-style first-run tour: once, at ApplicationIdle so it never fights startup.
+        if (!settings.OnboardingCompleted)
+            _ = Dispatcher.BeginInvoke(new Action(() =>
+                Views.Controls.Dialogs.WelcomeWindow.ShowTour()),
+                System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+
         // Background update check on startup
         UpdateCheckService.RunOnStartupAsync();
 

@@ -937,5 +937,21 @@
   "Wake_Turns": "連續畫几圈",
   "Wake_Undo": "撤销本组修改",
   "Wake_UnsetKey": "尚未設定按键",
-  "Hotkeys_ClipboardQuickPasteSlots": "全局快捷貼上槽位（Ctrl+Win+1~9 直接把第 N 條貼上到目前視窗）"
+  "Hotkeys_ClipboardQuickPasteSlots": "全局快捷貼上槽位（Ctrl+Win+1~9 直接把第 N 條貼上到目前視窗）",
+  "Onboarding_Title": "歡迎使用 Lertaro",
+  "Tray_Onboarding": "使用指南…",
+  "Onboarding_Skip": "跳過指南",
+  "Onboarding_Back": "上一步",
+  "Onboarding_Next": "下一步",
+  "Onboarding_Done": "開始使用",
+  "Onboarding_Step1Title": "你好，我是 Lertaro",
+  "Onboarding_Step1Body": "一個本地優先的全域搜尋與效率啟動器：檔案、應用、設定、剪貼簿，一鍵直達。下面用 30 秒認識最常用的四個能力。",
+  "Onboarding_Step2Title": "一鍵喚出，輸入即搜",
+  "Onboarding_Step2Body": "隨時按下方熱鍵喚出搜尋框，直接輸入檔案名、應用名或關鍵字，Enter 即開啟。不用在開始功能表裡翻找。",
+  "Onboarding_Step3Title": "剪貼簿歷史，Win+V",
+  "Onboarding_Step3Body": "複製的每一條文字、截圖和檔案都會自動記錄。按下方熱鍵呼出面板，搜尋並重新貼上任意一條。",
+  "Onboarding_Step4Title": "更快一步：全域快捷貼上",
+  "Onboarding_Step4Body": "不開面板，按 Ctrl+Win+1~9 直接把歷史裡第 N 條貼上到目前視窗。置頂的條目永遠排在最前面。",
+  "Onboarding_Step5Title": "按你的習慣來",
+  "Onboarding_Step5Body": "主題外觀、熱鍵、排除目錄、觸發詞……一切可調。點擊「開始使用」後，可隨時從系統匣功能表重新開啟本指南。"
 }

@@ -937,5 +937,21 @@
   "Wake_Undo": "이 그룹의 변경 취소",
   "Wake_UnsetKey": "키 미설정",
   "Wake_Manage": "바로 가기 관리",
-  "Hotkeys_ClipboardQuickPasteSlots": "전역 빠른 붙여넣기 슬롯(Ctrl+Win+1~9, 해당 항목을 현재 창에 바로 붙여넣기)"
+  "Hotkeys_ClipboardQuickPasteSlots": "전역 빠른 붙여넣기 슬롯(Ctrl+Win+1~9, 해당 항목을 현재 창에 바로 붙여넣기)",
+  "Onboarding_Title": "Lertaro에 오신 것을 환영합니다",
+  "Tray_Onboarding": "사용 가이드…",
+  "Onboarding_Skip": "가이드 건너뛰기",
+  "Onboarding_Back": "이전",
+  "Onboarding_Next": "다음",
+  "Onboarding_Done": "시작하기",
+  "Onboarding_Step1Title": "안녕하세요, Lertaro입니다",
+  "Onboarding_Step1Body": "로컬 우선의 전역 검색 런처: 파일, 앱, 설정, 클립보드를 한 번의 입력으로. 가장 많이 쓰는 네 가지를 30초 안에 소개합니다.",
+  "Onboarding_Step2Title": "호출하고, 입력하면 끝",
+  "Onboarding_Step2Body": "아래 단축키로 검색창을 띄우고 파일·앱·키워드를 입력한 뒤 Enter. 시작 메뉴를 뒤질 필요가 없습니다.",
+  "Onboarding_Step3Title": "클립보드 기록, Win+V",
+  "Onboarding_Step3Body": "복사한 텍스트·스크린샷·파일이 모두 기록됩니다. 아래 단축키로 패널을 열고 검색해 어떤 항목이든 다시 붙여넣으세요.",
+  "Onboarding_Step4Title": "한 단계 더: 전역 빠른 붙여넣기",
+  "Onboarding_Step4Body": "패널 없이 Ctrl+Win+1~9로 기록의 N번째 항목을 현재 창에 바로 붙여넣기. 고정한 항목은 항상 맨 앞에.",
+  "Onboarding_Step5Title": "내 방식대로",
+  "Onboarding_Step5Body": "테마, 단축키, 제외 폴더, 트리거 단어… 모두 조절 가능합니다. 시작한 뒤에도 트레이 메뉴에서 언제든 이 가이드를 다시 열 수 있습니다."
 }

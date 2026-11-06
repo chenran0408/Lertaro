@@ -937,5 +937,21 @@
   "About_Downloaded": "更新已下载，可随时运行安装程序。",
   "About_LaunchFailed": "无法启动安装程序，请打开所在文件夹手动运行。",
   "About_AutoCheckSwitch": "启动时自动检查更新",
-  "Hotkeys_ClipboardQuickPasteSlots": "全局快捷粘贴槽位（Ctrl+Win+1~9 直接把第 N 条粘贴到当前窗口）"
+  "Hotkeys_ClipboardQuickPasteSlots": "全局快捷粘贴槽位（Ctrl+Win+1~9 直接把第 N 条粘贴到当前窗口）",
+  "Onboarding_Title": "欢迎使用 Lertaro",
+  "Tray_Onboarding": "使用引导…",
+  "Onboarding_Skip": "跳过引导",
+  "Onboarding_Back": "上一步",
+  "Onboarding_Next": "下一步",
+  "Onboarding_Done": "开始使用",
+  "Onboarding_Step1Title": "你好，我是 Lertaro",
+  "Onboarding_Step1Body": "一个本地优先的全局搜索与效率启动器：文件、应用、设置、剪贴板，一键直达。下面用 30 秒认识最常用的四个能力。",
+  "Onboarding_Step2Title": "一键唤醒，输入即搜",
+  "Onboarding_Step2Body": "随时按下方热键唤出搜索框，直接输入文件名、应用名或关键词，回车即打开。不用在开始菜单里翻找。",
+  "Onboarding_Step3Title": "剪贴板历史，Win+V",
+  "Onboarding_Step3Body": "复制的每一条文本、截图和文件都会自动记录。按下方热键呼出面板，搜索并重新粘贴任意一条。",
+  "Onboarding_Step4Title": "更快一步：全局快捷粘贴",
+  "Onboarding_Step4Body": "不开面板，按 Ctrl+Win+1~9 直接把历史里第 N 条粘贴到当前窗口。置顶的条目永远排在最前面。",
+  "Onboarding_Step5Title": "按你的习惯来",
+  "Onboarding_Step5Body": "主题外观、热键、排除目录、触发词……一切可调。点击「开始使用」后，可随时从托盘菜单重新打开本引导。"
 }

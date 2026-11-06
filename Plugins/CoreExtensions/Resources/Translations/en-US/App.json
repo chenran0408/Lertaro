@@ -937,5 +937,21 @@
   "About_Downloaded": "Update downloaded. Run the installer when ready.",
   "About_LaunchFailed": "The installer could not be started. Open its folder and run it manually.",
   "About_AutoCheckSwitch": "Automatically check for updates on startup",
-  "Hotkeys_ClipboardQuickPasteSlots": "Global quick-paste slots (Ctrl+Win+1~9 pastes that entry straight into the active window)"
+  "Hotkeys_ClipboardQuickPasteSlots": "Global quick-paste slots (Ctrl+Win+1~9 pastes that entry straight into the active window)",
+  "Onboarding_Title": "Welcome to Lertaro",
+  "Tray_Onboarding": "Getting started…",
+  "Onboarding_Skip": "Skip tour",
+  "Onboarding_Back": "Back",
+  "Onboarding_Next": "Next",
+  "Onboarding_Done": "Get started",
+  "Onboarding_Step1Title": "Hi, I'm Lertaro",
+  "Onboarding_Step1Body": "A local-first global search and launcher: files, apps, settings and your clipboard, one keystroke away. Thirty seconds to the four things you'll use most.",
+  "Onboarding_Step2Title": "Wake it, type, found",
+  "Onboarding_Step2Body": "Press the hotkey below anywhere, type a file, app or keyword, hit Enter. No more digging through the Start menu.",
+  "Onboarding_Step3Title": "Clipboard history, Win+V",
+  "Onboarding_Step3Body": "Every text, screenshot and file you copy is captured. Press the hotkey below to open the panel, search it, paste any entry back.",
+  "Onboarding_Step4Title": "One step faster: global quick paste",
+  "Onboarding_Step4Body": "No panel needed: Ctrl+Win+1~9 pastes the Nth history entry straight into the active window. Pinned entries always come first.",
+  "Onboarding_Step5Title": "Make it yours",
+  "Onboarding_Step5Body": "Themes, hotkeys, excluded folders, trigger words -- everything is adjustable. After you start, you can reopen this tour from the tray menu anytime."
 }

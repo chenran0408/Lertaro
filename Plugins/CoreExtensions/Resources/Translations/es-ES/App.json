@@ -937,5 +937,21 @@
   "Wake_Undo": "Deshacer cambios del grupo",
   "Wake_UnsetKey": "Sin tecla asignada",
   "Wake_Manage": "Administrar atajos",
-  "Hotkeys_ClipboardQuickPasteSlots": "Ranuras de pegado rápido global (Ctrl+Win+1~9 pega esa entrada en la ventana activa)"
+  "Hotkeys_ClipboardQuickPasteSlots": "Ranuras de pegado rápido global (Ctrl+Win+1~9 pega esa entrada en la ventana activa)",
+  "Onboarding_Title": "Bienvenido a Lertaro",
+  "Tray_Onboarding": "Primeros pasos…",
+  "Onboarding_Skip": "Omitir tour",
+  "Onboarding_Back": "Atrás",
+  "Onboarding_Next": "Siguiente",
+  "Onboarding_Done": "Empezar",
+  "Onboarding_Step1Title": "Hola, soy Lertaro",
+  "Onboarding_Step1Body": "Un buscador y lanzador global y local: archivos, apps, ajustes y tu portapapeles, a una tecla de distancia. Treinta segundos para lo que más usarás.",
+  "Onboarding_Step2Title": "Llama, escribe, encontrado",
+  "Onboarding_Step2Body": "Pulsa el atajo de abajo donde sea, escribe un archivo, app o palabra y Enter. Se acabó hurgar en el menú Inicio.",
+  "Onboarding_Step3Title": "Historial del portapapeles, Win+V",
+  "Onboarding_Step3Body": "Cada texto, captura y archivo que copies queda registrado. Pulsa el atajo para abrir el panel, buscar y volver a pegar cualquier entrada.",
+  "Onboarding_Step4Title": "Un paso más rápido: pegado rápido global",
+  "Onboarding_Step4Body": "Sin panel: Ctrl+Win+1~9 pega la entrada N del historial directo en la ventana activa. Los fijados siempre van primero.",
+  "Onboarding_Step5Title": "A tu manera",
+  "Onboarding_Step5Body": "Temas, atajos, carpetas excluidas, palabras disparadoras… todo es ajustable. Tras empezar, puedes reabrir este tour desde el menú de la bandeja."
 }

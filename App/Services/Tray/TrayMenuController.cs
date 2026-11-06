@@ -20,6 +20,7 @@ internal sealed class TrayMenuController : IDisposable
     private MenuItem? _send;
     private MenuItem? _toggleHotkeys;
     private MenuItem? _settings;
+    private MenuItem? _onboarding;
     private MenuItem? _about;
     private MenuItem? _cleanExit;
     private MenuItem? _exit;
@@ -107,6 +108,7 @@ internal sealed class TrayMenuController : IDisposable
         _menu.Items.Add(_toggleHotkeys);
         _menu.Items.Add(_settings);
         _menu.Items.Add(QuickNavigationMenu.CreateSeparator());
+        _menu.Items.Add(_onboarding);
         _menu.Items.Add(_about);
         _menu.Items.Add(QuickNavigationMenu.CreateSeparator());
         _menu.Items.Add(_cleanExit);
@@ -149,6 +151,7 @@ internal sealed class TrayMenuController : IDisposable
         _showWindow!.Header = TranslationManager.Instance["Tray_ShowWindow"];
         _send!.Header = TranslationManager.Instance["Tray_SendToOtherDevices"];
         _settings!.Header = TranslationManager.Instance["Tray_Settings"];
+        _onboarding!.Header = TranslationManager.Instance["Tray_Onboarding"];
         _about!.Header = TranslationManager.Instance["Tray_About"];
         _cleanExit!.Header = TranslationManager.Instance["Tray_CleanExit"];
         _exit!.Header = TranslationManager.Instance["Tray_Exit"];
