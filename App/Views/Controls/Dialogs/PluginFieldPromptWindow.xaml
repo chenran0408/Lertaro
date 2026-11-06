@@ -7,6 +7,7 @@
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterOwner" Background="{DynamicResource ContentBg}" AllowsTransparency="False"
         WindowStyle="None"
+        BorderBrush="{Binding RelativeSource={RelativeSource Self}, Path=PanelBorderBrush}" BorderThickness="1"
         ResizeMode="CanResizeWithGrip"
         TextElement.Foreground="{Binding RelativeSource={RelativeSource Self}, Path=ForegroundBrush}"
         ShowInTaskbar="False"

@@ -106,7 +106,7 @@
                         </StackPanel.InputBindings>
                         <Border Width="108" Height="64" Style="{StaticResource PreviewCardShadowWrapperStyle}">
                             <Border x:Name="ModeLightBorder" CornerRadius="10"
-                                    Background="#FFFFFF" BorderThickness="2" ClipToBounds="True">
+                                    Background="#FFFFFF" BorderThickness="2" ClipToBounds="True"><!-- hex exempt: this card PREVIEWS the fixed light palette; it must stay white in dark mode. -->
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
@@ -132,7 +132,7 @@
                         </StackPanel.InputBindings>
                         <Border Width="108" Height="64" Style="{StaticResource PreviewCardShadowWrapperStyle}">
                             <Border x:Name="ModeDarkBorder" CornerRadius="10"
-                                    Background="#1E1E1E" BorderThickness="2" ClipToBounds="True">
+                                    Background="#1E1E1E" BorderThickness="2" ClipToBounds="True"><!-- hex exempt: previews the fixed dark palette. -->
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
@@ -181,8 +181,8 @@
                                     <Grid.Clip>
                                         <RectangleGeometry Rect="0,0,104,60" RadiusX="8" RadiusY="8"/>
                                     </Grid.Clip>
-                                    <Polygon Points="0,0 104,0 0,60" Fill="#FFFFFF"/>
-                                    <Polygon Points="104,0 104,60 0,60" Fill="#1E1E1E"/>
+                                    <Polygon Points="0,0 104,0 0,60" Fill="#FFFFFF"/><!-- hex exempt: fixed light/dark preview swatch -->
+                                    <Polygon Points="104,0 104,60 0,60" Fill="#1E1E1E"/><!-- hex exempt: fixed dark preview swatch -->
                                     <Border Width="26" Height="26" CornerRadius="13"
                                             Background="{DynamicResource AccentBlue}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <TextBlock Text="&#xE895;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="12"
