@@ -53,6 +53,7 @@ public class HotkeySettingsViewModel : ViewModelBase
 
         _quickNavigationHotkey = hotkeys.QuickNavigationHotkey;
         _clipboardPanelHotkey = hotkeys.ClipboardPanelHotkey;
+        _clipboardQuickPasteSlots = hotkeys.ClipboardQuickPasteSlots;
         PluginActionGroups = HotkeyPluginActionGroupBuilder.Build(hotkeys.PluginActionHotkeys);
         QuickPanelWake = new QuickPanelWakeSettingsViewModel(this, userSettings, _combinationTaken);
 
@@ -375,6 +376,9 @@ public class HotkeySettingsViewModel : ViewModelBase
         get => _clipboardPanelHotkey;
         set => SetProperty(ref _clipboardPanelHotkey, value);
     }
+
+    private bool _clipboardQuickPasteSlots;
+    public bool ClipboardQuickPasteSlots { get => _clipboardQuickPasteSlots; set => SetProperty(ref _clipboardQuickPasteSlots, value); }
     public string ClipboardPanelHotkeyConflictWarning => GetHostHotkeyConflictWarning(nameof(ClipboardPanelHotkey));
 
     private string _stayOpenHotkey;
@@ -435,6 +439,7 @@ public class HotkeySettingsViewModel : ViewModelBase
         hotkeys.QuickPanelMouseCircle = QuickPanelMouseCircle;
         hotkeys.QuickPanelRightHoldMilliseconds = QuickPanelRightHoldMilliseconds;
         hotkeys.QuickPanelMouseAllowDesktop = QuickPanelMouseAllowDesktop;
+        hotkeys.ClipboardQuickPasteSlots = ClipboardQuickPasteSlots;
         hotkeys.QuickPanelMouseAllowedProcesses = MouseWakeWhitelist.ToSettingsList();
         hotkeys.QuickPanelWakeBindings = useBindings ? QuickPanelWake.Export()
             : QuickPanelWakeBindings.Get(hotkeys).Select(b => b.Copy()).ToList();

@@ -13,6 +13,11 @@ public sealed class ClipboardTabProvider : IQuickPanelTabProvider
     /// fallback, which happens when there is no UI thread to host the window.</summary>
     public static bool TryOpenPanel() => View.ClipboardPanelView.TryShow();
 
+    /// <summary>Host-called global quick paste (Ctrl+Win+N): pastes the Nth entry of the panel's
+    /// canonical order straight into the active window. Resolved by name; returns whether a paste
+    /// was started.</summary>
+    public static bool TryQuickPaste(int oneBased) => ClipboardRuntime.Instance.PasteSlot(oneBased);
+
     public async Task<IReadOnlyList<ISearchResult>> GetEntriesAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

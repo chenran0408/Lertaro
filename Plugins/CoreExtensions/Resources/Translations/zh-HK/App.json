@@ -936,5 +936,6 @@
   "Wake_TogglePanel": "显示／隐藏快速面板",
   "Wake_Turns": "連續畫几圈",
   "Wake_Undo": "撤销本组修改",
-  "Wake_UnsetKey": "尚未設定按键"
+  "Wake_UnsetKey": "尚未設定按键",
+  "Hotkeys_ClipboardQuickPasteSlots": "全局快捷貼上槽位（Ctrl+Win+1~9 直接把第 N 條貼上到目前視窗）"
 }

@@ -38,6 +38,35 @@ public sealed class GlobalHotkeyDetectorTests
     }
 
     [TestMethod]
+    public void ClipboardQuickPaste_MatchesCtrlWinDigitAndConsumes()
+    {
+        var settings = new UserSettings();
+        var detector = new GlobalHotkeyDetector(settings, new ExplorerTracker());
+
+        detector.OnKeyDown(0x5B); // Win
+        detector.OnKeyDown(0xA2); // Ctrl
+        Assert.IsTrue(detector.CheckClipboardQuickPasteSlot(0x33, out var slot, out var consume));
+        Assert.AreEqual(3, slot);
+        Assert.IsTrue(consume);
+
+        // Non-digits and unpressed modifiers do not match.
+        Assert.IsFalse(detector.CheckClipboardQuickPasteSlot(0x41, out _, out _));
+    }
+
+    [TestMethod]
+    public void ClipboardQuickPaste_SettingOff_DoesNotMatchOrConsume()
+    {
+        var settings = new UserSettings();
+        settings.Hotkeys.ClipboardQuickPasteSlots = false;
+        var detector = new GlobalHotkeyDetector(settings, new ExplorerTracker());
+
+        detector.OnKeyDown(0x5B);
+        detector.OnKeyDown(0xA2);
+        Assert.IsFalse(detector.CheckClipboardQuickPasteSlot(0x33, out _, out var consume));
+        Assert.IsFalse(consume);
+    }
+
+    [TestMethod]
     public void ToggleHotkey_RecognizesTrackedAltState()
     {
         var settings = new UserSettings();

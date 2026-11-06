@@ -164,6 +164,21 @@ public sealed class GlobalHotkeyDetector
         return true;
     }
 
+    /// <summary>Ctrl+Win+1..9 global quick paste (Ditto parity). The combo is fixed, so the check
+    /// is digits against the modifier state -- no combo parsing per keypress. Gated by the
+    /// ClipboardQuickPasteSlots setting; the hook consumes the key only on a match.</summary>
+    public bool CheckClipboardQuickPasteSlot(int vkCode, out int slot, out bool consumeKey)
+    {
+        slot = 0;
+        consumeKey = false;
+        if (!_settings.Hotkeys.ClipboardQuickPasteSlots) return false;
+        if (vkCode is < 0x31 or > 0x39) return false; // '1'..'9'
+        if (!CheckModifiersMatch("Ctrl+Win")) return false;
+        slot = vkCode - 0x30;
+        consumeKey = true;
+        return true;
+    }
+
     private void EnsureQuickPanelRules()
     {
         var settings = _settings.Hotkeys;

@@ -385,6 +385,12 @@ public sealed class HookProcess : IDisposable
                 if (_appProcessId != 0) AllowSetForegroundWindow((int)_appProcessId);
                 _ipcServer.SendMessage(new IpcMessage { Id = IpcMessageId.ClipboardPanelHotkey });
             };
+            _keyboardHook.OnClipboardQuickPaste += slot =>
+            {
+                Logger.Log($"[HookProcess] Clipboard quick paste slot {slot} detected.", LogLevel.Debug);
+                if (_appProcessId != 0) AllowSetForegroundWindow((int)_appProcessId);
+                _ipcServer.SendMessage(new IpcMessage { Id = IpcMessageId.ClipboardQuickPaste, IntVal = slot });
+            };
             _keyboardHook.OnFavoriteDoubleTapHotkey += index => _ipcServer.SendMessage(new IpcMessage
             { Id = IpcMessageId.FavoriteDoubleTapHotkey, IntVal = index });
             _keyboardHook.OnQuickSwitchRequested += dialogHwnd =>

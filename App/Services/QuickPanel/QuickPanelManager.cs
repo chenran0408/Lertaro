@@ -149,6 +149,35 @@ public sealed partial class QuickPanelManager : IDisposable
         Show(host, process, QuickPanelPluginTabs.ComponentId(provider));
     }
 
+    /// <summary>Ditto-style global quick paste: pastes the Nth history entry straight into the
+    /// active window, no panel. Resolved by name through the same seam as TryOpenPanel because the
+    /// host does not reference plugin assemblies. Blocked in blacklisted foregrounds, same as the
+    /// panel itself.</summary>
+    public void QuickPasteSlot(int oneBased)
+    {
+        var settings = Core.UserSettings.Load();
+        var host = GetForegroundWindow();
+        var process = ProcessNameOf(host);
+        if (Core.QuickPanelTabSelection.IsBlocked(process, settings))
+        {
+            Core.Logger.Log($"[QuickPanel] '{process}' is blacklisted, so not quick-pasting into it.", Core.LogLevel.Debug);
+            return;
+        }
+        var provider = QuickPanelPluginTabs.Available
+            .FirstOrDefault(p => p.GetType().Name == "ClipboardTabProvider");
+        if (provider == null) return;
+        try
+        {
+            provider.GetType().GetMethod("TryQuickPaste",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)?
+                .Invoke(null, [oneBased]);
+        }
+        catch (Exception ex)
+        {
+            Core.Logger.Log($"[QuickPanel] Clipboard quick paste failed: {ex.GetType().Name}", Core.LogLevel.Warn);
+        }
+    }
+
     internal static bool IsCurrentProcess(uint foregroundProcessId, uint currentProcessId) =>
         foregroundProcessId != 0 && foregroundProcessId == currentProcessId;
 

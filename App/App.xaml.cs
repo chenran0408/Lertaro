@@ -181,6 +181,8 @@ public partial class App : Application
             new Action(() => _quickPanelManager?.ShowFromWakeRule(host, id, keyboard)));
         HookClient.OnClipboardPanelHotkey += () => Dispatcher.BeginInvoke(
             new Action(() => _quickPanelManager?.ShowClipboard()));
+        HookClient.OnClipboardQuickPaste += slot => Dispatcher.BeginInvoke(
+            new Action(() => _quickPanelManager?.QuickPasteSlot(slot)));
         HookClient.OnQuickNavigationHotkey += () => Dispatcher.BeginInvoke(
             new Action(QuickNavigationMenu.ShowFromKeyboard));
         HookClient.OnFavoriteDoubleTapHotkey += index => Dispatcher.BeginInvoke(

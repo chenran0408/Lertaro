@@ -936,5 +936,6 @@
   "Wake_Turns": "그리는 바퀴 수",
   "Wake_Undo": "이 그룹의 변경 취소",
   "Wake_UnsetKey": "키 미설정",
-  "Wake_Manage": "바로 가기 관리"
+  "Wake_Manage": "바로 가기 관리",
+  "Hotkeys_ClipboardQuickPasteSlots": "전역 빠른 붙여넣기 슬롯(Ctrl+Win+1~9, 해당 항목을 현재 창에 바로 붙여넣기)"
 }

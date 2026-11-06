@@ -936,5 +936,6 @@
   "About_UpdateSucceeded": "Updated from {0} to {1}.",
   "About_Downloaded": "Update downloaded. Run the installer when ready.",
   "About_LaunchFailed": "The installer could not be started. Open its folder and run it manually.",
-  "About_AutoCheckSwitch": "Automatically check for updates on startup"
+  "About_AutoCheckSwitch": "Automatically check for updates on startup",
+  "Hotkeys_ClipboardQuickPasteSlots": "Global quick-paste slots (Ctrl+Win+1~9 pastes that entry straight into the active window)"
 }

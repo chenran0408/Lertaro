@@ -77,7 +77,8 @@ public enum IpcMessageId : byte
     InlineInputStarted = 55,
     FavoriteDoubleTapHotkey = 56,
     SetFavoriteDoubleTapOwners = 57,
-    ClipboardPanelHotkey = 58
+    ClipboardPanelHotkey = 58,
+    ClipboardQuickPaste = 59
 }
 
 public struct IpcMessage

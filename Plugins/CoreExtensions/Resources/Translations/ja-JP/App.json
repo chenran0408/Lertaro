@@ -936,5 +936,6 @@
   "Wake_Turns": "描く周数",
   "Wake_Undo": "このグループの変更を元に戻す",
   "Wake_UnsetKey": "キー未設定",
-  "Wake_Manage": "ショートカットを管理"
+  "Wake_Manage": "ショートカットを管理",
+  "Hotkeys_ClipboardQuickPasteSlots": "グローバルクイック貼り付け（Ctrl+Win+1～9 で N 番目を直接貼り付け）"
 }

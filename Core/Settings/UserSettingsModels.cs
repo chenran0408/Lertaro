@@ -138,6 +138,10 @@ public class HotkeyPageSettings
     public string QuickPanelHotkey { get; set; } = "Ctrl+F2";
     public string QuickPanelAlternateHotkey { get; set; } = string.Empty;
     public string ClipboardPanelHotkey { get; set; } = "Win+V";
+    // Ditto-style global quick paste: Ctrl+Win+1..9 pastes that history slot straight into the
+    // active window, no panel. The combo is fixed (digits are not a recorder field); this only
+    // turns the family on or off.
+    public bool ClipboardQuickPasteSlots { get; set; } = true;
     public bool QuickPanelMouseRightHold { get; set; }
     public bool QuickPanelMouseCircle { get; set; }
     public int QuickPanelRightHoldMilliseconds { get; set; } = 600;

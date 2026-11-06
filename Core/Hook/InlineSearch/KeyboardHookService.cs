@@ -24,6 +24,7 @@ public class KeyboardHookService : IDisposable
     public event Action? OnDoubleCtrl;
     public event Action? OnQuickPanelHotkey;
     public event Action? OnClipboardPanelHotkey;
+    public event Action<int>? OnClipboardQuickPaste;
     internal event Action<string>? OnQuickPanelWakeRule;
     public event Action? OnQuickNavigationHotkey;
     public event Action<int>? OnFavoriteDoubleTapHotkey;
@@ -283,6 +284,17 @@ public class KeyboardHookService : IDisposable
                 {
                     OnClipboardPanelHotkey?.Invoke();
                     if (consumeClipboardPanel) return (IntPtr)1;
+                }
+            }
+            if (wakeTest == null && !shouldDisableAllHooks && !inlineCardOwnsThisChord
+                && !ForegroundProcessGate.IsForegroundProcessBlacklisted(_settings.BlacklistedProcesses)
+                && !ForegroundProcessGate.IsForegroundProcessBlacklisted(_settings.QuickPanel.BlacklistedProcesses)
+                && _hotkeyDetector.CheckClipboardQuickPasteSlot(vkCode, out var quickPasteSlot, out var consumeQuickPaste))
+            {
+                if (!_hotkeyDetector.QuickPanelKeyRepeated)
+                {
+                    OnClipboardQuickPaste?.Invoke(quickPasteSlot);
+                    if (consumeQuickPaste) return (IntPtr)1;
                 }
             }
             if (!shouldDisableAllHooks && _hotkeyDetector.CheckToggleWindowHotkey(vkCode, time, out var consumeToggleKey, OnDoubleCtrl))

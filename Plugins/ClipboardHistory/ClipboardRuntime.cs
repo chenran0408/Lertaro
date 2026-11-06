@@ -158,10 +158,25 @@ internal sealed class ClipboardRuntime : IDisposable
     /// panel's multi-select). Returns false when there is nothing pasteable or the target refuses.
     /// Accepted pastes count toward the entry's paste tally -- the frequency sort means "used",
     /// and a capture-only tally never told the truth about that.</summary>
-    internal bool PasteEntries(IReadOnlyList<ClipboardEntry> entries, bool keepFormat = true)
+    /// <summary>Global quick paste (Ctrl+Win+N): the Nth entry of the panel's canonical order
+    /// (recency or the frequency toggle, matching what the panel shows) pasted straight into the
+    /// active window. Out of range is a silent no-op -- a hotkey must never surface an error.</summary>
+    internal bool PasteSlot(int oneBased)
+    {
+        var ordered = View.ClipboardPanelRows.Sort(Entries, View.ClipboardPanelViewSettings.SortByFrequency());
+        if (oneBased < 1 || oneBased > ordered.Count) return false;
+        return PasteEntries([ordered[oneBased - 1]], keepFormat: true, pasteIntoCurrentForeground: true);
+    }
+
+    internal bool PasteEntries(IReadOnlyList<ClipboardEntry> entries, bool keepFormat = true,
+        bool pasteIntoCurrentForeground = false)
     {
         var merged = entries.Count == 1 ? entries[0] : ClipboardMergeSupport.MergeForPaste(entries);
-        var target = _targets?.Target ?? PasteTargetTracker.ReadExternalForeground();
+        // The hotkey path has no summon, so the tracker's "window the panel would target" is
+        // stale by definition -- the active window IS the target, read fresh.
+        var target = pasteIntoCurrentForeground
+            ? PasteTargetTracker.ReadExternalForeground()
+            : (_targets?.Target ?? PasteTargetTracker.ReadExternalForeground());
         try
         {
             if (merged == null || _monitor == null || !PasteBackHelper.CanPaste(target)) return false;

@@ -936,5 +936,6 @@
   "About_UpdateSucceeded": "已从 {0} 更新到 {1}。",
   "About_Downloaded": "更新已下载，可随时运行安装程序。",
   "About_LaunchFailed": "无法启动安装程序，请打开所在文件夹手动运行。",
-  "About_AutoCheckSwitch": "启动时自动检查更新"
+  "About_AutoCheckSwitch": "启动时自动检查更新",
+  "Hotkeys_ClipboardQuickPasteSlots": "全局快捷粘贴槽位（Ctrl+Win+1~9 直接把第 N 条粘贴到当前窗口）"
 }

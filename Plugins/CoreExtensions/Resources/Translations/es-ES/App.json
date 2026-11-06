@@ -936,5 +936,6 @@
   "Wake_Turns": "Número de círculos",
   "Wake_Undo": "Deshacer cambios del grupo",
   "Wake_UnsetKey": "Sin tecla asignada",
-  "Wake_Manage": "Administrar atajos"
+  "Wake_Manage": "Administrar atajos",
+  "Hotkeys_ClipboardQuickPasteSlots": "Ranuras de pegado rápido global (Ctrl+Win+1~9 pega esa entrada en la ventana activa)"
 }

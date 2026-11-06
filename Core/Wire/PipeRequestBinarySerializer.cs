@@ -111,6 +111,7 @@ public static class PipeRequestBinarySerializer
 
             case IpcMessageId.KeyCtrlNumber:
             case IpcMessageId.ClipboardPanelHotkey:
+            case IpcMessageId.ClipboardQuickPaste:
             case IpcMessageId.FavoriteDoubleTapHotkey:
                 writer.Write(msg.IntVal);
                 break;
@@ -253,6 +254,7 @@ public static class PipeRequestBinarySerializer
 
             case IpcMessageId.KeyCtrlNumber:
             case IpcMessageId.ClipboardPanelHotkey:
+            case IpcMessageId.ClipboardQuickPaste:
             case IpcMessageId.FavoriteDoubleTapHotkey:
                 msg.IntVal = reader.ReadInt32();
                 break;
