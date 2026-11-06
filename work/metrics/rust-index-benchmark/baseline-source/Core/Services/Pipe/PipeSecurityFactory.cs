@@ -1,0 +1,124 @@
+using System.IO.Pipes;
+using System.Security.AccessControl;
+using System.Security.Principal;
+
+namespace Lertaro.Core.Services.Pipe;
+
+// Split out of UsnServicePipeServer to keep that file under the line-count limit. Public (not internal)
+// so App\Services\AppSearchPipeService.cs -- a different assembly -- can reuse CreateCurrentUserOnly
+// too, for the same elevation-crossing reason HookIpcServer needed it (see that method's own comment).
+public static class PipeSecurityFactory
+{
+    // LertaroPipe's own pipe (UsnServicePipeServer): deliberately broad. That pipe is hosted by the
+    // --service process, which runs as LocalSystem (a genuine Windows Service, not a per-user process --
+    // see Service\Program.cs's "--service" branch), and is meant to be reachable by EVERY locally logged
+    // -in user. Restricting this ACL to one SID would restrict it to LocalSystem's own SID (since that's
+    // who creates the pipe), which no real user account would ever match -- breaking local search for
+    // everyone, not narrowing who can reach it.
+    //
+    // Reaching the pipe is not the same as seeing everything the service indexed, though: the index holds
+    // every user's files, and the pipe server identifies each caller by impersonating it and filters what
+    // it returns (see CallerVisibility). An elevated administrator sees everything; anyone else does not
+    // see other users' profile folders.
+    public static PipeSecurity? Create()
+    {
+        try
+        {
+            var pipeSecurity = new PipeSecurity();
+            pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.NetworkSid, null),
+                PipeAccessRights.FullControl, AccessControlType.Deny));
+
+            // Creating an instance of a named pipe that already exists is access-checked against THIS
+            // DACL, and the server creates instances while previous ones are still live (UsnServicePipeServer
+            // runs two overlapping listener loops with MaxAllowedServerInstances). So the right to create
+            // instances belongs to the accounts that host the server -- LocalSystem, plus Administrators
+            // for an interactive run -- and not to the public. Granting it to Everyone/Authenticated Users
+            // let any local process add its own "LertaroPipe" instance and have the App's or CLI's requests
+            // answered by it: they would receive attacker-chosen search results, file metadata and recent
+            // files to display and act on, and each squatted instance reserves kernel nonpaged pool.
+            foreach (var hostSid in new[]
+            {
+                new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null),
+                new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null),
+            })
+            {
+                pipeSecurity.AddAccessRule(new PipeAccessRule(
+                    hostSid,
+                    PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance,
+                    AccessControlType.Allow
+                ));
+            }
+
+            var everyoneSid = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
+
+            pipeSecurity.AddAccessRule(new PipeAccessRule(
+                everyoneSid,
+                PipeAccessRights.ReadWrite,
+                AccessControlType.Allow
+            ));
+
+            var authenticatedUsersSid = new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null);
+
+            pipeSecurity.AddAccessRule(new PipeAccessRule(
+                authenticatedUsersSid,
+                PipeAccessRights.ReadWrite,
+                AccessControlType.Allow
+            ));
+            Logger.Log("[PipeServer] PipeSecurity successfully configured.", LogLevel.Debug);
+            return pipeSecurity;
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"[PipeServer] Failed to create PipeSecurity: {ex.Message}", LogLevel.Error);
+            return null;
+        }
+    }
+
+    // For pipes that need to cross an elevation boundary for the SAME logged-in user -- originally the
+    // Hook process's two pipes (HookIpcServer: server runs elevated, client is the App at standard
+    // integrity), and also AppSearchPipeService's search pipe (server is the App at standard integrity,
+    // but a client run from an elevated/"Run as administrator" terminal needs to reach it too). Scopes
+    // the ACL to just the actual user's own SID, not every authenticated user on the machine.
+    //
+    // NamedPipeServerStreamAcl.Create with THIS ACL -- not the simpler PipeOptions.CurrentUserOnly flag on
+    // both ends -- is required specifically because of a subtlety in what "current user" means for a
+    // Windows token: WindowsIdentity.GetCurrent().User (used below) always reflects the actual logged-in
+    // user's SID regardless of elevation -- UAC's split-token model changes a token's integrity level and
+    // group memberships, not the identity it represents. But .NET's own PipeOptions.CurrentUserOnly
+    // doesn't check that; it compares against WindowsIdentity.GetCurrent().Owner, and for a user who's a
+    // member of Administrators, Windows sets the TOKEN OWNER to BUILTIN\Administrators on BOTH the
+    // filtered and elevated tokens -- NOT the user's own SID. A non-elevated server created with
+    // PipeOptions.CurrentUserOnly is fine for a non-elevated client (same Owner), but an elevated client
+    // (e.g. `lff` run from an admin terminal) trips the CLIENT-side CurrentUserOnly check against a
+    // server whose owner doesn't match either, throwing UnauthorizedAccessException ("was not owned by
+    // the current user") even though the SID-based ACL below would happily have allowed it. This is why
+    // BOTH the server (this ACL) and the client (a plain NamedPipeClientStream with no
+    // PipeOptions.CurrentUserOnly of its own) need to avoid that flag entirely and let the ACL alone be
+    // the enforcement (the pipe NAME can still embed the user+session for obscurity, but that's not an
+    // OS-enforced boundary on its own).
+    public static PipeSecurity? CreateCurrentUserOnly()
+    {
+        try
+        {
+            var pipeSecurity = new PipeSecurity();
+            pipeSecurity.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.NetworkSid, null),
+                PipeAccessRights.FullControl, AccessControlType.Deny));
+            var currentUserSid = WindowsIdentity.GetCurrent().User
+                ?? throw new InvalidOperationException("Could not resolve the current process's user SID.");
+
+            pipeSecurity.AddAccessRule(new PipeAccessRule(
+                currentUserSid,
+                PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance,
+                AccessControlType.Allow
+            ));
+
+            Logger.Log("[PipeServer] Current-user-only PipeSecurity successfully configured.", LogLevel.Debug);
+            return pipeSecurity;
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"[PipeServer] Failed to create current-user-only PipeSecurity: {ex.Message}", LogLevel.Error);
+            return null;
+        }
+    }
+}

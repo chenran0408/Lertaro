@@ -1,0 +1,268 @@
+using System.Text;
+using System.Text.Json;
+using Lertaro.Core.Services.LocalSend.Models;
+
+namespace Lertaro.Core.Services.LocalSend;
+
+public sealed class LocalSendClient : IDisposable
+{
+    private readonly HttpClient _httpClient;
+    private readonly LocalSendServer? _server;
+    private readonly bool _createChecksums;
+    private LocalSendPendingFileTransfer? _pendingFileTransfer;
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+    };
+
+    public LocalSendClient(LocalSendServer? server = null, string? expectedFingerprint = null, bool createChecksums = true)
+    {
+        _server = server;
+        _createChecksums = createChecksums;
+        // A running server already holds this installation's identity. Without one the shared instance
+        // stands in: loading the pfx here ran once per discovered device per validation sweep, and the
+        // per-device client has to stay per-device because the peer fingerprint it pins is baked into its
+        // handler.
+        var identity = (server?.IdentityCertificate ?? server?.Certificate) ?? LocalSendCertificate.SharedIdentity;
+        _httpClient = LocalSendHttpClientFactory.Create(identity, expectedFingerprint);
+    }
+
+    public async Task<LocalSendDeviceInfo?> GetDeviceInfoAsync(string ip, int port = 53317, bool https = false, CancellationToken token = default, string? targetVersion = null, string? fingerprint = null)
+    {
+        try
+        {
+            var cleanIp = LocalSendServerHelper.CleanIpAddress(ip);
+            var url = LocalSendApiRoute.BuildUri(cleanIp, port, https, "info", targetVersion).ToString();
+            if (!string.IsNullOrEmpty(fingerprint))
+                url += $"?fingerprint={Uri.EscapeDataString(fingerprint)}";
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            using var response = await _httpClient.SendAsync(request, token).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode) return null;
+            var json = await response.Content.ReadAsStringAsync(token).ConfigureAwait(false);
+            var info = JsonSerializer.Deserialize<LocalSendInfoDto>(json);
+            if (https && info != null && LocalSendHttpClientFactory.TryGetPeerFingerprint(request, out var peerFingerprint))
+                info.Fingerprint = peerFingerprint;
+            return info == null ? null : LocalSendProtocolMapper.ToDevice(info, cleanIp, port, https ? "https" : "http");
+        }
+        catch { return null; }
+    }
+
+    public async Task<LocalSendSendResult> SendTextAsync(
+        string targetIp, int targetPort, bool https, LocalSendDeviceInfo senderInfo, string text, string? pin = null,
+        CancellationToken token = default, string? targetVersion = null)
+    {
+        _pendingFileTransfer = null;
+        var rawGuid = Guid.NewGuid().ToString("D").ToLowerInvariant();
+        var fileId = $"text_{rawGuid.Replace("-", string.Empty)}";
+        var fileName = $"{rawGuid}.txt";
+        var textBytes = Encoding.UTF8.GetBytes(text);
+        var legacy = LocalSendApiRoute.UsesV1(targetVersion);
+
+        var dto = new LocalSendPrepareUploadRequestDto
+        {
+            Info = LocalSendProtocolMapper.CreateInfoRegister(senderInfo),
+            Files = new Dictionary<string, LocalSendFileDto>
+            {
+                [fileId] = new LocalSendFileDto
+                {
+                    Id = fileId,
+                    FileName = fileName,
+                    Size = textBytes.Length,
+                    FileType = legacy ? "text" : "text/plain",
+                    Sha256 = legacy || !_createChecksums ? null : LocalSendChecksum.Compute(textBytes),
+                    Preview = text
+                }
+            }
+        };
+
+        var (prepResult, sessionId, tokens, usedHttps, prepErr) = await LocalSendClientHelper.PrepareUploadAsync(
+            _httpClient, JsonOptions, targetIp, targetPort, https, dto, pin, token, targetVersion).ConfigureAwait(false);
+
+        if (prepResult != LocalSendSendResult.Success)
+        {
+            LastError = prepErr;
+            if (prepResult == LocalSendSendResult.Canceled)
+                await CancelSessionAsync(targetIp, targetPort, usedHttps, sessionId ?? string.Empty, CancellationToken.None, targetVersion).ConfigureAwait(false);
+            return prepResult;
+        }
+
+        if (tokens == null || (!legacy && string.IsNullOrEmpty(sessionId)))
+        {
+            LastError = prepErr ?? "Invalid prepare-upload response payload.";
+            return LocalSendSendResult.Error;
+        }
+
+        if (!tokens.ContainsKey(fileId))
+            return LocalSendSendResult.Success;
+
+        var cleanIp = LocalSendServerHelper.CleanIpAddress(targetIp);
+        _pendingFileTransfer = new LocalSendPendingFileTransfer
+        {
+            TargetIp = cleanIp,
+            TargetPort = targetPort,
+            Https = usedHttps,
+            SessionId = sessionId,
+            TargetVersion = targetVersion,
+            Tokens = tokens,
+            Files = [new LocalSendPendingFile(fileId, dto.Files[fileId], () => new MemoryStream(textBytes, writable: false))]
+        };
+        return await UploadPendingFilesAsync(null, null, token).ConfigureAwait(false);
+    }
+
+    public async Task<LocalSendSendResult> SendFilesAsync(
+        string targetIp, int targetPort, bool https, LocalSendDeviceInfo senderInfo, IReadOnlyList<string> filePaths,
+        string? pin = null, Action<LocalSendSendProgressArgs>? onProgress = null,
+        Action<LocalSendFileConfirmationArgs>? onFileConfirmed = null, CancellationToken token = default, string? targetVersion = null)
+    {
+        _pendingFileTransfer = null;
+        if (filePaths.Count == 0) return LocalSendSendResult.Error;
+
+        var expandedItems = new List<(string absolutePath, string relativePath)>();
+        foreach (var p in filePaths)
+        {
+            if (File.Exists(p))
+            {
+                expandedItems.Add((p, Path.GetFileName(p)));
+            }
+            else if (Directory.Exists(p))
+            {
+                var fullPath = Path.GetFullPath(p);
+                var parentDir = Path.GetDirectoryName(fullPath);
+                var baseDir = string.IsNullOrEmpty(parentDir) ? fullPath : parentDir;
+
+                try
+                {
+                    var files = Directory.GetFiles(fullPath, "*", SearchOption.AllDirectories);
+                    foreach (var f in files)
+                    {
+                        var relPath = Path.GetRelativePath(baseDir, f).Replace('\\', '/');
+                        expandedItems.Add((f, relPath));
+                    }
+                }
+                catch { }
+            }
+        }
+
+        if (expandedItems.Count == 0) return LocalSendSendResult.Error;
+
+        var filesDict = new Dictionary<string, LocalSendFileDto>();
+        var pathMap = new Dictionary<string, string>();
+        var legacy = LocalSendApiRoute.UsesV1(targetVersion);
+        for (var i = 0; i < expandedItems.Count; i++)
+        {
+            var (path, relPath) = expandedItems[i];
+            var fi = new FileInfo(path);
+            var id = $"file_{i}_{Guid.NewGuid():N}";
+            string? sha256;
+            try
+            {
+                sha256 = legacy || !_createChecksums ? null : await LocalSendChecksum.ComputeFileAsync(path, token,
+                    bytes => onProgress?.Invoke(new LocalSendSendProgressArgs(relPath, bytes, fi.Length, i + 1,
+                        expandedItems.Count, LocalSendTransferStage.CalculatingChecksum))).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+                return LocalSendSendResult.Canceled;
+            }
+            catch (Exception ex)
+            {
+                LastError = ex.Message;
+                return LocalSendSendResult.Error;
+            }
+
+            filesDict[id] = new LocalSendFileDto
+            {
+                Id = id,
+                FileName = relPath,
+                Size = fi.Length,
+                FileType = LocalSendClientHelper.GetFileType(fi.Extension, legacy),
+                Sha256 = sha256,
+                Metadata = new LocalSendFileMetadataDto
+                {
+                    LastModified = fi.LastWriteTimeUtc,
+                    LastAccessed = fi.LastAccessTimeUtc
+                }
+            };
+            pathMap[id] = path;
+        }
+
+        onProgress?.Invoke(new LocalSendSendProgressArgs(string.Empty, 0, 0, 0, expandedItems.Count,
+            LocalSendTransferStage.WaitingForConfirmation));
+        var prepareDto = new LocalSendPrepareUploadRequestDto { Info = LocalSendProtocolMapper.CreateInfoRegister(senderInfo), Files = filesDict };
+        var (prepResult, sessionId, tokens, usedHttps, prepErr) = await LocalSendClientHelper.PrepareUploadAsync(_httpClient, JsonOptions, targetIp, targetPort, https, prepareDto, pin, token, targetVersion).ConfigureAwait(false);
+        if (prepResult != LocalSendSendResult.Success || tokens == null || (!LocalSendApiRoute.UsesV1(targetVersion) && string.IsNullOrEmpty(sessionId)))
+        {
+            LastError = prepErr;
+            if (prepResult == LocalSendSendResult.Canceled)
+                await CancelSessionAsync(targetIp, targetPort, usedHttps, sessionId ?? string.Empty, CancellationToken.None, targetVersion).ConfigureAwait(false);
+            return prepResult;
+        }
+
+        var cleanIp = LocalSendServerHelper.CleanIpAddress(targetIp);
+        _pendingFileTransfer = new LocalSendPendingFileTransfer
+        {
+            TargetIp = cleanIp,
+            TargetPort = targetPort,
+            Https = usedHttps,
+            SessionId = sessionId,
+            TargetVersion = targetVersion,
+            Tokens = tokens,
+            Files = filesDict.Select(pair => new LocalSendPendingFile(
+                pair.Key, pair.Value, () => File.OpenRead(pathMap[pair.Key]))).ToArray()
+        };
+        return await UploadPendingFilesAsync(onProgress, onFileConfirmed, token).ConfigureAwait(false);
+    }
+
+    public bool HasRetryableFileSend => _pendingFileTransfer?.HasFailedFiles == true;
+
+    public Task<LocalSendSendResult> RetryLastFailedFileAsync(Action<LocalSendSendProgressArgs>? onProgress = null,
+        Action<LocalSendFileConfirmationArgs>? onFileConfirmed = null, CancellationToken token = default) =>
+        _pendingFileTransfer == null ? Task.FromResult(LocalSendSendResult.Error) : UploadPendingFilesAsync(onProgress, onFileConfirmed, token);
+
+    private async Task<LocalSendSendResult> UploadPendingFilesAsync(Action<LocalSendSendProgressArgs>? onProgress,
+        Action<LocalSendFileConfirmationArgs>? onFileConfirmed, CancellationToken token)
+    {
+        var transfer = _pendingFileTransfer!;
+        var attempt = await LocalSendFileTransferSender.UploadWithSenderCancellationAsync(
+            uploadToken => LocalSendFileTransferSender.UploadAsync(
+                _httpClient, _server, transfer, onProgress, onFileConfirmed, uploadToken),
+            () => CancelSessionAsync(transfer.TargetIp, transfer.TargetPort, transfer.Https,
+                transfer.SessionId ?? string.Empty, CancellationToken.None, transfer.TargetVersion),
+            token).ConfigureAwait(false);
+        LastError = attempt.Error;
+        if (!attempt.CanRetry)
+            _pendingFileTransfer = null;
+        return attempt.Result;
+    }
+
+    public async Task CancelSessionAsync(string targetIp, int targetPort, bool https, string sessionId, CancellationToken token = default, string? targetVersion = null)
+    {
+        try
+        {
+            var cleanIp = LocalSendServerHelper.CleanIpAddress(targetIp);
+            var url = BuildCancellationUrl(cleanIp, targetPort, https, sessionId, targetVersion);
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+            timeout.CancelAfter(TimeSpan.FromSeconds(2));
+            await _httpClient.PostAsync(url, content: null, timeout.Token).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"[LocalSendClient] Failed to send /cancel POST: {ex.Message}", LogLevel.Warn);
+        }
+    }
+
+    internal static string BuildCancellationUrl(
+        string targetIp, int targetPort, bool https, string sessionId, string? targetVersion)
+    {
+        var url = LocalSendApiRoute.BuildUri(targetIp, targetPort, https, "cancel", targetVersion).ToString();
+        return LocalSendApiRoute.UsesV1(targetVersion) || string.IsNullOrEmpty(sessionId)
+            ? url
+            : $"{url}?sessionId={Uri.EscapeDataString(sessionId)}";
+    }
+
+    public string? LastError { get; private set; }
+
+    public void Dispose() => _httpClient.Dispose();
+}

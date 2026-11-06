@@ -1,0 +1,296 @@
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+using Lertaro.Core.Indexer.Usn;
+
+namespace Lertaro.Core.DriveMonitoring;
+
+public class UsnMonitor : IDisposable
+{
+    private readonly string _drive;
+    private readonly ulong _journalId;
+    private long _startUsn;
+    private readonly UsnIndexer _indexer;
+    private readonly CancellationToken _token;
+    private readonly Action<string>? _onReindexRequired;
+    private readonly UsnMonitorHandleState _handleState = new();
+    // Own token (linked to the caller's), so Dispose can stop the loop itself -- see MonitorLoopJoin.
+    private readonly CancellationTokenSource _loopCts;
+    private Task _loop = Task.CompletedTask;
+    private int _disposed;
+
+    public UsnMonitor(
+        string drive,
+        ulong journalId,
+        long startUsn,
+        UsnIndexer indexer,
+        CancellationToken token,
+        Action<string>? onReindexRequired = null)
+    {
+        _drive = drive;
+        _journalId = journalId;
+        _startUsn = startUsn;
+        _indexer = indexer;
+        _loopCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+        _token = _loopCts.Token;
+        _onReindexRequired = onReindexRequired;
+    }
+
+    public void Dispose()
+    {
+        // Idempotent: the PnP removal path disposes the monitor but keeps its registration, so a later stop
+        // disposes this instance again (see DriveMonitorRegistration.DisposeMonitor).
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return;
+
+        _handleState.Dispose();
+        // Drain the loop before returning: the caller disposes this drive's LiveIndex next, and a batch
+        // applied into a disposed index is the crash MonitorLoopJoin exists to prevent.
+        MonitorLoopJoin.Stop(_loop, _loopCts, _drive);
+    }
+
+    public void Start() => _loop = Task.Run(async () =>
+                                {
+                                    try
+                                    {
+                                        await MonitorLoop();
+                                    }
+                                    catch (OperationCanceledException)
+                                    {
+                                        Logger.Log($"[Monitor] Monitoring on drive {_drive} cancelled successfully.");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Logger.Log($"[Monitor] Critical loop failure on drive {_drive}: {ex}", LogLevel.Error);
+                                    }
+                                }, _token);
+
+    private async Task MonitorLoop()
+    {
+        Logger.Log($"[Monitor] Started real-time monitoring on drive {_drive} from USN {_startUsn}...");
+        var volumePath = $"\\\\.\\{_drive}:";
+        var recordVersion = UsnJournalRead.RecordVersion(new DriveInfo(_drive).DriveFormat);
+        var handle = OpenVolume(volumePath);
+        if (handle.IsInvalid)
+        {
+            Logger.Log($"[Monitor] Failed to open drive {_drive} handle for monitoring.", LogLevel.Error);
+            handle.Dispose();
+            return;
+        }
+        if (Volatile.Read(ref _disposed) != 0)
+        {
+            handle.Dispose();
+            return;
+        }
+        _handleState.Set(handle);
+
+        var outBuf = new byte[64 * 1024];
+        var consecutiveUnexpectedErrors = 0;
+
+        try
+        {
+            while (!_token.IsCancellationRequested)
+            {
+                try
+                {
+                    var previousUsn = _startUsn;
+                    var success = UsnJournalRead.Read(handle, _startUsn, _journalId, recordVersion, outBuf, out var bytesReturned);
+
+                    if (!success)
+                    {
+                        var err = Marshal.GetLastWin32Error();
+                        Logger.Log($"[Monitor] FSCTL_READ_USN_JOURNAL error on drive {_drive}: {err}", LogLevel.Warn);
+                        if (IsJournalReindexError(err))
+                        {
+                            Logger.Log($"[Monitor] USN journal invalidated on drive {_drive} (error {err}). Stopping monitor for re-index.", LogLevel.Error);
+                            _onReindexRequired?.Invoke(_drive);
+                            break;
+                        }
+                        handle = await RecoverVolumeHandle(volumePath, handle, err);
+                        if (handle.IsInvalid)
+                            break;
+                        consecutiveUnexpectedErrors = 0;
+                        continue;
+                    }
+
+                    consecutiveUnexpectedErrors = 0;
+                    await ProcessReadBuffer(outBuf, (int)bytesReturned, previousUsn);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"[Monitor] Unexpected error in monitor loop on drive {_drive}: {ex}", LogLevel.Error);
+                    await Task.Delay(2000, _token);
+                    consecutiveUnexpectedErrors++;
+                    if (consecutiveUnexpectedErrors > 10)
+                    {
+                        Logger.Log($"[Monitor] Too many consecutive unexpected errors on drive {_drive}. Stopping monitor.", LogLevel.Error);
+                        break;
+                    }
+                }
+            }
+        }
+        finally
+        {
+            _handleState.Clear(handle);
+            handle.Dispose();
+        }
+
+        Logger.Log($"[Monitor] Stopped monitoring on drive {_drive}.");
+    }
+
+    private async Task ProcessReadBuffer(byte[] outBuf, int returnedSize, long previousUsn)
+    {
+        if (returnedSize > 8)
+        {
+            var nextUsn = BitConverter.ToInt64(outBuf, 0);
+            var offset = 8;
+            var records = new List<ParsedUsnRecord>();
+            var failedRecords = 0;
+
+            while (offset < returnedSize)
+            {
+                if (offset + 4 > returnedSize)
+                    break;
+
+                var recordLen = BitConverter.ToUInt32(outBuf, offset);
+                if (recordLen == 0 || offset + recordLen > returnedSize)
+                    break;
+
+                var recordSpan = new ReadOnlySpan<byte>(outBuf, offset, (int)recordLen);
+                try
+                {
+                    records.Add(UsnRecordParser.ParseRecord(recordSpan));
+                }
+                catch (Exception ex)
+                {
+                    failedRecords++;
+                    Logger.Log($"[Monitor] Record parse error during monitoring on {_drive}: {ex}", LogLevel.Error);
+                }
+
+                offset += (int)recordLen;
+            }
+
+            // Advance the watermark only after a successful apply. If ApplyUsnRecords throws, keep the
+            // old _startUsn so the next read replays this batch instead of dropping it forever. A false
+            // return (this drive's LiveIndex was gone) still moves _startUsn on, because replaying a batch
+            // nothing can accept would wedge this loop, but ApplyUsnRecords pins the drive's DURABLE
+            // watermark in that case, so the next cold start replays it from the cache file instead.
+            if (records.Count > 0 && _indexer.ApplyUsnRecords(_drive, records))
+                _indexer.AdvanceJournalWatermark(_drive, _journalId, nextUsn);
+
+            if (failedRecords > 0)
+            {
+                // Partial apply: the watermark must advance past the unreadable records (they would
+                // fail deterministically on replay and wedge the monitor on the same batch), so whatever
+                // changes they described are lost to the incremental index. Queue a rebuild so a full
+                // scan recovers them -- rare enough (the parser handles every shipped USN record version)
+                // that the rebuild cost is the right trade-off for silent gaps. This is checked for the
+                // whole batch, not only when at least one record parsed: a batch where every record was
+                // unreadable used to take the "nothing to apply" path below, advance the watermark past
+                // all of them, and queue nothing -- the exact silent gap the rebuild exists to recover.
+                Logger.Log($"[Monitor] {failedRecords} unreadable record(s) on {_drive}; queuing a rebuild to recover the skipped changes.", LogLevel.Error);
+                _onReindexRequired?.Invoke(_drive);
+            }
+
+            _startUsn = nextUsn;
+
+            if (_startUsn == previousUsn)
+                await Task.Delay(1000, _token);
+            else if (records.Count == 0)
+                await Task.Delay(200, _token);
+            return;
+        }
+
+        if (returnedSize == 8)
+            _startUsn = BitConverter.ToInt64(outBuf, 0);
+
+        await Task.Delay(500, _token);
+    }
+    private static SafeFileHandle OpenVolume(string volumePath) => Win32Api.CreateFileW(
+        volumePath,
+        Win32Api.GENERIC_READ,
+        Win32Api.FILE_SHARE_READ | Win32Api.FILE_SHARE_WRITE,
+        IntPtr.Zero,
+        Win32Api.OPEN_EXISTING,
+        0,
+        IntPtr.Zero);
+
+    private async Task<SafeFileHandle> RecoverVolumeHandle(string volumePath, SafeFileHandle oldHandle, int lastError)
+    {
+        oldHandle.Dispose();
+        _handleState.Clear(oldHandle);
+
+        if (!IsRecoverableVolumeError(lastError))
+        {
+            Logger.Log($"[Monitor] Non-recoverable USN journal error on drive {_drive}: {lastError}. Stopping monitor.", LogLevel.Error);
+            return new SafeFileHandle(IntPtr.Zero, ownsHandle: true);
+        }
+
+        for (var attempt = 1; attempt <= 30 && !_token.IsCancellationRequested; attempt++)
+        {
+            await Task.Delay(2000, _token);
+            var handle = OpenVolume(volumePath);
+            if (handle.IsInvalid)
+            {
+                handle.Dispose();
+                if (attempt == 1 || attempt % 5 == 0)
+                    Logger.Log($"[Monitor] Drive {_drive} not ready; reopen attempt {attempt}/30.", LogLevel.Warn);
+                continue;
+            }
+
+            _handleState.Set(handle);
+
+            var journal = QueryJournal(handle);
+            if (journal.HasValue && journal.Value.JournalId == _journalId)
+            {
+                if (_startUsn < journal.Value.LowestValidUsn || _startUsn > journal.Value.NextUsn)
+                {
+                    handle.Dispose();
+                    _handleState.Clear(handle);
+                    Logger.Log($"[Monitor] USN {_startUsn} on drive {_drive} is outside journal range {journal.Value.LowestValidUsn}..{journal.Value.NextUsn}. Stopping monitor for re-index.", LogLevel.Error);
+                    _onReindexRequired?.Invoke(_drive);
+                    return new SafeFileHandle(IntPtr.Zero, ownsHandle: true);
+                }
+
+                Logger.Log($"[Monitor] Reopened drive {_drive}; resuming from USN {_startUsn}.");
+                return handle;
+            }
+
+            handle.Dispose();
+            _handleState.Clear(handle);
+            if (journal.HasValue)
+            {
+                Logger.Log($"[Monitor] Journal ID changed on drive {_drive}. Stopping monitor for re-index.", LogLevel.Error);
+                _onReindexRequired?.Invoke(_drive);
+                return new SafeFileHandle(IntPtr.Zero, ownsHandle: true);
+            }
+        }
+
+        Logger.Log($"[Monitor] Drive {_drive} did not recover after reopen attempts. Stopping monitor.", LogLevel.Error);
+        return new SafeFileHandle(IntPtr.Zero, ownsHandle: true);
+    }
+
+    private static bool IsRecoverableVolumeError(int err) =>
+        err is Win32Api.ERROR_NOT_READY or Win32Api.ERROR_INVALID_HANDLE or Win32Api.ERROR_DEVICE_NOT_CONNECTED;
+    private static bool IsJournalReindexError(int err) =>
+        err is Win32Api.ERROR_JOURNAL_DELETE_IN_PROGRESS or Win32Api.ERROR_JOURNAL_NOT_ACTIVE or Win32Api.ERROR_JOURNAL_ENTRY_DELETED;
+
+    private static (ulong JournalId, long LowestValidUsn, long NextUsn)? QueryJournal(SafeFileHandle handle)
+    {
+        var queryBuf = new byte[56];
+        var success = Win32Api.DeviceIoControl(
+            handle,
+            Win32Api.FSCTL_QUERY_USN_JOURNAL,
+            IntPtr.Zero, 0,
+            queryBuf, (uint)queryBuf.Length,
+            out _,
+            IntPtr.Zero);
+
+        return success
+            ? (BitConverter.ToUInt64(queryBuf, 0), BitConverter.ToInt64(queryBuf, 24), BitConverter.ToInt64(queryBuf, 16))
+            : null;
+    }
+}

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Lertaro.PluginSdk</AssemblyName>
+    <RootNamespace>Lertaro.PluginSdk</RootNamespace>
+    <Version>2.1.2</Version>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Lertaro.PluginSdk.Tests" />
+  </ItemGroup>
+
+</Project>

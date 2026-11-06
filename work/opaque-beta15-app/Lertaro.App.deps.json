@@ -1,0 +1,82 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "Lertaro.App/5.10.2-beta.15": {
+        "dependencies": {
+          "Lertaro.Core": "3.0.0",
+          "Lertaro.PluginSdk": "2.1.2",
+          "Lertaro.Core.Reference": "3.0.0.0",
+          "Lertaro.PluginSdk.Reference": "2.1.2.0"
+        },
+        "runtime": {
+          "Lertaro.App.dll": {}
+        }
+      },
+      "Lertaro.Core/3.0.0": {
+        "dependencies": {
+          "Lertaro.PluginSdk": "2.1.2"
+        },
+        "runtime": {
+          "Lertaro.Core.dll": {
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "Lertaro.PluginSdk/2.1.2": {
+        "runtime": {
+          "Lertaro.PluginSdk.dll": {
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "Lertaro.Core.Reference/3.0.0.0": {
+        "runtime": {
+          "Lertaro.Core.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.0.0.0"
+          }
+        }
+      },
+      "Lertaro.PluginSdk.Reference/2.1.2.0": {
+        "runtime": {
+          "Lertaro.PluginSdk.dll": {
+            "assemblyVersion": "2.1.2.0",
+            "fileVersion": "2.1.2.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Lertaro.App/5.10.2-beta.15": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Lertaro.Core/3.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Lertaro.PluginSdk/2.1.2": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Lertaro.Core.Reference/3.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Lertaro.PluginSdk.Reference/2.1.2.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

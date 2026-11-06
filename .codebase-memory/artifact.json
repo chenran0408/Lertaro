@@ -1,0 +1,11 @@
+{
+    "schema_version": 2,
+    "commit": "06677d77e307036632f068ae82886488b2bb9e2c",
+    "indexed_at": "2026-10-29T13:42:52Z",
+    "project": "lertaro-audit",
+    "nodes": 63003,
+    "edges": 236153,
+    "original_size": 183631872,
+    "compressed_size": 32814423,
+    "compression_level": 3
+}

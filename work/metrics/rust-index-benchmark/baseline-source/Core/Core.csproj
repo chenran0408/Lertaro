@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Lertaro.Core</AssemblyName>
+    <RootNamespace>Lertaro.Core</RootNamespace>
+    <Version>3.0.0</Version>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <!-- IndexV2 reads its memory-mapped snapshot through typed spans over a raw view pointer. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Lertaro.Core.Tests" />
+    <InternalsVisibleTo Include="Lertaro.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Services\LocalSend\MimeTypes.json" />
+    <EmbeddedResource Include="..\release-signing-public-key.pem" LogicalName="Lertaro.UpdateSigningPublicKey" />
+  </ItemGroup>
+
+</Project>

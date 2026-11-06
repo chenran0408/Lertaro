@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="28d6cb07-1572-48de-b6ca-7871dcf49e41" name="28892@DESKTOP-0V36DHB 2026-10-29 18:41:15" runUser="DESKTOP-0V36DHB\28892" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-29T18:41:15.9736725+08:00" queuing="2026-10-29T18:41:15.9736727+08:00" start="2026-10-29T18:41:15.0871260+08:00" finish="2026-10-29T18:41:15.9769749+08:00" />
+  <TestSettings name="default" id="f510f4af-c94f-49a3-af0c-3b9a3919ecf9">
+    <Deployment runDeploymentRoot="28892_DESKTOP-0V36DHB_2026-10-29_18_41_15" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="2edcd250-59fa-4a95-b167-aa36266fba34" testId="16da7156-0e4d-8162-9806-9cbb21c940b2" testName="TransparentBaseCanBeToggledAfterTheControlIsCreated" computerName="DESKTOP-0V36DHB" duration="00:00:00.0075786" startTime="2026-10-29T18:41:15.8434903+08:00" endTime="2026-10-29T18:41:15.8525390+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2edcd250-59fa-4a95-b167-aa36266fba34" />
+    <UnitTestResult executionId="671d5a05-0870-48b6-a69e-41ab1cf1e64b" testId="1f1df910-7281-815a-92c0-ccbf669e1a3b" testName="LegacySolidAndGradientPresetsNoLongerPaintOverTheGlassSurface" computerName="DESKTOP-0V36DHB" duration="00:00:00.0392199" startTime="2026-10-29T18:41:15.8527473+08:00" endTime="2026-10-29T18:41:15.8951913+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="671d5a05-0870-48b6-a69e-41ab1cf1e64b" />
+    <UnitTestResult executionId="d748f96b-ba3e-463e-997f-1899c84828a8" testId="1a09f9df-2641-8705-9637-364cd293a59e" testName="OpacityChangesOnlyTheImageWithoutReloadingAndMissingImagesKeepTheTheme" computerName="DESKTOP-0V36DHB" duration="00:00:00.3854036" startTime="2026-10-29T18:41:15.4378895+08:00" endTime="2026-10-29T18:41:15.8409003+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d748f96b-ba3e-463e-997f-1899c84828a8" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="TransparentBaseCanBeToggledAfterTheControlIsCreated" storage="d:\codex\tasks\2026-10-27\new-chat-3\work\lertaro\tests\app\bin\release\net10.0-windows\lertaro.app.tests.dll" id="16da7156-0e4d-8162-9806-9cbb21c940b2">
+      <Execution id="2edcd250-59fa-4a95-b167-aa36266fba34" />
+      <TestMethod codeBase="D:\CODEX\Tasks\2026-10-27\new-chat-3\work\Lertaro\Tests\App\bin\Release\net10.0-windows\Lertaro.App.Tests.dll" adapterTypeName="executor://mstestadapter/v4" className="Lertaro.App.Tests.Views.Controls.BackgroundSurfaceTests" name="TransparentBaseCanBeToggledAfterTheControlIsCreated" />
+    </UnitTest>
+    <UnitTest name="LegacySolidAndGradientPresetsNoLongerPaintOverTheGlassSurface" storage="d:\codex\tasks\2026-10-27\new-chat-3\work\lertaro\tests\app\bin\release\net10.0-windows\lertaro.app.tests.dll" id="1f1df910-7281-815a-92c0-ccbf669e1a3b">
+      <Execution id="671d5a05-0870-48b6-a69e-41ab1cf1e64b" />
+      <TestMethod codeBase="D:\CODEX\Tasks\2026-10-27\new-chat-3\work\Lertaro\Tests\App\bin\Release\net10.0-windows\Lertaro.App.Tests.dll" adapterTypeName="executor://mstestadapter/v4" className="Lertaro.App.Tests.Views.Controls.BackgroundSurfaceTests" name="LegacySolidAndGradientPresetsNoLongerPaintOverTheGlassSurface" />
+    </UnitTest>
+    <UnitTest name="OpacityChangesOnlyTheImageWithoutReloadingAndMissingImagesKeepTheTheme" storage="d:\codex\tasks\2026-10-27\new-chat-3\work\lertaro\tests\app\bin\release\net10.0-windows\lertaro.app.tests.dll" id="1a09f9df-2641-8705-9637-364cd293a59e">
+      <Execution id="d748f96b-ba3e-463e-997f-1899c84828a8" />
+      <TestMethod codeBase="D:\CODEX\Tasks\2026-10-27\new-chat-3\work\Lertaro\Tests\App\bin\Release\net10.0-windows\Lertaro.App.Tests.dll" adapterTypeName="executor://mstestadapter/v4" className="Lertaro.App.Tests.Views.Controls.BackgroundSurfaceTests" name="OpacityChangesOnlyTheImageWithoutReloadingAndMissingImagesKeepTheTheme" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="16da7156-0e4d-8162-9806-9cbb21c940b2" executionId="2edcd250-59fa-4a95-b167-aa36266fba34" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1f1df910-7281-815a-92c0-ccbf669e1a3b" executionId="671d5a05-0870-48b6-a69e-41ab1cf1e64b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1a09f9df-2641-8705-9637-364cd293a59e" executionId="d748f96b-ba3e-463e-997f-1899c84828a8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="列表中未列出的结果" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="所有已加载的结果" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="3" executed="3" passed="3" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>已为 D:\CODEX\Tasks\2026-10-27\new-chat-3\work\Lertaro\Tests\App\bin\Release\net10.0-windows\Lertaro.App.Tests.dll 启用测试并行化(Workers: 20，Scope: MethodLevel)&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

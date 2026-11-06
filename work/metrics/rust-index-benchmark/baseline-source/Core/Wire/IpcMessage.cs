@@ -1,0 +1,97 @@
+namespace Lertaro.Core.Wire;
+
+public enum IpcMessageId : byte
+{
+    // App -> Hook
+    Stop = 1,
+    SetAppProcessId = 2,
+    SetQuickSearchVisible = 3,
+    SetInlineSearchVisible = 4,
+    NavigateDialog = 5, // BoolVal: restore dialog focus before navigating (favorite hotkeys).
+    RestoreDialogFocus = 6,
+    ReloadSettings = 7,
+    SetHotkeysDisabled = 8,
+    ForceForeground = 13,
+    KillProcess = 14,
+    ExecuteInlineItem = 15,
+    InlineSelectionChanged = 16,
+    InlineSearchFinished = 17,
+    // Distinct from SetInlineSearchVisible, which means "forward keystrokes to me" and is cleared the
+    // moment the inline window takes focus for itself. This one means the window is simply on screen,
+    // which stays true either way, and is what a suppression that has to outlive that handover needs.
+    SetInlineWindowOnScreen = 18,
+    RequestOpenedFolders = 19,
+
+    // App -> Hook
+    Activate = 20,
+    ExplorerDeactivated = 21,
+    ActiveWindowMoved = 22,
+    KeyBackspace = 23,
+    KeyEscape = 24,
+    KeyEnter = 25,
+    KeyUp = 26,
+    KeyDown = 27,
+    KeyLeft = 28,
+    KeyRight = 29,
+    KeyChar = 30,
+    KeyCtrlNumber = 31,
+    MouseClick = 32,
+    ExplorerActivated = 33,
+    PathCaptured = 34,
+    Error = 35,
+    MouseDoubleClick = 38,
+    MouseMiddleClick = 39,
+    // Hook -> App: the quick panel's global hotkey fired. Carries nothing; the panel reads the
+    // foreground window itself, which has to be the one in front at that moment rather than whatever
+    // the hook happened to see.
+    QuickPanelHotkey = 36,
+    QuickNavigationHotkey = 42,
+    ExecuteInlineItemResponse = 40,
+    OpenedFoldersCaptured = 41,
+
+    // Hook -> App, then App -> Hook: run a tool at the App's own privilege level.
+    //
+    // The Hook is started elevated (see HookIpcClient.LaunchHookProcessAsync), and an ELEVATED dopusrt can
+    // never be answered by the unelevated Directory Opus -- User Interface Privilege Isolation blocks the
+    // reply -- so it hangs and writes nothing. Only CreateProcessAsUser can start a process at a lower
+    // integrity level, and that needs SeAssignPrimaryTokenPrivilege, which the Hook's token does not hold.
+    // The App is already at the user's level, so it runs the tool instead and reports back.
+    //   Hook -> App  RunTool:    StringVal1 = output file, StringVal2 = tool path
+    //   App -> Hook  ToolResult: BoolVal = started, IntVal = process id, StringVal1 = failure reason
+    RunTool = 43,
+    ToolResult = 44,
+
+    // App -> Hook: truncate hook.log. The Hook holds that file's only write handle for its whole process
+    // lifetime (see Logger), and it usually runs elevated, so the App can neither reopen nor delete the
+    // file -- it has to ask. Carries nothing, and like every other command here is only reachable by the
+    // App the hook actually launched (see HookPipePeer).
+    ClearHookLog = 46,
+    LocateInlineItem = 47,
+    QuickPanelMouseGesture = 48,
+    QuickPanelWakeRule = 49,
+    StartQuickPanelWakeTest = 50,
+    StopQuickPanelWakeTest = 51,
+    QuickPanelWakeTestResult = 52,
+    SetHotkeyRecorderFocused = 53,
+    CompleteInlineInput = 54,
+    InlineInputStarted = 55,
+    FavoriteDoubleTapHotkey = 56,
+    SetFavoriteDoubleTapOwners = 57
+}
+
+public struct IpcMessage
+{
+    public IpcMessageId Id { get; set; }
+    public uint ProcessId { get; set; }
+    public bool BoolVal { get; set; }
+    public char CharVal { get; set; }
+    public int IntVal { get; set; }
+    public int MouseX { get; set; }
+    public int MouseY { get; set; }
+    public long Hwnd { get; set; }
+    public string? StringVal1 { get; set; }
+    public string? StringVal2 { get; set; }
+    public IReadOnlyList<string>? StringList { get; set; }
+    public bool IsDesktop { get; set; }
+    public bool IsDialog { get; set; }
+}

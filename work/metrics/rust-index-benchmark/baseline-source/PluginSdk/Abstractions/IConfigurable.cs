@@ -1,0 +1,85 @@
+namespace Lertaro.PluginSdk.Abstractions;
+
+public enum ConfigFieldType
+{
+    Boolean,
+    Text,
+    Integer,
+    Choice,
+    Array,
+    Object,
+    Group,
+    StringList,
+    Hotkey,
+    FilePath,
+    FolderPath,
+    CustomControl,
+    Button
+}
+
+public class PluginConfigField
+{
+    public string Key { get; set; } = string.Empty;
+    public string GroupKey { get; set; } = string.Empty;
+    public string LabelKey { get; set; } = string.Empty;
+    public string DescriptionKey { get; set; } = string.Empty;
+    public ConfigFieldType FieldType { get; set; }
+    public object DefaultValue { get; set; } = null!;
+    /// <summary>Optional FilePath picker patterns, separated by semicolons. The field label names the filter.</summary>
+    public string? FilePathPattern { get; set; }
+    public List<string>? Choices { get; set; }
+    /// <summary>Choice values with separate persisted values and localized display labels.</summary>
+    public List<PluginConfigChoice>? ChoiceOptions { get; set; }
+    public List<PluginConfigField>? SubFields { get; set; }
+    /// <summary>Opt in to single-entry JSON import/export for host-managed Array fields with flat
+    /// Boolean/Text/Hotkey/FilePath/FolderPath children, including Icon Path Data. Attachments are not bundled.</summary>
+    public bool AllowEntryTransfer { get; set; }
+    /// <summary>For Hotkey fields: when true, single keys without modifier keys (Ctrl/Alt/Shift/Win) are rejected.</summary>
+    public bool RequireModifier { get; set; }
+    /// <summary>When true, saving this field with an empty/whitespace value falls back to <see cref="DefaultValue"/>
+    /// instead of persisting the empty value -- for a field like a trigger keyword, where an empty value would
+    /// silently make the depending feature unreachable rather than just "no value set".</summary>
+    public bool RequireNonEmpty { get; set; }
+    /// <summary>For Text fields holding the word the user types to invoke the plugin: the settings page warns,
+    /// without blocking the save, when another feature already answers to the same word. Two features on one
+    /// word is otherwise silent -- the file search follows whichever registered first and the other's rows just
+    /// stop appearing, with nothing telling the user which one to rename.</summary>
+    public bool IsTriggerWord { get; set; }
+    /// <summary>For Text fields: maximum character length (0 or unset means no length restriction).</summary>
+    public int MaxLength { get; set; }
+    /// <summary>For Text fields: zero-based initial selection start in the prompt editor.</summary>
+    public int SelectionStart { get; set; }
+    /// <summary>For Text fields: initial selection length in the prompt editor.</summary>
+    public int SelectionLength { get; set; }
+    /// <summary>For CustomControl fields: custom UI element/control hosted directly by the application.</summary>
+    public object? CustomControl { get; set; }
+    /// <summary>For Button fields: invoked when the button is clicked. A Button field stores no value;
+    /// the click runs this delegate directly (e.g. a rebuild or clear action).</summary>
+    public Action? OnClick { get; set; }
+    /// <summary>Custom getter delegate for external plugin settings.</summary>
+    public Func<object?>? GetValue { get; set; }
+    /// <summary>Custom setter delegate for external plugin settings.</summary>
+    public Action<object?>? SetValue { get; set; }
+}
+
+public class PluginConfigChoice
+{
+    public string Value { get; set; } = string.Empty;
+    public string LabelKey { get; set; } = string.Empty;
+}
+
+public class PluginConfigSchema
+{
+    public List<PluginConfigField> Fields { get; set; } = new();
+    public Action? OnSave { get; set; }
+    /// <summary>Optional non-blocking save hook, awaited by the host before Apply completes.</summary>
+    public Func<Task>? OnSaveAsync { get; set; }
+    /// <summary>Optional preview of staged values without persisting them. OnRollback restores saved state.</summary>
+    public Func<IReadOnlyDictionary<string, object?>, Task>? OnPreviewAsync { get; set; }
+    public Action? OnRollback { get; set; }
+}
+
+public interface IConfigurable
+{
+    PluginConfigSchema GetConfigSchema();
+}
