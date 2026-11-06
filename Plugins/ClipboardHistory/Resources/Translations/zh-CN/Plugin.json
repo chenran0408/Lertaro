@@ -64,5 +64,6 @@
   "ClipboardHistory_TimeHoursAgo": "{0} 小时前",
   "ClipboardHistory_PanelNote": "备注",
   "ClipboardHistory_PanelNotePlaceholder": "为这条记录添加备注…",
-  "ClipboardHistory_PanelClearNote": "清除备注"
+  "ClipboardHistory_PanelClearNote": "清除备注",
+  "ClipboardHistory_PanelPreviewChip": "预览"
 }

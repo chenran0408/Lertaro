@@ -35,6 +35,8 @@ internal static class ClipboardPanelLabels
 
     public static string PreviewHidden() => TranslationService.Get("ClipboardHistory_PanelPreviewHidden");
 
+    public static string PreviewChip() => TranslationService.Get("ClipboardHistory_PanelPreviewChip");
+
     public static string NoteLabel() => TranslationService.Get("ClipboardHistory_PanelNote");
 
     public static string NotePlaceholder() => TranslationService.Get("ClipboardHistory_PanelNotePlaceholder");
@@ -92,6 +94,8 @@ internal static class ClipboardPanelLabels
         view.TabImage.Content = TabLabel(ClipboardPanelTab.Image);
         view.TabFiles.Content = TabLabel(ClipboardPanelTab.Files);
         view.TabFavorites.Content = TabLabel(ClipboardPanelTab.Favorites);
+        view.PreviewToggle.Content = PreviewChip();
+        view.PreviewToggle.ToolTip = TranslationService.Get("ClipboardHistory_PanelTogglePreview");
     }
 
     public static void SetEmpty(ClipboardPanelView view, bool visible)

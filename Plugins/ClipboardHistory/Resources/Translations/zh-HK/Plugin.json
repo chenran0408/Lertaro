@@ -64,5 +64,6 @@
   "ClipboardHistory_TimeHoursAgo": "{0} 小時前",
   "ClipboardHistory_PanelNote": "備註",
   "ClipboardHistory_PanelNotePlaceholder": "為這條記錄添加備註…",
-  "ClipboardHistory_PanelClearNote": "清除備註"
+  "ClipboardHistory_PanelClearNote": "清除備註",
+  "ClipboardHistory_PanelPreviewChip": "預覽"
 }

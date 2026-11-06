@@ -37,6 +37,10 @@ public partial class ClipboardPanelView : UserControl
     internal long NoteEntryId;
     internal string NoteAtLoad = string.Empty;
 
+    // The pane's width while visible, remembered across a collapse so toggling it back restores
+    // what the user had dragged rather than a default.
+    internal double _previewWidth = 300;
+
     public ClipboardPanelView()
     {
         InitializeComponent();
@@ -95,10 +99,9 @@ public partial class ClipboardPanelView : UserControl
             var window = new PluginWindow(
                 ClipboardPanelLabels.Title(), view.StoredWidth(), view.StoredHeight(), PluginWindowMode.Window);
             view.PreviewVisible = ClipboardPanelViewSettings.PreviewVisible();
-            if (!view.PreviewVisible)
-                view.PreviewColumn.Width = new GridLength(0);
-            else
-                view.PreviewColumn.Width = new GridLength(ClipboardPanelViewSettings.PreviewWidth());
+            view.PreviewToggle.IsChecked = view.PreviewVisible;
+            view._previewWidth = ClipboardPanelViewSettings.PreviewWidth();
+            view.PreviewColumn.Width = new GridLength(view.PreviewVisible ? view._previewWidth : 0);
             window.ShowFooter = false;
             window.ContentHostControl.VerticalContentAlignment = VerticalAlignment.Stretch;
             window.ContentHostControl.HorizontalContentAlignment = HorizontalAlignment.Stretch;
@@ -106,7 +109,7 @@ public partial class ClipboardPanelView : UserControl
             window.Closed += (_, _) =>
             {
                 ClipboardPanelViewSettings.Save(window.Width, window.Height, view.PreviewVisible);
-                if (view.PreviewVisible) ClipboardPanelViewSettings.SavePreviewWidth(view.PreviewColumn.Width.Value);
+                ClipboardPanelViewSettings.SavePreviewWidth(view.PreviewVisible ? view.PreviewColumn.Width.Value : view._previewWidth);
                 _window = null;
                 _instance = null;
             };
@@ -322,6 +325,13 @@ public partial class ClipboardPanelView : UserControl
         SearchBox.Text += e.Text;
         SearchBox.CaretIndex = SearchBox.Text.Length;
         e.Handled = true;
+    }
+
+    private void PreviewToggle_Click(object sender, RoutedEventArgs e)
+    {
+        var desired = PreviewToggle.IsChecked == true;
+        if (desired != PreviewVisible) _actions.TogglePreview(); // flips and syncs the button
+        else PreviewToggle.IsChecked = PreviewVisible;           // re-sync a stray programmatic set
     }
 
     private void View_PreviewKeyDown(object sender, KeyEventArgs e)

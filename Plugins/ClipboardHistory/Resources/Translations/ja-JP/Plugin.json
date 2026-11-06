@@ -64,5 +64,6 @@
   "ClipboardHistory_TimeHoursAgo": "{0} 時間前",
   "ClipboardHistory_PanelNote": "メモ",
   "ClipboardHistory_PanelNotePlaceholder": "この履歴にメモを追加…",
-  "ClipboardHistory_PanelClearNote": "メモを消去"
+  "ClipboardHistory_PanelClearNote": "メモを消去",
+  "ClipboardHistory_PanelPreviewChip": "プレビュー"
 }

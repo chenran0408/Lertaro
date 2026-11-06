@@ -40,11 +40,12 @@ public sealed class HighlightTextBlock : TextBlock
     {
         var text = Text ?? string.Empty;
         var query = Query ?? string.Empty;
+        // An empty query means "no highlighting", not "no content": Inlines.Clear() also clears
+        // the TextBlock's text (Text and Inlines are one content model), so the plain rendering
+        // must re-add its run too -- an early return here blanked every row until a search.
+        var mask = query.Length == 0 ? null : FuzzyMatchService.GetHighlightMask(text, query);
         Inlines.Clear();
-        if (query.Length == 0 || text.Length == 0)
-            return; // plain TextBlock rendering already covers this
-
-        var mask = FuzzyMatchService.GetHighlightMask(text, query);
+        if (text.Length == 0) return;
         var highlightBrush = ResolveHighlightBrush();
         foreach (var segment in ClipboardPanelText.Split(text, mask))
         {

@@ -74,6 +74,9 @@
         <!-- Filter chips: scope the list to one entry kind or the pinned set; the sort toggle
              flips between newest-first and most-copied-first. -->
         <DockPanel Grid.Row="1" Margin="12,2,10,6">
+            <ToggleButton x:Name="PreviewToggle" DockPanel.Dock="Right" FontSize="12" Padding="7,3"
+                          BorderThickness="0" Background="Transparent" Cursor="Hand"
+                          Click="PreviewToggle_Click"/>
             <ToggleButton x:Name="SortToggle" DockPanel.Dock="Right" Content="⇅" FontSize="12" Padding="7,3"
                           BorderThickness="0" Background="Transparent" Cursor="Hand" ToolTipService.ShowOnDisabled="True"
                           Click="SortToggle_Click"/>

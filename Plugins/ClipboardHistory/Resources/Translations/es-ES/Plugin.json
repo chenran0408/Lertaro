@@ -64,5 +64,6 @@
   "ClipboardHistory_TimeHoursAgo": "hace {0} h",
   "ClipboardHistory_PanelNote": "Nota",
   "ClipboardHistory_PanelNotePlaceholder": "Añadir una nota a este elemento...",
-  "ClipboardHistory_PanelClearNote": "Quitar nota"
+  "ClipboardHistory_PanelClearNote": "Quitar nota",
+  "ClipboardHistory_PanelPreviewChip": "Vista previa"
 }

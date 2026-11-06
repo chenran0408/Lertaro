@@ -265,9 +265,18 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
     /// <summary>Collapses or restores the preview column; the choice persists across summons.</summary>
     public void TogglePreview()
     {
-        view.PreviewVisible = !view.PreviewVisible;
-        view.PreviewColumn.Width = view.PreviewVisible ? new GridLength(300) : new GridLength(0);
-        if (view.PreviewVisible) UpdatePreview();
+        if (view.PreviewVisible)
+        {
+            view._previewWidth = view.PreviewColumn.Width.Value;
+            view.PreviewVisible = false;
+            view.PreviewColumn.Width = new GridLength(0);
+            view.PreviewToggle.IsChecked = false;
+            return;
+        }
+        view.PreviewVisible = true;
+        view.PreviewColumn.Width = new GridLength(view._previewWidth);
+        view.PreviewToggle.IsChecked = true;
+        UpdatePreview();
     }
 
     // --- drag out ---
