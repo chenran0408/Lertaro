@@ -65,5 +65,6 @@
   "ClipboardHistory_PanelNote": "Note",
   "ClipboardHistory_PanelNotePlaceholder": "Add a note to this entry...",
   "ClipboardHistory_PanelClearNote": "Clear note",
-  "ClipboardHistory_PanelPreviewChip": "Preview"
+  "ClipboardHistory_PanelPreviewChip": "Preview",
+  "ClipboardHistory_PanelEmptyHints": "Enter paste · Ctrl+Enter plain text · 1-9 quick paste · Ctrl+A select all · Esc clears search/closes"
 }

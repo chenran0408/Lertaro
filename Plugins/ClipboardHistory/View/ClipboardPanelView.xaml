@@ -126,13 +126,16 @@
                         <TextBlock Text="{Binding HeaderText}" FontSize="11" FontWeight="SemiBold"
                                    Margin="8,8,0,2" Opacity="0.65"
                                    Visibility="{Binding IsHeader, Converter={StaticResource BoolToVis}}"/>
-                        <!-- Entry row. -->
+                        <!-- Entry row. The tooltip surfaces the full content (Maccy-style) so the
+                             preview pane stays optional for a quick sanity check. -->
                         <Border x:Name="RowBorder" CornerRadius="6" Padding="10,7" Margin="2,1"
-                                Visibility="{Binding IsRow, Converter={StaticResource BoolToVis}}">
+                                Visibility="{Binding IsRow, Converter={StaticResource BoolToVis}}"
+                                ToolTip="{Binding Tooltip}" ToolTipService.InitialShowDelay="400">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <Border x:Name="ThumbBox" Grid.Column="0" Width="44" Height="36" CornerRadius="4"
                                         Margin="0,0,8,0" Background="#22808080">
@@ -146,6 +149,14 @@
                                                Foreground="{DynamicResource TextSecondary}"
                                                TextTrimming="CharacterEllipsis" Margin="0,1,0,0"/>
                                 </StackPanel>
+                                <!-- The 1~9 quick-paste slot badge: the keys only work outside the
+                                     search box, but they have always worked; this makes them visible. -->
+                                <Border x:Name="SlotBadge" Grid.Column="2" CornerRadius="4" Padding="5,1"
+                                        Margin="8,0,0,0" VerticalAlignment="Center"
+                                        Background="{DynamicResource ControlHoverBackground}">
+                                    <TextBlock Text="{Binding SlotText}" FontSize="10.5" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextSecondary}"/>
+                                </Border>
                             </Grid>
                         </Border>
                     </Grid>
@@ -157,6 +168,9 @@
                              leaving an empty gray square, which is the tell of an unpolished list. -->
                         <DataTrigger Binding="{Binding ImagePath}" Value="">
                             <Setter TargetName="ThumbBox" Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding SlotText}" Value="">
+                            <Setter TargetName="SlotBadge" Property="Visibility" Value="Collapsed"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
                             <Setter TargetName="RowBorder" Property="Background"

@@ -3,7 +3,9 @@ namespace Lertaro.Plugins.ClipboardHistory.View;
 /// <summary>The filter chips across the panel's top.</summary>
 internal enum ClipboardPanelTab { All, Text, Image, Files, Favorites }
 
-/// <summary>One line in the panel list: either a group header (IsHeader) or an entry row.</summary>
+/// <summary>One line in the panel list: either a group header (IsHeader) or an entry row.
+/// Tooltip carries the hover surface (full text / dimensions / paths); SlotText is the 1~9 quick
+/// paste badge shown on the first rows, empty past slot nine.</summary>
 internal sealed record ClipboardPanelItem(
     bool IsHeader,
     string HeaderText,
@@ -13,7 +15,9 @@ internal sealed record ClipboardPanelItem(
     ClipboardEntryKind Kind,
     string ImagePath,
     bool Pinned,
-    string Query = "")
+    string Query = "",
+    string Tooltip = "",
+    string SlotText = "")
 {
     public static ClipboardPanelItem Header(string text) => new(true, text, 0, string.Empty, string.Empty,
         ClipboardEntryKind.Text, string.Empty, false);
@@ -59,7 +63,8 @@ internal static class ClipboardPanelRows
 
     /// <summary>Filters and orders the visible rows (pinned first, then the store's newest-first),
     /// then groups them: one header for the pinned section, date headers for the rest. Store order
-    /// is already pinned DESC then newest DESC, so grouping walks the list once.</summary>
+    /// is already pinned DESC then newest DESC, so grouping walks the list once. The first nine
+    /// rows get their quick-paste slot number so the 1~9 keys are discoverable, not folklore.</summary>
     public static List<ClipboardPanelItem> Build(
         IReadOnlyList<ClipboardEntry> entries,
         ClipboardPanelTab tab,
@@ -67,6 +72,7 @@ internal static class ClipboardPanelRows
         Func<string, string, bool> isMatch,
         Func<ClipboardEntry, string> subtitle,
         Func<ClipboardEntry, string> dateLabel,
+        Func<ClipboardEntry, string> tooltip,
         string pinnedLabel)
     {
         var visible = entries
@@ -84,8 +90,14 @@ internal static class ClipboardPanelRows
                 items.Add(ClipboardPanelItem.Header(label));
             }
             items.Add(new ClipboardPanelItem(false, string.Empty, entry.Id, entry.PlainPreview,
-                subtitle(entry), entry.Kind, entry.ImagePath, entry.Pinned, query));
+                subtitle(entry), entry.Kind, entry.ImagePath, entry.Pinned, query, tooltip(entry)));
         }
+
+        // Same walk SelectableIds does: the badge must match exactly what pressing that digit pastes.
+        var slot = 0;
+        for (var index = 0; index < items.Count && slot < 9; index++)
+            if (items[index].IsRow)
+                items[index] = items[index] with { SlotText = (++slot).ToString() };
         return items;
     }
 

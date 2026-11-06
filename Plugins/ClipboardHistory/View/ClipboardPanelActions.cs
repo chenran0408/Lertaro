@@ -59,6 +59,20 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
     private int _anchor = -1;
     private bool _extending;
 
+    /// <summary>Home/End: jump to the first or last row, headers skipped along the way.</summary>
+    public void MoveSelectionEdge(int direction)
+    {
+        var items = view._items;
+        if (items.Count == 0) return;
+        var index = direction < 0 ? 0 : items.Count - 1;
+        while (index >= 0 && index < items.Count && items[index].IsHeader)
+            index += direction;
+        if (index < 0 || index >= items.Count) return;
+        EndKeyboardSelection();
+        view.Lst.SelectedIndex = index;
+        view.Lst.ScrollIntoView(view.Lst.SelectedItem);
+    }
+
     // The row the selection should land on after a delete takes the current one away; consumed by
     // the view's RestoreSelection and cleared there.
     internal long _selectAfterReload;

@@ -65,5 +65,6 @@
   "ClipboardHistory_PanelNote": "备注",
   "ClipboardHistory_PanelNotePlaceholder": "为这条记录添加备注…",
   "ClipboardHistory_PanelClearNote": "清除备注",
-  "ClipboardHistory_PanelPreviewChip": "预览"
+  "ClipboardHistory_PanelPreviewChip": "预览",
+  "ClipboardHistory_PanelEmptyHints": "Enter 粘贴 · Ctrl+Enter 纯文本 · 1~9 快捷粘贴 · Ctrl+A 全选 · Esc 清空搜索/关闭"
 }

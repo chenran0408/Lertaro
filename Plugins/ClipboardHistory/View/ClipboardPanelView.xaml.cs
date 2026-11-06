@@ -216,6 +216,7 @@ public partial class ClipboardPanelView : UserControl
             entries, _tab, query, FuzzyMatchService.IsMatch,
             ClipboardPanelLabels.Subtitle,
             entry => ClipboardPanelLabels.DateGroup(entry.LastSeenAtMs),
+            ClipboardPanelLabels.Tooltip,
             ClipboardPanelLabels.PinnedGroup());
         var selectedId = SelectedId();
         _entryById = entries.ToDictionary(entry => entry.Id);
@@ -347,6 +348,12 @@ public partial class ClipboardPanelView : UserControl
                 break;
             case ClipboardPanelAction.MoveDown:
                 _actions.MoveSelection(+1);
+                break;
+            case ClipboardPanelAction.MoveTop:
+                _actions.MoveSelectionEdge(-1);
+                break;
+            case ClipboardPanelAction.MoveBottom:
+                _actions.MoveSelectionEdge(+1);
                 break;
             case ClipboardPanelAction.ExtendUp:
                 _actions.ExtendSelection(-1);

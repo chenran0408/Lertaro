@@ -65,5 +65,6 @@
   "ClipboardHistory_PanelNote": "メモ",
   "ClipboardHistory_PanelNotePlaceholder": "この履歴にメモを追加…",
   "ClipboardHistory_PanelClearNote": "メモを消去",
-  "ClipboardHistory_PanelPreviewChip": "プレビュー"
+  "ClipboardHistory_PanelPreviewChip": "プレビュー",
+  "ClipboardHistory_PanelEmptyHints": "Enter 貼り付け · Ctrl+Enter 書式なし · 1～9 クイック貼り付け · Ctrl+A 全選択 · Esc 検索クリア/閉じる"
 }
