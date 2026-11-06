@@ -106,6 +106,8 @@
                                 Style="{StaticResource SettingsButton}" Click="BtnImportConfig_Click" MinWidth="130" Margin="12,0,0,0"/>
                         <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_RestoreConfig]}"
                                 Style="{StaticResource SettingsButton}" Click="BtnRestoreConfig_Click" MinWidth="130" Margin="12,0,0,0"/>
+                        <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Tray_Onboarding]}"
+                                Style="{StaticResource SettingsButton}" Click="BtnOnboardingTour_Click" MinWidth="130" Margin="12,0,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>

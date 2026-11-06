@@ -354,4 +354,7 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
     private async void BtnImportConfig_Click(object sender, RoutedEventArgs e) => await UserConfigBackups.RunImportFlowAsync();
 
     private async void BtnRestoreConfig_Click(object sender, RoutedEventArgs e) => await UserConfigBackups.RunRestoreFlowAsync();
+
+    private void BtnOnboardingTour_Click(object sender, RoutedEventArgs e) =>
+        Onboarding.OnboardingWindow.ShowTour();
 }

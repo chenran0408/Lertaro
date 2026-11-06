@@ -16,6 +16,7 @@ using ListBox = System.Windows.Controls.ListBox;
 using Application = System.Windows.Application;
 using MainSearchWindow = Lertaro.App.QuickSearchWindow;
 using Brush = System.Windows.Media.Brush;
+using TranslateTransform = System.Windows.Media.TranslateTransform;
 
 namespace Lertaro.App.Views.Onboarding;
 
@@ -226,29 +227,63 @@ public partial class OnboardingWindow : AppWindow
         _budgetTimer.Start();
     }
 
-    // Phase 3 turns these into sinking keycap animations; the skeleton shows static chips.
+    // The demo driver: each keycap floats slightly raised and translucent, then sinks onto its
+    // resting position like a pressed key -- staggered left to right, the whole chord repeating
+    // twice. Only Motion tokens; no effects, so the loop never costs a frame when idle.
     private void BuildKeycaps(string? combo)
     {
         KeycapPanel.Children.Clear();
         if (string.IsNullOrEmpty(combo)) return;
-        foreach (var chip in combo.Split('\u2009'))
+
+        var chips = combo.Split('\u2009');
+        var sink = (Duration)FindResource("DurationHover");
+        var fadeIn = (Duration)FindResource("DurationWindowFadeIn");
+        var ease = (System.Windows.Media.Animation.CubicEase)FindResource("EaseOutCubic");
+        var storyboard = new System.Windows.Media.Animation.Storyboard
         {
-            KeycapPanel.Children.Add(new Border
+            RepeatBehavior = new System.Windows.Media.Animation.RepeatBehavior(2),
+        };
+
+        for (var index = 0; index < chips.Length; index++)
+        {
+            var chip = new Border
             {
                 CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(8, 3, 8, 3),
                 Margin = new Thickness(0, 0, 6, 0),
+                Opacity = 0.25,
+                RenderTransform = new TranslateTransform(0, -4),
                 Background = (Brush)FindResource("ControlBackground"),
                 BorderBrush = (Brush)FindResource("ControlBorderBrush"),
                 BorderThickness = new Thickness(1),
                 Child = new TextBlock
                 {
-                    Text = chip,
+                    Text = chips[index],
                     FontSize = 12.5,
                     Foreground = (Brush)FindResource("TextPrimary"),
                 },
-            });
+            };
+            KeycapPanel.Children.Add(chip);
+
+            var begin = TimeSpan.FromMilliseconds(index * 150);
+            var opacity = new System.Windows.Media.Animation.DoubleAnimation
+            {
+                From = 0.25, To = 1, Duration = fadeIn, BeginTime = begin, EasingFunction = ease,
+            };
+            System.Windows.Media.Animation.Storyboard.SetTarget(opacity, chip);
+            System.Windows.Media.Animation.Storyboard.SetTargetProperty(opacity, new PropertyPath("Opacity"));
+            storyboard.Children.Add(opacity);
+
+            var press = new System.Windows.Media.Animation.DoubleAnimation
+            {
+                From = -4, To = 0, Duration = sink, BeginTime = begin, EasingFunction = ease,
+            };
+            System.Windows.Media.Animation.Storyboard.SetTarget(press, chip);
+            System.Windows.Media.Animation.Storyboard.SetTargetProperty(press, new PropertyPath("RenderTransform.Y"));
+            storyboard.Children.Add(press);
         }
+
+        storyboard.Begin(KeycapPanel);
     }
 
     private void RebuildDots()
