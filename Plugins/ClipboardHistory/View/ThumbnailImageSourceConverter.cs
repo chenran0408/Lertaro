@@ -14,7 +14,7 @@ namespace Lertaro.Plugins.ClipboardHistory.View;
 /// </summary>
 public sealed class ThumbnailImageSourceConverter(string imagesDirectory) : IValueConverter
 {
-    public const int DecodeWidth = 88; // 2x the 44-dip thumbnail box for HiDPI crispness
+    public const int DecodeWidth = 112; // 2x the 56-dip thumbnail rail for HiDPI crispness
 
     // Decoded thumbnails are cached per full path: the store's PNG names are content-addressed
     // (SHA-256), so a decode can never go stale, and every rebuild re-binding the same visible

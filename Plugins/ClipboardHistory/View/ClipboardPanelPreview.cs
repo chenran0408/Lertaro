@@ -45,7 +45,7 @@ internal static class ClipboardPanelPreview
                     list.Children.Add(new TextBlock
                     {
                         Text = path,
-                        FontSize = 11.5,
+                        FontSize = 12,
                         TextWrapping = TextWrapping.Wrap,
                         Margin = new Thickness(0, 2, 0, 2),
                     });
@@ -61,7 +61,7 @@ internal static class ClipboardPanelPreview
             Text = entry.Note,
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
-            FontSize = 11.5,
+            FontSize = 12,
             MaxHeight = 110,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
@@ -88,7 +88,7 @@ internal static class ClipboardPanelPreview
         TextWrapping = TextWrapping.Wrap,
         BorderThickness = new Thickness(0),
         Background = System.Windows.Media.Brushes.Transparent,
-        FontSize = 12,
+        FontSize = 13,
         VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
         HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
     };
