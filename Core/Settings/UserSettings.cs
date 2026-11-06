@@ -75,7 +75,11 @@ public class UserSettings
     public BackgroundSettings Background { get; set; } = new();
     public bool ThemeFollowSystem { get; set; } = false;
     // Listary-style first-run tour: shown once after install, replayable from the tray menu.
+    // Version guards future redesigns: raising CurrentOnboardingVersion re-arms the tour for
+    // everyone who last saw an older one.
     public bool OnboardingCompleted { get; set; } = false;
+    public int OnboardingVersion { get; set; }
+    public static int CurrentOnboardingVersion => 1;
     // Empty means "unset". The selected palette is now limited to the built-in Light/Dark modes;
     // retired custom preset IDs are migrated during ThemeManager initialization.
     public string LightThemeId { get; set; } = string.Empty;

@@ -332,10 +332,11 @@ public partial class App : Application
                 UriRouter.Route(e.Args[0]);
         }), System.Windows.Threading.DispatcherPriority.Loaded);
 
-        // Listary-style first-run tour: once, at ApplicationIdle so it never fights startup.
-        if (!settings.OnboardingCompleted)
+        // Listary-style first-run tour: once per tour version, at ApplicationIdle so it never
+        // fights startup. The card shows the steps; the real practice happens in the live windows.
+        if (!settings.OnboardingCompleted || settings.OnboardingVersion < UserSettings.CurrentOnboardingVersion)
             _ = Dispatcher.BeginInvoke(new Action(() =>
-                Views.Controls.Dialogs.WelcomeWindow.ShowTour()),
+                Views.Onboarding.OnboardingWindow.ShowTour()),
                 System.Windows.Threading.DispatcherPriority.ApplicationIdle);
 
         // Background update check on startup
