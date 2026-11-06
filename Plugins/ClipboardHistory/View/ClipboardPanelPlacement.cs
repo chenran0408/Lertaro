@@ -22,7 +22,21 @@ internal static class ClipboardPanelPlacement
     {
         if (!GetCursorPos(out var point)) return FallbackCenter(width, height);
         var area = MonitorArea(point.X, point.Y);
-        return Clamp(point.X, point.Y, width, height, area.left, area.top, area.right, area.bottom);
+        return ClampCursor(point.X, point.Y, DpiScale(), width, height, area);
+    }
+
+    /// <summary>Pure placement math over one monitor's work area: pixel cursor + scale in,
+    /// DIP window position out. Unit-testable without a screen.</summary>
+    internal static (double Left, double Top) ClampCursor(int cursorPixelX, int cursorPixelY, double scale,
+        double width, double height,
+        (double left, double top, double right, double bottom) area)
+    {
+        // GetCursorPos is physical pixels; WPF window coordinates are DIPs. The work area is
+        // converted inside MonitorArea -- the cursor must ride the same conversion, or on any
+        // scaled monitor (125%+) the raw pixel value overflows the DIP space and the clamp drags
+        // the panel into the bottom-right corner no matter where the cursor is.
+        return Clamp(cursorPixelX / scale, cursorPixelY / scale, width, height,
+            area.left, area.top, area.right, area.bottom);
     }
 
     /// <summary>The work area of the monitor containing the point (falls back to the primary work
@@ -50,8 +64,18 @@ internal static class ClipboardPanelPlacement
         double cursorX, double cursorY, double width, double height,
         double left, double top, double right, double bottom)
     {
-        var x = Math.Clamp(cursorX, left, Math.Max(left, right - width));
-        var y = Math.Clamp(cursorY, top, Math.Max(top, bottom - height));
+        var maxLeft = Math.Max(left, right - width);
+        var maxTop = Math.Max(top, bottom - height);
+        // Context-menu rule: the panel opens with its top-left corner at the cursor while there is
+        // room down/right, and flips to open up/left when there is not -- the cursor rides the
+        // panel's edge instead of being buried, and the window never straddles the work-area
+        // border. When neither side fits, the clamp wins.
+        var x = cursorX + width <= right || cursorX - width < left
+            ? Math.Clamp(cursorX, left, maxLeft)
+            : cursorX - width;
+        var y = cursorY + height <= bottom || cursorY - height < top
+            ? Math.Clamp(cursorY, top, maxTop)
+            : cursorY - height;
         return (x, y);
     }
 
