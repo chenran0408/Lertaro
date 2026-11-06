@@ -75,7 +75,7 @@ internal sealed class ClipboardRuntime : IDisposable
         {
             Directory.CreateDirectory(_imagesDirectory!);
             await _store!.InitializeAsync().ConfigureAwait(false);
-            await _store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays).ConfigureAwait(false);
+            await _store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays, ClipboardSettings.ImageRetentionDays).ConfigureAwait(false);
             Publish(await _store.GetEntriesAsync().ConfigureAwait(false));
             if (!_stopping && ClipboardSettings.Enabled) _monitor!.Start();
         }
@@ -90,9 +90,9 @@ internal sealed class ClipboardRuntime : IDisposable
             if (ClipboardSettings.Enabled) _monitor?.Start();
             else _monitor?.Stop();
         }
-        if (key is "MaxEntries" or "RetentionDays") _ = MutateAsync(async store =>
+        if (key is "MaxEntries" or "RetentionDays" or "ImageRetentionDays") _ = MutateAsync(async store =>
         {
-            await store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays).ConfigureAwait(false);
+            await store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays, ClipboardSettings.ImageRetentionDays).ConfigureAwait(false);
             Publish(await store.GetEntriesAsync().ConfigureAwait(false));
         });
     }
@@ -266,7 +266,7 @@ internal sealed class ClipboardRuntime : IDisposable
     {
         if (Entries.FirstOrDefault(entry => entry.Id == id) is not { } entry) return;
         await store.SetPinnedAsync(id, !entry.Pinned).ConfigureAwait(false);
-        await store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays).ConfigureAwait(false);
+        await store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays, ClipboardSettings.ImageRetentionDays).ConfigureAwait(false);
         Publish(await store.GetEntriesAsync().ConfigureAwait(false));
     });
 
@@ -329,7 +329,7 @@ internal sealed class ClipboardRuntime : IDisposable
 
                     _store = new ClipboardStore(_databasePath!, _imagesDirectory!);
                     await _store.InitializeAsync().ConfigureAwait(false);
-                    await _store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays).ConfigureAwait(false);
+                    await _store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays, ClipboardSettings.ImageRetentionDays).ConfigureAwait(false);
                     _sources.Clear();
                     Publish(await _store.GetEntriesAsync().ConfigureAwait(false));
                 }).ConfigureAwait(false);

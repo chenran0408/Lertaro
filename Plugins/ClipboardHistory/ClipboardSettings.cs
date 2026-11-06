@@ -14,6 +14,7 @@ internal static class ClipboardSettings
     private const string DefaultTriggerKeyword = "cb";
     private const string DefaultExcludedProcesses = "keepass,keepassxc,1password,bitwarden,enpass";
     private const string DefaultRetentionDays = "30";
+    private const string DefaultImageRetentionDays = "14";
     private const int DefaultMaxEntries = 500;
     private const int DefaultMaxTextLength = 1000000;
 
@@ -47,6 +48,17 @@ internal static class ClipboardSettings
         {
             var raw = PluginSettingsService.GetSetting(PluginId, "RetentionDays", DefaultRetentionDays)?.ToString();
             return raw is "1" or "7" or "30" or "0" ? int.Parse(raw) : int.Parse(DefaultRetentionDays);
+        }
+    }
+
+    /// <summary>Days an unpinned image survives; 0 keeps everything. Images are the disk-hog
+    /// kind, so they get their own window -- screenshots age out faster than text by default.</summary>
+    public static int ImageRetentionDays
+    {
+        get
+        {
+            var raw = PluginSettingsService.GetSetting(PluginId, "ImageRetentionDays", DefaultImageRetentionDays)?.ToString();
+            return raw is "1" or "7" or "14" or "30" or "0" ? int.Parse(raw) : int.Parse(DefaultImageRetentionDays);
         }
     }
 
@@ -104,6 +116,23 @@ internal static class ClipboardSettings
                 [
                     new PluginConfigChoice { Value = "1", LabelKey = "ClipboardHistory_Config_Retention1" },
                     new PluginConfigChoice { Value = "7", LabelKey = "ClipboardHistory_Config_Retention7" },
+                    new PluginConfigChoice { Value = "14", LabelKey = "ClipboardHistory_Config_Retention14" },
+                    new PluginConfigChoice { Value = "30", LabelKey = "ClipboardHistory_Config_Retention30" },
+                    new PluginConfigChoice { Value = "0", LabelKey = "ClipboardHistory_Config_RetentionForever" }
+                ]
+            },
+            new PluginConfigField
+            {
+                Key = "ImageRetentionDays",
+                LabelKey = "ClipboardHistory_Config_ImageRetentionLabel",
+                DescriptionKey = "ClipboardHistory_Config_ImageRetentionDesc",
+                FieldType = ConfigFieldType.Choice,
+                DefaultValue = DefaultImageRetentionDays,
+                ChoiceOptions =
+                [
+                    new PluginConfigChoice { Value = "1", LabelKey = "ClipboardHistory_Config_Retention1" },
+                    new PluginConfigChoice { Value = "7", LabelKey = "ClipboardHistory_Config_Retention7" },
+                    new PluginConfigChoice { Value = "14", LabelKey = "ClipboardHistory_Config_Retention14" },
                     new PluginConfigChoice { Value = "30", LabelKey = "ClipboardHistory_Config_Retention30" },
                     new PluginConfigChoice { Value = "0", LabelKey = "ClipboardHistory_Config_RetentionForever" }
                 ]

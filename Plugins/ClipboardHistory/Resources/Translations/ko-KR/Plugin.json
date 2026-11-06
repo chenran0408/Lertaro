@@ -71,5 +71,8 @@
   "ClipboardHistory_PanelImport": "기록 가져오기…",
   "ClipboardHistory_PanelImportConfirm": "가져오면 메모와 고정 항목을 포함한 현재 기록 전체가 대체됩니다. 계속할까요?",
   "ClipboardHistory_PanelExportDone": "기록을 내보냈습니다",
-  "ClipboardHistory_PanelImportDone": "기록을 가져왔습니다"
+  "ClipboardHistory_PanelImportDone": "기록을 가져왔습니다",
+  "ClipboardHistory_Config_ImageRetentionLabel": "이미지 보관 기간",
+  "ClipboardHistory_Config_ImageRetentionDesc": "스크린샷과 이미지는 별도 기간으로 관리되며, 고정되지 않은 오래된 이미지는 자동으로 지워집니다(텍스트와 파일은 위 설정을 따릅니다).",
+  "ClipboardHistory_Config_Retention14": "14일"
 }

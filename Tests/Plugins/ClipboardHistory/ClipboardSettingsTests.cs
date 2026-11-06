@@ -91,7 +91,7 @@ public sealed class ClipboardSettingsTests
     {
         var fields = ClipboardSettings.CreateSchema().Fields;
 
-        Assert.HasCount(7, fields);
+        Assert.HasCount(8, fields);
         Assert.AreEqual(ConfigFieldType.Boolean, Field(fields, "Enabled").FieldType);
         Assert.AreEqual(true, Field(fields, "Enabled").DefaultValue);
         Assert.AreEqual(ConfigFieldType.Text, Field(fields, "TriggerKeyword").FieldType);

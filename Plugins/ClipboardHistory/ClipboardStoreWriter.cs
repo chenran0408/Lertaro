@@ -46,7 +46,7 @@ internal static class ClipboardStoreWriter
                 sourceProcess, sourceWindowTitle, stamp);
         }
 
-        var trimmedImages = TrimUnpinned(connection, transaction, maxEntries, 0);
+        var trimmedImages = TrimUnpinned(connection, transaction, maxEntries, 0, 0);
         transaction.Commit();
         UnlinkImages(database.ImagesDirectory, trimmedImages);
 
@@ -86,11 +86,12 @@ internal static class ClipboardStoreWriter
         UnlinkImages(database.ImagesDirectory, images);
     }
 
-    public static void Trim(ClipboardDatabase database, int maxEntries, int retentionDays)
+    public static void Trim(ClipboardDatabase database, int maxEntries, int retentionDays, int imageRetentionDays)
     {
         using var connection = database.OpenConnection();
         using var transaction = connection.BeginTransaction();
-        var images = TrimUnpinned(connection, transaction, Math.Max(0, maxEntries), Math.Max(0, retentionDays));
+        var images = TrimUnpinned(connection, transaction, Math.Max(0, maxEntries),
+            Math.Max(0, retentionDays), Math.Max(0, imageRetentionDays));
         transaction.Commit();
         UnlinkImages(database.ImagesDirectory, images);
     }
@@ -161,10 +162,13 @@ internal static class ClipboardStoreWriter
     /// positive, unpinned rows not seen within the window. Returns the image file names of the
     /// deleted rows so the caller can unlink them after the transaction commits.</summary>
     private static List<string> TrimUnpinned(SqliteConnection connection, SqliteTransaction transaction,
-        int maxEntries, int retentionDays)
+        int maxEntries, int retentionDays, int imageRetentionDays)
     {
         var cutoff = retentionDays > 0
             ? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - retentionDays * 86_400_000L
+            : long.MinValue;
+        var imageCutoff = imageRetentionDays > 0
+            ? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - imageRetentionDays * 86_400_000L
             : long.MinValue;
 
         using var command = connection.CreateCommand();
@@ -172,11 +176,13 @@ internal static class ClipboardStoreWriter
         // Pinned entries are exempt from both the cap and the retention window: the cap applies to
         // the unpinned rows only, of which the newest by (LastSeenAtMs, Id) are kept. Tie-breaking
         // by Id is total, so two rows that share a millisecond never both fall outside the cap
-        // while an older one survives.
+        // while an older one survives. Images age on their own window: they are the disk-heavy
+        // kind, so a shorter image retention never shortens text.
         command.CommandText = """
             DELETE FROM clipboard_history
             WHERE pinned = 0 AND (
-                last_seen_at_ms < @cutoff OR id NOT IN (
+                last_seen_at_ms < CASE WHEN kind = 1 THEN @imageCutoff ELSE @cutoff END
+                OR id NOT IN (
                     SELECT id FROM clipboard_history
                     WHERE pinned = 0
                     ORDER BY last_seen_at_ms DESC, id DESC
@@ -186,6 +192,7 @@ internal static class ClipboardStoreWriter
             RETURNING image_path
             """;
         command.Parameters.AddWithValue("@cutoff", cutoff);
+        command.Parameters.AddWithValue("@imageCutoff", imageCutoff);
         command.Parameters.AddWithValue("@maxEntries", maxEntries);
 
         return ReadImagePaths(command);

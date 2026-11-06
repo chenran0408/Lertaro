@@ -58,8 +58,10 @@ internal sealed class ClipboardStore(string databasePath, string imagesDirectory
     public Task ExportAsync(string destinationZip, CancellationToken cancellationToken = default) =>
         RunLockedAsync(() => ClipboardBackupSupport.Export(databasePath, imagesDirectory, destinationZip), cancellationToken);
 
-    public Task TrimAsync(int maxEntries, int retentionDays, CancellationToken cancellationToken = default) =>
-        RunLockedAsync(() => ClipboardStoreWriter.Trim(_database, maxEntries, retentionDays), cancellationToken);
+    public Task TrimAsync(int maxEntries, int retentionDays, int imageRetentionDays,
+        CancellationToken cancellationToken = default) =>
+        RunLockedAsync(() => ClipboardStoreWriter.Trim(_database, maxEntries, retentionDays, imageRetentionDays),
+            cancellationToken);
 
     // The serialization shell shared by every public API: hold the gate, run the synchronous SQLite
     // work on the thread pool, always release. Split out purely to keep this file under the per-file

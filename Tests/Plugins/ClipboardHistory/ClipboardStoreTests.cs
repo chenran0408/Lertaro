@@ -182,7 +182,7 @@ public sealed class ClipboardStoreTests
         var oldest = entries.Single(entry => entry.Content == "text 0");
 
         await store.SetPinnedAsync(oldest.Id, pinned: true);
-        await store.TrimAsync(maxEntries: 3, retentionDays: 0);
+        await store.TrimAsync(maxEntries: 3, retentionDays: 0, imageRetentionDays: 0);
 
         var trimmed = await store.GetEntriesAsync();
         // The pinned row survives on top of the three newest unpinned rows.

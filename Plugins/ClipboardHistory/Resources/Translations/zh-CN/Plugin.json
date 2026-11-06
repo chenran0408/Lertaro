@@ -71,5 +71,8 @@
   "ClipboardHistory_PanelImport": "导入历史…",
   "ClipboardHistory_PanelImportConfirm": "导入会用备份替换当前全部历史（含备注与置顶）。确定继续？",
   "ClipboardHistory_PanelExportDone": "历史已导出",
-  "ClipboardHistory_PanelImportDone": "历史已导入"
+  "ClipboardHistory_PanelImportDone": "历史已导入",
+  "ClipboardHistory_Config_ImageRetentionLabel": "图片保留时长",
+  "ClipboardHistory_Config_ImageRetentionDesc": "截图与图片单独计时，超过该时长的未置顶图片会自动清除（文本与文件仍按上方设置）。",
+  "ClipboardHistory_Config_Retention14": "14 天"
 }

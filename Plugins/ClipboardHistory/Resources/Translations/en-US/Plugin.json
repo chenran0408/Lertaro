@@ -71,5 +71,8 @@
   "ClipboardHistory_PanelImport": "Import history…",
   "ClipboardHistory_PanelImportConfirm": "Importing replaces the entire current history, including notes and pins. Continue?",
   "ClipboardHistory_PanelExportDone": "History exported",
-  "ClipboardHistory_PanelImportDone": "History imported"
+  "ClipboardHistory_PanelImportDone": "History imported",
+  "ClipboardHistory_Config_ImageRetentionLabel": "Image retention",
+  "ClipboardHistory_Config_ImageRetentionDesc": "Screenshots and images age on their own window: unpinned images older than this are cleared automatically (text and files follow the setting above).",
+  "ClipboardHistory_Config_Retention14": "14 days"
 }

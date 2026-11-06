@@ -71,5 +71,8 @@
   "ClipboardHistory_PanelImport": "匯入歷史…",
   "ClipboardHistory_PanelImportConfirm": "匯入會用備份取代目前全部歷史（含備註與釘選）。確定繼續？",
   "ClipboardHistory_PanelExportDone": "歷史已匯出",
-  "ClipboardHistory_PanelImportDone": "歷史已匯入"
+  "ClipboardHistory_PanelImportDone": "歷史已匯入",
+  "ClipboardHistory_Config_ImageRetentionLabel": "圖片保留時長",
+  "ClipboardHistory_Config_ImageRetentionDesc": "截圖與圖片單獨計時，超過該時長的未釘選圖片會自動清除（文字與檔案仍依上方設定）。",
+  "ClipboardHistory_Config_Retention14": "14 天"
 }

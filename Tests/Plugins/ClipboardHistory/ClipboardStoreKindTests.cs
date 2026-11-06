@@ -157,7 +157,7 @@ public sealed class ClipboardStoreKindTests
             command.ExecuteNonQuery();
         }
 
-        await store.TrimAsync(maxEntries: 500, retentionDays: 1);
+        await store.TrimAsync(maxEntries: 500, retentionDays: 1, imageRetentionDays: 0);
 
         var entries = await store.GetEntriesAsync();
         Assert.HasCount(1, entries);
@@ -183,7 +183,7 @@ public sealed class ClipboardStoreKindTests
             command.ExecuteNonQuery();
         }
 
-        await store.TrimAsync(maxEntries: 500, retentionDays: 7);
+        await store.TrimAsync(maxEntries: 500, retentionDays: 7, imageRetentionDays: 0);
 
         Assert.HasCount(1, await store.GetEntriesAsync());
     }
@@ -259,5 +259,45 @@ public sealed class ClipboardStoreKindTests
         var added = await store.AddAsync(new ClipboardEntryDraft(ClipboardEntryKind.Text, "new text"),
             "App", "Title", 500, 1000000);
         Assert.IsNotNull(added);
+    }
+
+    [TestMethod]
+    public async Task ImageRetention_AgesImagesOnTheirOwnWindow()
+    {
+        var store = CreateStore();
+        await store.InitializeAsync();
+        var text = await store.AddAsync(new ClipboardEntryDraft(ClipboardEntryKind.Text, "keep me"), "App", "T", 500, 1000);
+        var image = await store.AddAsync(new ClipboardEntryDraft(ClipboardEntryKind.Image, "")
+        {
+            ImagePath = "old.png",
+            ImageWidth = 4,
+            ImageHeight = 4,
+        }, "App", "T", 500, 1000);
+        Assert.IsNotNull(text);
+        Assert.IsNotNull(image);
+
+        // Text kept for 30 days, images only 1: a fresh write-back of both rows' stamps, then a
+        // trim at the 7-day mark must drop the image and keep the text. Backdate both rows.
+        await store.SetNoteAsync(image.Id, string.Empty); // no-op touch; keep the test honest about ordering
+        using (var connection = Microsoft.Data.Sqlite.SqliteFactory.Instance.CreateConnection())
+        {
+            var builder = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+            {
+                DataSource = Path.Combine(Path.GetDirectoryName(_databasePath)!, Path.GetFileName(_databasePath)),
+                Mode = Microsoft.Data.Sqlite.SqliteOpenMode.ReadWrite,
+                Pooling = false,
+            };
+            connection.ConnectionString = builder.ToString();
+            connection.Open();
+            var command = connection.CreateCommand();
+            command.CommandText = "UPDATE clipboard_history SET last_seen_at_ms = last_seen_at_ms - 86400000";
+            command.ExecuteNonQuery();
+        }
+
+        await store.TrimAsync(maxEntries: 500, retentionDays: 30, imageRetentionDays: 1);
+
+        var entries = await store.GetEntriesAsync();
+        Assert.HasCount(1, entries);
+        Assert.AreEqual(ClipboardEntryKind.Text, entries[0].Kind);
     }
 }

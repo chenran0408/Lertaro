@@ -71,5 +71,8 @@
   "ClipboardHistory_PanelImport": "Importar historial…",
   "ClipboardHistory_PanelImportConfirm": "Importar reemplaza todo el historial actual, incluidas notas y fijados. ¿Continuar?",
   "ClipboardHistory_PanelExportDone": "Historial exportado",
-  "ClipboardHistory_PanelImportDone": "Historial importado"
+  "ClipboardHistory_PanelImportDone": "Historial importado",
+  "ClipboardHistory_Config_ImageRetentionLabel": "Retención de imágenes",
+  "ClipboardHistory_Config_ImageRetentionDesc": "Las capturas e imágenes envejecen en su propio plazo: las imágenes no fijadas más antiguas se borran automáticamente (el texto y los archivos siguen el ajuste de arriba).",
+  "ClipboardHistory_Config_Retention14": "14 días"
 }

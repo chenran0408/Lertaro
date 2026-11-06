@@ -71,5 +71,8 @@
   "ClipboardHistory_PanelImport": "履歴をインポート…",
   "ClipboardHistory_PanelImportConfirm": "インポートすると現在の履歴（メモとピン留め含む）がすべて置き換わります。続けますか？",
   "ClipboardHistory_PanelExportDone": "履歴をエクスポートしました",
-  "ClipboardHistory_PanelImportDone": "履歴をインポートしました"
+  "ClipboardHistory_PanelImportDone": "履歴をインポートしました",
+  "ClipboardHistory_Config_ImageRetentionLabel": "画像の保持期間",
+  "ClipboardHistory_Config_ImageRetentionDesc": "スクリーンショットと画像は独自の期間で管理され、ピン留めされていない古い画像は自動的に削除されます（テキストとファイルは上の設定に従います）。",
+  "ClipboardHistory_Config_Retention14": "14 日"
 }
