@@ -113,43 +113,13 @@
                 <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Focusable="False" Margin="0,1,0,0"
                               conv:ScrollViewerHelper.BubbleMouseWheel="True">
                     <TextBlock Text="{Binding DateModified, Converter={StaticResource ModifiedTime}}"
-                               FontSize="13"
+                               FontSize="14"
                                Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                helpers:MarqueeBehavior.EnableMarquee="True"/>
                 </ScrollViewer>
             </StackPanel>
         </Grid>
     </DataTemplate>
-
-    <!-- The sort switch, in each group header. Its glyph names the order it would GIVE you,
-         same as the view switch below and for the same reason. -->
-    <Style x:Key="QuickPanelSortToggleStyle" TargetType="Button">
-        <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-        <Setter Property="Width" Value="20"/>
-        <Setter Property="Height" Value="16"/>
-        <Setter Property="ToolTip" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_SortByName]}"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="Transparent" CornerRadius="4">
-                        <TextBlock x:Name="Glyph" Text="&#xE8CB;" FontFamily="{DynamicResource AppIconFontFamily}"
-                                   FontSize="10" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
-                        </Trigger>
-                        <DataTrigger Binding="{Binding SortMode}" Value="NameAscending">
-                            <Setter TargetName="Glyph" Property="Text" Value="&#xE81C;"/>
-                            <Setter Property="ToolTip" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_SortByModified]}"/>
-                        </DataTrigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
 
     <!-- The view switch. Its glyph shows what pressing it gives you, not what you are looking
          at: a list icon while the tiles are up, tiles while the list is. A toggle that pictures

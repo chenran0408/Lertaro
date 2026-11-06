@@ -20,8 +20,10 @@ internal static class AppTypography
 
     // WPF's built-in composite selects Windows fonts by script AND Language, including regional
     // CJK glyphs. Keep that maintained fallback table instead of ordering CJK families ourselves.
-    internal static FontFamily UiFont { get; } = new("Segoe UI, Global User Interface");
-    internal static FontFamily MonospaceFont { get; } = new("Consolas, Global User Interface");
+    // Segoe UI Variable ships with Windows 11; Windows 10 falls through to Segoe UI.
+    internal static FontFamily UiFont { get; } = new("Segoe UI Variable Text, Segoe UI, Global User Interface");
+    // Cascadia Mono ships with Windows 11; Consolas covers Windows 10.
+    internal static FontFamily MonospaceFont { get; } = new("Cascadia Mono, Consolas, Global User Interface");
     // Prefer Windows 11 icons; WPF falls back to the Windows 10 font when unavailable.
     internal static FontFamily IconFont { get; } = new("Segoe Fluent Icons, Segoe MDL2 Assets");
     private static bool _registered;

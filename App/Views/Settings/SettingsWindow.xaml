@@ -113,8 +113,9 @@
                 <Popup x:Name="SearchResultsPopup" PlacementTarget="{Binding ElementName=SearchBoxBorder}"
                        Placement="Bottom" Width="320" VerticalOffset="4" StaysOpen="True" AllowsTransparency="True"
                        PopupAnimation="Fade">
-                    <Border Background="{DynamicResource MenuBackground}" BorderBrush="{DynamicResource ControlBorderBrush}"
-                            BorderThickness="1" CornerRadius="{StaticResource CornerRadiusPopover}" Padding="0,4">
+                    <Border Background="{DynamicResource MenuBackground}" BorderBrush="{DynamicResource MenuBorderBrush}"
+                            BorderThickness="1" CornerRadius="{StaticResource CornerRadiusPopover}" Padding="0,4"
+                            Effect="{StaticResource PopoverShadowEffect}">
                         <StackPanel>
                             <ListBox x:Name="LstSearchResults" MaxHeight="400"
                                      BorderThickness="0" Background="Transparent"

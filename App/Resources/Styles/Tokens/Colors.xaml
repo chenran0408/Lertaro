@@ -1,15 +1,43 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- Keep legacy style keys theme-aware while existing views migrate to the shared palette. -->
-    <Style x:Key="GlassTextPrimary" TargetType="TextBlock">
+    <!-- Semantic token layer over the theme palette. The palette itself stays the 83-key theme
+         contract (Plugins/*/Resources/Themes/*.xaml) shared by all 48 themes; brushes keep their
+         original keys and are referenced directly, because a WPF brush alias cannot rewrap a
+         DynamicResource brush as a new brush. This file only adds what the palette lacks:
+         cross-key composites and shared effect/shape resources. -->
+
+    <!-- Shared soft shadow for custom popups (menus and tooltips keep the system drop shadow). -->
+    <DropShadowEffect x:Key="PopoverShadowEffect" BlurRadius="24" ShadowDepth="8" Direction="270"
+                      Color="{DynamicResource ShadowColor}" Opacity="0.14" RenderingBias="Performance"/>
+
+    <!-- Fluent keyboard focus ring: a 2px accent ring with a 1px surface-colored gap, so it reads
+         on any fill. Both colors come from the theme; dark themes invert automatically. -->
+    <Style x:Key="FluentFocusRing">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Grid Margin="-3">
+                        <Rectangle StrokeThickness="2" Stroke="{DynamicResource AccentColor}" RadiusX="6" RadiusY="6"/>
+                        <Rectangle Margin="1.5" StrokeThickness="1" Stroke="{DynamicResource ContentBg}" RadiusX="5" RadiusY="5"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Text styles for surfaces whose background is computed at runtime (the SpaceAnalyzer
+         treemap interpolates ContentBg toward AccentBlue). Formerly "Glass*": the glass style
+         they were named for no longer exists; the role is "text sitting on a dynamic fill". -->
+    <Style x:Key="SurfaceTextPrimary" TargetType="TextBlock">
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontWeight" Value="{DynamicResource AppUiFontWeight}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
-    <Style x:Key="GlassTextSecondary" TargetType="TextBlock" BasedOn="{StaticResource GlassTextPrimary}">
+    <Style x:Key="SurfaceTextSecondary" TargetType="TextBlock" BasedOn="{StaticResource SurfaceTextPrimary}">
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
     </Style>
+
     <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 </ResourceDictionary>

@@ -9,7 +9,7 @@
 
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBoxItem">
@@ -46,7 +46,7 @@
 
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
         <Setter Property="ItemContainerStyle" Value="{StaticResource SettingsComboBoxItem}"/>
         <Setter Property="Template">
             <Setter.Value>

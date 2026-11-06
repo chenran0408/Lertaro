@@ -50,10 +50,10 @@
                         <Border DockPanel.Dock="Right" CornerRadius="12" Padding="10,4" HorizontalAlignment="Right" VerticalAlignment="Center">
                             <Border.Style>
                                 <Style TargetType="Border">
-                                    <Setter Property="Background" Value="#20107C41"/>
+                                    <Setter Property="Background" Value="{DynamicResource SuccessBadgeBackground}"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsServiceRunning}" Value="False">
-                                            <Setter Property="Background" Value="#208A8886"/>
+                                            <Setter Property="Background" Value="{DynamicResource ControlDisabledBackground}"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -62,10 +62,10 @@
                                 <Ellipse Width="8" Height="8" Margin="0,0,6,0" VerticalAlignment="Center">
                                     <Ellipse.Style>
                                         <Style TargetType="Ellipse">
-                                            <Setter Property="Fill" Value="#107C41"/>
+                                            <Setter Property="Fill" Value="{DynamicResource SuccessBrush}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsServiceRunning}" Value="False">
-                                                    <Setter Property="Fill" Value="#8A8886"/>
+                                                    <Setter Property="Fill" Value="{DynamicResource TextSecondary}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -75,11 +75,11 @@
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Text" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_StatusRunning]}"/>
-                                            <Setter Property="Foreground" Value="#107C41"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsServiceRunning}" Value="False">
                                                     <Setter Property="Text" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_StatusStopped]}"/>
-                                                    <Setter Property="Foreground" Value="#8A8886"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>

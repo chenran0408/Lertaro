@@ -1,4 +1,5 @@
 using System.Windows;
+using Lertaro.App.Helpers.Visuals;
 using MediaBrush = System.Windows.Media.Brush;
 using MediaBrushes = System.Windows.Media.Brushes;
 
@@ -28,7 +29,7 @@ public class AppWindow : Window
 
     public static readonly DependencyProperty PanelCornerRadiusProperty = DependencyProperty.Register(
         nameof(PanelCornerRadius), typeof(CornerRadius), typeof(AppWindow),
-        new PropertyMetadata(new CornerRadius(40)));
+        new PropertyMetadata(new CornerRadius(10)));
 
     public MediaBrush? ForegroundBrush
     {
@@ -75,5 +76,9 @@ public class AppWindow : Window
         SetResourceReference(SecondaryForegroundBrushProperty, "TextSecondary");
         SetResourceReference(PanelBorderBrushProperty, "WindowBorderBrush");
         SetResourceReference(AccentBrushProperty, "AccentBlue");
+        // Fluent corners come from the window manager: the shape (and its ClearType text) stays
+        // real instead of a painted Border trick. Windows 11 rounds; older systems fail the call
+        // harmlessly and keep square corners. This path existed but was never wired up.
+        SourceInitialized += (_, _) => DwmWindowCorners.ApplyRound(this);
     }
 }

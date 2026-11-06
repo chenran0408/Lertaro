@@ -73,38 +73,38 @@
     </Style>
 
     <!-- Color aliases mapped dynamically to Lertaro theme tokens -->
-    <StaticResource x:Key="Color00B" ResourceKey="SettingsCardBackground" />
-    <StaticResource x:Key="Color01B" ResourceKey="ContentBg" />
-    <StaticResource x:Key="Color02B" ResourceKey="HoverBackground" />
-    <StaticResource x:Key="Color03B" ResourceKey="SettingsRowBorderBrush" />
-    <StaticResource x:Key="Color04B" ResourceKey="TextSecondary" />
-    <StaticResource x:Key="Color05B" ResourceKey="TextPrimary" />
-    <StaticResource x:Key="Color06B" ResourceKey="ControlBackground" />
-    <StaticResource x:Key="Color07B" ResourceKey="ControlBackground" />
-    <StaticResource x:Key="Color08B" ResourceKey="TextSecondary" />
-    <StaticResource x:Key="Color09B" ResourceKey="HeaderBg" />
-    <StaticResource x:Key="Color10B" ResourceKey="AccentColor" />
-    <StaticResource x:Key="Color11B" ResourceKey="AccentColor" />
-    <StaticResource x:Key="Color12B" ResourceKey="ControlBorderBrush" />
-    <StaticResource x:Key="Color13B" ResourceKey="ControlBorderBrush" />
-    <StaticResource x:Key="Color14B" ResourceKey="ControlBorderBrush" />
-    <StaticResource x:Key="Color15B" ResourceKey="ControlHoverBackground" />
-    <StaticResource x:Key="Color16B" ResourceKey="ControlBorderBrush" />
-    <StaticResource x:Key="Color17B" ResourceKey="TextPrimary" />
-    <StaticResource x:Key="Color18B" ResourceKey="TextSecondary" />
-    <StaticResource x:Key="Color19B" ResourceKey="ControlBackground" />
-    <StaticResource x:Key="Color20B" ResourceKey="ControlBackground" />
-    <StaticResource x:Key="Color21B" ResourceKey="ControlBorderBrush" />
-    <StaticResource x:Key="Color22B" ResourceKey="ControlBackground" />
-    <StaticResource x:Key="Color23B" ResourceKey="ContentBg" />
-    <StaticResource x:Key="Color24B" ResourceKey="TextSecondary" />
-    <StaticResource x:Key="Color25B" ResourceKey="ControlBackground" />
+    <DynamicResource x:Key="Color00B" ResourceKey="SettingsCardBackground" />
+    <DynamicResource x:Key="Color01B" ResourceKey="ContentBg" />
+    <DynamicResource x:Key="Color02B" ResourceKey="HoverBackground" />
+    <DynamicResource x:Key="Color03B" ResourceKey="SettingsRowBorderBrush" />
+    <DynamicResource x:Key="Color04B" ResourceKey="TextSecondary" />
+    <DynamicResource x:Key="Color05B" ResourceKey="TextPrimary" />
+    <DynamicResource x:Key="Color06B" ResourceKey="ControlBackground" />
+    <DynamicResource x:Key="Color07B" ResourceKey="ControlBackground" />
+    <DynamicResource x:Key="Color08B" ResourceKey="TextSecondary" />
+    <DynamicResource x:Key="Color09B" ResourceKey="HeaderBg" />
+    <DynamicResource x:Key="Color10B" ResourceKey="AccentColor" />
+    <DynamicResource x:Key="Color11B" ResourceKey="AccentColor" />
+    <DynamicResource x:Key="Color12B" ResourceKey="ControlBorderBrush" />
+    <DynamicResource x:Key="Color13B" ResourceKey="ControlBorderBrush" />
+    <DynamicResource x:Key="Color14B" ResourceKey="ControlBorderBrush" />
+    <DynamicResource x:Key="Color15B" ResourceKey="ControlHoverBackground" />
+    <DynamicResource x:Key="Color16B" ResourceKey="ControlBorderBrush" />
+    <DynamicResource x:Key="Color17B" ResourceKey="TextPrimary" />
+    <DynamicResource x:Key="Color18B" ResourceKey="TextSecondary" />
+    <DynamicResource x:Key="Color19B" ResourceKey="ControlBackground" />
+    <DynamicResource x:Key="Color20B" ResourceKey="ControlBackground" />
+    <DynamicResource x:Key="Color21B" ResourceKey="ControlBorderBrush" />
+    <DynamicResource x:Key="Color22B" ResourceKey="ControlBackground" />
+    <DynamicResource x:Key="Color23B" ResourceKey="ContentBg" />
+    <DynamicResource x:Key="Color24B" ResourceKey="TextSecondary" />
+    <DynamicResource x:Key="Color25B" ResourceKey="ControlBackground" />
 
-    <StaticResource x:Key="PopupBGColor" ResourceKey="MenuBackground" />
-    <StaticResource x:Key="PopupTextColor" ResourceKey="TextPrimary" />
-    <StaticResource x:Key="PopupButtonAreaBGColor" ResourceKey="ControlBackground" />
-    <StaticResource x:Key="PopupButtonAreaBorderColor" ResourceKey="ControlBorderBrush" />
-    <StaticResource x:Key="SystemThemeBorder" ResourceKey="ControlBorderBrush" />
+    <DynamicResource x:Key="PopupBGColor" ResourceKey="MenuBackground" />
+    <DynamicResource x:Key="PopupTextColor" ResourceKey="TextPrimary" />
+    <DynamicResource x:Key="PopupButtonAreaBGColor" ResourceKey="ControlBackground" />
+    <DynamicResource x:Key="PopupButtonAreaBorderColor" ResourceKey="ControlBorderBrush" />
+    <DynamicResource x:Key="SystemThemeBorder" ResourceKey="ControlBorderBrush" />
     <Style x:Key="AccentButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource PrimarySettingsButton}" />
 
     <!-- Flow.Launcher standard named styles -->

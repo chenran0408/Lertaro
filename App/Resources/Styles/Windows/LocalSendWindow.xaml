@@ -40,7 +40,7 @@
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
         <Setter Property="VerticalContentAlignment" Value="Top"/>
         <Setter Property="FontSize" Value="14"/>
-        <Setter Property="Background" Value="{DynamicResource FieldBackground}"/>
+        <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="CaretBrush" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
@@ -78,8 +78,13 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" CornerRadius="4" Background="{TemplateBinding Background}"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-                    <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="Background" Value="#20FF4D4F"/><Setter Property="Foreground" Value="#FF4D4F"/></Trigger></ControlTemplate.Triggers>
+                    <!-- Danger hover as a Fluent state layer: the fill rides in its own border at
+                         12% opacity so the theme brush stays untouched and the glyph keeps alpha. -->
+                    <Grid>
+                        <Border x:Name="Bd" CornerRadius="4" Background="{DynamicResource ErrorBrush}" Opacity="0"/>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                    <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="Opacity" Value="0.12"/><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/></Trigger></ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

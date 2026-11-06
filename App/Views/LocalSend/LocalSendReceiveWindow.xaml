@@ -134,7 +134,7 @@
                                                         <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                                                     </Trigger>
                                                     <Trigger Property="IsSelected" Value="True">
-                                                        <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SelectedBackground}"/>
+                                                        <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SidebarSelected}"/>
                                                         <Setter TargetName="AccentBar" Property="Fill" Value="{DynamicResource AccentBarColor}"/>
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>

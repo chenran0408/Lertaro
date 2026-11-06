@@ -16,7 +16,7 @@
         <Setter Property="Margin" Value="0"/>
         <Setter Property="MinHeight" Value="{Binding ItemHeight}"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
@@ -114,7 +114,7 @@
         <Setter Property="Margin" Value="0"/>
         <Setter Property="MinHeight" Value="{Binding ItemHeight}"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">

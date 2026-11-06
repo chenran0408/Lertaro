@@ -42,7 +42,7 @@
                          it needs. -->
                     <Border x:Name="PathPreviewBorder" Grid.Row="0" Background="Transparent"
                             BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1"
-                            CornerRadius="7,7,0,0"
+                            CornerRadius="{StaticResource CornerRadiusWindowTop}"
                             Padding="14,8,14,8"
                             Visibility="Collapsed">
                         <TextBlock x:Name="PathPreviewTextBlock"
@@ -72,7 +72,7 @@
                                Visibility="{Binding ResultsSeparatorVisibility}"/>
                     <!-- 4. Search Box (Bottom Anchored) -->
                     <Border x:Name="SearchBoxBorder" Grid.Row="3" Background="{DynamicResource ControlBackground}"
-                            BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,1,0,0" CornerRadius="0,0,7,7"
+                            BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,1,0,0" CornerRadius="{StaticResource CornerRadiusWindowBottom}"
                             Padding="12,8,12,8">
                         <local:SearchBoxControl x:Name="SearchBox" FontSize="14" Padding="0" IsIconOnLeft="False"
                                                 SearchText="{Binding SearchQuery, Mode=TwoWay}" IsServiceRunning="{Binding IsServiceConnected}"/>

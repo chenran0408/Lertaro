@@ -84,6 +84,7 @@
                 <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=CheckBox}}"/>
             </Style>
         </Style.Resources>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="Cursor" Value="Hand"/>
@@ -150,6 +151,7 @@
                 <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
             </Style>
         </Style.Resources>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="Cursor" Value="Hand"/>

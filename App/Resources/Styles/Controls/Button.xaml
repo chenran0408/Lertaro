@@ -17,6 +17,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
 
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="ContentTemplate">
@@ -39,6 +40,9 @@
                              of this one button. -->
                         <Border x:Name="HoverOverlay" CornerRadius="{StaticResource CornerRadiusControl}"
                                 Background="{DynamicResource ControlHoverBackground}" BorderBrush="{DynamicResource AccentBlue}"
+                                BorderThickness="{TemplateBinding BorderThickness}" Opacity="0"/>
+                        <Border x:Name="PressedOverlay" CornerRadius="{StaticResource CornerRadiusControl}"
+                                Background="{DynamicResource ControlHoverBackground}" BorderBrush="{DynamicResource ControlHoverBackground}"
                                 BorderThickness="{TemplateBinding BorderThickness}" Opacity="0"/>
                         <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
@@ -66,6 +70,26 @@
                             </MultiTrigger.ExitActions>
                             <Setter Property="Foreground" Value="{DynamicResource SecondaryButtonHoverText}"/>
                         </MultiTrigger>
+                        <!-- Pressed deepens the same hover fill instead of jumping to another color;
+                             primary's pressed pattern below, minus its dedicated pressed brush. -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressedOverlay" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="{StaticResource DurationFast}"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressedOverlay" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="{StaticResource DurationFast}"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlDisabledBackground}"/>
                             <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource ControlDisabledBorderBrush}"/>

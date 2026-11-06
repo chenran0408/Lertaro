@@ -15,7 +15,7 @@
 
     <Style x:Key="SettingsSectionTitle" TargetType="TextBlock">
         
-        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontSize" Value="20"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="Margin" Value="0,0,0,4"/>
@@ -136,6 +136,7 @@
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FontFamily" Value="{DynamicResource AppIconFontFamily}"/>
         <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -154,19 +155,10 @@
     </Style>
 
     <!-- Same shape as RuleIconButton, but hover also tints the border/foreground accent-blue: used
-         by the Hotkey blacklist and Index exclusion-rule rows. -->
-    <Style x:Key="RuleIconButtonAccent" TargetType="Button">
-        <Setter Property="Width" Value="32"/>
-        <Setter Property="Height" Value="32"/>
-        <Setter Property="Margin" Value="6,0,0,0"/>
-        <Setter Property="Padding" Value="0"/>
-        <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextSecondary2}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="FontFamily" Value="{DynamicResource AppIconFontFamily}"/>
-        <Setter Property="FontSize" Value="14"/>
+         by the Hotkey blacklist and Index exclusion-rule rows, and (as QuickNavIconButton below)
+         by quick-navigation rows. AccentColor and AccentBlue are the same value in every theme,
+         so the two accent variants collapse into one BasedOn. -->
+    <Style x:Key="RuleIconButtonAccent" TargetType="Button" BasedOn="{StaticResource RuleIconButton}">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -204,37 +196,10 @@
         <Setter Property="FontFamily" Value="{DynamicResource AppMonospaceFontFamily}"/>
     </Style>
 
-    <!-- Reorder button with accent-colored hover feedback for quick-navigation rows. -->
-    <Style x:Key="QuickNavIconButton" TargetType="Button">
-        <Setter Property="Width" Value="32"/>
-        <Setter Property="Height" Value="32"/>
-        <Setter Property="Margin" Value="6,0,0,0"/>
-        <Setter Property="Padding" Value="0"/>
-        <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextSecondary2}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="FontFamily" Value="{DynamicResource AppIconFontFamily}"/>
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" CornerRadius="6" Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBackground}"/>
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
+    <!-- Reorder button with accent-colored hover feedback for quick-navigation rows. Identical to
+         RuleIconButtonAccent (AccentColor == AccentBlue in every theme), kept as a named alias so
+         the call sites keep speaking their own language. -->
+    <Style x:Key="QuickNavIconButton" TargetType="Button" BasedOn="{StaticResource RuleIconButtonAccent}"/>
 
     <pconv:ComponentTypeToBadgeBrushConverter x:Key="TypeToBrush"/>
     <conv:StringToVisibilityConverter x:Key="StringToVis"/>
