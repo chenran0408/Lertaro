@@ -191,7 +191,7 @@ public partial class ClipboardPanelView : UserControl
         // Warm the thumbnail cache in the background so the first scroll through image rows does
         // not decode them one by one on the UI thread. Bounded: recent rows first, and the cache
         // itself clears wholesale past its cap.
-        var imagesDirectory = _actions.ImagesDirectory();
+        var imagesDirectory = ClipboardPanelActions.ImagesDirectory();
         var names = Entries.Where(entry => entry.Kind == ClipboardEntryKind.Image)
             .Take(24).Select(entry => entry.ImagePath).ToList();
         if (names.Count > 0)
