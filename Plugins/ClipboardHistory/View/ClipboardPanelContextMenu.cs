@@ -20,18 +20,22 @@ internal sealed class ClipboardPanelContextMenu
     private readonly Action<string> _copyText;
     private readonly Action _saveImageAs;
     private readonly Action _clearHistory;
+    private readonly Action _exportHistory;
+    private readonly Action _importHistory;
     private readonly Action _togglePreview;
     private readonly Action _togglePause;
 
     public ClipboardPanelContextMenu(Action paste, Action copy, Action togglePin, Action delete,
-        Action clearNote, Action openSource, Action<string> copyText, Action saveImageAs, Action clearHistory,
-        Action togglePreview, Action togglePause)
+        Action clearNote, Action exportHistory, Action importHistory, Action openSource, Action<string> copyText,
+        Action saveImageAs, Action clearHistory, Action togglePreview, Action togglePause)
     {
         _paste = paste;
         _copy = copy;
         _togglePin = togglePin;
         _delete = delete;
         _clearNote = clearNote;
+        _exportHistory = exportHistory;
+        _importHistory = importHistory;
         _openSource = openSource;
         _copyText = copyText;
         _saveImageAs = saveImageAs;
@@ -77,6 +81,8 @@ internal sealed class ClipboardPanelContextMenu
             ClipboardRuntime.IsCapturePaused() ? "ClipboardHistory_PanelResumeCapture" : "ClipboardHistory_PanelPauseCapture",
             (_, _) => _togglePause()));
         menu.Items.Add(Item("ClipboardHistory_PanelTogglePreview", (_, _) => _togglePreview()));
+        menu.Items.Add(Item("ClipboardHistory_PanelExport", (_, _) => _exportHistory()));
+        menu.Items.Add(Item("ClipboardHistory_PanelImport", (_, _) => _importHistory()));
         menu.Items.Add(Item("ClipboardHistory_ClearHistory", (_, _) => _clearHistory()));
         return menu;
     }

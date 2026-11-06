@@ -66,5 +66,10 @@
   "ClipboardHistory_PanelNotePlaceholder": "为这条记录添加备注…",
   "ClipboardHistory_PanelClearNote": "清除备注",
   "ClipboardHistory_PanelPreviewChip": "预览",
-  "ClipboardHistory_PanelEmptyHints": "Enter 粘贴 · Ctrl+Enter 纯文本 · 1~9 快捷粘贴 · Ctrl+A 全选 · Esc 清空搜索/关闭"
+  "ClipboardHistory_PanelEmptyHints": "Enter 粘贴 · Ctrl+Enter 纯文本 · 1~9 快捷粘贴 · Ctrl+A 全选 · Esc 清空搜索/关闭",
+  "ClipboardHistory_PanelExport": "导出历史…",
+  "ClipboardHistory_PanelImport": "导入历史…",
+  "ClipboardHistory_PanelImportConfirm": "导入会用备份替换当前全部历史（含备注与置顶）。确定继续？",
+  "ClipboardHistory_PanelExportDone": "历史已导出",
+  "ClipboardHistory_PanelImportDone": "历史已导入"
 }

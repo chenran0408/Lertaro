@@ -17,7 +17,9 @@ internal sealed class ClipboardRuntime : IDisposable
     private readonly ConcurrentDictionary<long, SourceWindow> _sources = new();
     private ClipboardEntry[] _entries = [];
     private ClipboardStore? _store;
+    private string? _root;
     private string? _imagesDirectory;
+    private string? _databasePath;
     private ClipboardMonitorService? _monitor;
     private PasteTargetTracker? _targets;
     private Task _ready = Task.CompletedTask;
@@ -53,8 +55,10 @@ internal sealed class ClipboardRuntime : IDisposable
             return;
         }
         var root = Path.Combine(directory, "ClipboardHistory");
+        _root = root;
         _imagesDirectory = Path.Combine(root, "images");
-        _store = new ClipboardStore(Path.Combine(root, "clipboard-history.db"), _imagesDirectory);
+        _databasePath = Path.Combine(root, "clipboard-history.db");
+        _store = new ClipboardStore(_databasePath, _imagesDirectory);
         _monitor = new ClipboardMonitorService(Captured, () => new ClipboardCaptureOptions(
             ClipboardSettings.Enabled && !_stopping && !IsCapturePaused(),
             ClipboardSettings.MaxTextLength, ClipboardSettings.ExcludedProcesses));
@@ -289,6 +293,72 @@ internal sealed class ClipboardRuntime : IDisposable
         await store.ClearUnpinnedAsync().ConfigureAwait(false);
         Publish(Entries.Where(entry => entry.Pinned).ToArray());
     });
+
+    /// <summary>Exports the whole history (database snapshot + images) into one zip file.</summary>
+    internal async Task<bool> ExportAsync(string destinationZip)
+    {
+        if (_store == null) return false;
+        try
+        {
+            await _store.ExportAsync(destinationZip).ConfigureAwait(false);
+            return true;
+        }
+        catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_StorageFailed"); return false; }
+    }
+
+    /// <summary>PasteBar-style import: replaces the whole history with a backup zip's contents.
+    /// The swap happens under the mutation gate; current files are moved aside first, so a
+    /// failure mid-surgery leaves the old history recoverable exactly like corruption recovery.
+    /// An older backup's schema is migrated in place by the fresh store's EnsureSchema.</summary>
+    internal async Task<bool> ImportFromAsync(string zipPath)
+    {
+        if (_store == null || _root == null) return false;
+        try
+        {
+            var staging = Path.Combine(Path.GetTempPath(), $"lertaro-clip-import-{Guid.NewGuid():N}");
+            var (stagedDatabase, stagedImages) = ClipboardBackupSupport.Extract(zipPath, staging);
+            try
+            {
+                await MutateAsync(async _ =>
+                {
+                    MoveCurrentAside();
+                    Directory.CreateDirectory(_imagesDirectory!);
+                    File.Copy(stagedDatabase, _databasePath!, overwrite: true);
+                    foreach (var file in Directory.GetFiles(stagedImages))
+                        File.Copy(file, Path.Combine(_imagesDirectory!, Path.GetFileName(file)), overwrite: true);
+
+                    _store = new ClipboardStore(_databasePath!, _imagesDirectory!);
+                    await _store.InitializeAsync().ConfigureAwait(false);
+                    await _store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays).ConfigureAwait(false);
+                    _sources.Clear();
+                    Publish(await _store.GetEntriesAsync().ConfigureAwait(false));
+                }).ConfigureAwait(false);
+                return true;
+            }
+            finally
+            {
+                try { Directory.Delete(staging, recursive: true); } catch (IOException) { }
+            }
+        }
+        catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_StorageFailed"); return false; }
+    }
+
+    // Same rename-aside pattern as corruption recovery: the old database, its sidecars and the
+    // image folder survive under a suffix until the import commits over them.
+    private void MoveCurrentAside()
+    {
+        var suffix = $".old-{DateTime.UtcNow:yyyyMMddHHmmssfff}";
+        var imagesDirectory = _imagesDirectory!;
+        foreach (var file in new[] { _databasePath, _databasePath + "-journal", _databasePath + "-wal", _databasePath + "-shm" })
+            if (file != null && File.Exists(file))
+                File.Move(file, file + suffix);
+        if (Directory.Exists(imagesDirectory))
+        {
+            var aside = imagesDirectory + suffix;
+            if (Directory.Exists(aside)) Directory.Delete(aside, recursive: true);
+            Directory.Move(imagesDirectory, aside);
+        }
+    }
 
     internal bool CanOpenSource(long id) => _sources.TryGetValue(id, out var source) && source.IsAlive;
     internal void OpenSource(long id)

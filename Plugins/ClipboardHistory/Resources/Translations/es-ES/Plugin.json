@@ -66,5 +66,10 @@
   "ClipboardHistory_PanelNotePlaceholder": "Añadir una nota a este elemento...",
   "ClipboardHistory_PanelClearNote": "Quitar nota",
   "ClipboardHistory_PanelPreviewChip": "Vista previa",
-  "ClipboardHistory_PanelEmptyHints": "Enter pegar · Ctrl+Enter texto sin formato · 1-9 pegado rápido · Ctrl+A seleccionar todo · Esc borra la búsqueda/cierra"
+  "ClipboardHistory_PanelEmptyHints": "Enter pegar · Ctrl+Enter texto sin formato · 1-9 pegado rápido · Ctrl+A seleccionar todo · Esc borra la búsqueda/cierra",
+  "ClipboardHistory_PanelExport": "Exportar historial…",
+  "ClipboardHistory_PanelImport": "Importar historial…",
+  "ClipboardHistory_PanelImportConfirm": "Importar reemplaza todo el historial actual, incluidas notas y fijados. ¿Continuar?",
+  "ClipboardHistory_PanelExportDone": "Historial exportado",
+  "ClipboardHistory_PanelImportDone": "Historial importado"
 }

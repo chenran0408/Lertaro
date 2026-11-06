@@ -66,5 +66,10 @@
   "ClipboardHistory_PanelNotePlaceholder": "為這條記錄新增備註…",
   "ClipboardHistory_PanelClearNote": "清除備註",
   "ClipboardHistory_PanelPreviewChip": "預覽",
-  "ClipboardHistory_PanelEmptyHints": "Enter 貼上 · Ctrl+Enter 純文字 · 1~9 快捷貼上 · Ctrl+A 全選 · Esc 清空搜尋/關閉"
+  "ClipboardHistory_PanelEmptyHints": "Enter 貼上 · Ctrl+Enter 純文字 · 1~9 快捷貼上 · Ctrl+A 全選 · Esc 清空搜尋/關閉",
+  "ClipboardHistory_PanelExport": "匯出歷史…",
+  "ClipboardHistory_PanelImport": "匯入歷史…",
+  "ClipboardHistory_PanelImportConfirm": "匯入會用備份取代目前全部歷史（含備註與釘選）。確定繼續？",
+  "ClipboardHistory_PanelExportDone": "歷史已匯出",
+  "ClipboardHistory_PanelImportDone": "歷史已匯入"
 }

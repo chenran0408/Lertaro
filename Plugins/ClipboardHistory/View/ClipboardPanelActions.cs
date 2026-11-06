@@ -21,6 +21,8 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
             TogglePinSelected,
             DeleteSelected,
             ClearSelectedNote,
+            ExportHistory,
+            ImportHistory,
             () => SelectedEntries().ToList().ForEach(entry => ClipboardRuntime.Instance.OpenSource(entry.Id)),
             text => _ = ClipboardRuntime.Instance.CopyTextAsync(text),
             SaveSelectedImageAs,
@@ -193,6 +195,42 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
             ClipboardRuntime.PauseCaptureFor(TimeSpan.Zero);
         else
             ClipboardRuntime.PauseCaptureFor(TimeSpan.FromMinutes(10));
+    }
+
+    /// <summary>PasteBar-style portability: one zip with the database snapshot and every image,
+    /// restorable on this machine or a fresh install.</summary>
+    public void ExportHistory()
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = $"lertaro-clipboard-{DateTime.Now:yyyyMMdd-HHmmss}.zip",
+            Filter = "ZIP|*.zip",
+            DefaultExt = ".zip",
+        };
+        if (dialog.ShowDialog() != true) return;
+        _ = ExportAndNotifyAsync(dialog.FileName);
+    }
+
+    private async Task ExportAndNotifyAsync(string path)
+    {
+        if (await ClipboardRuntime.Instance.ExportAsync(path).ConfigureAwait(true))
+            PasteBackHelper.Notify("ClipboardHistory_PanelExportDone");
+    }
+
+    public async void ImportHistory()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "ZIP|*.zip", DefaultExt = ".zip" };
+        if (dialog.ShowDialog() != true) return;
+        var result = PluginMessageBoxService.Show(
+            TranslationService.Get("ClipboardHistory_PanelImportConfirm"),
+            TranslationService.Get("ClipboardHistory_PluginName"),
+            MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+        if (result != MessageBoxResult.Yes) return;
+        if (await ClipboardRuntime.Instance.ImportFromAsync(dialog.FileName).ConfigureAwait(true))
+        {
+            PasteBackHelper.Notify("ClipboardHistory_PanelImportDone");
+            _ = view.ReloadAsync();
+        }
     }
 
     public void ClearHistoryWithConfirm()

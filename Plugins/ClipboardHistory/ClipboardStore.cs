@@ -55,6 +55,9 @@ internal sealed class ClipboardStore(string databasePath, string imagesDirectory
     public Task ClearUnpinnedAsync(CancellationToken cancellationToken = default) =>
         RunLockedAsync(() => ClipboardStoreWriter.ClearUnpinned(_database), cancellationToken);
 
+    public Task ExportAsync(string destinationZip, CancellationToken cancellationToken = default) =>
+        RunLockedAsync(() => ClipboardBackupSupport.Export(databasePath, imagesDirectory, destinationZip), cancellationToken);
+
     public Task TrimAsync(int maxEntries, int retentionDays, CancellationToken cancellationToken = default) =>
         RunLockedAsync(() => ClipboardStoreWriter.Trim(_database, maxEntries, retentionDays), cancellationToken);
 

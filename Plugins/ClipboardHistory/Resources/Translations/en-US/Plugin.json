@@ -66,5 +66,10 @@
   "ClipboardHistory_PanelNotePlaceholder": "Add a note to this entry...",
   "ClipboardHistory_PanelClearNote": "Clear note",
   "ClipboardHistory_PanelPreviewChip": "Preview",
-  "ClipboardHistory_PanelEmptyHints": "Enter paste · Ctrl+Enter plain text · 1-9 quick paste · Ctrl+A select all · Esc clears search/closes"
+  "ClipboardHistory_PanelEmptyHints": "Enter paste · Ctrl+Enter plain text · 1-9 quick paste · Ctrl+A select all · Esc clears search/closes",
+  "ClipboardHistory_PanelExport": "Export history…",
+  "ClipboardHistory_PanelImport": "Import history…",
+  "ClipboardHistory_PanelImportConfirm": "Importing replaces the entire current history, including notes and pins. Continue?",
+  "ClipboardHistory_PanelExportDone": "History exported",
+  "ClipboardHistory_PanelImportDone": "History imported"
 }

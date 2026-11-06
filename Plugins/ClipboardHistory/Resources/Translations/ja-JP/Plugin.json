@@ -66,5 +66,10 @@
   "ClipboardHistory_PanelNotePlaceholder": "この履歴にメモを追加…",
   "ClipboardHistory_PanelClearNote": "メモを消去",
   "ClipboardHistory_PanelPreviewChip": "プレビュー",
-  "ClipboardHistory_PanelEmptyHints": "Enter 貼り付け · Ctrl+Enter 書式なし · 1～9 クイック貼り付け · Ctrl+A 全選択 · Esc 検索クリア/閉じる"
+  "ClipboardHistory_PanelEmptyHints": "Enter 貼り付け · Ctrl+Enter 書式なし · 1～9 クイック貼り付け · Ctrl+A 全選択 · Esc 検索クリア/閉じる",
+  "ClipboardHistory_PanelExport": "履歴をエクスポート…",
+  "ClipboardHistory_PanelImport": "履歴をインポート…",
+  "ClipboardHistory_PanelImportConfirm": "インポートすると現在の履歴（メモとピン留め含む）がすべて置き換わります。続けますか？",
+  "ClipboardHistory_PanelExportDone": "履歴をエクスポートしました",
+  "ClipboardHistory_PanelImportDone": "履歴をインポートしました"
 }

@@ -66,5 +66,10 @@
   "ClipboardHistory_PanelNotePlaceholder": "이 항목에 메모 추가…",
   "ClipboardHistory_PanelClearNote": "메모 지우기",
   "ClipboardHistory_PanelPreviewChip": "미리보기",
-  "ClipboardHistory_PanelEmptyHints": "Enter 붙여넣기 · Ctrl+Enter 서식 없이 · 1~9 빠른 붙여넣기 · Ctrl+A 전체 선택 · Esc 검색 지우기/닫기"
+  "ClipboardHistory_PanelEmptyHints": "Enter 붙여넣기 · Ctrl+Enter 서식 없이 · 1~9 빠른 붙여넣기 · Ctrl+A 전체 선택 · Esc 검색 지우기/닫기",
+  "ClipboardHistory_PanelExport": "기록 내보내기…",
+  "ClipboardHistory_PanelImport": "기록 가져오기…",
+  "ClipboardHistory_PanelImportConfirm": "가져오면 메모와 고정 항목을 포함한 현재 기록 전체가 대체됩니다. 계속할까요?",
+  "ClipboardHistory_PanelExportDone": "기록을 내보냈습니다",
+  "ClipboardHistory_PanelImportDone": "기록을 가져왔습니다"
 }
