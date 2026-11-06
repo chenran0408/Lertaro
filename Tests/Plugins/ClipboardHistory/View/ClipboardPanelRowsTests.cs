@@ -16,12 +16,41 @@ public sealed class ClipboardPanelRowsTests
         ClipboardPanelTab tab = ClipboardPanelTab.All, string query = "",
         string dateLabel = "2026/11/03", string pinnedLabel = "pinned") =>
         ClipboardPanelRows.Build(entries, tab, query, Contains,
-            entry => $"sub:{entry.PlainPreview}", _ => dateLabel, pinnedLabel);
+            entry => $"sub:{entry.PlainPreview}", _ => dateLabel,
+            entry => $"tip:{entry.PlainPreview}", pinnedLabel);
 
     [TestMethod]
     public void Build_EmptyHistory_EmptyList()
     {
         Assert.IsEmpty(Build([]));
+    }
+
+    [TestMethod]
+    public void Build_NumberSlotsOnTheFirstNineRows_Only()
+    {
+        var entries = Enumerable.Range(1, 12).Select(i => Text($"row {i}", i)).ToList();
+        var items = Build(entries);
+
+        var slots = items.Where(item => item.IsRow).Select(item => item.SlotText).ToList();
+        Assert.HasCount(12, slots);
+        CollectionAssert.AreEqual(
+            new[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "", "", "" }, slots);
+    }
+
+    [TestMethod]
+    public void Build_SlotBadgesMatchSelectableIds()
+    {
+        // Headers split the list; the badge walk and the 1~9 paste walk must agree.
+        var entries = new List<ClipboardEntry>
+        {
+            Text("pinned", 1, pinned: true), Text("a", 2), Text("b", 3), Text("c", 4),
+        };
+        var items = Build(entries);
+
+        var badged = items.Where(item => item.IsRow && item.SlotText.Length > 0)
+            .Select(item => item.Id).ToList();
+        var selectable = ClipboardPanelRows.SelectableIds(items).Take(9).ToList();
+        CollectionAssert.AreEqual(selectable, badged);
     }
 
     [TestMethod]

@@ -65,5 +65,6 @@
   "ClipboardHistory_PanelNote": "메모",
   "ClipboardHistory_PanelNotePlaceholder": "이 항목에 메모 추가…",
   "ClipboardHistory_PanelClearNote": "메모 지우기",
-  "ClipboardHistory_PanelPreviewChip": "미리보기"
+  "ClipboardHistory_PanelPreviewChip": "미리보기",
+  "ClipboardHistory_PanelEmptyHints": "Enter 붙여넣기 · Ctrl+Enter 서식 없이 · 1~9 빠른 붙여넣기 · Ctrl+A 전체 선택 · Esc 검색 지우기/닫기"
 }

@@ -8,6 +8,8 @@ internal enum ClipboardPanelAction
     None,
     MoveUp,
     MoveDown,
+    MoveTop,
+    MoveBottom,
     ExtendUp,
     ExtendDown,
     SelectAll,
@@ -49,6 +51,10 @@ internal static class ClipboardPanelKeys
                 return ClipboardPanelAction.Close;
             case Key.Up when !searchFocused && modifiers == ModifierKeys.None:
                 return ClipboardPanelAction.MoveUp;
+            case Key.Home when !searchFocused && modifiers == ModifierKeys.None:
+                return ClipboardPanelAction.MoveTop;
+            case Key.End when !searchFocused && modifiers == ModifierKeys.None:
+                return ClipboardPanelAction.MoveBottom;
             case Key.Up when !searchFocused && modifiers == ModifierKeys.Shift:
                 return ClipboardPanelAction.ExtendUp;
             case Key.Down when !searchFocused && modifiers == ModifierKeys.None:

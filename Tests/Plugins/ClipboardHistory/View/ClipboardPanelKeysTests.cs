@@ -118,4 +118,18 @@ public sealed class ClipboardPanelKeysTests
         Assert.AreEqual(ClipboardPanelAction.Close,
             ClipboardPanelKeys.Resolve(Key.Escape, ModifierKeys.None, searchFocused: true).Action);
     }
+
+    [TestMethod]
+    public void HomeEnd_JumpToTheEdges_OnlyFromTheList()
+    {
+        Assert.AreEqual(ClipboardPanelAction.MoveTop,
+            ClipboardPanelKeys.Resolve(Key.Home, ModifierKeys.None, searchFocused: false).Action);
+        Assert.AreEqual(ClipboardPanelAction.MoveBottom,
+            ClipboardPanelKeys.Resolve(Key.End, ModifierKeys.None, searchFocused: false).Action);
+        // In the search box they stay native caret moves.
+        Assert.AreEqual(ClipboardPanelAction.None,
+            ClipboardPanelKeys.Resolve(Key.Home, ModifierKeys.None, searchFocused: true).Action);
+        Assert.AreEqual(ClipboardPanelAction.None,
+            ClipboardPanelKeys.Resolve(Key.End, ModifierKeys.None, searchFocused: true).Action);
+    }
 }

@@ -29,6 +29,19 @@ internal static class ClipboardPanelLabels
 
     public static string Empty() => TranslationService.Get("ClipboardHistory_PanelEmpty");
 
+    public static string EmptyHints() => TranslationService.Get("ClipboardHistory_PanelEmptyHints");
+
+    /// <summary>The row hover surface: the whole text (bounded so a huge clip cannot stall the
+    /// tooltip), image dimensions, or the path list. ponytail: 2000 chars is a flat display cap,
+    /// not a storage one -- the preview pane and paste stay complete; if someone truly reads past
+    /// it, the upgrade is a scrolling tooltip, not a bigger number.</summary>
+    public static string Tooltip(ClipboardEntry entry) => entry.Kind switch
+    {
+        ClipboardEntryKind.Image => $"{entry.ImageWidth}\u00d7{entry.ImageHeight}",
+        ClipboardEntryKind.FilePaths => string.Join("\n", entry.PathList),
+        _ => entry.Content.Length > 2000 ? entry.Content[..2000] + "\u2026" : entry.Content,
+    };
+
     public static string PreviewTextTitle() => TranslationService.Get("ClipboardHistory_PanelPreviewText");
 
     public static string PreviewFilesTitle() => TranslationService.Get("ClipboardHistory_PanelPreviewFiles");
@@ -100,7 +113,7 @@ internal static class ClipboardPanelLabels
 
     public static void SetEmpty(ClipboardPanelView view, bool visible)
     {
-        view.EmptyText.Text = Empty();
+        view.EmptyText.Text = visible ? $"{Empty()}\n\n{EmptyHints()}" : string.Empty;
         view.EmptyText.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
     }
 }
