@@ -43,6 +43,10 @@ public partial class QuickSearchWindow : Views.Controls.AppWindow, ISearchWindow
         SystemMenuBlocker.Attach(this);
         _viewModel = new QuickSearchViewModel();
         this.DataContext = _viewModel;
+        _viewModel.Search.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(QuickSearchViewModel.Search.IsWebMode)) OnWebModeChanged();
+        };
         _controller = new QuickSearchWindowController(this);
         // Mirrors the flag onto the logo. Subscribed rather than set from ToggleStayOpen alone, because
         // the flag also clears itself on the next real hide (see the controller's FinishHide).
@@ -58,6 +62,12 @@ public partial class QuickSearchWindow : Views.Controls.AppWindow, ISearchWindow
     }
     public ShellMenuPresenter? MenuPresenter => _menuPresenter;
     public QuickSearchViewModel ViewModel => _viewModel;
+
+    // B1 web mode indicator: the placeholder slot doubles as the mode badge -- the box itself is
+    // where the user is looking when the mode flips, and it restores itself on exit.
+    private void OnWebModeChanged() => TxtPlaceholder.Text = _viewModel.Search.IsWebMode
+            ? string.Format(TranslationManager.Instance["Search_WebModeWatermark"], _viewModel.Search.WebModeKeyword)
+            : TranslationManager.Instance["QuickSearch_Placeholder"];
     public string SearchText => TxtSearch.Text;
     public bool IsInActionsMode
     {

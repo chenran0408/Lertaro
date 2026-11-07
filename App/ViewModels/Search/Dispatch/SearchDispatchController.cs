@@ -218,6 +218,18 @@ internal sealed class SearchDispatchController
             deferInstantPass ? instantPass.Completion : null
         );
     }
+    /// <summary>B1 web mode: the file search stands down and one actionable web row takes the
+    /// list. Called by SearchExecutionViewModel whenever the query is inside a web keyword mode.</summary>
+    public void ShowWebSearchRow(string query)
+    {
+        _engine.CancelPendingSearch();
+        _setIsSearching(false);
+        var row = SearchResultMapper.CreateWebSearchResult(query);
+        _replaceResults([row]);
+        _setResultsPanelVisibility(Visibility.Visible);
+        _setResultsSeparatorVisibility(Visibility.Collapsed);
+    }
+
     public void PerformSearch(string query)
     {
         if (string.IsNullOrWhiteSpace(query))

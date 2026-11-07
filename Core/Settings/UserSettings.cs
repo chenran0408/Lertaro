@@ -31,6 +31,15 @@ public class UserSettings
     // Single source of truth for hidden/system visibility in search results. When true, the "*"
     // bypass marker no longer matters for hidden files (the old double semantics is gone).
     public bool ShowHiddenFiles { get; set; } = false;
+    // B1 web keyword mode. Suggest defaults OFF -- enabling it sends typed text to the search
+    // engine's suggestion endpoint; the settings page says so in plain words.
+    public List<WebKeywordSetting> WebKeywords { get; set; } = new()
+    {
+        new() { Keyword = "g", Url = "https://www.google.com/search?q={query}" },
+        new() { Keyword = "b", Url = "https://www.bing.com/search?q={query}" },
+        new() { Keyword = "w", Url = "https://en.wikipedia.org/wiki/Special:Search?search={query}" },
+    };
+    public bool WebSuggestEnabled { get; set; } = false;
     public bool EnableKeywordHistory { get; set; } = true;
     public bool StartWithWindows { get; set; } = true;
     public bool AutoCheckUpdates { get; set; } = true;

@@ -985,5 +985,11 @@
   "Chips_Files": "ファイル",
   "Chips_Images": "画像",
   "Chips_Documents": "ドキュメント",
-  "Chips_ThisWeek": "今週"
+  "Chips_ThisWeek": "今週",
+  "Search_WebModeRow": "{0} でウェブ検索：Enter で開く",
+  "Search_WebModeWatermark": "ウェブ検索（{0}）— Esc で解除",
+  "Settings_WebSearchLabel": "Web キーワード検索",
+  "Settings_WebSearchDesc": "キーワード+空白（例：g test）でウェブ検索モードに入ります。サジェスト有効時は入力内容を検索エンジンへ送信します（既定オフ）。",
+  "Settings_WebKeywordsLabel": "Web キーワード",
+  "Settings_WebKeywordsDesc": "1 行 1 件：キーワード|URL（URL 内の {query} が検索語に置き換わります）。"
 }

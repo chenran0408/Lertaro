@@ -37,6 +37,20 @@ internal static class SearchResultHelper
     public static AppSearchResult CreateUiResult(SearchResult item, string query, int index, bool isApplication, string? scope)
         => AppSearchResult.FromIndexResult(item, query, index, isApplication, scope);
 
+    // B1 web mode: one actionable row standing in for the whole result list. Executing it (Enter,
+    // click) opens the browser; the empty FullPath kind keeps every file-oriented affordance off.
+    public static AppSearchResult CreateWebSearchResult(string query) => new AppSearchResult
+    {
+        Name = TranslationManager.Instance["Search_WebModeRow"],
+        FullPath = "__WEB_SEARCH__",
+        ParentDir = string.Empty,
+        IsDir = false,
+        Drive = string.Empty,
+        ResultKind = "Web",
+        Index = 0,
+        SearchQuery = string.Empty
+    };
+
     public static AppSearchResult CreateNoResultsResult(string query) => new AppSearchResult
     {
         Name = TranslationManager.Instance["Search_NoResult"],

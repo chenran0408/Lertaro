@@ -985,5 +985,11 @@
   "Chips_Files": "Archivos",
   "Chips_Images": "Imágenes",
   "Chips_Documents": "Documentos",
-  "Chips_ThisWeek": "Esta semana"
+  "Chips_ThisWeek": "Esta semana",
+  "Search_WebModeRow": "Buscar en la web con {0}: Enter para abrir",
+  "Search_WebModeWatermark": "Búsqueda web ({0}) — Esc para salir del modo web",
+  "Settings_WebSearchLabel": "Búsqueda web por palabras clave",
+  "Settings_WebSearchDesc": "Escribe una palabra clave + espacio (como g test) para entrar en modo web. Con las sugerencias activadas, el texto se envía al buscador (desactivado por defecto).",
+  "Settings_WebKeywordsLabel": "Palabras clave web",
+  "Settings_WebKeywordsDesc": "Una por línea: palabraclave|URL (usa {query} en la URL donde va el texto)."
 }

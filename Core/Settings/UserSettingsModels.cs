@@ -1,5 +1,13 @@
 namespace Lertaro.Core;
 
+/// <summary>One web keyword: typing "<keyword> <text>" in the launcher opens the engine URL with
+/// {query} replaced by the URL-escaped text.</summary>
+public class WebKeywordSetting
+{
+    public string Keyword { get; set; } = string.Empty;
+    public string Url { get; set; } = string.Empty;
+}
+
 // Small settings-record types referenced from UserSettings, split out to keep that file under the
 // project's line limit.
 

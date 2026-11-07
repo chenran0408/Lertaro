@@ -985,5 +985,11 @@
   "Chips_Files": "Files",
   "Chips_Images": "Images",
   "Chips_Documents": "Documents",
-  "Chips_ThisWeek": "This week"
+  "Chips_ThisWeek": "This week",
+  "Search_WebModeRow": "Search the web with {0}: Enter to open",
+  "Search_WebModeWatermark": "Web search ({0}) — Esc to exit web mode",
+  "Settings_WebSearchLabel": "Web keyword search",
+  "Settings_WebSearchDesc": "Type a keyword + space (like g test) to enter web search mode. Suggestions, when enabled, send your typed text to the search engine (off by default).",
+  "Settings_WebKeywordsLabel": "Web keywords",
+  "Settings_WebKeywordsDesc": "One per line: keyword|URL (use {query} in the URL where the search text goes)."
 }

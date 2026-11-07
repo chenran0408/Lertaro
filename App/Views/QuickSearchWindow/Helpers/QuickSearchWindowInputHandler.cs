@@ -39,6 +39,13 @@ public class QuickSearchWindowInputHandler
 
         if (e.Key == Key.Escape && Keyboard.Modifiers == ModifierKeys.None)
         {
+            // B1: web mode unwinds first -- back to the file search for the same text.
+            if (_window.ViewModel.Search.IsWebMode)
+            {
+                _window.ViewModel.Search.ExitWebMode();
+                e.Handled = true;
+                return;
+            }
             // Same ladder as the main window (SearchWindowInputHandler.ShouldCloseOnEscape): a
             // non-empty query gets emptied first, only an empty box closes the window.
             if (_window.TxtSearch.Text.Length > 0)
@@ -206,6 +213,12 @@ public class QuickSearchWindowInputHandler
 
     private void HandleEnterBehavior()
     {
+        // B1 web mode: Enter runs the web search, the row is just its visual body.
+        if (_window.ViewModel.Search.IsWebMode && _window.ViewModel.Search.OpenWebSearch())
+        {
+            _window.HideWindow();
+            return;
+        }
         var result = _window.LstResults.SelectedItem as AppSearchResult;
         if (result == null && _window.LstResults.Items.Count > 0)
         {

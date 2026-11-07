@@ -3,6 +3,7 @@ using Lertaro.App.Helpers;
 using Lertaro.App.ViewModels.Search.Dispatch;
 
 using Lertaro.Core.Services.Search;
+using UserSettings = Lertaro.Core.UserSettings;
 
 using Lertaro.App.ViewModels.Search.Mapping;
 namespace Lertaro.App.ViewModels.Search;
@@ -103,6 +104,17 @@ public class SearchExecutionViewModel : ViewModelBase, IDisposable
                 {
                     return;
                 }
+                // B1 web mode: "<keyword> <rest>" with a configured keyword. In web mode the file
+                // search stands down and a single web-action row replaces the list; the visual
+                // state lives on the search box watermark, and Esc unwinds web mode first (the
+                // input handler owns that ladder).
+                UpdateWebMode(value);
+                if (IsWebMode)
+                {
+                    _engine.CancelPendingSearch();
+                    _dispatcher.ShowWebSearchRow(value);
+                    return;
+                }
                 if (string.IsNullOrWhiteSpace(value))
                 {
                     _engine.CancelPendingSearch();
@@ -114,6 +126,64 @@ public class SearchExecutionViewModel : ViewModelBase, IDisposable
                 }
             }
         }
+    }
+
+    // Null when not in web mode; otherwise the keyword whose web URL the query targets.
+    private string? _webModeKeyword;
+    public string? WebModeKeyword
+    {
+        get => _webModeKeyword;
+        private set => SetProperty(ref _webModeKeyword, value);
+    }
+
+    public bool IsWebMode => WebModeKeyword != null;
+
+    private void UpdateWebMode(string query)
+    {
+        var space = query.IndexOf(' ');
+        string? keyword;
+        string? rest;
+        if (space >= 0)
+        {
+            keyword = query[..space];
+            rest = query[(space + 1)..].Trim();
+        }
+        else
+        {
+            keyword = query;
+            rest = string.Empty;
+        }
+
+        // Entering web mode requires keyword + space + something to search; keyword alone stays a
+        // normal search so the transition point is the space itself.
+        if (space > 0 && rest.Length > 0 &&
+            UserSettings.Load().WebKeywords.FirstOrDefault(w =>
+                w.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase)) is { } match &&
+            !string.IsNullOrWhiteSpace(match.Url))
+        {
+            WebModeKeyword = match.Keyword;
+        }
+        else
+        {
+            WebModeKeyword = null;
+        }
+    }
+
+    /// <summary>Opens the current web-mode query in the browser and reports whether it did.</summary>
+    public bool OpenWebSearch()
+    {
+        if (!IsWebMode || WebModeKeyword is not { } keyword) return false;
+        var match = UserSettings.Load().WebKeywords.First(w => w.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase));
+        var rest = _searchQuery[(keyword.Length + 1)..].Trim();
+        UrlLauncher.Open(match.Url.Replace("{query}", Uri.EscapeDataString(rest)));
+        return true;
+    }
+
+    /// <summary>Leaves web mode and re-runs the query as a normal file search.</summary>
+    public void ExitWebMode()
+    {
+        WebModeKeyword = null;
+        _dispatcher.DispatchSearch(_searchQuery);
     }
 
     public bool IsSearching

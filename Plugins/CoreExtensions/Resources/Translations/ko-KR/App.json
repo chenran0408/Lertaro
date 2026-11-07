@@ -985,5 +985,11 @@
   "Chips_Files": "파일",
   "Chips_Images": "이미지",
   "Chips_Documents": "문서",
-  "Chips_ThisWeek": "이번 주"
+  "Chips_ThisWeek": "이번 주",
+  "Search_WebModeRow": "{0}(으)로 웹 검색: Enter로 열기",
+  "Search_WebModeWatermark": "웹 검색({0}) — Esc로 웹 모드 종료",
+  "Settings_WebSearchLabel": "웹 키워드 검색",
+  "Settings_WebSearchDesc": "키워드+공백(예: g test)을 입력하면 웹 검색 모드로 진입합니다. 연상 기능 사용 시 입력한 텍스트가 검색 엔진으로 전송됩니다(기본 꺼짐).",
+  "Settings_WebKeywordsLabel": "웹 키워드",
+  "Settings_WebKeywordsDesc": "한 줄에 하나: 키워드|URL(URL의 {query} 자리에 검색어가 들어갑니다)."
 }

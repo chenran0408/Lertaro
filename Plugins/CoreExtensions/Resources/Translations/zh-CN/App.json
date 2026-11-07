@@ -985,5 +985,11 @@
   "Chips_Files": "文件",
   "Chips_Images": "图片",
   "Chips_Documents": "文档",
-  "Chips_ThisWeek": "本周"
+  "Chips_ThisWeek": "本周",
+  "Search_WebModeRow": "用 {0} 搜索网络：Enter 打开",
+  "Search_WebModeWatermark": "Web 搜索（{0}）— Esc 退出 Web 模式",
+  "Settings_WebSearchLabel": "Web 关键词搜索",
+  "Settings_WebSearchDesc": "输入关键词+空格（如 g test）进入 Web 搜索模式。开启联想会把输入内容发送给搜索引擎（默认关闭）。",
+  "Settings_WebKeywordsLabel": "Web 关键词",
+  "Settings_WebKeywordsDesc": "每行一条，格式：关键词|URL（URL 里用 {query} 占位搜索词）。"
 }

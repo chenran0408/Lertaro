@@ -341,6 +341,9 @@ public static class SearchResultMapper
     public static AppSearchResult CreateUiResult(SearchResult item, string query, int index, bool isApplication, string? scope)
         => SearchResultHelper.CreateUiResult(item, query, index, isApplication, scope);
 
+    public static AppSearchResult CreateWebSearchResult(string query)
+        => SearchResultHelper.CreateWebSearchResult(query);
+
     public static AppSearchResult CreateNoResultsResult(string query)
         => SearchResultHelper.CreateNoResultsResult(query);
 
