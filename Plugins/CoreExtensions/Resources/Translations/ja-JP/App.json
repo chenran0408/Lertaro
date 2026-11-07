@@ -979,5 +979,11 @@
   "Tour2_IndexingBody": "Lertaro がファイルの検索インデックスを構築しています——初回だけ少し時間がかかり、以後はリアルタイムです。準備ができたらこのステップは自動で入力練習に戻ります。",
   "Tour2_IndexingHint": "少しお待ちください。準備できたら自動で戻ります",
   "Settings_ShowHiddenFilesLabel": "検索結果に隠しファイルとシステムファイルを表示",
-  "Settings_ShowHiddenFilesDesc": "オンにすると、隠しファイルとシステムファイルも検索結果に表示されます（\"*\" による除外バイパスの動作は変わりません）。最近使ったファイルとフォルダー表示は現在この設定に従いません。"
+  "Settings_ShowHiddenFilesDesc": "オンにすると、隠しファイルとシステムファイルも検索結果に表示されます（\"*\" による除外バイパスの動作は変わりません）。最近使ったファイルとフォルダー表示は現在この設定に従いません。",
+  "Chips_All": "すべて",
+  "Chips_Folders": "フォルダー",
+  "Chips_Files": "ファイル",
+  "Chips_Images": "画像",
+  "Chips_Documents": "ドキュメント",
+  "Chips_ThisWeek": "今週"
 }

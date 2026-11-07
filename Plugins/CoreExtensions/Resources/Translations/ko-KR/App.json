@@ -979,5 +979,11 @@
   "Tour2_IndexingBody": "Lertaro가 파일 검색 인덱스를 만들고 있습니다 — 처음 한 번만 시간이 걸리고 이후엔 실시간입니다. 준비되면 이 단계는 자동으로 입력 연습으로 돌아갑니다.",
   "Tour2_IndexingHint": "잠시만요 — 준비되면 자동으로 복원됩니다",
   "Settings_ShowHiddenFilesLabel": "검색 결과에 숨김/시스템 파일 표시",
-  "Settings_ShowHiddenFilesDesc": "켜면 숨김 및 시스템 파일도 검색 결과에 표시됩니다(\"*\" 제외 우회 동작은 변하지 않음). 최근 파일과 폴더 탐색은 아직 이 설정을 따르지 않습니다."
+  "Settings_ShowHiddenFilesDesc": "켜면 숨김 및 시스템 파일도 검색 결과에 표시됩니다(\"*\" 제외 우회 동작은 변하지 않음). 최근 파일과 폴더 탐색은 아직 이 설정을 따르지 않습니다.",
+  "Chips_All": "전체",
+  "Chips_Folders": "폴더",
+  "Chips_Files": "파일",
+  "Chips_Images": "이미지",
+  "Chips_Documents": "문서",
+  "Chips_ThisWeek": "이번 주"
 }

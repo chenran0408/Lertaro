@@ -979,5 +979,11 @@
   "Tour2_IndexingBody": "Lertaro está construyendo el índice de tus archivos: la primera pasada lleva un momento, después es en vivo. Este paso vuelve solo a la práctica de escritura cuando esté listo.",
   "Tour2_IndexingHint": "Un momento: este paso se restaura solo al estar listo",
   "Settings_ShowHiddenFilesLabel": "Mostrar archivos ocultos y del sistema en los resultados",
-  "Settings_ShowHiddenFilesDesc": "Activado, la búsqueda lista archivos ocultos y del sistema (el marcador \"*\" de omisión no cambia). Los archivos recientes y la exploración de carpetas aún no siguen este ajuste."
+  "Settings_ShowHiddenFilesDesc": "Activado, la búsqueda lista archivos ocultos y del sistema (el marcador \"*\" de omisión no cambia). Los archivos recientes y la exploración de carpetas aún no siguen este ajuste.",
+  "Chips_All": "Todo",
+  "Chips_Folders": "Carpetas",
+  "Chips_Files": "Archivos",
+  "Chips_Images": "Imágenes",
+  "Chips_Documents": "Documentos",
+  "Chips_ThisWeek": "Esta semana"
 }

@@ -979,5 +979,11 @@
   "Tour2_IndexingBody": "Lertaro 正在为你的文件建立搜索索引——首次启动需要一点时间，之后就是实时的。就绪后这一步会自动变回输入练习。",
   "Tour2_IndexingHint": "稍等片刻，索引就绪后这一步会自动恢复",
   "Settings_ShowHiddenFilesLabel": "在搜索结果中显示隐藏文件和系统文件",
-  "Settings_ShowHiddenFilesDesc": "开启后搜索会列出隐藏与系统文件（\"*\" 前缀跳过排除规则的行为不变）。最近文件与目录浏览暂不跟随此开关。"
+  "Settings_ShowHiddenFilesDesc": "开启后搜索会列出隐藏与系统文件（\"*\" 前缀跳过排除规则的行为不变）。最近文件与目录浏览暂不跟随此开关。",
+  "Chips_All": "全部",
+  "Chips_Folders": "文件夹",
+  "Chips_Files": "文件",
+  "Chips_Images": "图片",
+  "Chips_Documents": "文档",
+  "Chips_ThisWeek": "本周"
 }
