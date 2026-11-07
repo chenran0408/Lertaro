@@ -276,6 +276,7 @@ end;
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   ResultCode: Integer;
+  Msg: String;
 begin
   if CurUninstallStep = usUninstall then
   begin
@@ -303,7 +304,9 @@ begin
     RegDeleteKeyIncludingSubkeys(HKEY_CURRENT_USER, 'Software\Classes\lertaro');
 
     // B4: offer to remove user data (settings, history, index, logs). Default = keep.
-    if MsgBox('Do you also want to delete Lertaro''s user data (settings, search history, index cache, logs)?' #13#13 'Click No to keep your data for a future reinstall.', 'Lertaro Uninstaller', MB_YESNO, MB_ICONEXCLAMATION) = IDYES then
+    Msg := 'Do you also want to delete the Lertaro user data (settings, search history, index cache, logs)?';
+    Msg := Msg + #13#13 + 'Click No to keep your data for a future reinstall.';
+    if MsgBox(Msg, 'Lertaro Uninstaller', MB_YESNO) = IDYES then
       DelTree(ExpandConstant('{localappdata}') + '\Lertaro');
   end;
 end;
