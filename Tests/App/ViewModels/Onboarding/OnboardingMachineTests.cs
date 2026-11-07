@@ -9,14 +9,14 @@ public sealed class OnboardingMachineTests
     public void PracticeObserved_AdvancesThroughEveryStep_ThenCompletes()
     {
         var machine = new OnboardingMachine();
-        for (var step = 0; step < OnboardingMachine.StepCount; step++)
+        for (var step = 0; step < new OnboardingMachine().StepCount; step++)
         {
             Assert.AreEqual(step, machine.StepIndex);
             Assert.AreEqual(TourOutcome.InProgress, machine.Outcome);
             machine.Handle(TourEvent.PracticeObserved);
         }
         Assert.AreEqual(TourOutcome.Completed, machine.Outcome);
-        Assert.AreEqual(OnboardingMachine.StepCount, machine.CompletedSteps);
+        Assert.AreEqual(new OnboardingMachine().StepCount, machine.CompletedSteps);
     }
 
     [TestMethod]
@@ -62,23 +62,23 @@ public sealed class OnboardingMachineTests
     public void EventsAfterCompletion_AreIgnored()
     {
         var machine = new OnboardingMachine();
-        for (var step = 0; step < OnboardingMachine.StepCount; step++)
+        for (var step = 0; step < new OnboardingMachine().StepCount; step++)
             machine.Handle(TourEvent.PracticeObserved);
         Assert.AreEqual(TourOutcome.Completed, machine.Outcome);
 
         machine.Handle(TourEvent.SkipRequested);
         Assert.AreEqual(TourOutcome.Completed, machine.Outcome);
         machine.Handle(TourEvent.PracticeObserved);
-        Assert.AreEqual(OnboardingMachine.StepCount, machine.CompletedSteps);
+        Assert.AreEqual(new OnboardingMachine().StepCount, machine.CompletedSteps);
     }
 
     [TestMethod]
     public void PracticeObserved_LastStep_CompletesDirectly()
     {
         var machine = new OnboardingMachine();
-        for (var step = 0; step < OnboardingMachine.StepCount - 1; step++)
+        for (var step = 0; step < new OnboardingMachine().StepCount - 1; step++)
             machine.Handle(TourEvent.PracticeObserved);
-        Assert.AreEqual(OnboardingMachine.StepCount - 1, machine.StepIndex);
+        Assert.AreEqual(new OnboardingMachine().StepCount - 1, machine.StepIndex);
         Assert.AreEqual(TourOutcome.InProgress, machine.Outcome);
 
         machine.Handle(TourEvent.PracticeObserved);
@@ -89,7 +89,7 @@ public sealed class OnboardingMachineTests
     public void PersistencePlan_Completed_MarksAndArmsVersion()
     {
         var machine = new OnboardingMachine();
-        for (var step = 0; step < OnboardingMachine.StepCount; step++)
+        for (var step = 0; step < new OnboardingMachine().StepCount; step++)
             machine.Handle(TourEvent.PracticeObserved);
 
         var (markCompleted, skipStep, updateVersion) = machine.PersistencePlan(1);
