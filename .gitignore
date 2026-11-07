@@ -131,3 +131,4 @@ Site/.vitepress/public/logo.webp
 # Local agent workspace debris
 /.codebase-memory/
 /work/
+/work-dotnet-home/
