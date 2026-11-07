@@ -971,5 +971,11 @@
   "Tour5_Hint": "按 Ctrl+O 试试动作菜单",
   "Tour_DoneTitle": "你已经会用了",
   "Tour_DoneBody": "完成 {0} 步实操。剩下的在日用中自然会遇到——托盘菜单里的「使用引导」随时可以回来复习。",
-  "Onboarding_Restore": "继续引导"
+  "Onboarding_Restore": "继续引导",
+  "Tour1_TrayTitle": "唤起主搜索（改走托盘）",
+  "Tour1_TrayBody": "你设置的唤醒热键正被其他程序占用。点击屏幕角落的 Lertaro 托盘图标，同样可以唤起搜索；想换一个不冲突的热键，稍后在设置里修改即可。",
+  "Tour1_TrayHint": "点击屏幕角落的托盘图标唤起搜索",
+  "Tour2_IndexingTitle": "索引准备中",
+  "Tour2_IndexingBody": "Lertaro 正在为你的文件建立搜索索引——首次启动需要一点时间，之后就是实时的。就绪后这一步会自动变回输入练习。",
+  "Tour2_IndexingHint": "稍等片刻，索引就绪后这一步会自动恢复"
 }

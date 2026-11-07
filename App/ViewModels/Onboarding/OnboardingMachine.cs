@@ -48,6 +48,19 @@ public sealed class OnboardingMachine
     /// <summary>How many steps the user actually finished -- for the summary line on completion.</summary>
     public int CompletedSteps { get; private set; }
 
+    /// <summary>What the host should persist when the tour window closes. Completed marks the
+    /// flag and arms the version (future redesigns re-arm via the version compare); Skipped also
+    /// marks the flag -- one-shot semantics mean the tour never re-pops by itself -- and records
+    /// which step was abandoned (0 = not skipped); InProgress (the process died mid-tour) writes
+    /// nothing, so the next start replays it.</summary>
+    public (bool MarkCompleted, int SkipStep, bool UpdateVersion) PersistencePlan(int currentVersion) =>
+        Outcome switch
+        {
+            TourOutcome.Completed => (true, 0, true),
+            TourOutcome.Skipped => (true, StepIndex + 1, false),
+            _ => (false, 0, false),
+        };
+
     public void Handle(TourEvent tourEvent)
     {
         if (Outcome != TourOutcome.InProgress) return; // terminal: nothing revives the tour

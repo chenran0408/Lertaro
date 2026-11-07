@@ -6,6 +6,9 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using Lertaro.App.Helpers.Visuals;
 using Lertaro.App.Services;
+using Lertaro.App.Services.Favorites;
+using Lertaro.App.Services.Notifications;
+using Lertaro.App.ViewModels.Search;
 using Lertaro.App.ViewModels.Onboarding;
 using Lertaro.App.Views.Controls;
 using Lertaro.App.Views.Controls.Dialogs;
@@ -45,6 +48,8 @@ public partial class OnboardingWindow : AppWindow
 
     private readonly OnboardingMachine _machine = new();
     private readonly DispatcherTimer _budgetTimer = new() { Interval = TimeSpan.FromSeconds(PracticeBudgetSeconds) };
+    private bool _indexingVariant;
+    private PropertyChangedEventHandler? _indexReadyHandler;
     private TextBox? _hookedSearchTextBox;
     private ListBox? _hookedResults;
     private SearchBoxControl? _hookedSearchBox;
@@ -74,8 +79,20 @@ public partial class OnboardingWindow : AppWindow
 
     /// <summary>First run and tray replay both come through here. A foreground fullscreen app
     /// (video, game) delays the popup a few seconds instead of popping over it.</summary>
+    /// <summary>True when the configured wake hotkey is a chord and RegisterHotKey says someone
+    /// else owns it -- step one then teaches the tray path instead. Bare-modifier wakes (the
+    /// default double-ctrl) cannot be probed: RegisterHotKey has no representation for them, and
+    /// such a wake cannot collide with any registered hotkey. ponytail: a true double-tap
+    /// conflict (another app swallowing the chord) is undetectable here; the upgrade is watching
+    /// for the detector's miss at runtime, not a bigger probe.</summary>
+    private static bool _teachTrayPath;
+
     public static void ShowTour()
     {
+        _teachTrayPath = false;
+        if (FavoriteHotkeyFormat.TryBuild(UserSettings.Load().Hotkeys.ToggleWindowHotkey,
+                out var virtualKey, out var modifiers) && HotkeyConflictProbe.IsTaken(modifiers, virtualKey))
+            _teachTrayPath = true;
         var window = new OnboardingWindow();
         // Startup summons this before the main window has ever been shown; assigning that as Owner
         // throws. ResolveOwner only hands back windows with a live handle, else none -- the card
@@ -107,15 +124,17 @@ public partial class OnboardingWindow : AppWindow
         RestartBudget();
     }
 
-    // Right edge, vertically centered, inside the work area -- beside the action, never over it.
+    // Right edge of the foreground window's monitor, vertically centered, inside that monitor's
+    // work area (per-monitor DPI via the shared placement resolver) -- beside the action.
     private void PlaceAtRightEdge()
     {
-        var area = SystemParameters.WorkArea;
+        var area = NotificationPlacement.Resolve().WorkAreaDip;
         var width = _machine.Mode == TourMode.Minimized ? 260 : CardWidth;
-        Left = Math.Max(area.Left, area.Right - width - 20);
-        Top = _machine.Mode == TourMode.Minimized
-            ? area.Bottom - 120
-            : area.Top + Math.Max(0, (area.Height - 220) / 2);
+        Left = Math.Clamp(
+            area.Right - width - 20, area.Left, Math.Max(area.Left, area.Right - width));
+        Top = Math.Clamp(
+            _machine.Mode == TourMode.Minimized ? area.Bottom - 120 : area.Top + (area.Height - 220) / 2,
+            area.Top, Math.Max(area.Top, area.Bottom - 100));
     }
 
     private void HookMainWindow()
@@ -143,6 +162,16 @@ public partial class OnboardingWindow : AppWindow
     {
         if (Application.Current?.MainWindow is not MainSearchWindow main) return;
         _hookedSearchTextBox = main.SearchTextBox;
+        if (main.DataContext is QuickSearchViewModel quickVm)
+        {
+            _indexReadyHandler = (_, args) =>
+            {
+                if (args.PropertyName == nameof(QuickSearchViewModel.IsIndexReady)
+                    && _machine.StepIndex == 1 && _indexingVariant)
+                    Render(); // readiness arrived: back to the real step-two copy
+            };
+            quickVm.PropertyChanged += _indexReadyHandler;
+        }
         _hookedSearchTextBox.TextChanged += (_, _) =>
         {
             if (_machine.StepIndex == 1 && _hookedSearchTextBox.Text.Length > 0) Observe();
@@ -177,12 +206,24 @@ public partial class OnboardingWindow : AppWindow
         }
 
         var step = Steps[Math.Min(_machine.StepIndex, Steps.Length - 1)];
+        // W1: step two is the only step whose practice depends on the index -- while it builds,
+        // the copy switches to the indexing variant (and back) instead of teaching a search that
+        // cannot return file results yet.
+        _indexingVariant = _machine.StepIndex == 1 && !IsIndexReady();
         StepCounter.Text = $"{_machine.StepIndex + 1} / {Steps.Length}";
-        StepTitle.Text = T(step.TitleKey);
-        StepBody.Text = T(step.BodyKey);
-        PracticeHint.Text = T(step.HintKey);
-        BuildKeycaps(step.Keycaps);
+        StepTitle.Text = T(_indexingVariant ? "Tour2_IndexingTitle" : step.TitleKey);
+        StepBody.Text = T(_indexingVariant ? "Tour2_IndexingBody" : step.BodyKey);
+        PracticeHint.Text = T(_indexingVariant ? "Tour2_IndexingHint" : step.HintKey);
+        BuildKeycaps(_indexingVariant ? null : step.Keycaps);
         UpdateDots(_machine.StepIndex);
+
+        if (_machine.StepIndex == 0 && _teachTrayPath)
+        {
+            StepTitle.Text = T("Tour1_TrayTitle");
+            StepBody.Text = T("Tour1_TrayBody");
+            PracticeHint.Text = T("Tour1_TrayHint");
+            KeycapPanel.Children.Clear();
+        }
 
         var minimized = _machine.Mode == TourMode.Minimized;
         ExpandedCard.Visibility = minimized ? Visibility.Collapsed : Visibility.Visible;
@@ -336,11 +377,25 @@ public partial class OnboardingWindow : AppWindow
     protected override void OnClosed(EventArgs e)
     {
         base.OnClosed(e);
+        // The machine decides what this exit means: Completed marks + arms the version, Skipped
+        // marks with the abandoned step (one-shot holds -- the tour never re-pops by itself),
+        // InProgress (the process died) writes nothing so the next start replays it.
+        var (markCompleted, skipStep, updateVersion) = _machine.PersistencePlan(UserSettings.CurrentOnboardingVersion);
+        if (!markCompleted) return;
         var settings = UserSettings.Load();
         settings.OnboardingCompleted = true;
-        settings.OnboardingVersion = UserSettings.CurrentOnboardingVersion;
+        settings.OnboardingSkipStep = skipStep;
+        if (updateVersion) settings.OnboardingVersion = UserSettings.CurrentOnboardingVersion;
         _ = settings.Save();
     }
+
+    /// <summary>The same readiness the search box itself reports, via the main window's
+    /// DataContext (QuickSearchViewModel.IsIndexReady -> ServiceMonitorViewModel). Fail-open: any
+    /// surprise in the chain shows the normal step rather than blocking the tour.</summary>
+    private bool IsIndexReady() =>
+        Application.Current?.MainWindow is MainSearchWindow { DataContext: QuickSearchViewModel vm }
+            ? vm.IsIndexReady
+            : true;
 
     private static string T(string key) => TranslationManager.Instance[key];
 }

@@ -971,5 +971,11 @@
   "Tour5_Hint": "Pulsa Ctrl+O para el menú de acciones",
   "Tour_DoneTitle": "Ya lo dominas",
   "Tour_DoneBody": "{0} pasos practicados. El resto llega solo: el menú de la bandeja reabre este tour cuando quieras.",
-  "Onboarding_Restore": "Continuar el tour"
+  "Onboarding_Restore": "Continuar el tour",
+  "Tour1_TrayTitle": "Despierta la búsqueda (vía bandeja)",
+  "Tour1_TrayBody": "Otra app posee ahora mismo el atajo configurado. Haz clic en el icono de Lertaro de la bandeja: misma búsqueda, mismos resultados. Podrás elegir un atajo libre en los ajustes.",
+  "Tour1_TrayHint": "Haz clic en el icono de la bandeja para despertar la búsqueda",
+  "Tour2_IndexingTitle": "Índice en preparación",
+  "Tour2_IndexingBody": "Lertaro está construyendo el índice de tus archivos: la primera pasada lleva un momento, después es en vivo. Este paso vuelve solo a la práctica de escritura cuando esté listo.",
+  "Tour2_IndexingHint": "Un momento: este paso se restaura solo al estar listo"
 }

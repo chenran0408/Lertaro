@@ -971,5 +971,11 @@
   "Tour5_Hint": "Press Ctrl+O for the actions menu",
   "Tour_DoneTitle": "You've got it",
   "Tour_DoneBody": "{0} steps practiced. The rest comes naturally -- the tray menu's Getting Started replays this anytime.",
-  "Onboarding_Restore": "Resume tour"
+  "Onboarding_Restore": "Resume tour",
+  "Tour1_TrayTitle": "Wake the search (via tray)",
+  "Tour1_TrayBody": "Your configured wake hotkey is currently owned by another app. Click the Lertaro tray icon instead -- same search, same results. You can pick a free hotkey later in settings.",
+  "Tour1_TrayHint": "Click the Lertaro tray icon to wake the search",
+  "Tour2_IndexingTitle": "Index is warming up",
+  "Tour2_IndexingBody": "Lertaro is building the search index for your files -- the first pass takes a moment, after that it is live. This step switches back to the typing practice once the index is ready.",
+  "Tour2_IndexingHint": "Hang tight -- this step restores itself when the index is ready"
 }

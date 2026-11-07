@@ -971,5 +971,11 @@
   "Tour5_Hint": "Ctrl+O로 액션 메뉴를 열어 보세요",
   "Tour_DoneTitle": "이제 사용할 줄 아셨네요",
   "Tour_DoneBody": "{0}단계를 직접 연습했습니다. 나머지는 사용하다 보면 자연스럽게 — 트레이 메뉴의 사용 가이드에서 언제든 복습하세요.",
-  "Onboarding_Restore": "가이드 계속"
+  "Onboarding_Restore": "가이드 계속",
+  "Tour1_TrayTitle": "검색 호출(트레이 경로)",
+  "Tour1_TrayBody": "설정한 단축키를 다른 앱이 사용 중입니다. 트레이의 Lertaro 아이콘을 클릭하면 같은 검색이 열립니다. 비어 있는 단축키는 나중에 설정에서 바꿀 수 있습니다.",
+  "Tour1_TrayHint": "트레이의 Lertaro 아이콘을 클릭해 검색 열기",
+  "Tour2_IndexingTitle": "인덱스 준비 중",
+  "Tour2_IndexingBody": "Lertaro가 파일 검색 인덱스를 만들고 있습니다 — 처음 한 번만 시간이 걸리고 이후엔 실시간입니다. 준비되면 이 단계는 자동으로 입력 연습으로 돌아갑니다.",
+  "Tour2_IndexingHint": "잠시만요 — 준비되면 자동으로 복원됩니다"
 }

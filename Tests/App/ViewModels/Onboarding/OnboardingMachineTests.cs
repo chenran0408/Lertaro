@@ -86,6 +86,44 @@ public sealed class OnboardingMachineTests
     }
 
     [TestMethod]
+    public void PersistencePlan_Completed_MarksAndArmsVersion()
+    {
+        var machine = new OnboardingMachine();
+        for (var step = 0; step < OnboardingMachine.StepCount; step++)
+            machine.Handle(TourEvent.PracticeObserved);
+
+        var (markCompleted, skipStep, updateVersion) = machine.PersistencePlan(1);
+        Assert.IsTrue(markCompleted);
+        Assert.AreEqual(0, skipStep);
+        Assert.IsTrue(updateVersion);
+    }
+
+    [TestMethod]
+    public void PersistencePlan_Skipped_MarksWithAbandonedStep_KeepsVersion()
+    {
+        var machine = new OnboardingMachine();
+        machine.Handle(TourEvent.PracticeObserved); // finished step one
+        machine.Handle(TourEvent.SkipRequested);    // quit on step two
+
+        var (markCompleted, skipStep, updateVersion) = machine.PersistencePlan(1);
+        Assert.IsTrue(markCompleted); // one-shot holds: never re-pops by itself
+        Assert.AreEqual(2, skipStep); // 1-based: abandoned ON step two
+        Assert.IsFalse(updateVersion);
+    }
+
+    [TestMethod]
+    public void PersistencePlan_InProgress_WritesNothing()
+    {
+        var machine = new OnboardingMachine();
+        machine.Handle(TourEvent.PracticeObserved);
+
+        var (markCompleted, skipStep, updateVersion) = machine.PersistencePlan(1);
+        Assert.IsFalse(markCompleted);
+        Assert.AreEqual(0, skipStep);
+        Assert.IsFalse(updateVersion);
+    }
+
+    [TestMethod]
     public void WakeStep_CompletesOnWindowShown_AndPracticeContinuesWhileFolded()
     {
         // The user flow that shipped broken: double-ctrl wakes the window, the card folds, and the

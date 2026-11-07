@@ -79,6 +79,8 @@ public class UserSettings
     // everyone who last saw an older one.
     public bool OnboardingCompleted { get; set; } = false;
     public int OnboardingVersion { get; set; }
+    // 1-based step the user abandoned the tour on; 0 = not skipped. Local analytics only.
+    public int OnboardingSkipStep { get; set; }
     public static int CurrentOnboardingVersion => 1;
     // Empty means "unset". The selected palette is now limited to the built-in Light/Dark modes;
     // retired custom preset IDs are migrated during ThemeManager initialization.
