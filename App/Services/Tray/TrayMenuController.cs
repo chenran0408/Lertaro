@@ -94,6 +94,7 @@ internal sealed class TrayMenuController : IDisposable
         _send = Item("\uE709", ShowSendWindow);
         _toggleHotkeys = Item(string.Empty, ToggleHotkeys);
         _settings = Item("\uE713", () => App.ShowSettingsWindow());
+        _onboarding = Item("\uE897", () => Views.Onboarding.OnboardingWindow.ShowTour());
         _about = Item("\uE946", () => App.ShowSettingsWindow("About"));
         _cleanExit = Item("\uE74D", () => TrayCleanExitHelper.CleanExit("tray clean exit"));
         _exit = Item("\uF3B1", () =>

@@ -8,6 +8,7 @@ using Lertaro.App.Helpers.Visuals;
 using Lertaro.App.Services;
 using Lertaro.App.ViewModels.Onboarding;
 using Lertaro.App.Views.Controls;
+using Lertaro.App.Views.Controls.Dialogs;
 using Lertaro.Core;
 using FullscreenHelper = Lertaro.Core.Hook.FullscreenHelper;
 using ThemedWindowIconHelper = Lertaro.App.Services.Theme.ThemedWindowIconHelper;
@@ -76,7 +77,11 @@ public partial class OnboardingWindow : AppWindow
     public static void ShowTour()
     {
         var window = new OnboardingWindow();
-        window.Owner = Application.Current?.MainWindow;
+        // Startup summons this before the main window has ever been shown; assigning that as Owner
+        // throws. ResolveOwner only hands back windows with a live handle, else none -- the card
+        // then centres on screen, which is exactly the first-run layout anyway.
+        if (OwnedDialog.ResolveOwner(window) is { } owner)
+            window.Owner = owner;
         if (FullscreenHelper.IsForegroundWindowFullScreen())
         {
             var retries = 0;

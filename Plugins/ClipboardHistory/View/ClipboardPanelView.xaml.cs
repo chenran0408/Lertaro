@@ -113,6 +113,11 @@ public partial class ClipboardPanelView : UserControl
                 _window = null;
                 _instance = null;
             };
+            // Mature-manager behavior: the panel is a transient surface -- clicking into another
+            // window dismisses it. Guarded, because deactivate can fire while an in-flight close
+            // is still settling, and a second Close on a closing window throws.
+            window.Deactivated += (_, _) => view.ClosePanel();
+
             var (left, top) = ClipboardPanelPlacement.Place(window.Width, window.Height);
             window.WindowStartupLocation = WindowStartupLocation.Manual;
             window.Left = left;
@@ -134,8 +139,12 @@ public partial class ClipboardPanelView : UserControl
         return true;
     }
 
+    private bool _closing;
+
     internal void ClosePanel()
     {
+        if (_closing) return;
+        _closing = true;
         _actions.FlushNote();
         _window?.Close();
     }

@@ -132,6 +132,7 @@
                              surfaces the full content Maccy-style. -->
                         <Border x:Name="RowBorder" CornerRadius="6" Padding="10,8" Margin="2,1"
                                 Visibility="{Binding IsRow, Converter={StaticResource BoolToVis}}"
+                                Background="Transparent"
                                 ToolTip="{Binding Tooltip}" ToolTipService.InitialShowDelay="400">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -188,6 +189,10 @@
                         <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
                             <Setter TargetName="RowBorder" Property="Background"
                                     Value="{DynamicResource ControlHoverBackground}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
+                            <Setter TargetName="RowBorder" Property="Background"
+                                    Value="{DynamicResource ItemHover}"/>
                         </DataTrigger>
                     </DataTemplate.Triggers>
                 </DataTemplate>
