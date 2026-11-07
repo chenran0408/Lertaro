@@ -269,6 +269,10 @@
         <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding ClipboardPanelHotkeyConflictWarning}"
                    Visibility="{Binding ClipboardPanelHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
 
+        <CheckBox x:Name="RowQuickSwitchBar" Margin="0,8,0,0" HorizontalAlignment="Left"
+                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_QuickSwitchBarLabel]}"
+                  IsChecked="{Binding QuickSwitchBarEnabled, Mode=TwoWay}"/>
+
         <CheckBox x:Name="RowClipboardQuickPasteSlots" Margin="0,8,0,0" HorizontalAlignment="Left"
                   Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ClipboardQuickPasteSlots]}"
                   IsChecked="{Binding ClipboardQuickPasteSlots, Mode=TwoWay}"/>

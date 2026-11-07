@@ -1,0 +1,27 @@
+<Window x:Class="Lertaro.App.Views.QuickSwitch.QuickSwitchBarWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:services="clr-namespace:Lertaro.App.Services"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="420" SizeToContent="Height" MaxWidth="520"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ShowActivated="False" ShowInTaskbar="False" Topmost="True"
+        ResizeMode="NoResize" Focusable="False">
+    <Border CornerRadius="8" Background="{DynamicResource ContentBg}"
+            BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" Padding="12,8">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="&#xE8B7;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="16"
+                       Foreground="{DynamicResource AccentBlue}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBlock x:Name="SuggestionText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
+                       Foreground="{DynamicResource TextPrimary}" TextTrimming="CharacterEllipsis"/>
+            <Button x:Name="GoButton" Grid.Column="2" Style="{StaticResource SettingsButton}" Height="26"
+                    MinWidth="0" Padding="12,0" FontSize="12"
+                    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickSwitch_BarGo]}"
+                    Click="Go_Click"/>
+        </Grid>
+    </Border>
+</Window>

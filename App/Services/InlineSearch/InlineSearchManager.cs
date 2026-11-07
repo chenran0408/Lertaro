@@ -86,8 +86,10 @@ public class InlineSearchManager : IDisposable
 
     private void WireUpExplorerEvents()
     {
+        var quickSwitchBar = new global::Lertaro.App.Services.QuickSwitch.QuickSwitchBarManager();
         _explorerTracker.OnExplorerActivated += (hwnd, title, className, isDesktop) => Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
+                quickSwitchBar.OnExplorerActivated(hwnd, _explorerTracker);
                 if (_window != null && _currentHostHwnd == hwnd)
                 {
                     return;
@@ -109,7 +111,11 @@ public class InlineSearchManager : IDisposable
                 }
             }));
 
-        _explorerTracker.OnExplorerDeactivated += () => Application.Current.Dispatcher.BeginInvoke(new Action(ScheduleCloseOnExplorerDeactivated));
+        _explorerTracker.OnExplorerDeactivated += () => Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+        {
+            quickSwitchBar.OnExplorerDeactivated();
+            ScheduleCloseOnExplorerDeactivated();
+        }));
 
         _explorerTracker.OnError += (msg) => Logger.Log($"[InlineSearchManager] ExplorerTracker error: {msg}", LogLevel.Error);
 

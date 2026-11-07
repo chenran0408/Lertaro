@@ -150,6 +150,9 @@ public class HotkeyPageSettings
     // active window, no panel. The combo is fixed (digits are not a recorder field); this only
     // turns the family on or off.
     public bool ClipboardQuickPasteSlots { get; set; } = true;
+    // C1/C2: the Quick Switch discoverability bar above file dialogs. Default on -- the Listary
+    // lesson was not "no auto" but "no switch".
+    public bool QuickSwitchBarEnabled { get; set; } = true;
     public bool QuickPanelMouseRightHold { get; set; }
     public bool QuickPanelMouseCircle { get; set; }
     public int QuickPanelRightHoldMilliseconds { get; set; } = 600;
