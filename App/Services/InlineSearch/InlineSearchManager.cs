@@ -97,6 +97,8 @@ public class InlineSearchManager : IDisposable
 
                 if (_explorerTracker.IsActiveWindowDialog)
                 {
+                    Views.Onboarding.Tips.TipCardWindow.ShowTip(
+                        global::Lertaro.App.ViewModels.Onboarding.TipRegistry.QuickSwitch, hwnd);
                     CloseInlineSearch("ExplorerActivated (Dialog)");
                     EnsureWindowCreated();
                     _window?.UpdateSearchDisplay(string.Empty);

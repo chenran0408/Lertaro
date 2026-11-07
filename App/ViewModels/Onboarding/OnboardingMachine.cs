@@ -38,10 +38,15 @@ public enum TourEvent
 /// </summary>
 public sealed class OnboardingMachine
 {
-    public const int StepCount = 5;
+    public const int DefaultStepCount = 5;
+
+    private readonly int _stepCount;
+
+    public OnboardingMachine(int stepCount = DefaultStepCount) => _stepCount = Math.Max(1, stepCount);
 
     /// <summary>Zero-based practice step the tour is waiting on.</summary>
     public int StepIndex { get; private set; }
+    public int StepCount => _stepCount;
     public TourMode Mode { get; private set; } = TourMode.Expanded;
     public TourOutcome Outcome { get; private set; } = TourOutcome.InProgress;
 
@@ -68,7 +73,7 @@ public sealed class OnboardingMachine
         {
             case TourEvent.PracticeObserved:
                 CompletedSteps++;
-                if (StepIndex >= StepCount - 1) Outcome = TourOutcome.Completed;
+                if (StepIndex >= _stepCount - 1) Outcome = TourOutcome.Completed;
                 else StepIndex++;
                 break;
             case TourEvent.MainWindowShown:

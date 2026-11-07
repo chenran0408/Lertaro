@@ -137,6 +137,11 @@ internal sealed class SearchStreamRenderer
             if (localMatches != null)
                 uiResults = InlineListSearchHelper.MergeLocalMatches(uiResults, localMatches, query, contextDirectory);
 
+            // D1: first zero-result search teaches the filter keywords -- once, only for a real
+            // query, and never while the tour is on screen.
+            if (final && !string.IsNullOrEmpty(query) && !Views.Onboarding.OnboardingWindow.TourActive)
+                Views.Onboarding.Tips.TipCardWindow.ShowTip(ViewModels.Onboarding.TipRegistry.Filters, IntPtr.Zero);
+
             if (final && includeAdditionalResults && uiResults.Count == 0)
                 uiResults.Add(SearchResultMapper.CreateNoResultsResult(query));
 

@@ -140,7 +140,12 @@ public sealed partial class QuickPanelManager : IDisposable
         {
             var openPanel = provider.GetType().GetMethod("TryOpenPanel",
                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-            if (openPanel?.Invoke(null, null) is true) return;
+            if (openPanel?.Invoke(null, null) is true)
+            {
+                Views.Onboarding.Tips.TipCardWindow.ShowTip(
+                    ViewModels.Onboarding.TipRegistry.Clipboard, host);
+                return;
+            }
         }
         catch (Exception ex)
         {

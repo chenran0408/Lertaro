@@ -93,6 +93,8 @@ public class UserSettings
     public int OnboardingVersion { get; set; }
     // 1-based step the user abandoned the tour on; 0 = not skipped. Local analytics only.
     public int OnboardingSkipStep { get; set; }
+    /// <summary>D1 point-of-use tips: shown-once ids, independent of the tour's own flag.</summary>
+    public List<string> SeenTips { get; set; } = new();
     public static int CurrentOnboardingVersion => 2;
     // Empty means "unset". The selected palette is now limited to the built-in Light/Dark modes;
     // retired custom preset IDs are migrated during ThemeManager initialization.

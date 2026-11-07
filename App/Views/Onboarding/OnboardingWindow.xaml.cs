@@ -87,6 +87,9 @@ public partial class OnboardingWindow : AppWindow
     /// for the detector's miss at runtime, not a bigger probe.</summary>
     private static bool _teachTrayPath;
 
+    /// <summary>True while a tour card is on screen -- D1 tips suppress themselves during it.</summary>
+    public static bool TourActive { get; private set; }
+
     public static void ShowTour()
     {
         _teachTrayPath = false;
@@ -121,6 +124,7 @@ public partial class OnboardingWindow : AppWindow
     {
         PlaceAtRightEdge();
         Show();
+        TourActive = true;
         RestartBudget();
     }
 
@@ -205,12 +209,12 @@ public partial class OnboardingWindow : AppWindow
             return;
         }
 
-        var step = Steps[Math.Min(_machine.StepIndex, Steps.Length - 1)];
+        var step = Steps[Math.Min(_machine.StepIndex, _machine.StepCount - 1)];
         // W1: step two is the only step whose practice depends on the index -- while it builds,
         // the copy switches to the indexing variant (and back) instead of teaching a search that
         // cannot return file results yet.
         _indexingVariant = _machine.StepIndex == 1 && !IsIndexReady();
-        StepCounter.Text = $"{_machine.StepIndex + 1} / {Steps.Length}";
+        StepCounter.Text = $"{_machine.StepIndex + 1} / {_machine.StepCount}";
         StepTitle.Text = T(_indexingVariant ? "Tour2_IndexingTitle" : step.TitleKey);
         StepBody.Text = T(_indexingVariant ? "Tour2_IndexingBody" : step.BodyKey);
         PracticeHint.Text = T(_indexingVariant ? "Tour2_IndexingHint" : step.HintKey);
@@ -232,7 +236,7 @@ public partial class OnboardingWindow : AppWindow
         {
             Width = 260;
             // Mid-practice the user needs the instruction, not the chapter name.
-            StripStepLabel.Text = $"{_machine.StepIndex + 1}/{OnboardingMachine.StepCount}  " + T(Steps[_machine.StepIndex].HintKey);
+            StripStepLabel.Text = $"{_machine.StepIndex + 1}/{_machine.StepCount}  " + T(Steps[_machine.StepIndex].HintKey);
             RebuildStripDots();
             PlaceAtRightEdge();
         }
@@ -341,7 +345,7 @@ public partial class OnboardingWindow : AppWindow
     private void RebuildStripDots()
     {
         StripDots.Children.Clear();
-        for (var index = 0; index < OnboardingMachine.StepCount; index++)
+        for (var index = 0; index < _machine.StepCount; index++)
             StripDots.Children.Add(new Ellipse
             {
                 Width = index == _machine.StepIndex ? 10 : 6,
@@ -354,7 +358,7 @@ public partial class OnboardingWindow : AppWindow
 
     private void RebuildDots()
     {
-        for (var index = 0; index < OnboardingMachine.StepCount; index++)
+        for (var index = 0; index < _machine.StepCount; index++)
             Dots.Children.Add(new Ellipse
             {
                 Width = 8,
@@ -377,6 +381,7 @@ public partial class OnboardingWindow : AppWindow
     protected override void OnClosed(EventArgs e)
     {
         base.OnClosed(e);
+        TourActive = false;
         // The machine decides what this exit means: Completed marks + arms the version, Skipped
         // marks with the abandoned step (one-shot holds -- the tour never re-pops by itself),
         // InProgress (the process died) writes nothing so the next start replays it.
