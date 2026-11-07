@@ -301,5 +301,9 @@ begin
     // Both no-op harmlessly if already absent.
     RegDeleteValue(HKEY_CURRENT_USER, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Lertaro');
     RegDeleteKeyIncludingSubkeys(HKEY_CURRENT_USER, 'Software\Classes\lertaro');
+
+    // B4: offer to remove user data (settings, history, index, logs). Default = keep.
+    if MsgBox('Do you also want to delete Lertaro''s user data (settings, search history, index cache, logs)?' #13#13 'Click No to keep your data for a future reinstall.', 'Lertaro Uninstaller', MB_YESNO, MB_ICONQUESTION) = IDYES then
+      DelTree(ExpandConstant('{localappdata}') + '\Lertaro');
   end;
 end;

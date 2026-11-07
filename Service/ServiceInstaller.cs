@@ -68,6 +68,12 @@ static class ServiceInstaller
 
             ApplySecurity();
 
+            // B3: crash recovery -- restart the service 60 seconds after a failure, reset the
+            // failure counter after 24 hours of stable running. sc failure is the built-in
+            // ChangeServiceConfig2 equivalent, so no new P/Invoke is needed.
+            Logger.Log("Configuring service failure recovery: sc.exe failure LertaroService");
+            ServiceControlRunner.Run("failure LertaroService reset= 86400 actions= restart/60000");
+
             Logger.Log("Starting service: sc.exe start LertaroService");
             var start = ServiceControlRunner.Run("start LertaroService", 0, 1056);
             if (!start.IsSuccess(0, 1056))

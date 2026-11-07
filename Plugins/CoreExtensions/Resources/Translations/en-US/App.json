@@ -993,5 +993,7 @@
   "Settings_WebKeywordsLabel": "Web keywords",
   "Settings_WebKeywordsDesc": "One per line: keyword|URL (use {query} in the URL where the search text goes).",
   "Tray_OpenLogs": "Open log folder",
-  "Tray_DiagnosticZip": "Export diagnostics"
+  "Tray_DiagnosticZip": "Export diagnostics",
+  "JumpList_CategorySearches": "Recent searches",
+  "JumpList_CategoryFavorites": "Favorite folders"
 }

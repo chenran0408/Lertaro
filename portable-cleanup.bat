@@ -81,3 +81,16 @@ if not defined EXIT_CODE set "EXIT_CODE=0"
 echo.
 pause
 exit /b %EXIT_CODE%
+
+echo.
+set /p DELDATA="Also delete user data (settings, history, index)? [y/N]: "
+if /i "%DELDATA%"=="y" (
+    if exist "%LOCALAPPDATA%\Lertaro" (
+        rmdir /s /q "%LOCALAPPDATA%\Lertaro"
+        echo User data removed.
+    ) else (
+        echo No user data directory found.
+    )
+) else (
+    echo User data kept.
+)

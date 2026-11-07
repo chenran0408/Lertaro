@@ -993,5 +993,7 @@
   "Settings_WebKeywordsLabel": "Web 关键词",
   "Settings_WebKeywordsDesc": "每行一条，格式：关键词|URL（URL 里用 {query} 占位搜索词）。",
   "Tray_OpenLogs": "打开日志文件夹",
-  "Tray_DiagnosticZip": "导出诊断包"
+  "Tray_DiagnosticZip": "导出诊断包",
+  "JumpList_CategorySearches": "最近搜索",
+  "JumpList_CategoryFavorites": "收藏目录"
 }

@@ -29,6 +29,11 @@ public static class UriRouter
 
         var route = uri.Host;
         var arg = Uri.UnescapeDataString(uri.AbsolutePath.TrimStart('/'));
+        // B2: parameterized query support -- lertaro://search?q=... takes priority over the path
+        // segment when both are present.
+        var queryParam = System.Web.HttpUtility.ParseQueryString(uri.Query)["q"];
+        if (!string.IsNullOrEmpty(queryParam))
+            arg = queryParam;
 
         System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
         {

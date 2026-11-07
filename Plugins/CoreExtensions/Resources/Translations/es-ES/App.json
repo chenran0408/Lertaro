@@ -993,5 +993,7 @@
   "Settings_WebKeywordsLabel": "Palabras clave web",
   "Settings_WebKeywordsDesc": "Una por línea: palabraclave|URL (usa {query} en la URL donde va el texto).",
   "Tray_OpenLogs": "Abrir carpeta de registros",
-  "Tray_DiagnosticZip": "Exportar diagnóstico"
+  "Tray_DiagnosticZip": "Exportar diagnóstico",
+  "JumpList_CategorySearches": "Búsquedas recientes",
+  "JumpList_CategoryFavorites": "Carpetas favoritas"
 }

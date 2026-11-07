@@ -342,6 +342,9 @@ public partial class App : Application
         // W3: register WER LocalDumps for App + Service crash dumps
         Services.Diagnostics.DiagnosticHelper.RegisterLocalDumps();
 
+        // B1: taskbar JumpList with recent searches and favorite directories
+        Services.TaskbarIntegration.JumpListService.Refresh();
+
         // Background update check on startup
         UpdateCheckService.RunOnStartupAsync();
 

@@ -993,5 +993,7 @@
   "Settings_WebKeywordsLabel": "Web キーワード",
   "Settings_WebKeywordsDesc": "1 行 1 件：キーワード|URL（URL 内の {query} が検索語に置き換わります）。",
   "Tray_OpenLogs": "ログフォルダーを開く",
-  "Tray_DiagnosticZip": "診断パッケージをエクスポート"
+  "Tray_DiagnosticZip": "診断パッケージをエクスポート",
+  "JumpList_CategorySearches": "最近の検索",
+  "JumpList_CategoryFavorites": "お気に入りフォルダー"
 }

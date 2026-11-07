@@ -993,5 +993,7 @@
   "Settings_WebKeywordsLabel": "Web 關鍵字",
   "Settings_WebKeywordsDesc": "每行一條，格式：關鍵字|URL（URL 裡用 {query} 佔位搜尋詞）。",
   "Tray_OpenLogs": "開啟日誌資料夾",
-  "Tray_DiagnosticZip": "匯出診斷套件"
+  "Tray_DiagnosticZip": "匯出診斷套件",
+  "JumpList_CategorySearches": "最近搜尋",
+  "JumpList_CategoryFavorites": "收藏目錄"
 }
