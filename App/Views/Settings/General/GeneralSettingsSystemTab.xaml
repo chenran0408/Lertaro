@@ -86,6 +86,21 @@
                 <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_EnableFuzzyMatchDesc]}"
                            Style="{StaticResource SettingsHintText}" TextWrapping="Wrap"/>
 
+                <CheckBox x:Name="RowWebSearch" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_WebSearchLabel]}"
+                           IsChecked="{Binding General.WebSearchEnabled, Mode=TwoWay}"
+                           Margin="0,4"/>
+                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_WebSearchDesc]}"
+                           Style="{StaticResource SettingsHintText}" TextWrapping="Wrap"/>
+                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_WebKeywordsLabel]}"
+                           Margin="0,8,0,2" FontWeight="SemiBold"/>
+                <TextBox Text="{Binding General.WebKeywordsText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="56" FontSize="12"/>
+                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_WebKeywordsDesc]}"
+                           Style="{StaticResource SettingsHintText}" TextWrapping="Wrap"/>
+                <CheckBox x:Name="RowWebSuggest" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_WebSuggestLabel]}"
+                           IsChecked="{Binding General.WebSuggestEnabled, Mode=TwoWay}"
+                           Margin="0,6,0,4"/>
+
                 <CheckBox x:Name="RowShowHiddenFiles" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_ShowHiddenFilesLabel]}"
                            IsChecked="{Binding General.ShowHiddenFiles, Mode=TwoWay}"
                            Margin="0,4"/>

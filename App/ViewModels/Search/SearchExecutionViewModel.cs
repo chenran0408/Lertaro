@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Threading;
 using Lertaro.App.Helpers;
 using Lertaro.App.ViewModels.Search.Dispatch;
 
@@ -24,7 +25,7 @@ public class SearchExecutionViewModel : ViewModelBase, IDisposable
     private Visibility _resultsSeparatorVisibility = Visibility.Collapsed;
     private string? _searchScope;
     private bool _isInlineSearchContext;
-    private readonly System.Windows.Threading.DispatcherTimer _providerLoadedRefreshTimer;
+    private readonly DispatcherTimer _providerLoadedRefreshTimer;
 
     public SearchExecutionViewModel(QuickSearchViewModel mainVm, SearchService searchService)
     {
@@ -46,7 +47,7 @@ public class SearchExecutionViewModel : ViewModelBase, IDisposable
 
         // Coalesce multiple providers finishing their (background, unawaited) load in quick succession
         // (e.g. right after app startup) into a single re-run of the current query, not one per provider.
-        _providerLoadedRefreshTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
+        _providerLoadedRefreshTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
         _providerLoadedRefreshTimer.Tick += (s, e) =>
         {
             _providerLoadedRefreshTimer.Stop();
@@ -113,6 +114,7 @@ public class SearchExecutionViewModel : ViewModelBase, IDisposable
                 {
                     _engine.CancelPendingSearch();
                     _dispatcher.ShowWebSearchRow(value);
+                    QueueSuggest();
                     return;
                 }
                 if (string.IsNullOrWhiteSpace(value))
@@ -169,6 +171,62 @@ public class SearchExecutionViewModel : ViewModelBase, IDisposable
         }
     }
 
+    // B1 suggest: default OFF (enabling sends typed text to the engine). A 200ms debounce after
+    // the last keystroke, one flight at a time; failures fail silent -- the web row stays.
+    private static readonly System.Net.Http.HttpClient SuggestClient = new() { Timeout = TimeSpan.FromSeconds(3) };
+    private DispatcherTimer? _suggestTimer;
+    private int _suggestFlight;
+    private List<AppSearchResult> _suggestionRows = [];
+
+    private void QueueSuggest()
+    {
+        if (!UserSettings.Load().WebSuggestEnabled) return;
+        _suggestTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+        _suggestTimer.Tick += async (_, _) =>
+        {
+            _suggestTimer.Stop();
+            if (!IsWebMode || WebModeKeyword is not { } keyword) return;
+            var rest = _searchQuery[(keyword.Length + 1)..].Trim();
+            if (rest.Length == 0) { ReplaceSuggestions([]); return; }
+            var match = UserSettings.Load().WebKeywords.First(w => w.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase));
+            var endpoint = SuggestEndpointFor(match.Url, rest);
+            if (endpoint == null) return;
+            var flight = Interlocked.Increment(ref _suggestFlight);
+            try
+            {
+                var json = await SuggestClient.GetStringAsync(endpoint).ConfigureAwait(true);
+                var names = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(json);
+                // [query, [suggestions]] (google/bing/opensearch all fit this shape)
+                if (names.ValueKind != System.Text.Json.JsonValueKind.Array || names.GetArrayLength() < 2) return;
+                var list = new List<AppSearchResult>();
+                foreach (var item in names[1].EnumerateArray())
+                {
+                    var text = item.GetString();
+                    if (string.IsNullOrEmpty(text)) continue;
+                    list.Add(SearchResultHelper.CreateWebSuggestionResult(text, keyword));
+                    if (list.Count >= 6) break;
+                }
+                if (Volatile.Read(ref _suggestFlight) == flight)
+                    ReplaceSuggestions(list);
+            }
+            catch { /* network/parse failure: the plain web row remains */ }
+        };
+        _suggestTimer.Start();
+    }
+
+    private void ReplaceSuggestions(List<AppSearchResult> rows)
+    {
+        _suggestionRows = rows;
+        var webRow = SearchResultHelper.CreateWebSearchResult(_searchQuery);
+        _dispatcher.ReplaceResultsNow([webRow, .. rows]);
+    }
+
+    private static string? SuggestEndpointFor(string urlTemplate, string query) =>
+        urlTemplate.Contains("google.com/search") ? "https://suggestqueries.google.com/complete/search?client=firefox&q=" + Uri.EscapeDataString(query)
+        : urlTemplate.Contains("bing.com/search") ? "https://api.bing.com/osjson.aspx?query=" + Uri.EscapeDataString(query)
+        : urlTemplate.Contains("wikipedia.org") ? "https://en.wikipedia.org/w/api.php?action=opensearch&limit=6&search=" + Uri.EscapeDataString(query)
+        : null; // user-added engines: local-only
+
     /// <summary>Opens the current web-mode query in the browser and reports whether it did.</summary>
     public bool OpenWebSearch()
     {
@@ -176,6 +234,15 @@ public class SearchExecutionViewModel : ViewModelBase, IDisposable
         var match = UserSettings.Load().WebKeywords.First(w => w.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase));
         var rest = _searchQuery[(keyword.Length + 1)..].Trim();
         UrlLauncher.Open(match.Url.Replace("{query}", Uri.EscapeDataString(rest)));
+        return true;
+    }
+
+    /// <summary>Opens the engine for one suggestion text; returns whether web mode was active.</summary>
+    public bool OpenWebSearchFor(string suggestion)
+    {
+        if (!IsWebMode || WebModeKeyword is not { } keyword) return false;
+        var match = UserSettings.Load().WebKeywords.First(w => w.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase));
+        UrlLauncher.Open(match.Url.Replace("{query}", Uri.EscapeDataString(suggestion)));
         return true;
     }
 

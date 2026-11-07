@@ -39,6 +39,18 @@ internal static class SearchResultHelper
 
     // B1 web mode: one actionable row standing in for the whole result list. Executing it (Enter,
     // click) opens the browser; the empty FullPath kind keeps every file-oriented affordance off.
+    public static AppSearchResult CreateWebSuggestionResult(string suggestion, string keyword) => new AppSearchResult
+    {
+        Name = suggestion,
+        FullPath = "__WEB_SUGGEST__:" + suggestion,
+        ParentDir = string.Empty,
+        IsDir = false,
+        Drive = string.Empty,
+        ResultKind = "Web",
+        Index = 0,
+        SearchQuery = string.Empty
+    };
+
     public static AppSearchResult CreateWebSearchResult(string query) => new AppSearchResult
     {
         Name = TranslationManager.Instance["Search_WebModeRow"],

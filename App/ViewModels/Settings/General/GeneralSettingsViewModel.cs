@@ -20,6 +20,9 @@ public class GeneralSettingsViewModel : ViewModelBase
     private bool _enableHardwareAcceleration;
     private bool _enableFuzzyMatch;
     private bool _showHiddenFiles;
+    private bool _webSearchEnabled;
+    private bool _webSuggestEnabled;
+    private string _webKeywordsText = string.Empty;
     private bool _orFirstPrecedence;
     private bool _enableQuickSearchClipboardAutoFill;
     private bool _keepSearchText;
@@ -60,6 +63,9 @@ public class GeneralSettingsViewModel : ViewModelBase
         _enableHardwareAcceleration = userSettings.EnableHardwareAcceleration;
         _enableFuzzyMatch = userSettings.EnableFuzzyMatch;
         _showHiddenFiles = userSettings.ShowHiddenFiles;
+        _webSearchEnabled = userSettings.WebKeywords.Count > 0;
+        _webSuggestEnabled = userSettings.WebSuggestEnabled;
+        _webKeywordsText = string.Join(Environment.NewLine, userSettings.WebKeywords.Select(w => $"{w.Keyword}|{w.Url}"));
         _orFirstPrecedence = userSettings.OrFirstPrecedence;
         _enableQuickSearchClipboardAutoFill = userSettings.EnableQuickSearchClipboardAutoFill;
         _keepSearchText = userSettings.SearchWindow.KeepSearchText;
@@ -168,6 +174,62 @@ public class GeneralSettingsViewModel : ViewModelBase
         get => _showHiddenFiles;
         set => SetProperty(ref _showHiddenFiles, value);
     }
+
+    // Disabling web mode clears the keyword list; enabling restores the shipped defaults when the
+    // list is empty, so the switch alone is a working on/off.
+    public bool WebSearchEnabled
+    {
+        get => _webSearchEnabled;
+        set
+        {
+            if (SetProperty(ref _webSearchEnabled, value))
+            {
+                _userSettings.WebKeywords = value && _userSettings.WebKeywords.Count == 0
+                    ? DefaultWebKeywords()
+                    : value ? _userSettings.WebKeywords : [];
+                _userSettings.Save();
+                WebKeywordsText = string.Join(Environment.NewLine, _userSettings.WebKeywords.Select(w => $"{w.Keyword}|{w.Url}"));
+            }
+        }
+    }
+
+    public bool WebSuggestEnabled
+    {
+        get => _webSuggestEnabled;
+        set
+        {
+            if (SetProperty(ref _webSuggestEnabled, value))
+            {
+                _userSettings.WebSuggestEnabled = value;
+                _userSettings.Save();
+            }
+        }
+    }
+
+    // keyword|url per line; parsed on commit (lost focus), invalid lines skipped.
+    public string WebKeywordsText
+    {
+        get => _webKeywordsText;
+        set
+        {
+            if (SetProperty(ref _webKeywordsText, value))
+            {
+                _userSettings.WebKeywords = value.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(line => line.Split('|', 2))
+                    .Where(parts => parts.Length == 2 && parts[0].Length > 0 && parts[1].Length > 0)
+                    .Select(parts => new WebKeywordSetting { Keyword = parts[0].Trim(), Url = parts[1].Trim() })
+                    .ToList();
+                _userSettings.Save();
+            }
+        }
+    }
+
+    private static List<WebKeywordSetting> DefaultWebKeywords() =>
+    [
+        new() { Keyword = "g", Url = "https://www.google.com/search?q={query}" },
+        new() { Keyword = "b", Url = "https://www.bing.com/search?q={query}" },
+        new() { Keyword = "w", Url = "https://en.wikipedia.org/wiki/Special:Search?search={query}" },
+    ];
 
     // How spaces (AND) and the pipe '|' (OR) bind when a query mixes them. Off is AND-first, the
     // default: "report | summary 2024" means report OR (summary AND 2024). On restores the historical

@@ -218,6 +218,14 @@ internal sealed class SearchDispatchController
             deferInstantPass ? instantPass.Completion : null
         );
     }
+    /// <summary>B1 suggest rows replace the list while web mode is active (suggest is opt-in).</summary>
+    public void ReplaceResultsNow(IReadOnlyList<AppSearchResult> rows)
+    {
+        _replaceResults(rows);
+        _setResultsPanelVisibility(Visibility.Visible);
+        _setResultsSeparatorVisibility(Visibility.Collapsed);
+    }
+
     /// <summary>B1 web mode: the file search stands down and one actionable web row takes the
     /// list. Called by SearchExecutionViewModel whenever the query is inside a web keyword mode.</summary>
     public void ShowWebSearchRow(string query)

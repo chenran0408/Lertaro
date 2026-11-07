@@ -213,11 +213,25 @@ public class QuickSearchWindowInputHandler
 
     private void HandleEnterBehavior()
     {
-        // B1 web mode: Enter runs the web search, the row is just its visual body.
-        if (_window.ViewModel.Search.IsWebMode && _window.ViewModel.Search.OpenWebSearch())
+        // B1 web mode: Enter runs the web search (a suggestion row searches for that suggestion),
+        // the rows are just visual bodies.
+        if (_window.ViewModel.Search.IsWebMode)
         {
-            _window.HideWindow();
-            return;
+            var target = _window.LstResults.SelectedItem as AppSearchResult;
+            if (target is not null && target.FullPath.StartsWith("__WEB_SUGGEST__:", StringComparison.Ordinal))
+            {
+                var suggestion = target.FullPath["__WEB_SUGGEST__:".Length..];
+                if (_window.ViewModel.Search.OpenWebSearchFor(suggestion))
+                {
+                    _window.HideWindow();
+                    return;
+                }
+            }
+            if (_window.ViewModel.Search.OpenWebSearch())
+            {
+                _window.HideWindow();
+                return;
+            }
         }
         var result = _window.LstResults.SelectedItem as AppSearchResult;
         if (result == null && _window.LstResults.Items.Count > 0)
