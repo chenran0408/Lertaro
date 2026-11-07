@@ -38,7 +38,14 @@ public sealed class SearchResultRankComparer : IComparer<SearchResult>
 
     private readonly IReadOnlyDictionary<string, int> _historySnapshot;
 
-    public SearchResultRankComparer(IReadOnlyDictionary<string, int> historySnapshot) => _historySnapshot = historySnapshot;
+    private readonly IReadOnlyDictionary<string, int>? _usageCounts;
+
+    public SearchResultRankComparer(IReadOnlyDictionary<string, int> historySnapshot,
+        IReadOnlyDictionary<string, int>? usageCounts = null)
+    {
+        _historySnapshot = historySnapshot;
+        _usageCounts = usageCounts;
+    }
 
     private static string NormalizeForLookup(string path)
     {
@@ -69,6 +76,17 @@ public sealed class SearchResultRankComparer : IComparer<SearchResult>
         compare = left.RankSortKey.CompareTo(right.RankSortKey);
         if (compare != 0)
             return compare;
+
+        // Usage tie-breaker (A2): equal fzf score, the more-opened entry first. A null or all-zero
+        // map makes every comparison fall through, so ordering is bit-identical to pre-A2 builds.
+        if (_usageCounts != null)
+        {
+            var leftUsage = _usageCounts.TryGetValue(leftPath, out var lu) ? lu : 0;
+            var rightUsage = _usageCounts.TryGetValue(rightPath, out var ru) ? ru : 0;
+            compare = leftUsage.CompareTo(rightUsage);
+            if (compare != 0)
+                return -compare;
+        }
 
         compare = left.Path.Length.CompareTo(right.Path.Length);
         if (compare != 0)

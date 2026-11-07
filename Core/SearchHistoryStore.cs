@@ -16,8 +16,10 @@ public static class SearchHistoryStore
     private static readonly object Gate = new();
     private static Dictionary<string, List<StoredEntry>>? _buckets;
     private static Dictionary<string, int>? _priorityCache;
+    private static IReadOnlyDictionary<string, int>? _frequencyCache;
 
     /// <summary>What <see cref="Snapshot"/> returns before the store has any entries at all.</summary>
+    private static readonly IReadOnlyDictionary<string, int> EmptyFrequencies = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
     private static readonly IReadOnlyDictionary<string, int> EmptyPriorities =
         new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
@@ -89,6 +91,7 @@ public static class SearchHistoryStore
 
             PersistNoLock();
             _priorityCache = BuildPriorityCache(buckets);
+            _frequencyCache = SearchHistoryBucketSupport.BuildFrequencyCache(buckets);
         }
 
         Changed?.Invoke();
@@ -165,6 +168,7 @@ public static class SearchHistoryStore
             _buckets = BuildBuckets(validated);
             PersistNoLock();
             _priorityCache = BuildPriorityCache(_buckets);
+            _frequencyCache = SearchHistoryBucketSupport.BuildFrequencyCache(_buckets);
         }
 
         Changed?.Invoke();
@@ -182,6 +186,17 @@ public static class SearchHistoryStore
         {
             EnsureCacheNoLock();
             return _priorityCache ?? EmptyPriorities;
+        }
+    }
+
+    /// <summary>Live path-to-open-count map, handed out by reference like <see cref="Snapshot"/>:
+    /// the usage tally A2's rank tie-breaker sorts by. Same swap-on-rebuild consistency.</summary>
+    public static IReadOnlyDictionary<string, int> GetFrequencies()
+    {
+        lock (Gate)
+        {
+            EnsureCacheNoLock();
+            return _frequencyCache ?? EmptyFrequencies;
         }
     }
 
@@ -203,6 +218,7 @@ public static class SearchHistoryStore
 
         _buckets = LoadNoLock();
         _priorityCache = BuildPriorityCache(_buckets);
+        _frequencyCache = SearchHistoryBucketSupport.BuildFrequencyCache(_buckets);
     }
 
     private static Dictionary<string, List<StoredEntry>> LoadNoLock() => LoadFromFiles(HistoryPath, BackupPath);

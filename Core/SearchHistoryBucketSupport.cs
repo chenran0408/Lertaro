@@ -51,6 +51,17 @@ internal static class SearchHistoryBucketSupport
 
     // Global rank per distinct path (lowest = most recently relevant). Paths no longer span multiple
     // buckets, but this stays dedup-safe regardless.
+    /// <summary>Path -> open count for the usage tie-breaker. A path lives in exactly one keyword
+    /// bucket, so the stored count is the whole story; pruning/truncation naturally retires counts.</summary>
+    internal static Dictionary<string, int> BuildFrequencyCache(Dictionary<string, List<SearchHistoryStore.StoredEntry>> buckets)
+    {
+        var frequencies = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var list in buckets.Values)
+            foreach (var entry in list)
+                frequencies[entry.Path] = entry.Count;
+        return frequencies;
+    }
+
     internal static Dictionary<string, int> BuildPriorityCache(Dictionary<string, List<SearchHistoryStore.StoredEntry>> buckets)
     {
         var flat = Flatten(buckets);

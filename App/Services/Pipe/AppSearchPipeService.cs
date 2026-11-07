@@ -332,7 +332,7 @@ public static class AppSearchPipeService
 
         SearchResultMapper.RemoveQueriedDirectoryItself(raw, query);
         token.ThrowIfCancellationRequested();
-        raw.Sort(new SearchResultRankComparer(SearchHistoryStore.Snapshot()));
+        raw.Sort(new SearchResultRankComparer(SearchHistoryStore.Snapshot(), SearchHistoryStore.GetFrequencies()));
 
         var byPath = new Dictionary<string, SearchResult>(StringComparer.OrdinalIgnoreCase);
         var appResults = new List<AppSearchResult>(raw.Count);

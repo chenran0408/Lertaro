@@ -29,6 +29,7 @@ internal sealed class StreamingResultAccumulator
     private readonly string _query;
     private readonly Lazy<string?> _queriedDirectory;
     private IComparer<SearchResult> _rankComparer;
+    private readonly IReadOnlyDictionary<string, int>? _usageCounts;
 
     private int _consumed;
     private List<Entry> _ranked = new();
@@ -56,7 +57,8 @@ internal sealed class StreamingResultAccumulator
         string query,
         IReadOnlyDictionary<string, int> historySnapshot,
         IReadOnlyList<SearchResultMapper.RankedCandidate>? seedCandidates = null,
-        Func<string, string?>? resolveQueriedDirectory = null)
+        Func<string, string?>? resolveQueriedDirectory = null,
+        IReadOnlyDictionary<string, int>? usageCounts = null)
     {
         _query = query;
         // Constructed on input, consumed by the background mapper. Directory.Exists can block on a
@@ -64,7 +66,7 @@ internal sealed class StreamingResultAccumulator
         _queriedDirectory = new Lazy<string?>(() => (resolveQueriedDirectory ?? SearchResultMapper.GetQueriedDirectory)(query));
         // Captured once for the whole query rather than re-read per paint: the ranking must not shift
         // underneath rows that are already on screen just because the user opened something mid-search.
-        _rankComparer = new SearchResultRankComparer(historySnapshot);
+        _rankComparer = new SearchResultRankComparer(historySnapshot, usageCounts);
 
         if (seedCandidates == null)
             return;
@@ -100,10 +102,11 @@ internal sealed class StreamingResultAccumulator
     /// working the priorities out reads the history store and resolves Recent Items shortcuts -- work that
     /// belongs on the render callback's background thread, ahead of its first batch.
     /// </remarks>
-    public void UsePriorities(IReadOnlyDictionary<string, int> priorities)
+    public void UsePriorities(IReadOnlyDictionary<string, int> priorities,
+        IReadOnlyDictionary<string, int>? usageCounts = null)
     {
         if (!_completed && _consumed == 0 && _ranked.Count == 0)
-            _rankComparer = new SearchResultRankComparer(priorities);
+            _rankComparer = new SearchResultRankComparer(priorities, usageCounts);
     }
 
     /// <summary>How many of the arrivals handed in so far have been mapped.</summary>
@@ -148,7 +151,7 @@ internal sealed class StreamingResultAccumulator
         _ranked = new List<Entry>();
         _lastBatchRows = new List<AppSearchResult>();
         _seedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        _rankComparer = new SearchResultRankComparer(new Dictionary<string, int>());
+        _rankComparer = new SearchResultRankComparer(new Dictionary<string, int>(), _usageCounts);
         if (!keepRows)
         {
             _rows = new List<AppSearchResult>();

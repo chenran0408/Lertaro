@@ -128,7 +128,8 @@ internal sealed class SearchQueryDispatchController
         // order already established, so the total cost of painting twenty times is the cost of painting
         // once. Built here rather than on the first mapper call because the content append has to reach it
         // even when the file search never answers. See StreamingResultAccumulator.
-        var accumulator = new StreamingResultAccumulator(cleanQuery, new Dictionary<string, int>());
+        var accumulator = new StreamingResultAccumulator(cleanQuery, new Dictionary<string, int>(),
+            usageCounts: SearchHistoryStore.GetFrequencies());
         var prioritiesApplied = false;
         _accumulator = accumulator;
         _searchSettled = false;
@@ -182,7 +183,8 @@ internal sealed class SearchQueryDispatchController
                 // render callback's thread, before the first batch is ranked.
                 if (!prioritiesApplied)
                 {
-                    accumulator.UsePriorities(HistorySearchCandidateMapper.RankingPriorities(FuzzyQuery.Parse(cleanQuery)));
+                    accumulator.UsePriorities(HistorySearchCandidateMapper.RankingPriorities(FuzzyQuery.Parse(cleanQuery)),
+                        SearchHistoryStore.GetFrequencies());
                     prioritiesApplied = true;
                 }
                 return accumulator.AbsorbBatch(fileResults);
