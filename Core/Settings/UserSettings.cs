@@ -95,6 +95,8 @@ public class UserSettings
     public int OnboardingSkipStep { get; set; }
     /// <summary>D1 point-of-use tips: shown-once ids, independent of the tour's own flag.</summary>
     public List<string> SeenTips { get; set; } = new();
+    // Bump ONLY when the tour's steps or copy change enough to warrant showing it again. Never
+    // bump on releases alone: the version compare is the re-arm, not the release number.
     public static int CurrentOnboardingVersion => 2;
     // Empty means "unset". The selected palette is now limited to the built-in Light/Dark modes;
     // retired custom preset IDs are migrated during ThemeManager initialization.
