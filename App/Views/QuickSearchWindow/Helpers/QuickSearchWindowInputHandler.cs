@@ -39,6 +39,14 @@ public class QuickSearchWindowInputHandler
 
         if (e.Key == Key.Escape && Keyboard.Modifiers == ModifierKeys.None)
         {
+            // Same ladder as the main window (SearchWindowInputHandler.ShouldCloseOnEscape): a
+            // non-empty query gets emptied first, only an empty box closes the window.
+            if (_window.TxtSearch.Text.Length > 0)
+            {
+                _window.TxtSearch.Clear();
+                e.Handled = true;
+                return;
+            }
             _window.HideWindow();
             e.Handled = true;
             return;
