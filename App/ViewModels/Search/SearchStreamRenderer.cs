@@ -87,6 +87,13 @@ internal sealed class SearchStreamRenderer
             // before it can take a row. Filtered here rather than after ranking so the row budget, the
             // progressive paint sizes and the "N results" count all describe the rows the window may actually
             // list.
+            // A1 filter keywords (folder:/file:/ext:/datemodified:) drop rows at intake, before the
+            // row budget and the counts -- filtered streams stay streaming, and "N results" already
+            // describes what the window will actually list.
+            var activeFilters = QueryFilterSupport.ActiveFilters;
+            if (activeFilters is { IsEmpty: false } && !activeFilters.Matches(result))
+                return;
+
             if (foldersOnly && !result.IsDir)
                 return;
 

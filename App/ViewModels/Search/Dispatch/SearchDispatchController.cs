@@ -71,6 +71,10 @@ internal sealed class SearchDispatchController
         _bypassExclusions = bypassExclusions;
         var (strippedClean, triggeredTypeId) = _resultTypeTrigger.StripTrigger(value, cleanQuery);
         cleanQuery = strippedClean;
+        // A1 filter keywords ride ahead of dispatch: the engine never sees them, the streaming
+        // renderer drops non-matching rows as batches arrive.
+        cleanQuery = QueryFilterSupport.Extract(cleanQuery, out var queryFilters);
+        QueryFilterSupport.Activate(queryFilters);
         // File-filter scope keyword ("tf report" -> search "report" only inside the tf filter's
         // folders): quick window only, and never stacked on a per-type trigger (an Applications-only
         // trigger over a scoped file search serves neither feature).
