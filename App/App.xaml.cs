@@ -339,6 +339,9 @@ public partial class App : Application
                 Views.Onboarding.OnboardingWindow.ShowTour()),
                 System.Windows.Threading.DispatcherPriority.ApplicationIdle);
 
+        // W3: register WER LocalDumps for App + Service crash dumps
+        Services.Diagnostics.DiagnosticHelper.RegisterLocalDumps();
+
         // Background update check on startup
         UpdateCheckService.RunOnStartupAsync();
 

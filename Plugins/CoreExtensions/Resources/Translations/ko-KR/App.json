@@ -991,5 +991,7 @@
   "Settings_WebSearchLabel": "웹 키워드 검색",
   "Settings_WebSearchDesc": "키워드+공백(예: g test)을 입력하면 웹 검색 모드로 진입합니다. 연상 기능 사용 시 입력한 텍스트가 검색 엔진으로 전송됩니다(기본 꺼짐).",
   "Settings_WebKeywordsLabel": "웹 키워드",
-  "Settings_WebKeywordsDesc": "한 줄에 하나: 키워드|URL(URL의 {query} 자리에 검색어가 들어갑니다)."
+  "Settings_WebKeywordsDesc": "한 줄에 하나: 키워드|URL(URL의 {query} 자리에 검색어가 들어갑니다).",
+  "Tray_OpenLogs": "로그 폴더 열기",
+  "Tray_DiagnosticZip": "진단 패키지 내보내기"
 }

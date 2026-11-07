@@ -1,4 +1,3 @@
-using System.Windows;
 using Lertaro.App.Views.QuickSwitch;
 using Lertaro.Core;
 using Lertaro.Core.Hook;

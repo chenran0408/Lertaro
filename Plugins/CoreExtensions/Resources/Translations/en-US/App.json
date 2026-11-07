@@ -991,5 +991,7 @@
   "Settings_WebSearchLabel": "Web keyword search",
   "Settings_WebSearchDesc": "Type a keyword + space (like g test) to enter web search mode. Suggestions, when enabled, send your typed text to the search engine (off by default).",
   "Settings_WebKeywordsLabel": "Web keywords",
-  "Settings_WebKeywordsDesc": "One per line: keyword|URL (use {query} in the URL where the search text goes)."
+  "Settings_WebKeywordsDesc": "One per line: keyword|URL (use {query} in the URL where the search text goes).",
+  "Tray_OpenLogs": "Open log folder",
+  "Tray_DiagnosticZip": "Export diagnostics"
 }

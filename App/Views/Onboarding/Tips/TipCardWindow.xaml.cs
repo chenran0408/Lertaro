@@ -1,6 +1,5 @@
 using System.Windows;
 using Lertaro.App.Helpers.Visuals;
-using Lertaro.App.Services;
 using AppWindow = Lertaro.App.Views.Controls.AppWindow;
 using Lertaro.App.ViewModels.Onboarding;
 using Lertaro.Core;
@@ -37,7 +36,7 @@ public partial class TipCardWindow : AppWindow
 
         if (!TipRegistry.TryGetCopy(tipId, out var title, out var body)) return;
         var window = new TipCardWindow(tipId, title, body);
-        window.Owner = Views.Controls.Dialogs.OwnedDialog.ResolveOwner(window);
+        window.Owner = Controls.Dialogs.OwnedDialog.ResolveOwner(window);
         window.Show();
         window.PlaceNearAnchor(anchorHwnd);
     }

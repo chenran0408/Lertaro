@@ -991,5 +991,7 @@
   "Settings_WebSearchLabel": "Web 關鍵字搜尋",
   "Settings_WebSearchDesc": "輸入關鍵字+空格（如 g test）進入 Web 搜尋模式。開啟聯想會把輸入內容傳送給搜尋引擎（預設關閉）。",
   "Settings_WebKeywordsLabel": "Web 關鍵字",
-  "Settings_WebKeywordsDesc": "每行一條，格式：關鍵字|URL（URL 裡用 {query} 佔位搜尋詞）。"
+  "Settings_WebKeywordsDesc": "每行一條，格式：關鍵字|URL（URL 裡用 {query} 佔位搜尋詞）。",
+  "Tray_OpenLogs": "開啟日誌資料夾",
+  "Tray_DiagnosticZip": "匯出診斷包"
 }

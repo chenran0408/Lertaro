@@ -86,7 +86,7 @@ public class InlineSearchManager : IDisposable
 
     private void WireUpExplorerEvents()
     {
-        var quickSwitchBar = new global::Lertaro.App.Services.QuickSwitch.QuickSwitchBarManager();
+        var quickSwitchBar = new QuickSwitch.QuickSwitchBarManager();
         _explorerTracker.OnExplorerActivated += (hwnd, title, className, isDesktop) => Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
                 quickSwitchBar.OnExplorerActivated(hwnd, _explorerTracker);
@@ -98,7 +98,7 @@ public class InlineSearchManager : IDisposable
                 if (_explorerTracker.IsActiveWindowDialog)
                 {
                     Views.Onboarding.Tips.TipCardWindow.ShowTip(
-                        global::Lertaro.App.ViewModels.Onboarding.TipRegistry.QuickSwitch, hwnd);
+                        ViewModels.Onboarding.TipRegistry.QuickSwitch, hwnd);
                     CloseInlineSearch("ExplorerActivated (Dialog)");
                     EnsureWindowCreated();
                     _window?.UpdateSearchDisplay(string.Empty);

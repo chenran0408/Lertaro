@@ -991,5 +991,7 @@
   "Settings_WebSearchLabel": "Web 关键词搜索",
   "Settings_WebSearchDesc": "输入关键词+空格（如 g test）进入 Web 搜索模式。开启联想会把输入内容发送给搜索引擎（默认关闭）。",
   "Settings_WebKeywordsLabel": "Web 关键词",
-  "Settings_WebKeywordsDesc": "每行一条，格式：关键词|URL（URL 里用 {query} 占位搜索词）。"
+  "Settings_WebKeywordsDesc": "每行一条，格式：关键词|URL（URL 里用 {query} 占位搜索词）。",
+  "Tray_OpenLogs": "打开日志文件夹",
+  "Tray_DiagnosticZip": "导出诊断包"
 }

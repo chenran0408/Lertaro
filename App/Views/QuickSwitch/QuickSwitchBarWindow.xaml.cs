@@ -2,7 +2,6 @@ using System.Windows;
 using System.Windows.Interop;
 using Lertaro.App.Helpers.Visuals;
 using Lertaro.App.Services;
-using Lertaro.Core;
 using Lertaro.Core.Hook;
 using Lertaro.Core.Wire;
 
@@ -30,11 +29,9 @@ public partial class QuickSwitchBarWindow : Window
         {
             if (PresentationSource.FromVisual(this) is HwndSource source)
                 source.AddHook((_, msg, _, _, ref handled) =>
-                {
                     // Dismiss when the dialog we serve dies (WM_DESTROY observed indirectly via the
                     // bar being deactivated by a dead window is unreliable; the manager hides us).
-                    return IntPtr.Zero;
-                });
+                    IntPtr.Zero);
         };
     }
 

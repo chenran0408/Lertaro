@@ -991,5 +991,7 @@
   "Settings_WebSearchLabel": "Web キーワード検索",
   "Settings_WebSearchDesc": "キーワード+空白（例：g test）でウェブ検索モードに入ります。サジェスト有効時は入力内容を検索エンジンへ送信します（既定オフ）。",
   "Settings_WebKeywordsLabel": "Web キーワード",
-  "Settings_WebKeywordsDesc": "1 行 1 件：キーワード|URL（URL 内の {query} が検索語に置き換わります）。"
+  "Settings_WebKeywordsDesc": "1 行 1 件：キーワード|URL（URL 内の {query} が検索語に置き換わります）。",
+  "Tray_OpenLogs": "ログフォルダーを開く",
+  "Tray_DiagnosticZip": "診断パッケージをエクスポート"
 }
