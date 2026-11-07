@@ -342,6 +342,8 @@ public class SearchViewModel : ViewModelBase, IDisposable
             .Select(p => p!)
             .ToList();
 
+        // D2 stealth badge: when the query started with ";", append a visual marker to the status
+        // text so the user knows this search was not recorded.
         // A3 chip: a display-level row filter sharing the sidebar's predicate pipeline. Applied as a
         // streaming per-row check over the source, so no extra full-size copy is made for it.
         if (!string.IsNullOrEmpty(_activeChip))
@@ -369,9 +371,10 @@ public class SearchViewModel : ViewModelBase, IDisposable
             results =>
             {
                 var sorted = SearchResultSorter.Sort(results, _currentSortColumn, _isSortAscending);
-                return ReferenceEquals(sorted, results) && results is List<AppSearchResult> asList
+                var list = ReferenceEquals(sorted, results) && results is List<AppSearchResult> asList
                     ? asList
                     : sorted.ToList();
+                return list;
             },
             () => _filterSource!,
             RenderFinal,

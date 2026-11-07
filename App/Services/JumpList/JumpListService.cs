@@ -1,7 +1,6 @@
 using System.IO;
 using System.Windows.Shell;
 using Lertaro.Core;
-using Lertaro.Core.Settings;
 using Application = System.Windows.Application;
 using JumpList = System.Windows.Shell.JumpList;
 

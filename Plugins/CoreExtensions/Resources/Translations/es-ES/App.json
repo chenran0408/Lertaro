@@ -995,5 +995,6 @@
   "Tray_OpenLogs": "Abrir carpeta de registros",
   "Tray_DiagnosticZip": "Exportar diagnóstico",
   "JumpList_CategorySearches": "Búsquedas recientes",
-  "JumpList_CategoryFavorites": "Carpetas favoritas"
+  "JumpList_CategoryFavorites": "Carpetas favoritas",
+  "Settings_ClearOnExitLabel": "Borrar historial de búsqueda al salir"
 }

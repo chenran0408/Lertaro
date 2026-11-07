@@ -106,7 +106,7 @@ public partial class QuickSearchWindow : Views.Controls.AppWindow, ISearchWindow
     internal void ExecuteFavorite(AppSearchResult result) => _resultExecutor.Execute(result);
     internal void RecordKeywordHistory()
     {
-        try { KeywordHistoryStore.Record(_viewModel.SearchQuery); } catch { }
+        if (!QueryFilterSupport.IsStealth) try { KeywordHistoryStore.Record(_viewModel.SearchQuery); } catch { }
     }
     // Runs the results-panel height computation synchronously instead of through the normal deferred
     // QueueResultsLayoutUpdate -- see QuickSearchWindowController.ShowWindow's own comment on why it needs

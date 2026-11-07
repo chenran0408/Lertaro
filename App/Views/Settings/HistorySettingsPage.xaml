@@ -130,5 +130,10 @@
                 </Style>
             </ctrl:HistoryListControl.Style>
         </ctrl:HistoryListControl>
+
+        <!-- D1: clear search + keyword history on app exit (default off). -->
+        <CheckBox Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_ClearOnExitLabel]}"
+                  IsChecked="{Binding ClearHistoryOnExit, Mode=TwoWay}"
+                  Margin="0,12,0,0"/>
     </Grid>
 </UserControl>

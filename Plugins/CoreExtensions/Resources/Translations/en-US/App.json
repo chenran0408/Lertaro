@@ -995,5 +995,6 @@
   "Tray_OpenLogs": "Open log folder",
   "Tray_DiagnosticZip": "Export diagnostics",
   "JumpList_CategorySearches": "Recent searches",
-  "JumpList_CategoryFavorites": "Favorite folders"
+  "JumpList_CategoryFavorites": "Favorite folders",
+  "Settings_ClearOnExitLabel": "Clear search history on exit"
 }

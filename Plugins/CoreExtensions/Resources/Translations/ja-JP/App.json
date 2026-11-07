@@ -995,5 +995,6 @@
   "Tray_OpenLogs": "ログフォルダーを開く",
   "Tray_DiagnosticZip": "診断パッケージをエクスポート",
   "JumpList_CategorySearches": "最近の検索",
-  "JumpList_CategoryFavorites": "お気に入りフォルダー"
+  "JumpList_CategoryFavorites": "お気に入りフォルダー",
+  "Settings_ClearOnExitLabel": "終了時に検索履歴をクリア"
 }

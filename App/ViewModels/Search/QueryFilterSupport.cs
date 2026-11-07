@@ -22,6 +22,14 @@ public static class QueryFilterSupport
     /// <summary>The filters for the search currently being dispatched. Null = unfiltered.</summary>
     public static ResultFilters? ActiveFilters => ActiveLocal.Value;
 
+    private static readonly AsyncLocal<bool> StealthLocal = new();
+
+    /// <summary>True while a ";" stealth query is being dispatched -- history stores check this
+    /// to suppress recording for the current async chain only.</summary>
+    public static bool IsStealth => StealthLocal.Value;
+
+    public static void SetStealth(bool stealth) => StealthLocal.Value = stealth;
+
     /// <summary>Extracts every filter keyword occurrence and returns the query without them. The
     /// returned filters object is shared; callers push it through <see cref="Activate"/>.</summary>
     public static string Extract(string query, out ResultFilters filters)

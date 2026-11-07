@@ -31,6 +31,8 @@ public class UserSettings
     // Single source of truth for hidden/system visibility in search results. When true, the "*"
     // bypass marker no longer matters for hidden files (the old double semantics is gone).
     public bool ShowHiddenFiles { get; set; } = false;
+    // D1: when true, search history and keyword history are cleared on app exit. Default off.
+    public bool ClearHistoryOnExit { get; set; } = false;
     // B1 web keyword mode. Suggest defaults OFF -- enabling it sends typed text to the search
     // engine's suggestion endpoint; the settings page says so in plain words.
     public List<WebKeywordSetting> WebKeywords { get; set; } = new()

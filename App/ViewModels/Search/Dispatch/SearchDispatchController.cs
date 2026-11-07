@@ -64,6 +64,12 @@ internal sealed class SearchDispatchController
 
     public void DispatchSearch(string value)
     {
+        // D2: a leading ";" marks the query as stealth -- it runs normally but is excluded from
+        // SearchHistoryStore and KeywordHistoryStore. The prefix is stripped before any parsing.
+        var stealth = value.StartsWith(";");
+        if (stealth) value = value[1..].TrimStart();
+        QueryFilterSupport.SetStealth(stealth);
+
         var globalPrefixChar = GetGlobalTokenPrefixChar();
         var strippedTrailing = SearchQuerySortParser.Strip(value, out var tokens, globalPrefixChar);
         _queryTokens = tokens;

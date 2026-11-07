@@ -995,5 +995,6 @@
   "Tray_OpenLogs": "로그 폴더 열기",
   "Tray_DiagnosticZip": "진단 패키지 내보내기",
   "JumpList_CategorySearches": "최근 검색",
-  "JumpList_CategoryFavorites": "즐겨찾는 폴더"
+  "JumpList_CategoryFavorites": "즐겨찾는 폴더",
+  "Settings_ClearOnExitLabel": "종료 시 검색 기록 지우기"
 }

@@ -363,6 +363,19 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         Logger.Log($"[AppLifecycle] Exiting process {Environment.ProcessId}; code={e.ApplicationExitCode}; initialized={_startupInitialized}.");
+
+        // D1: clear search and keyword history on exit if the user opted in.
+        if (UserSettings.Load().ClearHistoryOnExit)
+        {
+            try
+            {
+                SearchHistoryStore.SaveEntries([]);
+                KeywordHistoryStore.SaveEntries([]);
+                Logger.Log("[AppLifecycle] History cleared on exit (ClearHistoryOnExit).");
+            }
+            catch (Exception ex) { Logger.Log($"[AppLifecycle] Failed to clear history on exit: {ex.Message}", LogLevel.Error); }
+        }
+
         if (!_startupInitialized)
         {
             _settingsSession?.Dispose();

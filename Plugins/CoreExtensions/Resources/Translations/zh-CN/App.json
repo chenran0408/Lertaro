@@ -995,5 +995,6 @@
   "Tray_OpenLogs": "打开日志文件夹",
   "Tray_DiagnosticZip": "导出诊断包",
   "JumpList_CategorySearches": "最近搜索",
-  "JumpList_CategoryFavorites": "收藏目录"
+  "JumpList_CategoryFavorites": "收藏目录",
+  "Settings_ClearOnExitLabel": "退出时清空搜索历史"
 }

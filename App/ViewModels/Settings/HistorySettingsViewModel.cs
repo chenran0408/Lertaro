@@ -10,6 +10,7 @@ namespace Lertaro.App.ViewModels.Settings;
 public class HistorySettingsViewModel : ViewModelBase
 {
     private readonly UserSettings _userSettings;
+    private bool _clearHistoryOnExit;
     private string _selectedTab = "Search";
     private ICommand? _selectTabCommand;
 
@@ -24,6 +25,7 @@ public class HistorySettingsViewModel : ViewModelBase
     public HistorySettingsViewModel(UserSettings userSettings)
     {
         _userSettings = userSettings;
+        _clearHistoryOnExit = userSettings.ClearHistoryOnExit;
 
         SearchHistory = new HistoryListViewModel<HistoryEntry>(
             () => SearchHistoryStore.GetEntries().ToList(),

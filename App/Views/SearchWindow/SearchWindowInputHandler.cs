@@ -241,7 +241,7 @@ public class SearchWindowInputHandler
     {
         if (result.IsPluginSearchAction || result.IsInstantResult)
             return;
-        SearchHistoryStore.Record(SearchResultHelper.HistoryKeywordOf(result, _window.SearchText), result.FullPath, SearchResultHelper.HistoryKindOf(result));
+        if (!QueryFilterSupport.IsStealth) SearchHistoryStore.Record(SearchResultHelper.HistoryKeywordOf(result, _window.SearchText), result.FullPath, SearchResultHelper.HistoryKindOf(result));
     }
 
     // Wraps at both ends, and skips the rows that exist only to be looked at, the same way the quick,
