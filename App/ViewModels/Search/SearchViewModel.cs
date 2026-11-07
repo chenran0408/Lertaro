@@ -9,6 +9,7 @@ using Lertaro.App.ViewModels.Service;
 using Lertaro.Core.Services.Search;
 
 using Lertaro.App.Services.Plugin;
+using Lertaro.PluginSdk.Abstractions;
 using Lertaro.App.ViewModels.Search.DynamicSidebar;
 namespace Lertaro.App.ViewModels.Search;
 
@@ -284,6 +285,39 @@ public class SearchViewModel : ViewModelBase, IDisposable
         _sidebarCountHelper?.Recalculate();
         ApplyFiltersAndRender(extendsContent: false, unchangedPrefix: 0);
     }
+
+    // A3 result chips: "" = no chip. The setter re-runs the same filter/render pipeline the
+    // sidebar uses -- chips are display-level, the query text is never touched.
+    private string _activeChip = string.Empty;
+    public string ActiveChip
+    {
+        get => _activeChip;
+        set
+        {
+            if (_activeChip == value) return;
+            _activeChip = value;
+            OnPropertyChanged();
+            OnDynamicFilterChanged();
+        }
+    }
+
+    private bool ChipMatches(AppSearchResult row)
+    {
+        if (string.IsNullOrEmpty(_activeChip)) return true;
+        if (_activeChip == "folder") return row.IsDir;
+        if (_activeChip == "file") return !row.IsDir;
+        if (_activeChip == "thisweek") return row.DateModified >= DateTime.Today.AddDays(-(((int)DateTime.Today.DayOfWeek + 6) % 7));
+        var extensions = _activeChip switch
+        {
+            "images" => PluginSdk.Search.ResultFilterSupport.ExtensionSet(PluginSdk.Search.ResultFilterSupport.ImageExtensions),
+            "documents" => PluginSdk.Search.ResultFilterSupport.ExtensionSet(PluginSdk.Search.ResultFilterSupport.DocumentExtensions),
+            _ => null,
+        };
+        if (extensions == null) return true;
+        if (row.IsDir) return false;
+        var extension = System.IO.Path.GetExtension(row.FullPath).TrimStart('.').ToLowerInvariant();
+        return extensions.Contains(extension);
+    }
     private readonly DynamicFilterCoordinator _dynamicFilterCoordinator = new();
 
     // DynamicFilterCoordinator renders through an Action<List<AppSearchResult>> and can do so twice
@@ -307,6 +341,14 @@ public class SearchViewModel : ViewModelBase, IDisposable
             .Where(p => p != null)
             .Select(p => p!)
             .ToList();
+
+        // A3 chip: a display-level row filter sharing the sidebar's predicate pipeline. Applied as a
+        // streaming per-row check over the source, so no extra full-size copy is made for it.
+        if (!string.IsNullOrEmpty(_activeChip))
+        {
+            activeFilters.Add(results => Task.FromResult<IReadOnlyList<ISearchResult>>(
+                results.Where(r => r is AppSearchResult row && ChipMatches(row)).ToList()));
+        }
 
         // The copy costs a full pass over a list that can hold hundreds of thousands of rows, so it happens
         // only when a type filter is open AND this list actually holds content rows. Those arrive once per

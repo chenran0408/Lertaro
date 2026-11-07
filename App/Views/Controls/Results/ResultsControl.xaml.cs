@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Collections;
+using Lertaro.App.Services;
 
 namespace Lertaro.App.Views.Controls.Results;
 
@@ -35,7 +36,7 @@ public partial class ResultsControl : System.Windows.Controls.UserControl
                     if (item?.Content is AppSearchResult result && result.CanPreview)
                     {
                         listBox?.SelectedItem = result;
-                        Services.QuickLookManager.Instance.Toggle(parentWindow, result.FullPath);
+                        QuickLookManager.Instance.Toggle(parentWindow, result.FullPath);
                         e.Handled = true;
                     }
                 }
@@ -50,6 +51,7 @@ public partial class ResultsControl : System.Windows.Controls.UserControl
         {
             UpdateViewModeVisibility();
             LoadDynamicColumns();
+            EnsureChips();
         };
 
         // Every grid column's header (built-in and plugin alike) can end up as a one-time translated
@@ -62,8 +64,8 @@ public partial class ResultsControl : System.Windows.Controls.UserControl
         // SearchWindow's ResultsControl doesn't linger forever pinned by the singleton's event -- never
         // fires for QuickSearchWindow/InlineSearchWindow's instances since those windows are only ever
         // Hidden, not Closed, which is exactly the lifetime this subscription should have there too.
-        Services.TranslationManager.Instance.PropertyChanged += OnTranslationsChanged;
-        Unloaded += (s, e) => Services.TranslationManager.Instance.PropertyChanged -= OnTranslationsChanged;
+        TranslationManager.Instance.PropertyChanged += OnTranslationsChanged;
+        Unloaded += (s, e) => TranslationManager.Instance.PropertyChanged -= OnTranslationsChanged;
     }
 
     private void OnTranslationsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -139,6 +141,64 @@ public partial class ResultsControl : System.Windows.Controls.UserControl
     }
 
     public System.Windows.Controls.ListBox ActiveListBox => ViewMode == ResultsViewMode.Grid ? (System.Windows.Controls.ListBox)LstGridResults : LstResults;
+
+    // A3 result chips. ChipFilter is the active chip kind ("" = all), bound TwoWay to the host's
+    // ActiveChip; clicking the active chip again clears it. Chips are static kinds -- no settings,
+    // no persistence: they are a momentary view over the results already on screen.
+    public static readonly DependencyProperty ChipFilterProperty = DependencyProperty.Register(
+        nameof(ChipFilter), typeof(string), typeof(ResultsControl),
+        new FrameworkPropertyMetadata(string.Empty));
+
+    public string ChipFilter
+    {
+        get => (string)GetValue(ChipFilterProperty);
+        set => SetValue(ChipFilterProperty, value);
+    }
+
+    private static readonly (string Kind, string LabelKey)[] Chips =
+    [
+        ("folder", "Chips_Folders"),
+        ("file", "Chips_Files"),
+        ("images", "Chips_Images"),
+        ("documents", "Chips_Documents"),
+        ("thisweek", "Chips_ThisWeek"),
+    ];
+
+    private bool _chipsBuilt;
+
+    private void EnsureChips()
+    {
+        if (_chipsBuilt) return;
+        _chipsBuilt = true;
+        ChipBar.Children.Add(MakeChip("", "Chips_All"));
+        foreach (var (kind, labelKey) in Chips)
+            ChipBar.Children.Add(MakeChip(kind, labelKey));
+        TranslationManager.Instance.PropertyChanged += OnLanguageChangedForChips;
+    }
+
+    private System.Windows.Controls.Button MakeChip(string kind, string labelKey)
+    {
+        var button = new System.Windows.Controls.Button
+        {
+            Tag = kind,
+            Content = TranslationManager.Instance[labelKey],
+            Margin = new Thickness(0, 0, 6, 0),
+            Padding = new Thickness(10, 2, 10, 2),
+            Cursor = System.Windows.Input.Cursors.Hand,
+            Focusable = false,
+        };
+        button.SetResourceReference(StyleProperty, "SettingsButton");
+        button.Click += (_, _) => ChipFilter = ChipFilter == kind ? string.Empty : kind;
+        return button;
+    }
+
+    private void OnLanguageChangedForChips(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(TranslationManager.CurrentCulture)) return;
+        foreach (var child in ChipBar.Children.OfType<System.Windows.Controls.Button>())
+            if (child.Tag is string kind)
+                child.Content = TranslationManager.Instance[Chips.First(c => c.Kind == kind).LabelKey];
+    }
 
     // ViewMode DependencyProperty
     public static readonly DependencyProperty ViewModeProperty = DependencyProperty.Register(

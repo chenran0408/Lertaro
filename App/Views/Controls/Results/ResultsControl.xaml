@@ -19,8 +19,15 @@
     </UserControl.Resources>
 
     <Grid x:Name="ResultsPanel">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <!-- A3 result chips: display-level filters over the already-streamed rows. The chip state
+             rides the ActiveChip binding; the query text is never touched. -->
+        <StackPanel x:Name="ChipBar" Grid.Row="0" Orientation="Horizontal" Margin="8,4,8,2"/>
         <!-- Unified container for results (either list or grid) -->
-        <Grid x:Name="GridSearchResultsContainer" Visibility="Visible">
+        <Grid x:Name="GridSearchResultsContainer" Grid.Row="1" Visibility="Visible">
             <!-- Search results view (List Mode) -->
             <Grid x:Name="GridSearchResults" Visibility="Visible">
                 <ListBox x:Name="LstResults"
@@ -119,7 +126,7 @@
         </Grid>
         <!-- Actions View: the quick window places this in the lower-right portion of the result area;
              the other windows switch this host back to a full-area panel in ResultsControl.xaml.cs. -->
-        <Grid x:Name="ActionsOverlayHost" Panel.ZIndex="10" UseLayoutRounding="True" SnapsToDevicePixels="True">
+        <Grid x:Name="ActionsOverlayHost" Grid.Row="1" Panel.ZIndex="10" UseLayoutRounding="True" SnapsToDevicePixels="True">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="3*"/>
                 <ColumnDefinition Width="7*"/>
