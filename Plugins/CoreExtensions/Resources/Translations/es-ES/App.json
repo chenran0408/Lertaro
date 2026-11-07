@@ -977,5 +977,7 @@
   "Tour1_TrayHint": "Haz clic en el icono de la bandeja para despertar la búsqueda",
   "Tour2_IndexingTitle": "Índice en preparación",
   "Tour2_IndexingBody": "Lertaro está construyendo el índice de tus archivos: la primera pasada lleva un momento, después es en vivo. Este paso vuelve solo a la práctica de escritura cuando esté listo.",
-  "Tour2_IndexingHint": "Un momento: este paso se restaura solo al estar listo"
+  "Tour2_IndexingHint": "Un momento: este paso se restaura solo al estar listo",
+  "Settings_ShowHiddenFilesLabel": "Mostrar archivos ocultos y del sistema en los resultados",
+  "Settings_ShowHiddenFilesDesc": "Activado, la búsqueda lista archivos ocultos y del sistema (el marcador \"*\" de omisión no cambia). Los archivos recientes y la exploración de carpetas aún no siguen este ajuste."
 }

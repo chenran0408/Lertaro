@@ -80,10 +80,10 @@ public class SearchService : IDisposable
         var seenPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var uniqueOnResult = new Action<SearchResult>(result =>
         {
-            // Unconditional, even in bypass mode: "*" only opts out of the user's own
-            // ExcludedPaths/Globs/Regexes configuration, not hidden/system attributes -- those are a
-            // separate, always-on filter.
-            if (FileSystemItemFilter.IsHiddenOrSystem(result))
+            // ShowHiddenFiles is the single source of truth for hidden/system visibility: the "*"
+            // bypass marker only ever opted out of the user's own ExcludedPaths/Globs/Regexes
+            // configuration, and with the toggle the old always-on double semantics is gone.
+            if (!settings.ShowHiddenFiles && FileSystemItemFilter.IsHiddenOrSystem(result))
                 return;
 
             lock (seenPaths)

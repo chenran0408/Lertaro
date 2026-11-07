@@ -19,7 +19,7 @@ internal static class GeneralSettingsApplier
         bool autoCheckUpdates,
         bool enableHardwareAcceleration,
         bool enableFuzzyMatch,
-        bool orFirstPrecedence,
+        bool showHiddenFiles, bool orFirstPrecedence,
         bool enableQuickSearchClipboardAutoFill,
         bool keepSearchText,
         bool enableEverythingIpc,
@@ -36,6 +36,7 @@ internal static class GeneralSettingsApplier
         userSettings.AutoCheckUpdates = autoCheckUpdates;
         userSettings.EnableHardwareAcceleration = enableHardwareAcceleration;
         userSettings.EnableFuzzyMatch = enableFuzzyMatch;
+        userSettings.ShowHiddenFiles = showHiddenFiles;
         userSettings.OrFirstPrecedence = orFirstPrecedence;
         userSettings.EnableQuickSearchClipboardAutoFill = enableQuickSearchClipboardAutoFill;
         // Stored under SearchWindow because both windows read it (the quick one on hide, the full one on

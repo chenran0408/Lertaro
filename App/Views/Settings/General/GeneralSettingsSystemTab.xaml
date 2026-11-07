@@ -86,6 +86,12 @@
                 <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_EnableFuzzyMatchDesc]}"
                            Style="{StaticResource SettingsHintText}" TextWrapping="Wrap"/>
 
+                <CheckBox x:Name="RowShowHiddenFiles" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_ShowHiddenFilesLabel]}"
+                           IsChecked="{Binding General.ShowHiddenFiles, Mode=TwoWay}"
+                           Margin="0,4"/>
+                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_ShowHiddenFilesDesc]}"
+                           Style="{StaticResource SettingsHintText}" TextWrapping="Wrap"/>
+
                 <CheckBox x:Name="RowOrFirstPrecedence" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_OrFirstPrecedence]}"
                            IsChecked="{Binding General.OrFirstPrecedence, Mode=TwoWay}"
                            Margin="0,4"/>

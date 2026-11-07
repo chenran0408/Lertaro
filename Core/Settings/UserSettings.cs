@@ -28,6 +28,9 @@ public class UserSettings
     public List<string> IgnoredPathRegexes { get; set; } = new();
     public List<string> BlacklistedProcesses { get; set; } = new();
     public bool EnableHistory { get; set; } = true;
+    // Single source of truth for hidden/system visibility in search results. When true, the "*"
+    // bypass marker no longer matters for hidden files (the old double semantics is gone).
+    public bool ShowHiddenFiles { get; set; } = false;
     public bool EnableKeywordHistory { get; set; } = true;
     public bool StartWithWindows { get; set; } = true;
     public bool AutoCheckUpdates { get; set; } = true;

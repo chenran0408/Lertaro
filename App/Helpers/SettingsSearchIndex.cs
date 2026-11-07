@@ -73,6 +73,7 @@ public static class SettingsSearchIndex
         new("General_HideTrayIcon", "General", vm => vm.General.SelectedTab = "System", "TabSystem/RowHideTrayIcon", "General_SysTitle"),
         new("General_EnableEverythingIpc", "General", vm => vm.General.SelectedTab = "System", "TabSystem/RowEnableEverythingIpc", "General_SysTitle"),
         new("General_EnableFuzzyMatch", "General", vm => vm.General.SelectedTab = "System", "TabSystem/RowEnableFuzzyMatch", "General_SysTitle"),
+        new("Settings_ShowHiddenFilesLabel", "General", vm => vm.General.SelectedTab = "System", "TabSystem/RowShowHiddenFiles", "General_SysTitle"),
         new("General_OrFirstPrecedence", "General", vm => vm.General.SelectedTab = "System", "TabSystem/RowOrFirstPrecedence", "General_SysTitle"),
         new("General_KeepSearchText", "General", vm => vm.General.SelectedTab = "System", "TabSystem/RowKeepSearchText", "General_SysTitle"),
         new("General_ShowOpenedFoldersInInlineSearch", "General", vm => vm.General.SelectedTab = "System", "TabSystem/RowShowOpenedFoldersInInlineSearch", "General_SysTitle"),

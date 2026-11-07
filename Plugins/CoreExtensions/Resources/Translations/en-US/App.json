@@ -977,5 +977,7 @@
   "Tour1_TrayHint": "Click the Lertaro tray icon to wake the search",
   "Tour2_IndexingTitle": "Index is warming up",
   "Tour2_IndexingBody": "Lertaro is building the search index for your files -- the first pass takes a moment, after that it is live. This step switches back to the typing practice once the index is ready.",
-  "Tour2_IndexingHint": "Hang tight -- this step restores itself when the index is ready"
+  "Tour2_IndexingHint": "Hang tight -- this step restores itself when the index is ready",
+  "Settings_ShowHiddenFilesLabel": "Show hidden and system files in search results",
+  "Settings_ShowHiddenFilesDesc": "When on, search lists hidden and system files (the \"*\" bypass marker behavior is unchanged). Recent files and folder browsing do not follow this toggle yet."
 }

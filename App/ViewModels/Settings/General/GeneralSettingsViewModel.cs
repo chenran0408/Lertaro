@@ -19,6 +19,7 @@ public class GeneralSettingsViewModel : ViewModelBase
     private bool _autoCheckUpdates;
     private bool _enableHardwareAcceleration;
     private bool _enableFuzzyMatch;
+    private bool _showHiddenFiles;
     private bool _orFirstPrecedence;
     private bool _enableQuickSearchClipboardAutoFill;
     private bool _keepSearchText;
@@ -58,6 +59,7 @@ public class GeneralSettingsViewModel : ViewModelBase
         _autoCheckUpdates = userSettings.AutoCheckUpdates;
         _enableHardwareAcceleration = userSettings.EnableHardwareAcceleration;
         _enableFuzzyMatch = userSettings.EnableFuzzyMatch;
+        _showHiddenFiles = userSettings.ShowHiddenFiles;
         _orFirstPrecedence = userSettings.OrFirstPrecedence;
         _enableQuickSearchClipboardAutoFill = userSettings.EnableQuickSearchClipboardAutoFill;
         _keepSearchText = userSettings.SearchWindow.KeepSearchText;
@@ -159,6 +161,14 @@ public class GeneralSettingsViewModel : ViewModelBase
         set => SetProperty(ref _enableFuzzyMatch, value);
     }
 
+    // Hidden/system files stay out of search results unless this is on. Single source of truth:
+    // the "*" bypass marker never re-includes them by itself.
+    public bool ShowHiddenFiles
+    {
+        get => _showHiddenFiles;
+        set => SetProperty(ref _showHiddenFiles, value);
+    }
+
     // How spaces (AND) and the pipe '|' (OR) bind when a query mixes them. Off is AND-first, the
     // default: "report | summary 2024" means report OR (summary AND 2024). On restores the historical
     // OR-first reading of the same query -- (report OR summary) AND 2024.
@@ -243,6 +253,7 @@ public class GeneralSettingsViewModel : ViewModelBase
         _autoCheckUpdates,
         _enableHardwareAcceleration,
         _enableFuzzyMatch,
+        _showHiddenFiles,
         _orFirstPrecedence,
         _enableQuickSearchClipboardAutoFill,
         _keepSearchText,
