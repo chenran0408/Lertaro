@@ -20,7 +20,7 @@ internal static class ResultExporter
         if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
 
         using var writer = new StreamWriter(filePath, append: false,
-            asCsv ? new UTF8(encoderShouldEmitUTF8Identifier: true) : new UTF8(false));
+            asCsv ? new UTF8Encoding(encoderShouldEmitUTF8Identifier: true) : new UTF8Encoding(false));
 
         if (asCsv)
         {
