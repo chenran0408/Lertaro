@@ -124,9 +124,12 @@ public partial class OnboardingWindow : AppWindow
         main.IsVisibleChanged += (_, args) =>
         {
             var visible = (bool)args.NewValue;
-            // Hiding while on the Enter step IS the practice: executing a result closes the window
-            // by design. Hiding any other time is just the user dismissing the window.
-            if (!visible && _machine.StepIndex == 3)
+            // The window's visibility IS the practice signal on two steps: appearing completes the
+            // wake step, disappearing completes the Enter step (executing a result closes the
+            // window by design). Any other visibility change is just the user coming and going.
+            if (visible && _machine.StepIndex == 0)
+                _machine.Handle(TourEvent.PracticeObserved);
+            else if (!visible && _machine.StepIndex == 3)
                 _machine.Handle(TourEvent.PracticeObserved);
             else
                 _machine.Handle(visible ? TourEvent.MainWindowShown : TourEvent.MainWindowHidden);
@@ -187,7 +190,8 @@ public partial class OnboardingWindow : AppWindow
         if (minimized)
         {
             Width = 260;
-            StripStepLabel.Text = $"{_machine.StepIndex + 1}/{OnboardingMachine.StepCount}  " + T(Steps[_machine.StepIndex].TitleKey);
+            // Mid-practice the user needs the instruction, not the chapter name.
+            StripStepLabel.Text = $"{_machine.StepIndex + 1}/{OnboardingMachine.StepCount}  " + T(Steps[_machine.StepIndex].HintKey);
             RebuildStripDots();
             PlaceAtRightEdge();
         }

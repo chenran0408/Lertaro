@@ -86,6 +86,25 @@ public sealed class OnboardingMachineTests
     }
 
     [TestMethod]
+    public void WakeStep_CompletesOnWindowShown_AndPracticeContinuesWhileFolded()
+    {
+        // The user flow that shipped broken: double-ctrl wakes the window, the card folds, and the
+        // user follows the remaining steps while the window owns the screen. The wake completes ON
+        // the window appearing; later steps advance while the card stays folded.
+        var machine = new OnboardingMachine();
+        machine.Handle(TourEvent.MainWindowShown);  // window appears...
+        machine.Handle(TourEvent.PracticeObserved); // ...and that appearance IS the wake step
+        Assert.AreEqual(1, machine.StepIndex);
+        Assert.AreEqual(TourMode.Minimized, machine.Mode);
+
+        machine.Handle(TourEvent.PracticeObserved); // typed
+        machine.Handle(TourEvent.PracticeObserved); // selected
+        machine.Handle(TourEvent.PracticeObserved); // enter -> window hides
+        Assert.AreEqual(4, machine.StepIndex);
+        Assert.AreEqual(TourOutcome.InProgress, machine.Outcome);
+    }
+
+    [TestMethod]
     public void FullScenario_YieldWhilePracticing_TimeoutOnStepFour_SkipAtTheEnd()
     {
         // The real first-run shape: wake the window (yields), type and select inside it, the
