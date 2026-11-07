@@ -111,8 +111,11 @@ public partial class OnboardingWindow : AppWindow
     private void PlaceAtRightEdge()
     {
         var area = SystemParameters.WorkArea;
-        Left = Math.Max(area.Left, area.Right - CardWidth - 20);
-        Top = area.Top + Math.Max(0, (area.Height - 220) / 2);
+        var width = _machine.Mode == TourMode.Minimized ? 260 : CardWidth;
+        Left = Math.Max(area.Left, area.Right - width - 20);
+        Top = _machine.Mode == TourMode.Minimized
+            ? area.Bottom - 120
+            : area.Top + Math.Max(0, (area.Height - 220) / 2);
     }
 
     private void HookMainWindow()
@@ -178,21 +181,19 @@ public partial class OnboardingWindow : AppWindow
         BuildKeycaps(step.Keycaps);
         UpdateDots(_machine.StepIndex);
 
-        // Minimized keeps the strip as the whole window: hide the card content, shrink the frame.
         var minimized = _machine.Mode == TourMode.Minimized;
         ExpandedCard.Visibility = minimized ? Visibility.Collapsed : Visibility.Visible;
+        MinimizedStrip.Visibility = minimized ? Visibility.Visible : Visibility.Collapsed;
         if (minimized)
         {
-            Width = 190;
-            MinHeight = 0;
-            Left = Math.Max(SystemParameters.WorkArea.Left, SystemParameters.WorkArea.Right - Width - 20);
-            Top = Math.Max(SystemParameters.WorkArea.Top, SystemParameters.WorkArea.Bottom - 70);
-            TryButton.Visibility = Visibility.Visible;
+            Width = 260;
+            StripStepLabel.Text = $"{_machine.StepIndex + 1}/{OnboardingMachine.StepCount}  " + T(Steps[_machine.StepIndex].TitleKey);
+            RebuildStripDots();
+            PlaceAtRightEdge();
         }
         else
         {
             Width = CardWidth;
-            TryButton.Visibility = Visibility.Collapsed;
         }
     }
 
@@ -215,8 +216,9 @@ public partial class OnboardingWindow : AppWindow
     private void Restore_Click(object sender, RoutedEventArgs e)
     {
         _machine.Handle(TourEvent.Restore);
-        Render();
+        PlaceAtRightEdge();
         RestartBudget();
+        Render();
     }
 
     private void Skip_Click(object sender, RoutedEventArgs e)
@@ -289,6 +291,20 @@ public partial class OnboardingWindow : AppWindow
         }
 
         storyboard.Begin(KeycapPanel);
+    }
+
+    private void RebuildStripDots()
+    {
+        StripDots.Children.Clear();
+        for (var index = 0; index < OnboardingMachine.StepCount; index++)
+            StripDots.Children.Add(new Ellipse
+            {
+                Width = index == _machine.StepIndex ? 10 : 6,
+                Height = 6,
+                Margin = new Thickness(2, 0, 2, 0),
+                Fill = (Brush)FindResource(index == _machine.StepIndex ? "AccentBlue" : "TextSecondary"),
+                Opacity = index == _machine.StepIndex ? 1 : 0.3,
+            });
     }
 
     private void RebuildDots()
