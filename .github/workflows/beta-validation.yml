@@ -85,7 +85,17 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - name: Install package compiler
-        run: winget install JRSoftware.InnoSetup.7 --force --silent --no-upgrade --accept-source-agreements
+        shell: pwsh
+        run: |
+          # winget pulls the Inno Setup installer from GitHub Releases; that endpoint has answered
+          # 504 on release runs twice now (it also hit the taskbar asset download once). Retry
+          # with backoff before giving up -- --force makes a partial earlier attempt harmless.
+          for ($attempt = 1; $attempt -le 4; $attempt++) {
+            winget install JRSoftware.InnoSetup.7 --force --silent --no-upgrade --accept-source-agreements
+            if ($LASTEXITCODE -eq 0) { exit 0 }
+            if ($attempt -lt 4) { Start-Sleep -Seconds (20 * $attempt) }
+          }
+          exit $LASTEXITCODE
       - name: Build both installers
         run: .\make.bat
       - name: Verify packaged index store architectures
