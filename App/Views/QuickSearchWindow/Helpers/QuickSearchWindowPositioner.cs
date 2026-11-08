@@ -58,10 +58,16 @@ public class QuickSearchWindowPositioner
         var settings = UserSettings.Load();
         var windowWidth = settings.SearchWindow.SearchBarWidth + 48;
 
+        // Follow-cursor summon ignores the remembered spot (which is kept, not cleared, so turning
+        // the option off restores it); remember mode passes it through.
+        var (relLeft, relTop) = settings.SearchWindow.FollowCursorOnSummon
+            ? ((double?)null, (double?)null)
+            : (settings.SearchWindow.RelativeLeft, settings.SearchWindow.RelativeTop);
+
         var (targetPhysX, targetPhysY) = CalculatePhysicalPosition(
             wa.Left, wa.Top, wa.Width, wa.Height,
             windowWidth, targetDpiScaleX,
-            settings.SearchWindow.RelativeLeft, settings.SearchWindow.RelativeTop,
+            relLeft, relTop,
             mousePos.X, mousePos.Y);
 
         // Set WPF DIP properties first so WPF's internal logical coordinates are updated.
@@ -141,7 +147,9 @@ public class QuickSearchWindowPositioner
     }
 
     // Wired to QuickSearchWindow's drag handler right after a drag finishes moving the window.
-    // Records where it ended up as a fraction of whichever monitor it is now on.
+    // Records where it ended up as a fraction of whichever monitor it is now on. A drag is the
+    // user pinning the bar down -- it also turns follow-cursor off, so the pinned spot actually
+    // sticks on the next summon instead of being overridden the moment the hotkey goes again.
     public void SaveWindowPosition()
     {
         var hwnd = new WindowInteropHelper(_window).Handle;
@@ -159,6 +167,7 @@ public class QuickSearchWindowPositioner
         var settings = UserSettings.Load();
         settings.SearchWindow.RelativeLeft = (double)(rect.Left - wa.Left) / wa.Width;
         settings.SearchWindow.RelativeTop = (double)(rect.Top - wa.Top) / wa.Height;
+        settings.SearchWindow.FollowCursorOnSummon = false;
         settings.Save();
     }
 
@@ -167,6 +176,8 @@ public class QuickSearchWindowPositioner
         var settings = UserSettings.Load();
         settings.SearchWindow.RelativeLeft = null;
         settings.SearchWindow.RelativeTop = null;
+        // Back to the factory behavior: follow the cursor until the next drag pins a new spot.
+        settings.SearchWindow.FollowCursorOnSummon = true;
         settings.Save();
         PositionWindow();
     }

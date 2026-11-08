@@ -17,6 +17,31 @@
                 <ColumnDefinition Width="Auto"/><!-- Right Icon Column -->
             </Grid.ColumnDefinitions>
 
+            <!-- Empty-bar drag strip: with no text in the box there is nothing to select, so the
+                 whole surface drags the window (the issue #255 rule stays intact once text exists:
+                 the TextBox above takes every press back and the logo remains the handle). Hit-visible
+                 only while the box is empty and not browsing actions; a plain click still lands here
+                 and the code-behind focuses the box, so summon-and-click-to-type is unchanged. -->
+            <Grid x:Name="BarDragStrip" Grid.Column="0" Grid.ColumnSpan="4" Background="Transparent"
+                  MouseLeftButtonDown="BarDrag_MouseLeftButtonDown"
+                  MouseLeftButtonUp="BarDrag_MouseLeftButtonUp" MouseMove="BarDrag_MouseMove">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="IsHitTestVisible" Value="False"/>
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding Text, ElementName=TxtSearch}" Value=""/>
+                                    <Condition Binding="{Binding IsInActionsMode, ElementName=root}" Value="False"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="IsHitTestVisible" Value="True"/>
+                                <Setter Property="Cursor" Value="SizeAll"/>
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+            </Grid>
+
             <!-- Left Icon Grid (Visible only when IsIconOnLeft is True) -->
             <Grid Grid.Column="0" Margin="0,0,11,0" VerticalAlignment="Center"
                   MouseRightButtonUp="Icon_MouseRightButtonUp"
@@ -127,6 +152,13 @@
                                 </ControlTemplate>
                             </Setter.Value>
                         </Setter>
+                        <!-- Yield hit-testing to the empty-bar drag strip while there is no text:
+                             keyboard input and programmatic focus are unaffected, only clicks. -->
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource Self}}" Value="">
+                                <Setter Property="IsHitTestVisible" Value="False"/>
+                            </DataTrigger>
+                        </Style.Triggers>
                     </Style>
                 </TextBox.Style>
             </TextBox>

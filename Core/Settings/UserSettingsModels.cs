@@ -215,6 +215,11 @@ public class SearchWindowSettings
     // QuickSearchWindowShowSupport.ShowWindow), so typing still replaces it rather than appending to it.
     // Off by default: the window is meant to start clean for the usual "summon and type" gesture.
     public bool KeepSearchText { get; set; } = false;
+    // Where the quick window appears on summon. True (default) places it centred on the cursor a
+    // step below it -- the eyes are already at the cursor when the hotkey goes down. False falls
+    // back to the dragged-and-remembered relative spot. The remembered spot is kept either way
+    // (RelativeLeft/Top above), so toggling back restores it untouched.
+    public bool FollowCursorOnSummon { get; set; } = true;
 }
 
 public class PreviewWindowSettings

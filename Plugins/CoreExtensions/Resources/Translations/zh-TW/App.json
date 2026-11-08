@@ -996,5 +996,8 @@
   "Tray_DiagnosticZip": "匯出診斷套件",
   "JumpList_CategorySearches": "最近搜尋",
   "JumpList_CategoryFavorites": "收藏目錄",
-  "Settings_ClearOnExitLabel": "退出時清空搜尋歷史"
+  "Settings_ClearOnExitLabel": "退出時清空搜尋歷史",
+  "General_LayoutFollowCursor": "呼出時跟隨滑鼠",
+  "General_LayoutFollowCursorHint": "搜尋框出現在滑鼠附近；拖動一次後會自動記住該位置，不再跟隨。",
+  "About_UpdateNotes": "更新內容"
 }

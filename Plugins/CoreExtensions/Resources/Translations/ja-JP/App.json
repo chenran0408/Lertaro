@@ -996,5 +996,8 @@
   "Tray_DiagnosticZip": "診断パッケージをエクスポート",
   "JumpList_CategorySearches": "最近の検索",
   "JumpList_CategoryFavorites": "お気に入りフォルダー",
-  "Settings_ClearOnExitLabel": "終了時に検索履歴をクリア"
+  "Settings_ClearOnExitLabel": "終了時に検索履歴をクリア",
+  "General_LayoutFollowCursor": "呼び出し時にカーソルに追従",
+  "General_LayoutFollowCursorHint": "検索バーはマウスの近くに表示されます。一度ドラッグするとその位置が記憶され、追従を停止します。",
+  "About_UpdateNotes": "更新内容"
 }

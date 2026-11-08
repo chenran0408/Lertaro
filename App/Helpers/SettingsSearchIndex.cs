@@ -94,6 +94,7 @@ public static class SettingsSearchIndex
         new("General_LayoutHeight", "General", vm => vm.General.SelectedTab = "Layout", "TabLayout/RowLayoutHeight", "General_LayoutTitle", "General_LayoutSectionTitle"),
         new("General_LayoutShowClock", "General", vm => vm.General.SelectedTab = "Layout", "TabLayout/RowLayoutShowClock", "General_LayoutTitle", "General_LayoutSectionTitle"),
         new("General_LayoutReopenFullWindowOnHotkey", "General", vm => vm.General.SelectedTab = "Layout", "TabLayout/RowLayoutReopenFullWindow", "General_LayoutTitle", "General_LayoutSectionTitle"),
+        new("General_LayoutFollowCursor", "General", vm => vm.General.SelectedTab = "Layout", "TabLayout/RowLayoutFollowCursor", "General_LayoutTitle", "General_LayoutSectionTitle"),
         new("General_LayoutLockPosition", "General", vm => vm.General.SelectedTab = "Layout", "TabLayout/RowLayoutLockPosition", "General_LayoutTitle", "General_LayoutSectionTitle"),
         new("General_LayoutAutoFillClipboard", "General", vm => vm.General.SelectedTab = "Layout", "TabLayout/RowLayoutAutoFillClipboard", "General_LayoutTitle", "General_LayoutSectionTitle"),
         new("General_LayoutReset", "General", vm => vm.General.SelectedTab = "Layout", "TabLayout/RowLayoutReset", "General_LayoutTitle", "General_LayoutSectionTitle"),

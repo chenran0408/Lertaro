@@ -996,5 +996,8 @@
   "Tray_DiagnosticZip": "导出诊断包",
   "JumpList_CategorySearches": "最近搜索",
   "JumpList_CategoryFavorites": "收藏目录",
-  "Settings_ClearOnExitLabel": "退出时清空搜索历史"
+  "Settings_ClearOnExitLabel": "退出时清空搜索历史",
+  "General_LayoutFollowCursor": "呼出时跟随鼠标",
+  "General_LayoutFollowCursorHint": "搜索框出现在鼠标附近；拖动一次后会自动记住该位置，不再跟随。",
+  "About_UpdateNotes": "更新内容"
 }

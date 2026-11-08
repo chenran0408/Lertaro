@@ -53,34 +53,24 @@ public partial class SearchBoxControl : UserControl
         IconMiddleClicked?.Invoke();
     }
 
-    // Marks the press handled so it never bubbles up to whatever a hosting window does with a press on its
-    // own chrome (a window that drags itself): without this, a plain click on a clickable icon would also
-    // be picked up as a drag-start by whatever's underneath it. Left alone when the icon isn't clickable,
-    // so windows that never opted in keep whatever click-to-drag behavior they had.
-    //
-    // When IsIconDraggable is ALSO set (the quick window: its logo still drags the window, same as
-    // before it was clickable at all), capture the mouse and wait to see whether the gesture turns into
-    // a real drag before deciding -- see Icon_MouseMove.
-    private void Icon_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    // Shared gesture core for every "press, wait for the threshold, then move the window" surface
+    // (the logo, and the empty-bar strip): capture at press, start WindowDragTracker only once the
+    // movement is a real drag -- from HERE, not the original press point, so the window doesn't jump
+    // to "catch up" for however far the mouse already moved past the drag threshold before this fired.
+    private void BeginPotentialDrag(IInputElement element, MouseButtonEventArgs e)
     {
-        if (!IsIconClickable) return;
-        e.Handled = true;
-
-        if (IsIconDraggable && sender is IInputElement el)
-        {
-            _iconDragStarted = false;
-            _iconPressScreenPoint = el is System.Windows.Media.Visual v ? v.PointToScreen(e.GetPosition(el)) : (System.Windows.Point?)null;
-            Mouse.Capture(el);
-        }
+        _iconDragStarted = false;
+        _iconPressScreenPoint = element is System.Windows.Media.Visual v
+            ? v.PointToScreen(e.GetPosition(element))
+            : (System.Windows.Point?)null;
+        Mouse.Capture(element);
     }
 
-    private void Icon_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    private void TrackPotentialDrag(System.Windows.Media.Visual visual, System.Windows.Input.MouseEventArgs e)
     {
-        if (!IsIconDraggable || _iconPressScreenPoint == null || e.LeftButton != MouseButtonState.Pressed)
-            return;
-        if (sender is not System.Windows.Media.Visual visual) return;
+        if (_iconPressScreenPoint == null || e.LeftButton != MouseButtonState.Pressed) return;
 
-        var current = visual.PointToScreen(e.GetPosition((IInputElement)sender));
+        var current = visual.PointToScreen(e.GetPosition((IInputElement)visual));
 
         if (!_iconDragStarted)
         {
@@ -89,9 +79,6 @@ public partial class SearchBoxControl : UserControl
                 Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance)
                 return;
 
-            // Real drag confirmed: start tracking from HERE, not the original press point, so the window
-            // doesn't jump to "catch up" for however far the mouse already moved past the drag threshold
-            // before this fired.
             var window = Window.GetWindow(this);
             if (window == null) return;
             _iconDragStarted = true;
@@ -103,23 +90,72 @@ public partial class SearchBoxControl : UserControl
         _iconDragTracker?.Update(current);
     }
 
-    private void Icon_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    private bool EndPotentialDrag(IInputElement element, MouseButtonEventArgs e)
     {
-        if (sender is IInputElement el) el.ReleaseMouseCapture();
+        element.ReleaseMouseCapture();
         var wasDrag = _iconDragStarted;
         _iconDragStarted = false;
         _iconPressScreenPoint = null;
-        if (wasDrag)
-        {
-            _iconDragTracker?.End();
-            _iconDragTracker = null;
-            IconDragCompleted?.Invoke();
-            return;
-        }
+        if (!wasDrag) return false;
+        _iconDragTracker?.End();
+        _iconDragTracker = null;
+        IconDragCompleted?.Invoke();
+        return true;
+    }
 
+    // Marks the press handled so it never bubbles up to whatever a hosting window does with a press on its
+    // own chrome (a window that drags itself): without this, a plain click on a clickable icon would also
+    // be picked up as a drag-start by whatever's underneath it. Left alone when the icon isn't clickable,
+    // so windows that never opted in keep whatever click-to-drag behavior they had.
+    //
+    // When IsIconDraggable is ALSO set (the quick window: its logo still drags the window, same as
+    // before it was clickable at all), capture the mouse and wait to see whether the gesture turns into
+    // a real drag before deciding -- see TrackPotentialDrag.
+    private void Icon_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!IsIconClickable) return;
+        e.Handled = true;
+
+        if (IsIconDraggable && sender is IInputElement el)
+            BeginPotentialDrag(el, e);
+    }
+
+    private void Icon_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (!IsIconDraggable || sender is not System.Windows.Media.Visual visual) return;
+        TrackPotentialDrag(visual, e);
+    }
+
+    private void Icon_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not IInputElement el) return;
+        if (EndPotentialDrag(el, e)) return; // a real drag just ended; no click
         if (!IsIconClickable || IconLeftClicked == null) return;
         var screenPoint = ((System.Windows.Media.Visual)sender).PointToScreen(e.GetPosition((IInputElement)sender));
         IconLeftClicked.Invoke((int)screenPoint.X, (int)screenPoint.Y);
+    }
+
+    // The empty-bar drag strip (see BarDragStrip in the XAML): the box has no text to select while
+    // empty, so there the whole surface drags the window; once text exists the TextBox takes every
+    // press back and the logo remains the handle. A plain click still focuses the box, so the
+    // summon-and-click-to-type gesture is unchanged.
+    private void BarDrag_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!IsIconDraggable || sender is not IInputElement el) return;
+        e.Handled = true;
+        TxtSearch.Focus();
+        BeginPotentialDrag(el, e);
+    }
+
+    private void BarDrag_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (!IsIconDraggable || sender is not System.Windows.Media.Visual visual) return;
+        TrackPotentialDrag(visual, e);
+    }
+
+    private void BarDrag_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is IInputElement el) EndPotentialDrag(el, e);
     }
 
     static SearchBoxControl()

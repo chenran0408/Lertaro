@@ -15,6 +15,7 @@ public class SearchBarLayoutSettingsViewModel : ViewModelBase
     private bool _showClock;
     private bool _reopenAsFullWindowOnRepeatHotkey;
     private bool _lockPosition;
+    private bool _followCursorOnSummon;
     // Reset() clears the quick window's remembered screen position -- there's no bound field for it
     // (the window itself owns Left/Top), so this just stages the intent for Save() to commit.
     private bool _resetPosition;
@@ -27,6 +28,7 @@ public class SearchBarLayoutSettingsViewModel : ViewModelBase
         _showClock = userSettings.SearchWindow.ShowClock;
         _reopenAsFullWindowOnRepeatHotkey = userSettings.SearchWindow.ReopenAsFullWindowOnRepeatHotkey;
         _lockPosition = userSettings.SearchWindow.LockPosition;
+        _followCursorOnSummon = userSettings.SearchWindow.FollowCursorOnSummon;
     }
 
     public double SearchBarWidth
@@ -73,6 +75,12 @@ public class SearchBarLayoutSettingsViewModel : ViewModelBase
         set => SetProperty(ref _lockPosition, value);
     }
 
+    public bool FollowCursorOnSummon
+    {
+        get => _followCursorOnSummon;
+        set => SetProperty(ref _followCursorOnSummon, value);
+    }
+
     public ICommand ResetCommand => new RelayCommand(Reset);
 
     private void Reset()
@@ -94,6 +102,7 @@ public class SearchBarLayoutSettingsViewModel : ViewModelBase
         _userSettings.SearchWindow.ShowClock = _showClock;
         _userSettings.SearchWindow.ReopenAsFullWindowOnRepeatHotkey = _reopenAsFullWindowOnRepeatHotkey;
         _userSettings.SearchWindow.LockPosition = _lockPosition;
+        _userSettings.SearchWindow.FollowCursorOnSummon = _followCursorOnSummon;
         if (_resetPosition)
         {
             _userSettings.SearchWindow.RelativeLeft = null;

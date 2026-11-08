@@ -996,5 +996,8 @@
   "Tray_DiagnosticZip": "Exportar diagnóstico",
   "JumpList_CategorySearches": "Búsquedas recientes",
   "JumpList_CategoryFavorites": "Carpetas favoritas",
-  "Settings_ClearOnExitLabel": "Borrar historial de búsqueda al salir"
+  "Settings_ClearOnExitLabel": "Borrar historial de búsqueda al salir",
+  "General_LayoutFollowCursor": "Seguir el cursor al aparecer",
+  "General_LayoutFollowCursorHint": "La barra de busqueda aparece junto al raton; al arrastrarla una vez se fija en ese lugar y deja de seguirlo.",
+  "About_UpdateNotes": "Novedades"
 }

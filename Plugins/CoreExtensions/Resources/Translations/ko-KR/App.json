@@ -996,5 +996,8 @@
   "Tray_DiagnosticZip": "진단 패키지 내보내기",
   "JumpList_CategorySearches": "최근 검색",
   "JumpList_CategoryFavorites": "즐겨찾는 폴더",
-  "Settings_ClearOnExitLabel": "종료 시 검색 기록 지우기"
+  "Settings_ClearOnExitLabel": "종료 시 검색 기록 지우기",
+  "General_LayoutFollowCursor": "호출 시 커서 따르기",
+  "General_LayoutFollowCursorHint": "검색 창이 마우스 근처에 나타납니다. 한 번 끌면 해당 위치가 기억되어 더 이상 따르지 않습니다.",
+  "About_UpdateNotes": "업데이트 내용"
 }

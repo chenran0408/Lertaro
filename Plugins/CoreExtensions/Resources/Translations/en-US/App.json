@@ -996,5 +996,8 @@
   "Tray_DiagnosticZip": "Export diagnostics",
   "JumpList_CategorySearches": "Recent searches",
   "JumpList_CategoryFavorites": "Favorite folders",
-  "Settings_ClearOnExitLabel": "Clear search history on exit"
+  "Settings_ClearOnExitLabel": "Clear search history on exit",
+  "General_LayoutFollowCursor": "Follow the cursor on summon",
+  "General_LayoutFollowCursorHint": "The search bar appears near the mouse; dragging it once pins that spot and stops the following.",
+  "About_UpdateNotes": "What's new"
 }

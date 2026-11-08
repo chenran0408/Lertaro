@@ -158,6 +158,19 @@
                                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_ActionPage]}"
                                  Click="BtnGoToPage_Click" MinWidth="130"/>
                     </StackPanel>
+
+                    <!-- What's new in the found version: the release body, markdown cleaned -->
+                    <StackPanel x:Name="SpUpdateNotes" Margin="0,14,0,0" Visibility="Collapsed">
+                        <TextBlock x:Name="TxtUpdateNotesTitle" FontSize="14" FontWeight="SemiBold"
+                                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_UpdateNotes]}"/>
+                        <Border Margin="0,8,0,0" Padding="12,10" CornerRadius="6"
+                                Background="{DynamicResource ControlHoverBackground}">
+                            <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <TextBlock x:Name="TxtUpdateNotes" TextWrapping="Wrap" FontSize="13"/>
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

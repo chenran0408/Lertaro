@@ -150,6 +150,7 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
         BtnCheckUpdate.IsEnabled = false;
         _latestRelease = null;
         BtnDownloadUpdate.Visibility = Visibility.Collapsed;
+        SpUpdateNotes.Visibility = Visibility.Collapsed;
         TxtUpdateStatus.Text = TranslationManager.Instance["About_Checking"];
         SpUpdateActions.Visibility = Visibility.Collapsed;
 
@@ -190,6 +191,10 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
                 SpUpdateActions.Visibility = Visibility.Visible;
                 BtnDownloadUpdate.Visibility = Visibility.Visible;
 
+                // What's new: the release body rendered under the actions, so the user can decide
+                // with the changelog in front of them instead of a bare version number.
+                RenderReleaseNotes(release.Body);
+
                 // The service applies signed packages as LocalSystem, so a standard user can update
                 // from this button without elevating the App or opening a download page.
                 BtnDownloadUpdate.IsEnabled = true;
@@ -204,6 +209,29 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
             TxtUpdateStatus.Text = TranslationManager.Instance["About_UpdateUnavailable"];
             SpUpdateActions.Visibility = Visibility.Visible;
         }
+    }
+
+    /// <summary>Renders the cleaned release body into the notes area. An empty or whitespace-only
+    /// body keeps the whole panel hidden -- a bare version number is still better than an empty box.</summary>
+    private void RenderReleaseNotes(string? body)
+    {
+        var lines = UpdateNotesFormatter.Format(body);
+        if (lines.Count == 0) return;
+
+        TxtUpdateNotes.Inlines.Clear();
+        for (var index = 0; index < lines.Count; index++)
+        {
+            var line = lines[index];
+            var run = new System.Windows.Documents.Run(line.Text);
+            if (line.IsHeader)
+            {
+                run.FontWeight = FontWeights.SemiBold;
+                run.FontSize = 14;
+            }
+            TxtUpdateNotes.Inlines.Add(run);
+            if (index < lines.Count - 1) TxtUpdateNotes.Inlines.Add(new System.Windows.Documents.LineBreak());
+        }
+        SpUpdateNotes.Visibility = Visibility.Visible;
     }
 
     private async void BtnDownloadUpdate_Click(object sender, RoutedEventArgs e)
