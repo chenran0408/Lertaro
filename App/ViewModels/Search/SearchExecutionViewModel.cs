@@ -146,8 +146,8 @@ public class SearchExecutionViewModel : ViewModelBase, IDisposable
         // queries skip UserSettings.Load() entirely, keeping the setter fast for normal typing.
         var space = query.IndexOf(' ');
         if (space < 0) { WebModeKeyword = null; return; }
-        string keyword = query[..space];
-        string rest = query[(space + 1)..].Trim();
+        var keyword = query[..space];
+        var rest = query[(space + 1)..].Trim();
 
         // Entering web mode requires keyword + space + something to search; keyword alone stays a
         // normal search so the transition point is the space itself.
