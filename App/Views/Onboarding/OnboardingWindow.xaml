@@ -11,20 +11,14 @@
              ShowInTaskbar="False"
              TextElement.Foreground="{Binding RelativeSource={RelativeSource Self}, Path=ForegroundBrush}"
              BorderBrush="{Binding RelativeSource={RelativeSource Self}, Path=PanelBorderBrush}" BorderThickness="1">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-
-        <!-- Expanded card -->
-        <Grid x:Name="ExpandedCard" Grid.Row="0" Margin="20,16,20,18">        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <!-- The card is the whole window: it never folds (Listary-style coexistence: while the
+         search window is up, the code-behind docks this window beside it instead). -->
+    <Grid x:Name="ExpandedCard" Margin="20,16,20,18">        <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
 
         <!-- Header: progress + skip. -->
         <Grid Grid.Row="0">
@@ -57,26 +51,4 @@
 
         <StackPanel x:Name="Dots" Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,14,0,0"/>
     </Grid>
-
-    <!-- Folded strip: the whole window while minimized. It must carry its own visible content,
-         because the first cut collapsed the card and showed a blank bar nobody could find. -->
-    <Border x:Name="MinimizedStrip" Grid.Row="1" Visibility="Collapsed" Margin="10"
-            Background="{DynamicResource ContentBg}" CornerRadius="6"
-            BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" Padding="10,6">
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <StackPanel x:Name="StripDots" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0"/>
-            <TextBlock x:Name="StripStepLabel" Grid.Column="1" FontSize="12" VerticalAlignment="Center"
-                       Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis"/>
-            <Button Grid.Column="2" Style="{StaticResource SettingsButton}" Height="24" MinWidth="0"
-                    Padding="10,0" FontSize="12"
-                    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Onboarding_Restore]}"
-                    Click="Restore_Click"/>
-        </Grid>
-    </Border>
-</Grid>
 </appWindow:AppWindow>

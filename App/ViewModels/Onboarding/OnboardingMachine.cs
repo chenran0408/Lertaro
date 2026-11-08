@@ -1,15 +1,5 @@
 namespace Lertaro.App.ViewModels.Onboarding;
 
-/// <summary>How the tour card presents itself right now.</summary>
-public enum TourMode
-{
-    /// <summary>Full card beside the action.</summary>
-    Expanded,
-    /// <summary>Non-blocking strip: the practice window owns the screen (main search window up,
-    /// or the step timed out and the card folded to a corner hint). Restorable.</summary>
-    Minimized,
-}
-
 /// <summary>Where the tour is in its life; Completed/Skipped are terminal.</summary>
 public enum TourOutcome { InProgress, Completed, Skipped }
 
@@ -18,23 +8,17 @@ public enum TourEvent
 {
     /// <summary>The user did the step's real action (typed, selected, pressed, opened).</summary>
     PracticeObserved,
-    /// <summary>The main search window appeared -- the card yields the screen.</summary>
-    MainWindowShown,
-    /// <summary>The main search window went away -- the card returns.</summary>
-    MainWindowHidden,
-    /// <summary>The step's practice budget elapsed; fold to a corner hint.</summary>
-    Timeout,
     /// <summary>User dismissed the tour.</summary>
     SkipRequested,
-    /// <summary>User clicked the folded hint back open.</summary>
-    Restore,
 }
 
 /// <summary>
-/// Pure state machine for the first-run tour: five practice steps, one real event each, fold and
-/// restore on demand, two terminal outcomes. No WPF, no timers, no IO -- drivers observe the world
-/// and feed events; the view renders whatever state comes back. Every transition is total, so a
-/// late event after completion or skip can never revive the tour.
+/// Pure state machine for the first-run tour: five practice steps, one real event each, two
+/// terminal outcomes. No WPF, no timers, no IO -- drivers observe the world and feed events; the
+/// view renders whatever state comes back. The card never folds: Listary-style, the tour and the
+/// search window coexist on screen and positioning stays a view concern (the main window's
+/// visibility doubles as the practice signal on two steps, which the view maps itself). Every
+/// transition is total, so a late event after completion or skip can never revive the tour.
 /// </summary>
 public sealed class OnboardingMachine
 {
@@ -47,7 +31,6 @@ public sealed class OnboardingMachine
     /// <summary>Zero-based practice step the tour is waiting on.</summary>
     public int StepIndex { get; private set; }
     public int StepCount => _stepCount;
-    public TourMode Mode { get; private set; } = TourMode.Expanded;
     public TourOutcome Outcome { get; private set; } = TourOutcome.InProgress;
 
     /// <summary>How many steps the user actually finished -- for the summary line on completion.</summary>
@@ -75,16 +58,6 @@ public sealed class OnboardingMachine
                 CompletedSteps++;
                 if (StepIndex >= _stepCount - 1) Outcome = TourOutcome.Completed;
                 else StepIndex++;
-                break;
-            case TourEvent.MainWindowShown:
-                Mode = TourMode.Minimized;
-                break;
-            case TourEvent.MainWindowHidden:
-            case TourEvent.Restore:
-                Mode = TourMode.Expanded;
-                break;
-            case TourEvent.Timeout:
-                Mode = TourMode.Minimized;
                 break;
             case TourEvent.SkipRequested:
                 Outcome = TourOutcome.Skipped;

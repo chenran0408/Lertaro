@@ -27,9 +27,10 @@ namespace Lertaro.App.Views.Onboarding;
 /// <summary>
 /// The first-run tour card: each step demos its keycap animation (Phase 3) and then waits for the
 /// user to actually do it -- the card listens to the real surfaces (main window visibility, the
-/// search box, the results list) and never touches the wake path itself. While the main window is
-/// up the card folds to a non-blocking strip and returns when it closes; a step ignored for its
-/// whole budget folds the same way; Esc anywhere ends the tour. Every exit marks
+/// search box, the results list) and never touches the wake path itself. Listary-style, the card
+/// never folds: while the search window is up it docks beside it (same top edge, whichever side
+/// has room) so the instruction and the practice stay on screen together, and it returns to its
+/// resting spot when the window closes. Esc anywhere ends the tour. Every exit marks
 /// OnboardingCompleted, so the card shows itself exactly once -- the tray replays it on demand.
 /// </summary>
 public partial class OnboardingWindow : AppWindow
@@ -43,17 +44,20 @@ public partial class OnboardingWindow : AppWindow
         ("Tour5_Title", "Tour5_Body", "Tour5_Hint", "Ctrl\u2009+\u2009O"),
     ];
 
-    private const int PracticeBudgetSeconds = 30;
     private const double CardWidth = 420;
+    private const double EstimatedCardHeight = 320;
 
     private readonly OnboardingMachine _machine = new();
-    private readonly DispatcherTimer _budgetTimer = new() { Interval = TimeSpan.FromSeconds(PracticeBudgetSeconds) };
+    // Runs once, after the completed card has been up for its linger delay: then the tour closes
+    // itself. There is no per-step budget -- an ignored card stays put (Listary does the same)
+    // instead of folding away mid-practice.
+    private readonly DispatcherTimer _lingerTimer = new() { Interval = TimeSpan.FromSeconds(2.5) };
     private bool _indexingVariant;
     private PropertyChangedEventHandler? _indexReadyHandler;
     private TextBox? _hookedSearchTextBox;
     private ListBox? _hookedResults;
     private SearchBoxControl? _hookedSearchBox;
-    private bool _lingerBeforeClose;
+    private bool _completedShown;
 
     public OnboardingWindow()
     {
@@ -65,12 +69,7 @@ public partial class OnboardingWindow : AppWindow
         {
             if (e.Key == Key.Escape) Close();
         };
-        _budgetTimer.Tick += (_, _) =>
-        {
-            if (_lingerBeforeClose) { Close(); return; }
-            _machine.Handle(TourEvent.Timeout);
-            Render();
-        };
+        _lingerTimer.Tick += (_, _) => Close();
         RebuildDots();
         HookMainWindow();
         HookPracticeSurfaces();
@@ -122,23 +121,42 @@ public partial class OnboardingWindow : AppWindow
 
     private void ShowCard()
     {
-        PlaceAtRightEdge();
+        Place();
         Show();
         TourActive = true;
-        RestartBudget();
     }
 
-    // Right edge of the foreground window's monitor, vertically centered, inside that monitor's
-    // work area (per-monitor DPI via the shared placement resolver) -- beside the action.
-    private void PlaceAtRightEdge()
+    // Resting spot: right edge of the foreground window's monitor, vertically centered, inside
+    // that monitor's work area (per-monitor DPI via the shared placement resolver). While the
+    // search window is up, the card docks beside it at the same top edge -- the side with room
+    // wins -- so tour and practice read as one panel; if neither side fits (small screen, wide
+    // window) the resting spot stands. ponytail: main.Left/Top are DIPs in the search window's
+    // own monitor's scale; the resolver returns the foreground monitor's. They agree in the
+    // normal first-run shape (summon on the foreground monitor) and the clamps below keep a
+    // cross-DPI surprise on-screen rather than off it.
+    private void Place()
     {
         var area = NotificationPlacement.Resolve().WorkAreaDip;
-        var width = _machine.Mode == TourMode.Minimized ? 260 : CardWidth;
-        Left = Math.Clamp(
-            area.Right - width - 20, area.Left, Math.Max(area.Left, area.Right - width));
-        Top = Math.Clamp(
-            _machine.Mode == TourMode.Minimized ? area.Bottom - 120 : area.Top + (area.Height - 220) / 2,
-            area.Top, Math.Max(area.Top, area.Bottom - 100));
+        var left = area.Right - CardWidth - 20;
+        var top = area.Top + Math.Max(area.Height - EstimatedCardHeight, 0) / 2;
+
+        if (Application.Current?.MainWindow is MainSearchWindow { IsVisible: true } main)
+        {
+            const double gap = 14;
+            if (main.Left + main.ActualWidth + gap + CardWidth <= area.Right)
+            {
+                left = main.Left + main.ActualWidth + gap;
+                top = main.Top;
+            }
+            else if (main.Left - gap - CardWidth >= area.Left)
+            {
+                left = main.Left - gap - CardWidth;
+                top = main.Top;
+            }
+        }
+
+        Left = Math.Clamp(left, area.Left, Math.Max(area.Left, area.Right - CardWidth));
+        Top = Math.Clamp(top, area.Top, Math.Max(area.Top, area.Bottom - EstimatedCardHeight));
     }
 
     private void HookMainWindow()
@@ -154,9 +172,10 @@ public partial class OnboardingWindow : AppWindow
                 _machine.Handle(TourEvent.PracticeObserved);
             else if (!visible && _machine.StepIndex == 3)
                 _machine.Handle(TourEvent.PracticeObserved);
-            else
-                _machine.Handle(visible ? TourEvent.MainWindowShown : TourEvent.MainWindowHidden);
             Render();
+            // Queued at Loaded priority so the SizeToContent search window has laid out before the
+            // dock math reads its ActualWidth -- on first summon it is still zero at this point.
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, Place);
         };
     }
 
@@ -228,59 +247,26 @@ public partial class OnboardingWindow : AppWindow
             PracticeHint.Text = T("Tour1_TrayHint");
             KeycapPanel.Children.Clear();
         }
-
-        var minimized = _machine.Mode == TourMode.Minimized;
-        ExpandedCard.Visibility = minimized ? Visibility.Collapsed : Visibility.Visible;
-        MinimizedStrip.Visibility = minimized ? Visibility.Visible : Visibility.Collapsed;
-        if (minimized)
-        {
-            Width = 260;
-            // Mid-practice the user needs the instruction, not the chapter name.
-            StripStepLabel.Text = $"{_machine.StepIndex + 1}/{_machine.StepCount}  " + T(Steps[_machine.StepIndex].HintKey);
-            RebuildStripDots();
-            PlaceAtRightEdge();
-        }
-        else
-        {
-            Width = CardWidth;
-        }
     }
 
     private void ShowCompletedCard()
     {
-        if (_lingerBeforeClose) return;
-        _lingerBeforeClose = true;
+        if (_completedShown) return;
+        _completedShown = true;
         StepCounter.Text = string.Empty;
         StepTitle.Text = T("Tour_DoneTitle");
         StepBody.Text = string.Format(T("Tour_DoneBody"), _machine.CompletedSteps);
         PracticeHint.Text = string.Empty;
         KeycapPanel.Children.Clear();
         UpdateDots(-1);
-        _budgetTimer.Stop();
-        _budgetTimer.Interval = TimeSpan.FromSeconds(2.5);
-        _budgetTimer.Tick += (_, _) => Close();
-        _budgetTimer.Start();
-    }
-
-    private void Restore_Click(object sender, RoutedEventArgs e)
-    {
-        _machine.Handle(TourEvent.Restore);
-        PlaceAtRightEdge();
-        RestartBudget();
-        Render();
+        _lingerTimer.Stop();
+        _lingerTimer.Start();
     }
 
     private void Skip_Click(object sender, RoutedEventArgs e)
     {
         _machine.Handle(TourEvent.SkipRequested);
         Close();
-    }
-
-    private void RestartBudget()
-    {
-        _budgetTimer.Stop();
-        _budgetTimer.Interval = TimeSpan.FromSeconds(PracticeBudgetSeconds);
-        _budgetTimer.Start();
     }
 
     // The demo driver: each keycap floats slightly raised and translucent, then sinks onto its
@@ -340,20 +326,6 @@ public partial class OnboardingWindow : AppWindow
         }
 
         storyboard.Begin(KeycapPanel);
-    }
-
-    private void RebuildStripDots()
-    {
-        StripDots.Children.Clear();
-        for (var index = 0; index < _machine.StepCount; index++)
-            StripDots.Children.Add(new Ellipse
-            {
-                Width = index == _machine.StepIndex ? 10 : 6,
-                Height = 6,
-                Margin = new Thickness(2, 0, 2, 0),
-                Fill = (Brush)FindResource(index == _machine.StepIndex ? "AccentBlue" : "TextSecondary"),
-                Opacity = index == _machine.StepIndex ? 1 : 0.3,
-            });
     }
 
     private void RebuildDots()
