@@ -999,5 +999,21 @@
   "Settings_ClearOnExitLabel": "退出時清空搜尋歷史",
   "General_LayoutFollowCursor": "呼出時跟隨滑鼠",
   "General_LayoutFollowCursorHint": "搜尋框出現在滑鼠附近；拖動一次後會自動記住該位置，不再跟隨。",
-  "About_UpdateNotes": "更新內容"
+  "About_UpdateNotes": "更新內容",
+  "Tip_QuickSwitch_Title": "快速切換列",
+  "Tip_QuickSwitch_Body": "在開啟/儲存對話框裡，視窗頂部會出現快速切換列，點一下即可跳到最近與收藏的目錄。",
+  "Tip_Clipboard_Title": "剪貼簿面板",
+  "Tip_Clipboard_Body": "前九條記錄按數字鍵即可直接貼上；雙擊貼上，右鍵更多操作，新增的備註也能參與搜尋。",
+  "Tip_Filters_Title": "結果太多？試試過濾關鍵字",
+  "Tip_Filters_Body": "用 folder:、file:、ext:pdf、datemodified:today 這類關鍵字，一步把結果收窄到想要的範圍。",
+  "Tip_GotIt": "知道了",
+  "Action_BuiltinGroup": "內建操作",
+  "Action_DefaultGroup": "其他操作",
+  "Background_FirstColor": "顏色一",
+  "JumpList_RecentSearch": "搜尋「{0}」",
+  "QuickSwitch_BarGo": "前往",
+  "QuickSwitch_BarSuggestion": "試試：{0}",
+  "Settings_QuickSwitchBarLabel": "在對話方塊中啟用快速切換列",
+  "Settings_WebSuggestLabel": "Web 搜尋建議（輸入內容傳送給搜尋引擎）",
+  "Tip_Title": "小提示"
 }

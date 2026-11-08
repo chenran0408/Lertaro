@@ -999,5 +999,21 @@
   "Settings_ClearOnExitLabel": "Clear search history on exit",
   "General_LayoutFollowCursor": "Follow the cursor on summon",
   "General_LayoutFollowCursorHint": "The search bar appears near the mouse; dragging it once pins that spot and stops the following.",
-  "About_UpdateNotes": "What's new"
+  "About_UpdateNotes": "What's new",
+  "Tip_QuickSwitch_Title": "Quick Switch Bar",
+  "Tip_QuickSwitch_Body": "In open/save dialogs a quick switch bar appears at the top -- one click jumps to your recent and favorite folders.",
+  "Tip_Clipboard_Title": "Clipboard Panel",
+  "Tip_Clipboard_Body": "Paste any of the first nine entries with its number key; double-click pastes, right-click for more, and notes are searchable too.",
+  "Tip_Filters_Title": "Too many results? Try filter keywords",
+  "Tip_Filters_Body": "Keywords like folder:, file:, ext:pdf and datemodified:today narrow the results down in one step.",
+  "Tip_GotIt": "Got it",
+  "Action_BuiltinGroup": "Built-in actions",
+  "Action_DefaultGroup": "Other actions",
+  "Background_FirstColor": "Color 1",
+  "JumpList_RecentSearch": "Search for \"{0}\"",
+  "QuickSwitch_BarGo": "Go",
+  "QuickSwitch_BarSuggestion": "Try: {0}",
+  "Settings_QuickSwitchBarLabel": "Show the quick switch bar in dialogs",
+  "Settings_WebSuggestLabel": "Web search suggestions (typed text is sent to the engine)",
+  "Tip_Title": "Tip"
 }

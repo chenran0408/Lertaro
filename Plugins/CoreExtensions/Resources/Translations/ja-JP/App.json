@@ -999,5 +999,21 @@
   "Settings_ClearOnExitLabel": "終了時に検索履歴をクリア",
   "General_LayoutFollowCursor": "呼び出し時にカーソルに追従",
   "General_LayoutFollowCursorHint": "検索バーはマウスの近くに表示されます。一度ドラッグするとその位置が記憶され、追従を停止します。",
-  "About_UpdateNotes": "更新内容"
+  "About_UpdateNotes": "更新内容",
+  "Tip_QuickSwitch_Title": "クイックスイッチバー",
+  "Tip_QuickSwitch_Body": "開く/保存ダイアログの上部にクイックスイッチバーが現れ、クリックだけで最近使ったフォルダやお気に入りへ移動できます。",
+  "Tip_Clipboard_Title": "クリップボードパネル",
+  "Tip_Clipboard_Body": "上位9件は数字キーで直接ペースト。ダブルクリックで貼り付け、右クリックでその他の操作、メモも検索対象になります。",
+  "Tip_Filters_Title": "結果が多すぎますか？フィルターキーワードを試してください",
+  "Tip_Filters_Body": "folder:、file:、ext:pdf、datemodified:today などのキーワードで、結果を一歩で絞り込めます。",
+  "Tip_GotIt": "OK",
+  "Action_BuiltinGroup": "組み込みアクション",
+  "Action_DefaultGroup": "その他のアクション",
+  "Background_FirstColor": "色 1",
+  "JumpList_RecentSearch": "「{0}」を検索",
+  "QuickSwitch_BarGo": "移動",
+  "QuickSwitch_BarSuggestion": "候補: {0}",
+  "Settings_QuickSwitchBarLabel": "ダイアログでクイックスイッチバーを表示",
+  "Settings_WebSuggestLabel": "Web 検索候補（入力したテキストを検索エンジンへ送信）",
+  "Tip_Title": "ヒント"
 }

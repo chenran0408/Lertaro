@@ -999,5 +999,21 @@
   "Settings_ClearOnExitLabel": "종료 시 검색 기록 지우기",
   "General_LayoutFollowCursor": "호출 시 커서 따르기",
   "General_LayoutFollowCursorHint": "검색 창이 마우스 근처에 나타납니다. 한 번 끌면 해당 위치가 기억되어 더 이상 따르지 않습니다.",
-  "About_UpdateNotes": "업데이트 내용"
+  "About_UpdateNotes": "업데이트 내용",
+  "Tip_QuickSwitch_Title": "빠른 전환 바",
+  "Tip_QuickSwitch_Body": "열기/저장 대화상자 상단에 빠른 전환 바가 나타나며, 클릭 한 번으로 최근 및 즐겨찾기 폴더로 이동합니다.",
+  "Tip_Clipboard_Title": "클립보드 패널",
+  "Tip_Clipboard_Body": "처음 아홉 항목은 숫자 키로 바로 붙여넣기できます. 두 번 클릭으로 붙여넣고, 마우스 오른쪽 버튼으로 더 많은 작업을 하며, 메모도 검색됩니다.",
+  "Tip_Filters_Title": "결과가 너무 많나요? 필터 키워드를 사용해 보세요",
+  "Tip_Filters_Body": "folder:, file:, ext:pdf, datemodified:today 같은 키워드로 결과를 한 번에 좁힐 수 있습니다.",
+  "Tip_GotIt": "확인",
+  "Action_BuiltinGroup": "기본 작업",
+  "Action_DefaultGroup": "기타 작업",
+  "Background_FirstColor": "색 1",
+  "JumpList_RecentSearch": "\"{0}\" 검색",
+  "QuickSwitch_BarGo": "이동",
+  "QuickSwitch_BarSuggestion": "추천: {0}",
+  "Settings_QuickSwitchBarLabel": "대화상자에서 빠른 전환 바 표시",
+  "Settings_WebSuggestLabel": "웹 검색 제안(입력한 텍스트가 검색 엔진으로 전송됨)",
+  "Tip_Title": "팁"
 }

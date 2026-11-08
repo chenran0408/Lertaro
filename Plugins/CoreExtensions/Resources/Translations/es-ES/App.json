@@ -999,5 +999,21 @@
   "Settings_ClearOnExitLabel": "Borrar historial de búsqueda al salir",
   "General_LayoutFollowCursor": "Seguir el cursor al aparecer",
   "General_LayoutFollowCursorHint": "La barra de busqueda aparece junto al raton; al arrastrarla una vez se fija en ese lugar y deja de seguirlo.",
-  "About_UpdateNotes": "Novedades"
+  "About_UpdateNotes": "Novedades",
+  "Tip_QuickSwitch_Title": "Barra de cambio rapido",
+  "Tip_QuickSwitch_Body": "En los dialogos de abrir/guardar aparece una barra rapida arriba: un clic salta a tus carpetas recientes y favoritas.",
+  "Tip_Clipboard_Title": "Panel del portapapeles",
+  "Tip_Clipboard_Body": "Pega cualquiera de las primeras nueve entradas con su tecla numerica; doble clic pega, clic derecho da mas opciones y las notas tambien se buscan.",
+  "Tip_Filters_Title": "Demasiados resultados? Prueba palabras clave de filtro",
+  "Tip_Filters_Body": "Claves como folder:, file:, ext:pdf y datemodified:today reducen los resultados en un paso.",
+  "Tip_GotIt": "Entendido",
+  "Action_BuiltinGroup": "Acciones integradas",
+  "Action_DefaultGroup": "Otras acciones",
+  "Background_FirstColor": "Color 1",
+  "JumpList_RecentSearch": "Buscar \"{0}\"",
+  "QuickSwitch_BarGo": "Ir",
+  "QuickSwitch_BarSuggestion": "Prueba: {0}",
+  "Settings_QuickSwitchBarLabel": "Mostrar la barra de cambio rapido en los dialogos",
+  "Settings_WebSuggestLabel": "Sugerencias de busqueda web (el texto escrito se envia al buscador)",
+  "Tip_Title": "Consejo"
 }
