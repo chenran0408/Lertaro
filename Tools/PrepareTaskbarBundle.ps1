@@ -17,7 +17,19 @@ function Get-VerifiedAsset([string]$Name) {
     if (!$asset) { throw "Unknown taskbar asset: $Name" }
     $path = Join-Path $CacheDirectory $Name
     if (!(Test-Path -LiteralPath $path) -or (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $asset.sha256) {
-        Invoke-WebRequest -Uri $asset.url -OutFile $path -UseBasicParsing
+        # The download host occasionally answers 502/503/504 (seen once on a release run and it
+        # failed the whole pipeline); the checksum below still guards every accepted copy.
+        $attempt = 0
+        while ($true) {
+            try {
+                Invoke-WebRequest -Uri $asset.url -OutFile $path -UseBasicParsing
+                break
+            } catch {
+                $attempt++
+                if ($attempt -ge 4) { throw }
+                Start-Sleep -Seconds (10 * $attempt)
+            }
+        }
     }
     if ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $asset.sha256) { throw "Checksum mismatch: $Name" }
     return $path
