@@ -17,8 +17,11 @@ function Get-VerifiedAsset([string]$Name) {
     if (!$asset) { throw "Unknown taskbar asset: $Name" }
     $path = Join-Path $CacheDirectory $Name
     if (!(Test-Path -LiteralPath $path) -or (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $asset.sha256) {
-        # The download host occasionally answers 502/503/504 (seen once on a release run and it
-        # failed the whole pipeline); the checksum below still guards every accepted copy.
+        # The download host (GitHub Releases/codeload) has had sustained bad windows -- one release
+        # run saw four consecutive 504s across a 70s backoff. Ride them out: six attempts with
+        # growing sleeps (~5.5 min of waiting), and the checksum below still guards every copy.
+        # The workflow caches the cache directory itself, so a healthy run makes all later ones
+        # skip this fetch entirely.
         $attempt = 0
         while ($true) {
             try {
@@ -26,8 +29,8 @@ function Get-VerifiedAsset([string]$Name) {
                 break
             } catch {
                 $attempt++
-                if ($attempt -ge 4) { throw }
-                Start-Sleep -Seconds (10 * $attempt)
+                if ($attempt -ge 6) { throw }
+                Start-Sleep -Seconds (15 * $attempt)
             }
         }
     }

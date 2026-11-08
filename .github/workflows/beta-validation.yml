@@ -96,6 +96,13 @@ jobs:
             if ($attempt -lt 4) { Start-Sleep -Seconds (20 * $attempt) }
           }
           exit $LASTEXITCODE
+      # The taskbar bundle assets (~50MB across nine pinned GitHub downloads) cost a release run
+      # each when the Releases endpoint has a bad day; keyed on assets.json so a bump re-fetches.
+      - name: Cache taskbar bundle assets
+        uses: actions/cache@v4
+        with:
+          path: obj/TaskbarDownloadCache
+          key: taskbar-assets-${{ hashFiles('ThirdParty/TranslucentTB/assets.json') }}
       - name: Build both installers
         run: .\make.bat
       - name: Verify packaged index store architectures
