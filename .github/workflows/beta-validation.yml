@@ -84,18 +84,36 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+      # The Inno Setup installer comes from GitHub Releases, and that endpoint has had sustained
+      # outage windows -- winget lost four consecutive 504s across four minutes on one run. Fetch
+      # it into the cache ourselves (same retry shape as the taskbar assets) so one healthy
+      # download serves every later run, then install it silently where make.bat looks for it.
+      - name: Cache package compiler
+        uses: actions/cache@v4
+        with:
+          path: obj/CompilerCache
+          key: innosetup-7.1.1-x64
       - name: Install package compiler
         shell: pwsh
         run: |
-          # winget pulls the Inno Setup installer from GitHub Releases; that endpoint has answered
-          # 504 on release runs twice now (it also hit the taskbar asset download once). Retry
-          # with backoff before giving up -- --force makes a partial earlier attempt harmless.
-          for ($attempt = 1; $attempt -le 4; $attempt++) {
-            winget install JRSoftware.InnoSetup.7 --force --silent --no-upgrade --accept-source-agreements
-            if ($LASTEXITCODE -eq 0) { exit 0 }
-            if ($attempt -lt 4) { Start-Sleep -Seconds (20 * $attempt) }
+          New-Item -ItemType Directory -Force -Path obj/CompilerCache | Out-Null
+          $exe = 'obj/CompilerCache/innosetup-7.1.1-x64.exe'
+          if (!(Test-Path $exe)) {
+            $attempt = 0
+            while ($true) {
+              try {
+                Invoke-WebRequest -Uri 'https://github.com/jrsoftware/issrc/releases/download/is-7_1_1/innosetup-7.1.1-x64.exe' -OutFile $exe -UseBasicParsing
+                break
+              } catch {
+                $attempt++
+                if ($attempt -ge 6) { throw }
+                Start-Sleep -Seconds (15 * $attempt)
+              }
+            }
           }
-          exit $LASTEXITCODE
+          $process = Start-Process -FilePath $exe -ArgumentList '/VERYSILENT','/NORESTART','/SUPPRESSMSGBOXES','/SP-' -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Inno Setup installer exited with $($process.ExitCode)." }
+          if (!(Test-Path 'C:\Program Files\Inno Setup 7\ISCC.exe')) { throw 'Inno Setup 7 is not where make.bat expects it.' }
       # The taskbar bundle assets (~50MB across nine pinned GitHub downloads) cost a release run
       # each when the Releases endpoint has a bad day; keyed on assets.json so a bump re-fetches.
       - name: Cache taskbar bundle assets

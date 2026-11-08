@@ -38,6 +38,7 @@ public class QuickSearchWindowPositioner
         var hwnd = new WindowInteropHelper(_window).Handle;
         Screen screen;
         IntPtr targetMonitor;
+        var mousePos = Control.MousePosition;
 
         // When the window is already visible (e.g. pinned / handling DpiChanged), preserve placement on its current monitor.
         // When summoning (not yet visible), target the monitor under the mouse cursor.
@@ -48,7 +49,6 @@ public class QuickSearchWindowPositioner
         }
         else
         {
-            var mousePos = Control.MousePosition;
             screen = Screen.FromPoint(mousePos);
             targetMonitor = MonitorFromPoint(new POINT { X = mousePos.X, Y = mousePos.Y }, MONITOR_DEFAULTTONEAREST);
         }
@@ -61,7 +61,8 @@ public class QuickSearchWindowPositioner
         var (targetPhysX, targetPhysY) = CalculatePhysicalPosition(
             wa.Left, wa.Top, wa.Width, wa.Height,
             windowWidth, targetDpiScaleX,
-            settings.SearchWindow.RelativeLeft, settings.SearchWindow.RelativeTop);
+            settings.SearchWindow.RelativeLeft, settings.SearchWindow.RelativeTop,
+            mousePos.X, mousePos.Y);
 
         // Set WPF DIP properties first so WPF's internal logical coordinates are updated.
         // If WPF's internal DPI scale is temporarily stale (e.g. while hidden across different DPI monitors),
@@ -78,10 +79,18 @@ public class QuickSearchWindowPositioner
         }
     }
 
+    /// <summary>
+    /// With a remembered relative position (the user dragged the bar there once) it always wins.
+    /// Without one, the bar summons where the user is -- centred horizontally on the cursor, a
+    /// touch below it -- instead of a fixed spot in the middle of the monitor; eyes are already
+    /// at the cursor when the hotkey goes down. Clamped inside the work area, with the bottom
+    /// edge held high enough for the results list to grow downward from the bar.
+    /// </summary>
     internal static (double PhysX, double PhysY) CalculatePhysicalPosition(
         int waLeft, int waTop, int waWidth, int waHeight,
         double windowDipWidth, double targetDpiScaleX,
-        double? relativeLeft, double? relativeTop)
+        double? relativeLeft, double? relativeTop,
+        double cursorPhysX, double cursorPhysY)
     {
         double targetPhysX;
         double targetPhysY;
@@ -95,9 +104,21 @@ public class QuickSearchWindowPositioner
         }
         else
         {
-            var targetPhysWidth = windowDipWidth * targetDpiScaleX;
-            targetPhysX = waLeft + (waWidth - targetPhysWidth) / 2.0;
-            targetPhysY = waTop + waHeight * 0.22;
+            // Heuristic sizes in DIP: the search bar row plus a handful of result rows that must
+            // stay on-screen below it. X scale stands in for Y -- monitors are near-uniform and
+            // this method never had the Y scale.
+            const double barDipHeight = 64;
+            const double rowDipHeight = 48;
+            const double reservedRows = 5;
+            var physWidth = windowDipWidth * targetDpiScaleX;
+            var bottomReserve = (barDipHeight + rowDipHeight * reservedRows) * targetDpiScaleX;
+
+            var xMin = waLeft + 8;
+            targetPhysX = Math.Clamp(
+                cursorPhysX - physWidth / 2, xMin, Math.Max(xMin, waLeft + waWidth - physWidth - 8));
+            var yMin = waTop + 8;
+            targetPhysY = Math.Clamp(
+                cursorPhysY + 24 * targetDpiScaleX, yMin, Math.Max(yMin, waTop + waHeight - bottomReserve));
         }
 
         return (targetPhysX, targetPhysY);
@@ -106,12 +127,14 @@ public class QuickSearchWindowPositioner
     internal static (double Left, double Top) CalculatePosition(
         int waLeft, int waTop, int waWidth, int waHeight,
         double windowDipWidth, double targetDpiScaleX, double targetDpiScaleY,
-        double? relativeLeft, double? relativeTop)
+        double? relativeLeft, double? relativeTop,
+        double cursorPhysX, double cursorPhysY)
     {
         var (physX, physY) = CalculatePhysicalPosition(
             waLeft, waTop, waWidth, waHeight,
             windowDipWidth, targetDpiScaleX,
-            relativeLeft, relativeTop);
+            relativeLeft, relativeTop,
+            cursorPhysX, cursorPhysY);
         var scaleX = targetDpiScaleX > 0 ? targetDpiScaleX : 1.0;
         var scaleY = targetDpiScaleY > 0 ? targetDpiScaleY : 1.0;
         return (physX / scaleX, physY / scaleY);

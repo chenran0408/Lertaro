@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using Lertaro.Core;
+using Lertaro.App.Services.Diagnostics;
 using Lertaro.App.Services.ShellMenu.QuickNav;
 using ContextMenu = System.Windows.Controls.ContextMenu;
 using MenuItem = System.Windows.Controls.MenuItem;
@@ -97,9 +98,17 @@ internal sealed class TrayMenuController : IDisposable
         _toggleHotkeys = Item(string.Empty, ToggleHotkeys);
         _settings = Item("\uE713", () => App.ShowSettingsWindow());
         _onboarding = Item("\uE897", () => Views.Onboarding.OnboardingWindow.ShowTour());
+        _openLogs = Item("\uE8E5", DiagnosticHelper.OpenLogsFolder);
+        _diagnosticZip = Item("\uE74E", () =>
+        {
+            var zip = DiagnosticHelper.BuildDiagnosticZip();
+            if (zip != null) Logger.Log($"[TrayMenuController] Diagnostic zip built: {zip}");
+        });
         _about = Item("\uE946", () => App.ShowSettingsWindow("About"));
         _cleanExit = Item("\uE74D", () => TrayCleanExitHelper.CleanExit("tray clean exit"));
-        _exit = Item("\uF3B1", () =>
+        // E7E8 (PowerButton), not F3B1: F3B1 only exists in Segoe Fluent Icons -- on machines
+        // still serving MDL2 it rendered as a missing-glyph box with no text next to it.
+        _exit = Item("\uE7E8", () =>
         {
             Logger.Log("[AppLifecycle] Exit requested from tray menu.");
             System.Windows.Application.Current.Shutdown();
