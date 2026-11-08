@@ -142,19 +142,12 @@ public class SearchExecutionViewModel : ViewModelBase, IDisposable
 
     private void UpdateWebMode(string query)
     {
+        // Only check for web mode when the query has a space (keyword + text pattern). Single-word
+        // queries skip UserSettings.Load() entirely, keeping the setter fast for normal typing.
         var space = query.IndexOf(' ');
-        string? keyword;
-        string? rest;
-        if (space >= 0)
-        {
-            keyword = query[..space];
-            rest = query[(space + 1)..].Trim();
-        }
-        else
-        {
-            keyword = query;
-            rest = string.Empty;
-        }
+        if (space < 0) { WebModeKeyword = null; return; }
+        string keyword = query[..space];
+        string rest = query[(space + 1)..].Trim();
 
         // Entering web mode requires keyword + space + something to search; keyword alone stays a
         // normal search so the transition point is the space itself.
