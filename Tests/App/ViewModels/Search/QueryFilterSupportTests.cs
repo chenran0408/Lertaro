@@ -8,6 +8,21 @@ namespace Lertaro.App.Tests.ViewModels.Search;
 [TestClass]
 public sealed class QueryFilterSupportTests
 {
+    [TestMethod]
+    [DataRow("; tr en 早上好", true)]
+    [DataRow("tr en 早上好", true)]
+    [DataRow("tr en 其他", false)]
+    [DataRow(";  ", false)]
+    [DataRow(null, false)]
+    public void AsyncPluginRefreshMatchesTheTextTheProviderReceived(string? query, bool expected)
+    {
+        Assert.AreEqual(expected, QueryFilterSupport.MatchesPluginRefresh(query, text =>
+        {
+            Assert.IsFalse(string.IsNullOrWhiteSpace(text));
+            return text == "tr en 早上好";
+        }));
+    }
+
     private static ISearchResult Row(string fullPath, bool isDir = false, DateTime? modified = null) => new SearchResult
     {
         Path = fullPath,

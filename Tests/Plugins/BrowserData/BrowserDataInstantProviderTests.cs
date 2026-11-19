@@ -101,7 +101,7 @@ public sealed class BrowserDataInstantProviderTests
     [TestMethod]
     public void CollectMatches_MultiWordFuzzyAcrossTimeAndUrl_ReturnsTierTwo()
     {
-        var chromiumTicks = (new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero) - new DateTimeOffset(1601, 1, 1, 0, 0, 0, TimeSpan.Zero)).Ticks / 10;
+        var chromiumTicks = (new DateTimeOffset(new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Local)) - new DateTimeOffset(1601, 1, 1, 0, 0, 0, TimeSpan.Zero)).Ticks / 10;
         var entry = new BrowserEntry("Internal", "https://lan.example.internal/ui/#/proxies", isBookmark: false, sortKey: chromiumTicks);
         var profile = CreateProfile("Chrome", entry);
         var matches = new List<(BrowserEntry Entry, ProfileEntries Profile, string Description, int Tier)>();

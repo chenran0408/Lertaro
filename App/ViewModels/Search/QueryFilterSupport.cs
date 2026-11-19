@@ -27,6 +27,13 @@ public static class QueryFilterSupport
     public static string StripStealthPrefix(string query) =>
         IsStealthQuery(query) ? query[1..].TrimStart() : query;
 
+    internal static bool MatchesPluginRefresh(string? currentQuery, Func<string, bool> queryMatches)
+    {
+        if (string.IsNullOrWhiteSpace(currentQuery)) return false;
+        var providerQuery = StripStealthPrefix(currentQuery);
+        return providerQuery.Length > 0 && queryMatches(providerQuery);
+    }
+
     /// <summary>Extracts every filter keyword occurrence and returns the query without them. The
     /// returned filters object is shared; callers push it through <see cref="Activate"/>.</summary>
     public static string Extract(string query, out ResultFilters filters)

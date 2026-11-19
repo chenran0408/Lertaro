@@ -69,7 +69,7 @@ jobs:
             Where-Object { $featured -notcontains $_.Directory.Name } |
             ForEach-Object {
               Write-Host "::group::$($_.Directory.Name)"
-              dotnet test $_.FullName -c Release -r "${{ matrix.rid }}" -p:RustIndexStoreTarget="${{ matrix.rust_target }}" --logger "console;verbosity=quiet"
+              dotnet test $_.FullName -c Release -r "${{ matrix.rid }}" -p:RustIndexStoreTarget="${{ matrix.rust_target }}" --logger "console;verbosity=minimal"
               if ($LASTEXITCODE -ne 0) { $failed += $_.Directory.Name }
               Write-Host "::endgroup::"
             }

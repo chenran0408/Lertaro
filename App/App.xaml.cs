@@ -232,13 +232,13 @@ public partial class App : Application
                         if (window.DataContext is QuickSearchViewModel quickVm)
                         {
                             var currentQuery = quickVm.SearchQuery;
-                            if (!string.IsNullOrWhiteSpace(currentQuery) && queryMatches(currentQuery))
+                            if (QueryFilterSupport.MatchesPluginRefresh(currentQuery, queryMatches))
                                 quickVm.Search.PerformSearch(currentQuery);
                         }
                         else if (window.DataContext is SearchViewModel searchVm)
                         {
                             var currentQuery = searchVm.AdvancedQuery;
-                            if (!string.IsNullOrWhiteSpace(currentQuery) && queryMatches(currentQuery))
+                            if (QueryFilterSupport.MatchesPluginRefresh(currentQuery, queryMatches))
                                 searchVm.PerformSearch(currentQuery);
                         }
                     }
