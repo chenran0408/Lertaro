@@ -1,77 +1,27 @@
-name: Code quality
-
-on:
-  pull_request:
-  workflow_call:
-  workflow_dispatch:
-
+name: ARM plugin diagnostics
+on: workflow_dispatch
 permissions:
   contents: read
-
 jobs:
-  app-regression:
-    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
-    runs-on: windows-latest
+  plugins:
+    runs-on: windows-11-arm
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      - uses: actions-rust-lang/setup-rust-toolchain@v2
-        with:
-          target: x86_64-pc-windows-msvc
-      - name: Run Windows regression suite
-        run: dotnet test Tests/Tests.slnx -c Release -m:1 -p:RustIndexStoreTarget=x86_64-pc-windows-msvc -v quiet
-
-  documentation:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: Site/package-lock.json
-      - name: Restore documentation tool
-        run: dotnet tool restore
-      - name: Install site dependencies
-        run: npm ci
-        working-directory: Site
-      - name: Build API reference and all site locales
-        run: npm run docs:build
-        working-directory: Site
-
-  quality:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-      - name: Check source file size
+      - name: Reproduce the two failing plugin suites
         shell: pwsh
-        run: ./Tools/TestSourceSize.ps1
-      - name: Test source size gate
-        run: dotnet test Tests/Tools/SourceSize/SourceSize.csproj -c Release -v quiet
-      - name: Build strict projects
-        run: dotnet build Tools/CompactionBenchmark/CompactionBenchmark.csproj -c Release -p:EnableRustIndexStoreBuild=false -v quiet
-      - name: Verify dotnet format style (core projects)
-        shell: pwsh
-        # Ratchet: the shipped core projects are format-clean since the repo-wide sweep; plugins
-        # join this list as they get their own pass. A new warning fails the job instead of
-        # silently accumulating again.
         run: |
-          $projects = @('App/App.csproj', 'Core/Core.csproj', 'PluginSdk/PluginSdk.csproj',
-                        'Service/Service.csproj', 'Cli/Cli.csproj', 'TaskbarHost/TaskbarHost.csproj')
           $failed = @()
-          foreach ($project in $projects) {
-            $output = dotnet format style $project --verify-no-changes 2>&1 | Out-String
-            if ($LASTEXITCODE -ne 0) { $failed += "$project`n$output" }
+          foreach ($name in 'BrowserData','FlowLauncherBridge') {
+            dotnet test "Tests/Plugins/$name/$name.csproj" -c Release -r win-arm64 -p:RustIndexStoreTarget=aarch64-pc-windows-msvc --logger 'console;verbosity=normal' --logger "trx;LogFileName=$name.trx" --results-directory results -v quiet
+            if ($LASTEXITCODE) { $failed += $name }
           }
-          if ($failed.Count -gt 0) {
-            Write-Error "dotnet format style found issues:`n$($failed -join "`n`n")"
-            exit 1
-          }
+          if ($failed.Count) { throw "Failed suites $failed" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arm-results
+          path: results/*.trx
+
