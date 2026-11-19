@@ -13,12 +13,12 @@
              BorderBrush="{Binding RelativeSource={RelativeSource Self}, Path=PanelBorderBrush}" BorderThickness="1">
     <!-- The card is the whole window: it never folds (Listary-style coexistence: while the
          search window is up, the code-behind docks this window beside it instead). -->
-    <Grid x:Name="ExpandedCard" Margin="20,16,20,18">        <Grid.RowDefinitions>
-        <RowDefinition Height="Auto"/>
-        <RowDefinition Height="Auto"/>
-        <RowDefinition Height="Auto"/>
-        <RowDefinition Height="Auto"/>
-    </Grid.RowDefinitions>
+    <Grid x:Name="ExpandedCard" Margin="22,16,22,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
         <!-- Header: progress + skip. -->
         <Grid Grid.Row="0">
@@ -26,29 +26,39 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock x:Name="StepCounter" FontSize="12" Opacity="0.65"
+            <TextBlock x:Name="StepCounter" FontSize="12" FontWeight="SemiBold"
                        Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
-            <Button Grid.Column="1" Style="{StaticResource SettingsButton}" Height="26" MinWidth="0"
-                    Padding="10,0" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Onboarding_Skip]}"
+            <Button Grid.Column="1" Style="{StaticResource QuietActionButton}"
+                    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Onboarding_Skip]}"
                     Click="Skip_Click"/>
         </Grid>
 
         <!-- Demo + explanation. The keycap panel is where the ghost keystroke animation plays. -->
         <StackPanel Grid.Row="1" Margin="0,14,0,0">
-            <TextBlock x:Name="StepTitle" FontSize="18" FontWeight="SemiBold"
+            <TextBlock x:Name="StepTitle" FontSize="22" FontWeight="SemiBold"
                        Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
-            <TextBlock x:Name="StepBody" FontSize="13.5" Foreground="{DynamicResource TextSecondary}"
-                       TextWrapping="Wrap" Margin="0,6,0,0"/>
+            <TextBlock x:Name="StepBody" FontSize="14" Foreground="{DynamicResource TextSecondary}"
+                       TextWrapping="Wrap" LineHeight="22" Margin="0,8,0,0"/>
             <StackPanel x:Name="KeycapPanel" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,12,0,0"/>
         </StackPanel>
 
         <!-- The ask: what the user should do right now. -->
-        <Border Grid.Row="2" Margin="0,14,0,0" Padding="10,7" CornerRadius="6"
-                Background="{DynamicResource ControlHoverBackground}">
-            <TextBlock x:Name="PracticeHint" FontSize="13" TextWrapping="Wrap"
+        <Border Grid.Row="2" Margin="0,16,0,0" Padding="12,10"
+                CornerRadius="{StaticResource CornerRadiusControl}"
+                Background="{DynamicResource CardBackground}"
+                BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Text, ElementName=PracticeHint}" Value="">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <TextBlock x:Name="PracticeHint" FontSize="13" TextWrapping="Wrap" LineHeight="20"
                        Foreground="{DynamicResource TextPrimary}"/>
         </Border>
 
-        <StackPanel x:Name="Dots" Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,14,0,0"/>
     </Grid>
 </appWindow:AppWindow>

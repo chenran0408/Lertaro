@@ -6,6 +6,10 @@ public partial class QuickPanelSearchBox : System.Windows.Controls.UserControl
 {
     public QuickPanelSearchBox() => InitializeComponent();
 
+    internal bool HasFilterText => TxtFilter.Text.Length > 0;
+
+    private void ClearFilter_Click(object sender, System.Windows.RoutedEventArgs e) => FocusInput();
+
     /// <summary>Puts the keyboard in the box, which is where a summon leaves it.</summary>
     /// <remarks>
     /// Both calls: Focus() sets WPF's logical focus within this control, Keyboard.Focus is what actually

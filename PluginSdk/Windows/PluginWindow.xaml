@@ -38,7 +38,7 @@
                                     <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ItemHover}"/>
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ItemHover}"/>
+                                    <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ItemSelected}"/>
                                     <Setter TargetName="AccentBar" Property="Fill" Value="{DynamicResource AccentBarColor}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
@@ -68,7 +68,7 @@
                             <Image x:Name="TitleBarLogo" Width="16" Height="16" Margin="0,0,8,0"
                                    Stretch="Uniform"/>
                             <TextBlock x:Name="TitleText" FontSize="12.5" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimary2}" VerticalAlignment="Center"/>
+                               Foreground="{DynamicResource TextPrimary2}" VerticalAlignment="Center"/>
                         </StackPanel>
                         <Button Content="&#xE8BB;" Style="{StaticResource CloseButton}"
                                 HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,6,0"

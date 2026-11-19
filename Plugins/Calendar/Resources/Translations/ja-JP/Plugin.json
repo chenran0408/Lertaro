@@ -38,6 +38,8 @@
   "Calendar_Unpin": "常に手前に表示しない",
   "Calendar_Add": "追加",
   "Calendar_Delete": "削除",
+  "Calendar_Hour": "時",
+  "Calendar_Minute": "分",
   "Calendar_TimeHint": "時刻 HH:MM",
   "Calendar_TextHint": "リマインダー内容",
   "Calendar_TextAdvice": "5件までを推奨",

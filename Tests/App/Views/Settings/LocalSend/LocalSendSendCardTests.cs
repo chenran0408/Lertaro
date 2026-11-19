@@ -41,6 +41,24 @@ public sealed class LocalSendSendCardTests
         Assert.IsInstanceOfType<LocalSendSendCard>(page.FindName("SendEntry"));
     }
 
+    [StaTestMethod]
+    public void ReceivingControlsPrecedeNetworkOptionsAndDeviceRenameIsKeyboardAccessible()
+    {
+        using var theme = SettingsThemeFixture.Use();
+        var page = new LocalSendSettingsPage { DataContext = new LocalSendSettingsViewModel(new UserSettings()) };
+        page.Measure(new Size(460, 560));
+        page.Arrange(new Rect(0, 0, 460, 560));
+        page.UpdateLayout();
+
+        var receiving = (Grid)page.FindName("RowLocalSendReceivePin");
+        var network = (Grid)page.FindName("RowLocalSendPort");
+        Assert.IsTrue(receiving.TranslatePoint(new Point(), page).Y < network.TranslatePoint(new Point(), page).Y);
+        var alias = (Grid)page.FindName("RowLocalSendDeviceAlias");
+        var button = alias.Children.OfType<Grid>().Single().Children.OfType<Button>().Single();
+        Assert.IsTrue(button.Focusable && button.IsTabStop);
+        Assert.IsGreaterThanOrEqualTo(28d, button.ActualWidth);
+    }
+
     private static LocalSendSendCard Create(bool enabled)
     {
         var settings = new UserSettings();

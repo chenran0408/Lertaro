@@ -12,9 +12,9 @@ internal static class ClipboardSearchSupport
     public static bool Matches(ClipboardEntry entry, string term, Func<string, string, bool> isMatch)
     {
         if (term.Length == 0) return true;
-        return isMatch(entry.PlainPreview, term)
-            || (entry.Content.Length > 0 && isMatch(entry.Content, term))
-            || (entry.SourceProcess.Length > 0 && isMatch(entry.SourceProcess, term))
-            || (entry.Note.Length > 0 && isMatch(entry.Note, term));
+        return isMatch(term, entry.PlainPreview)
+            || (entry.Content.Length > 0 && entry.Content != entry.PlainPreview && isMatch(term, entry.Content))
+            || (entry.SourceProcess.Length > 0 && isMatch(term, entry.SourceProcess))
+            || (entry.Note.Length > 0 && isMatch(term, entry.Note));
     }
 }

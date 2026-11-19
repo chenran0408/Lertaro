@@ -62,19 +62,22 @@ internal static class ClipboardPanelPreview
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
             FontSize = 12,
+            Padding = new Thickness(8, 4, 8, 4),
+            MinHeight = 28,
             MaxHeight = 110,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             ToolTip = ClipboardPanelLabels.NotePlaceholder(),
         };
         noteEditor.LostFocus += (_, _) => commitNote(noteEditor.Text);
-        stack.Children.Add(new TextBlock
+        var noteLabel = new TextBlock
         {
             Text = ClipboardPanelLabels.NoteLabel(),
-            FontSize = 11,
-            Opacity = 0.65,
-            Margin = new Thickness(0, 10, 0, 2),
-        });
+            FontSize = 12,
+            Margin = new Thickness(0, 10, 0, 4),
+        };
+        noteLabel.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
+        stack.Children.Add(noteLabel);
         stack.Children.Add(noteEditor);
 
         host.Children.Add(stack);

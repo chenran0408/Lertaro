@@ -4,6 +4,18 @@ namespace Lertaro.Plugins.ClipboardHistory.Tests;
 public sealed class ClipboardRuntimeTests
 {
     [TestMethod]
+    public void RetentionTracksImageAndTextDeadlinesWithoutExpiringPinnedEntries()
+    {
+        var now = new DateTimeOffset(2026, 11, 19, 12, 0, 0, TimeSpan.Zero);
+        var time = now.AddDays(-2).ToUnixTimeMilliseconds();
+        var text = ClipboardInstantProviderTests.Entry(1, "text", pinned: false, time);
+        var image = ClipboardInstantProviderTests.Entry(2, "image", pinned: false, time) with { Kind = ClipboardEntryKind.Image };
+        Assert.IsTrue(ClipboardRuntime.HasExpiredEntries([text, image], now, retentionDays: 30, imageRetentionDays: 1));
+        Assert.IsFalse(ClipboardRuntime.HasExpiredEntries([text, image with { Pinned = true }], now, retentionDays: 30, imageRetentionDays: 1));
+        Assert.IsFalse(ClipboardRuntime.HasExpiredEntries([text, image], now, retentionDays: 0, imageRetentionDays: 0));
+    }
+
+    [TestMethod]
     public void CachedOrderingMatchesPinExemptionAndUnpinnedCap()
     {
         var entries = new[]
@@ -17,14 +29,4 @@ public sealed class ClipboardRuntimeTests
             ClipboardRuntime.ClipEntries(entries, 1).Select(entry => entry.Id).ToArray());
     }
 
-    // PasteAndClose re-reads the entry from Entries AFTER the paste -- Publish() can re-order the
-    // cache while the paste is in flight, so the close/stay answer must come from the current
-    // state. This pins the shape of that lookup: a pinned entry is the "panel stays up so the same
-    // entry can be pasted again" case, an unpinned one the "close and hand focus back" case.
-    [TestMethod]
-    public void PasteStayDecisionFollowsTheCurrentPinState()
-    {
-        Assert.IsTrue(ClipboardInstantProviderTests.Entry(7, "pin", pinned: true, time: 7).Pinned);
-        Assert.IsFalse(ClipboardInstantProviderTests.Entry(8, "plain", pinned: false, time: 8).Pinned);
-    }
 }

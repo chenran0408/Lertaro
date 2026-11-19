@@ -1,0 +1,85 @@
+<UserControl x:Class="Lertaro.App.Views.Settings.General.GeneralSettingsSearchBehaviorTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:services="clr-namespace:Lertaro.App.Services"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="700">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml"/>
+                <ResourceDictionary Source="../../../Resources/Styles/Windows/SearchWindow.xaml"/>
+                <ResourceDictionary Source="../../../Resources/Styles/Windows/SettingsWindow.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="0,0,0,8">
+        <Border Style="{StaticResource SettingsCard}">
+            <StackPanel>
+                <TextBlock Style="{StaticResource SettingsSubHeading}" Margin="0,0,0,8"
+                           Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_FileSearchGroup]}"/>
+                <CheckBox x:Name="RowEnableFuzzyMatch"
+                          ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_EnableFuzzyMatchDesc]}" AutomationProperties.HelpText="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_EnableFuzzyMatchDesc]}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_EnableFuzzyMatch]}"
+                           IsChecked="{Binding General.EnableFuzzyMatch, Mode=TwoWay}"
+                           Margin="0,4"/>
+
+                <CheckBox x:Name="RowShowHiddenFiles"
+                          ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_ShowHiddenFilesDesc]}" AutomationProperties.HelpText="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_ShowHiddenFilesDesc]}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_ShowHiddenFilesLabel]}"
+                           IsChecked="{Binding General.ShowHiddenFiles, Mode=TwoWay}"
+                           Margin="0,4"/>
+
+                <CheckBox x:Name="RowOrFirstPrecedence"
+                          ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_OrFirstPrecedenceDesc]}" AutomationProperties.HelpText="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_OrFirstPrecedenceDesc]}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_OrFirstPrecedence]}"
+                           IsChecked="{Binding General.OrFirstPrecedence, Mode=TwoWay}"
+                           Margin="0,4"/>
+
+                <CheckBox x:Name="RowKeepSearchText"
+                          ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_KeepSearchTextHint]}" AutomationProperties.HelpText="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_KeepSearchTextHint]}"
+                          Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_KeepSearchText]}"
+                          IsChecked="{Binding General.KeepSearchText, Mode=TwoWay}"
+                          Margin="0,12,0,0"/>
+
+                <Grid x:Name="RowGlobalTokenPrefix" Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto" MinWidth="60"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_GlobalTokenPrefix]}" Margin="0,0,16,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                    <TextBox Grid.Column="1"
+                             AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_GlobalTokenPrefix]}"
+                             Style="{StaticResource SettingsTextBox}"
+                             Width="36" Height="26" MaxLength="1"
+                             TextAlignment="Center"
+                             HorizontalContentAlignment="Center"
+                             Text="{Binding General.GlobalTokenPrefix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalAlignment="Center"/>
+                </Grid>
+                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_GlobalTokenPrefixDesc]}"
+                           Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Border>
+        <Border Style="{StaticResource SettingsCard}">
+            <StackPanel>
+                <CheckBox x:Name="RowWebSearch" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_WebSearchLabel]}"
+                           IsChecked="{Binding General.WebSearchEnabled, Mode=TwoWay}"
+                           Margin="0,4"/>
+                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_WebSearchDesc]}"
+                           Style="{StaticResource SettingsHintText}" TextWrapping="Wrap"/>
+                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_WebKeywordsLabel]}"
+                           Margin="0,8,0,2" FontWeight="SemiBold"/>
+                <TextBox x:Name="RowWebKeywords"
+                          ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_WebKeywordsDesc]}" AutomationProperties.HelpText="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_WebKeywordsDesc]}" AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_WebKeywordsLabel]}"
+                         Text="{Binding General.WebKeywordsText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="56" FontSize="12"/>
+
+                <CheckBox x:Name="RowWebSuggest" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_WebSuggestLabel]}"
+                           IsChecked="{Binding General.WebSuggestEnabled, Mode=TwoWay}"
+                           Margin="0,6,0,4"/>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

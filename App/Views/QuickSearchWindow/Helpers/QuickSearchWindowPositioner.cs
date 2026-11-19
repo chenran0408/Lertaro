@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
+using System.Windows;
 using System.Windows.Interop;
+using Lertaro.App.Services;
 using Lertaro.Core;
 
 namespace Lertaro.App.Views.QuickSearchWindow.Helpers;
@@ -23,6 +25,9 @@ public class QuickSearchWindowPositioner
     private const uint SWP_NOSIZE = 0x0001;
     private const uint SWP_NOZORDER = 0x0004;
     private const uint SWP_NOACTIVATE = 0x0010;
+    private const int WorkAreaInset = 8;
+    // Space for the single-line status bar, including its vertical margins.
+    private const double StatusBarDipHeight = 32;
 
     private readonly Lertaro.App.QuickSearchWindow _window;
     private readonly Func<IntPtr> _getLastActiveHwnd;
@@ -40,8 +45,8 @@ public class QuickSearchWindowPositioner
         IntPtr targetMonitor;
         var mousePos = Control.MousePosition;
 
-        // When the window is already visible (e.g. pinned / handling DpiChanged), preserve placement on its current monitor.
-        // When summoning (not yet visible), target the monitor under the mouse cursor.
+        // A visible window being explicitly repositioned stays on its current monitor.
+        // A new summon targets the monitor under the pointer.
         if (_window.IsVisible && hwnd != IntPtr.Zero)
         {
             screen = Screen.FromHandle(hwnd);
@@ -55,20 +60,19 @@ public class QuickSearchWindowPositioner
 
         var (targetDpiScaleX, targetDpiScaleY) = GetMonitorDpiScale(targetMonitor);
         var wa = screen.WorkingArea;
-        var settings = UserSettings.Load();
-        var windowWidth = settings.SearchWindow.SearchBarWidth + 48;
+        var settings = UserSettings.Load().SearchWindow;
+        var (windowWidth, expandedHeight) = FitViewport(settings,
+            (wa.Width - 2 * WorkAreaInset) / targetDpiScaleX,
+            (wa.Height - 2 * WorkAreaInset) / targetDpiScaleY);
 
-        // Follow-cursor summon ignores the remembered spot (which is kept, not cleared, so turning
-        // the option off restores it); remember mode passes it through.
-        var (relLeft, relTop) = settings.SearchWindow.FollowCursorOnSummon
+        var (relLeft, relTop) = settings.FollowCursorOnSummon
             ? ((double?)null, (double?)null)
-            : (settings.SearchWindow.RelativeLeft, settings.SearchWindow.RelativeTop);
+            : (settings.RelativeLeft, settings.RelativeTop);
 
         var (targetPhysX, targetPhysY) = CalculatePhysicalPosition(
             wa.Left, wa.Top, wa.Width, wa.Height,
-            windowWidth, targetDpiScaleX,
-            relLeft, relTop,
-            mousePos.X, mousePos.Y);
+            windowWidth, expandedHeight, targetDpiScaleX, targetDpiScaleY,
+            relLeft, relTop, mousePos.X, mousePos.Y);
 
         // Set WPF DIP properties first so WPF's internal logical coordinates are updated.
         // If WPF's internal DPI scale is temporarily stale (e.g. while hidden across different DPI monitors),
@@ -85,64 +89,76 @@ public class QuickSearchWindowPositioner
         }
     }
 
+    internal void FitViewportAtCurrentPosition()
+    {
+        var hwnd = new WindowInteropHelper(_window).Handle;
+        if (!_window.IsVisible || !GetWindowRect(hwnd, out var rect))
+            return;
+
+        // The search bar's current origin determines the work area even when an expanding
+        // menu would otherwise cause more of the window to overlap a neighboring monitor.
+        var origin = new System.Drawing.Point(rect.Left, rect.Top);
+        var wa = Screen.FromPoint(origin).WorkingArea;
+        var monitor = MonitorFromPoint(new POINT { X = origin.X, Y = origin.Y }, MONITOR_DEFAULTTONEAREST);
+        var (scaleX, scaleY) = GetMonitorDpiScale(monitor);
+        FitViewport(UserSettings.Load().SearchWindow,
+            (wa.Width - 2 * WorkAreaInset) / scaleX,
+            (wa.Bottom - rect.Top - WorkAreaInset) / scaleY);
+    }
+
+    private (double Width, double ExpandedHeight) FitViewport(
+        SearchWindowSettings settings, double availableWidth, double availableHeight)
+    {
+        var margins = _window.SearchContentFrame.Margin;
+        var horizontalMargins = margins.Left + margins.Right;
+        var chromeHeight = margins.Top + margins.Bottom + settings.SearchBarHeight
+            + _window.ResultsSeparator.Height + StatusBarDipHeight;
+        _window.SearchContent.MaxWidth = Math.Max(0, availableWidth - horizontalMargins);
+
+        var maxPanelHeight = Math.Min(UiMetrics.ScaledQuickSearchMaxResultHeight, Math.Max(0, availableHeight - chromeHeight));
+        _window.ResultsPanelControl.MaxHeight = maxPanelHeight;
+        _window.LstResults.MaxHeight = maxPanelHeight;
+        _window.LaunchPanelControl.SetCurrentValue(FrameworkElement.MaxHeightProperty, maxPanelHeight);
+
+        return (Math.Min(settings.SearchBarWidth, _window.SearchContent.MaxWidth) + horizontalMargins,
+            chromeHeight + maxPanelHeight);
+    }
+
     /// <summary>
-    /// With a remembered relative position (the user dragged the bar there once) it always wins.
-    /// Without one, the bar summons where the user is -- centred horizontally on the cursor, a
-    /// touch below it -- instead of a fixed spot in the middle of the monitor; eyes are already
-    /// at the cursor when the hotkey goes down. Clamped inside the work area, with the bottom
-    /// edge held high enough for the results list to grow downward from the bar.
+    /// Places the expanded window at the remembered position or near the pointer, within the work area.
     /// </summary>
     internal static (double PhysX, double PhysY) CalculatePhysicalPosition(
         int waLeft, int waTop, int waWidth, int waHeight,
-        double windowDipWidth, double targetDpiScaleX,
+        double windowDipWidth, double windowDipHeight, double targetDpiScaleX, double targetDpiScaleY,
         double? relativeLeft, double? relativeTop,
         double cursorPhysX, double cursorPhysY)
     {
-        double targetPhysX;
-        double targetPhysY;
+        var width = windowDipWidth * targetDpiScaleX;
+        var height = windowDipHeight * targetDpiScaleY;
+        var hasRememberedPosition = relativeLeft.HasValue && relativeTop.HasValue;
+        var x = hasRememberedPosition ? waLeft + relativeLeft.GetValueOrDefault() * waWidth : cursorPhysX - width / 2;
+        var y = hasRememberedPosition ? waTop + relativeTop.GetValueOrDefault() * waHeight : cursorPhysY + 24 * targetDpiScaleY;
+        var left = waLeft + WorkAreaInset;
+        var top = waTop + WorkAreaInset;
 
-        if (relativeLeft.HasValue && relativeTop.HasValue)
-        {
-            var relLeft = Math.Clamp(relativeLeft.Value, -0.5, 1.0);
-            var relTop = Math.Clamp(relativeTop.Value, 0.0, 0.9);
-            targetPhysX = waLeft + relLeft * waWidth;
-            targetPhysY = waTop + relTop * waHeight;
-        }
-        else
-        {
-            // Heuristic sizes in DIP: the search bar row plus a handful of result rows that must
-            // stay on-screen below it. X scale stands in for Y -- monitors are near-uniform and
-            // this method never had the Y scale.
-            const double barDipHeight = 64;
-            const double rowDipHeight = 48;
-            const double reservedRows = 5;
-            var physWidth = windowDipWidth * targetDpiScaleX;
-            var bottomReserve = (barDipHeight + rowDipHeight * reservedRows) * targetDpiScaleX;
-
-            var xMin = waLeft + 8;
-            targetPhysX = Math.Clamp(
-                cursorPhysX - physWidth / 2, xMin, Math.Max(xMin, waLeft + waWidth - physWidth - 8));
-            var yMin = waTop + 8;
-            targetPhysY = Math.Clamp(
-                cursorPhysY + 24 * targetDpiScaleX, yMin, Math.Max(yMin, waTop + waHeight - bottomReserve));
-        }
-
-        return (targetPhysX, targetPhysY);
+        return (
+            Math.Clamp(x, left, Math.Max(left, waLeft + waWidth - width - WorkAreaInset)),
+            Math.Clamp(y, top, Math.Max(top, waTop + waHeight - height - WorkAreaInset)));
     }
 
     internal static (double Left, double Top) CalculatePosition(
         int waLeft, int waTop, int waWidth, int waHeight,
-        double windowDipWidth, double targetDpiScaleX, double targetDpiScaleY,
+        double windowDipWidth, double windowDipHeight, double targetDpiScaleX, double targetDpiScaleY,
         double? relativeLeft, double? relativeTop,
         double cursorPhysX, double cursorPhysY)
     {
-        var (physX, physY) = CalculatePhysicalPosition(
-            waLeft, waTop, waWidth, waHeight,
-            windowDipWidth, targetDpiScaleX,
-            relativeLeft, relativeTop,
-            cursorPhysX, cursorPhysY);
         var scaleX = targetDpiScaleX > 0 ? targetDpiScaleX : 1.0;
         var scaleY = targetDpiScaleY > 0 ? targetDpiScaleY : 1.0;
+        var (physX, physY) = CalculatePhysicalPosition(
+            waLeft, waTop, waWidth, waHeight,
+            windowDipWidth, windowDipHeight, scaleX, scaleY,
+            relativeLeft, relativeTop,
+            cursorPhysX, cursorPhysY);
         return (physX / scaleX, physY / scaleY);
     }
 

@@ -27,7 +27,7 @@ public static class SearchableItemMapper
             if (entry == null)
                 continue;
 
-            result = BuildCandidate(entry, provider, query, MatchRank.NoMatch).Result;
+            result = BuildResult(entry, provider, query);
             return true;
         }
 
@@ -51,7 +51,7 @@ public static class SearchableItemMapper
     // the caller (SearchResultMapper.BuildQuickResults) merges these into one globally sorted list
     // alongside favorites/history-matched files/file-search results, rather than always showing every
     // searchable item ahead of every file result regardless of which actually matched better.
-    public static List<(AppSearchResult Result, MatchRank Match, bool IsExactAlias)> CollectSearchableItemResults(string query, bool isInlineWindow)
+    public static List<(AppSearchResult Result, MatchRank Match, bool IsExactAlias)> CollectSearchableItemResults(string query, bool isInlineWindow, string? triggeredTypeId = null)
     {
         var candidates = new List<(AppSearchResult Result, MatchRank Match, bool IsExactAlias)>();
         if (isInlineWindow) return candidates;
@@ -69,10 +69,14 @@ public static class SearchableItemMapper
         // match rank the file search hot path uses (FuzzyMatcher.ComputeBestMatch, against the entry's
         // own title -- same text TextHighlighter shows), instead of a fixed match-kind bucket order capped
         // PER PROVIDER.
-        var matched = new List<(SearchableItemCache.CacheEntry Entry, MatchRank Match, ISearchableItemProvider Provider, string ActiveQuery)>();
+        var separators = AliasProviderRegistry.GetActiveProviders().Select(p => p.SyllableSeparator).Where(c => c != '\0').ToArray();
+        var aliasQuery = ApplicationSearchAliases.Normalize(q, separators);
+        var matched = new List<CatalogMatch>();
 
         foreach (var provider in PluginManager.Instance.SearchableItemProviders)
         {
+            if (triggeredTypeId != null && SearchResultTypePriority.GetProviderTypeId(provider) != triggeredTypeId)
+                continue;
             SearchableItemCache.EnsureLoaded(provider);
 
             if (!SearchableItemCache.TryGetEntries(provider.GetType().Name, out var entries))
@@ -87,42 +91,47 @@ public static class SearchableItemMapper
                 // ResultKind routing over materialized files; it is now a real scoped engine search --
                 // see FileFilterScopeResolver.)
                 var match = MatchCatalogEntry(fuzzy, queryWords, entry);
-                if (match.IsMatch)
-                    matched.Add((entry, match, provider, q));
+                var exactAlias = entry.ExactAliases?.Contains(aliasQuery) == true;
+                if (match.IsMatch || exactAlias)
+                    matched.Add(new(entry, match, provider, exactAlias));
             }
         }
 
-        // Generous safety cap only -- the real top-N selection happens after this merges with the
-        // other candidate categories in BuildQuickResults. Same primary keys as the final ranking (match
-        // shape, start, then weight) so the cap cannot drop a candidate the merge would have ranked higher.
-        var matches = matched
-            .OrderBy(m => m.Match.Shape)
-            .ThenBy(m => m.Match.Start)
-            .ThenByDescending(m => m.Match.Weight)
-            .Take(50);
-        foreach (var (entry, match, provider, activeQuery) in matches)
-        {
-            candidates.Add(BuildCandidate(entry, provider, activeQuery, match));
-        }
-
+        foreach (var item in SelectDisplayCandidates(matched, q))
+            candidates.Add((BuildResult(item.Entry, item.Provider, q), item.Match, item.ExactAlias));
         return candidates;
     }
 
+    internal readonly record struct CatalogMatch(SearchableItemCache.CacheEntry Entry, MatchRank Match,
+        ISearchableItemProvider Provider, bool ExactAlias);
+
+    internal static IEnumerable<CatalogMatch> SelectDisplayCandidates(IEnumerable<CatalogMatch> matched, string query) =>
+        matched.OrderByDescending(m => query.Equals(m.Entry.Item.Title, StringComparison.OrdinalIgnoreCase))
+            .ThenByDescending(m => m.ExactAlias)
+            .ThenBy(m => m.Match.Shape).ThenBy(m => m.Match.Start).ThenByDescending(m => m.Match.Weight)
+            .Take(50);
+
     internal static MatchRank MatchCatalogEntry(FuzzyQuery query, string[] queryWords, SearchableItemCache.CacheEntry entry)
     {
+        if (IsLiteralShortcut(entry.Item, query.Text))
+            return new MatchRank(MatchRank.TierName, 0, 1);
         var match = query.BestMatch(entry.Item.Title, entry.Aliases);
         if (match.IsMatch) return match;
         // Match Windows Control Panel task links: every query token prefixes a title/keyword word.
         // Keyword-only hits have no title highlight evidence, so retain zero weight as a fallback.
         return queryWords.Length > 0 && queryWords.All(token => entry.KeywordWords.Any(
                 word => word.StartsWith(token, StringComparison.OrdinalIgnoreCase)))
-            ? new MatchRank(MatchRank.TierFull, 0, 0)
+            ? new MatchRank(MatchRank.TierFull, 0, 0, MatchRank.ShapeNoName)
             : MatchRank.NoMatch;
     }
 
+    private static bool IsLiteralShortcut(SearchableItem item, string query) =>
+        query.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) && item.ResultKind == "Application"
+        && query.Equals(System.IO.Path.GetFileName(item.ActionArgument), StringComparison.OrdinalIgnoreCase);
+
     // Split out of the matches loop below purely to keep this file's per-method length down -- no
     // other caller.
-    private static (AppSearchResult Result, MatchRank Match, bool IsExactAlias) BuildCandidate(SearchableItemCache.CacheEntry entry, ISearchableItemProvider provider, string activeQuery, MatchRank match)
+    private static AppSearchResult BuildResult(SearchableItemCache.CacheEntry entry, ISearchableItemProvider provider, string activeQuery)
     {
         var item = entry.Item;
         System.Windows.Media.ImageSource? iconOverride = null;
@@ -188,9 +197,9 @@ public static class SearchableItemMapper
             catch { }
         }
 
-        return (new AppSearchResult
+        return new AppSearchResult
         {
-            Name = item.Title,
+            Name = IsLiteralShortcut(item, activeQuery) ? System.IO.Path.GetFileName(item.ActionArgument) : item.Title,
             FullPath = (isRealFile || isRealDir || isApplication) ? item.ActionArgument : $"__SEARCHABLE_ITEM__:{provider.Name}:{item.Title}",
             // Applications show name-only: blank the subtitle so the path row collapses (an app's
             // FullPath is a virtual token anyway). Other item kinds keep their description.
@@ -208,7 +217,6 @@ public static class SearchableItemMapper
             InstantResultOnExecuteFunc = item.OnExecuteFunc,
             TabCompletion = item.TabCompletion,
             SourceProvider = provider
-        }, match, isApplication && ApplicationSearchAliases.IsExactMatch(activeQuery ?? "", entry.Aliases,
-            AliasProviderRegistry.GetActiveProviders().Select(aliasProvider => aliasProvider.SyllableSeparator)));
+        };
     }
 }

@@ -15,6 +15,7 @@ internal static class ClipboardBackupSupport
     public static void Export(string databasePath, string imagesDirectory, string destinationZip)
     {
         var staging = Path.Combine(Path.GetTempPath(), $"lertaro-clip-export-{Guid.NewGuid():N}");
+        var temporaryZip = $"{destinationZip}.{Guid.NewGuid():N}.partial";
         Directory.CreateDirectory(staging);
         try
         {
@@ -32,11 +33,12 @@ internal static class ClipboardBackupSupport
                     File.Copy(file, Path.Combine(staging, "images", Path.GetFileName(file)));
             }
 
-            if (File.Exists(destinationZip)) File.Delete(destinationZip);
-            ZipFile.CreateFromDirectory(staging, destinationZip);
+            ZipFile.CreateFromDirectory(staging, temporaryZip);
+            File.Move(temporaryZip, destinationZip, overwrite: true);
         }
         finally
         {
+            File.Delete(temporaryZip);
             try { Directory.Delete(staging, recursive: true); }
             catch (IOException) { /* a staging leftover is cosmetic; the zip is already closed */ }
         }
@@ -48,18 +50,86 @@ internal static class ClipboardBackupSupport
     public static (string DatabasePath, string ImagesDirectory) Extract(string zipPath, string stagingRoot)
     {
         Directory.CreateDirectory(stagingRoot);
-        ZipFile.ExtractToDirectory(zipPath, stagingRoot, overwriteFiles: true);
+        try
+        {
+            ZipFile.ExtractToDirectory(zipPath, stagingRoot, overwriteFiles: true);
+            var databasePath = Path.Combine(stagingRoot, DatabaseFileName);
+            if (!File.Exists(databasePath))
+                throw new InvalidDataException("Backup zip does not contain a clipboard database.");
 
-        var databasePath = Path.Combine(stagingRoot, DatabaseFileName);
-        if (!File.Exists(databasePath))
+            var images = Path.Combine(stagingRoot, "images");
+            Directory.CreateDirectory(images);
+            return (databasePath, images);
+        }
+        catch
         {
             Directory.Delete(stagingRoot, recursive: true);
-            throw new InvalidDataException("Backup zip does not contain a clipboard database.");
+            throw;
+        }
+    }
+
+    internal static void ValidateDatabase(string path)
+    {
+        using var connection = OpenConnection(path);
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = 'clipboard_history'";
+        if (command.ExecuteScalar() is null)
+            throw new InvalidDataException("Backup does not contain a clipboard history table.");
+
+        command.CommandText = "PRAGMA quick_check(1)";
+        if (!string.Equals(command.ExecuteScalar() as string, "ok", StringComparison.Ordinal))
+            throw new InvalidDataException("Backup clipboard database is damaged.");
+    }
+
+    internal static void ReplaceLiveFiles(string databasePath, string imagesDirectory,
+        string stagedDatabase, string stagedImages)
+    {
+        var previous = Path.Combine(Path.GetDirectoryName(databasePath)!, $".previous-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(previous);
+        var moves = new Stack<(string From, string To, bool IsDirectory)>();
+        var preservePrevious = false;
+        try
+        {
+            foreach (var suffix in new[] { "-journal", "-wal", "-shm", string.Empty })
+            {
+                var path = databasePath + suffix;
+                if (File.Exists(path))
+                    Move(path, Path.Combine(previous, Path.GetFileName(path)), isDirectory: false);
+            }
+            if (Directory.Exists(imagesDirectory))
+                Move(imagesDirectory, Path.Combine(previous, "images"), isDirectory: true);
+            Move(stagedDatabase, databasePath, isDirectory: false);
+            Move(stagedImages, imagesDirectory, isDirectory: true);
+        }
+        catch
+        {
+            preservePrevious = true;
+            foreach (var (from, to, isDirectory) in moves)
+            {
+                if (isDirectory) Directory.Move(to, from);
+                else File.Move(to, from);
+            }
+            preservePrevious = false;
+            throw;
+        }
+        finally
+        {
+            if (!preservePrevious)
+                DeleteStagingDirectory(previous);
         }
 
-        var images = Path.Combine(stagingRoot, "images");
-        if (!Directory.Exists(images)) Directory.CreateDirectory(images);
-        return (databasePath, images);
+        void Move(string from, string to, bool isDirectory)
+        {
+            if (isDirectory) Directory.Move(from, to);
+            else File.Move(from, to);
+            moves.Push((from, to, isDirectory));
+        }
+    }
+
+    internal static void DeleteStagingDirectory(string directory)
+    {
+        try { Directory.Delete(directory, recursive: true); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 
     private static SqliteConnection OpenConnection(string databasePath)

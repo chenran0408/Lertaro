@@ -9,6 +9,20 @@ permissions:
   contents: read
 
 jobs:
+  app-regression:
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          target: x86_64-pc-windows-msvc
+      - name: Run Windows regression suite
+        run: dotnet test Tests/Tests.slnx -c Release -m:1 -p:RustIndexStoreTarget=x86_64-pc-windows-msvc -v quiet
+
   documentation:
     runs-on: ubuntu-latest
     steps:

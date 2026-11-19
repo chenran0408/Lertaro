@@ -14,10 +14,12 @@ internal static class SettingsWindowSearchActivationHelper
     // and SettingsWindow.JumpToEntry.
     internal static void ActivateSearchResult(this SettingsWindow window, SettingsSearchResultItem item)
     {
+        window.SelectSection(item.Section);
         if (window.DataContext is SettingsViewModel vm)
             item.Activate?.Invoke(vm);
 
-        window.SelectSection(item.Section);
+        if (item.Section == "Hotkeys" && item.TargetElementName?.StartsWith("TabGlobal/", StringComparison.Ordinal) == true)
+            window.PageHotkeys.TabGlobal.ClearFilter();
         // Clearing the text fires TxtSettingsSearch_TextChanged, which closes the popup.
         window.TxtSettingsSearch.Text = string.Empty;
 
@@ -97,7 +99,7 @@ internal static class SettingsWindowSearchActivationHelper
         "General" => window.PageGeneral,
         "Appearance" => window.PageAppearance,
         "Hotkeys" => window.PageHotkeys,
-        "Plugins" => window.PagePlugins,
+        "Plugins" or "PluginSettings" => window.PagePlugins,
         "History" => window.PageHistory,
         "Favorites" => window.PageFavorites,
         "QuickLaunch" => window.PageQuickLaunch,

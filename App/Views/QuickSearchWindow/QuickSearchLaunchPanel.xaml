@@ -23,7 +23,7 @@
             <Setter Property="Margin" Value="2"/>
             <Setter Property="Height" Value="92"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusControl}"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
@@ -63,7 +63,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ListViewItem">
                         <Border x:Name="SelectionOverlay" Background="Transparent"
-                                CornerRadius="6" Margin="2" Padding="2" Cursor="Hand">
+                                CornerRadius="{StaticResource CornerRadiusControl}" Margin="2" Padding="2" Cursor="Hand">
                             <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -71,7 +71,7 @@
                                 <Setter TargetName="SelectionOverlay" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="SelectionOverlay" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
+                                <Setter TargetName="SelectionOverlay" Property="Background" Value="{DynamicResource ItemSelected}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

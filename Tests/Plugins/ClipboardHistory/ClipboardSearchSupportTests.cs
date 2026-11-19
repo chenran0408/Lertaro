@@ -4,7 +4,7 @@ namespace Lertaro.Plugins.ClipboardHistory.Tests;
 public sealed class ClipboardSearchSupportTests
 {
     private static readonly Func<string, string, bool> Contains =
-        (text, term) => text.Contains(term, StringComparison.OrdinalIgnoreCase);
+        (term, text) => text.Contains(term, StringComparison.OrdinalIgnoreCase);
 
     private static ClipboardEntry Entry(string preview, string content = "", string process = "Chrome",
         ClipboardEntryKind kind = ClipboardEntryKind.Text, string note = "") =>

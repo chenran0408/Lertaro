@@ -82,6 +82,19 @@ public sealed class SearchResultsReconcilerTests
         Assert.AreEqual(@"C:\a", selected?.FullPath);
     }
 
+    [TestMethod]
+    public void Replace_NewLaunchVariantUpdatesTheRetainedRowAndSelectsTheDisplayedInstance()
+    {
+        var first = Result(@"C:\Apps\Editor.exe", "Editor", "Application");
+        var refreshed = Result(first.FullPath, "Editor", "Application");
+        refreshed.ParentDir = first.FullPath;
+        var results = new ObservableRangeCollection<AppSearchResult> { first };
+        AppSearchResult? selection = null;
+        SearchResultsReconciler.Replace(results, [refreshed], null, row => selection = row);
+        Assert.AreSame(first, selection);
+        Assert.AreEqual(first.FullPath, first.ParentDir);
+    }
+
     // The point of excluding SearchQuery from row identity: typing another character changes every row's
     // query, so including it replaced every row instance -- and every realized row re-bound its icon,
     // rebuilt its highlight Runs and restarted its marquee, on the UI thread, per keystroke.

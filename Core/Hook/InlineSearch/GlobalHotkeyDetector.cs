@@ -155,7 +155,7 @@ public sealed class GlobalHotkeyDetector
     {
         var hotkey = _settings.Hotkeys.ClipboardPanelHotkey;
         consumeKey = false;
-        if (string.IsNullOrWhiteSpace(hotkey)) return false;
+        if (string.IsNullOrWhiteSpace(hotkey) || !ClipboardPluginEnabled()) return false;
         if (HotkeyStringFormat.IsDoubleTap(hotkey, out _)) return false;
         HotkeyStringFormat.ParseCombo(hotkey, out var modifier, out var key);
         var targetVk = KeyboardUtils.GetKeyVirtualCode(key);
@@ -171,13 +171,15 @@ public sealed class GlobalHotkeyDetector
     {
         slot = 0;
         consumeKey = false;
-        if (!_settings.Hotkeys.ClipboardQuickPasteSlots) return false;
-        if (vkCode is < 0x31 or > 0x39) return false; // '1'..'9'
-        if (!CheckModifiersMatch("Ctrl+Win")) return false;
+        if (!_settings.Hotkeys.ClipboardQuickPasteSlots || vkCode is < 0x31 or > 0x39) return false;
+        if (!CheckModifiersMatch("Ctrl+Win") || !ClipboardPluginEnabled()) return false;
         slot = vkCode - 0x30;
         consumeKey = true;
         return true;
     }
+
+    private bool ClipboardPluginEnabled() =>
+        !_settings.DisabledPluginAssemblies.Contains("Lertaro.Plugins.ClipboardHistory.dll", StringComparer.OrdinalIgnoreCase);
 
     private void EnsureQuickPanelRules()
     {

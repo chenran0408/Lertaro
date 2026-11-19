@@ -1,5 +1,4 @@
 using Microsoft.Data.Sqlite;
-using System.Text;
 
 namespace Lertaro.Plugins.ContentSearch.Storage;
 
@@ -27,7 +26,7 @@ public static class DatabaseSearchHelper
             yield break;
 
         var seenFileIds = new HashSet<long>();
-        var tokens = rawQuery.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        var tokens = rawQuery.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
         var emitted = 0;
 
         // The trigram index holds three-character sequences only, so a query carrying any
@@ -76,7 +75,7 @@ public static class DatabaseSearchHelper
     /// hit. Kept out of the iterator so the branch decision is testable on its own.
     /// </summary>
     internal static bool RequiresContentScan(IReadOnlyList<string> tokens) =>
-        tokens.Any(t => t.EnumerateRunes().Take(3).Count() < 3);
+        tokens.Any(DatabaseFtsQueryHelper.IsShortTerm);
 
     // How many matched sources one duplicate-expansion query carries. Bounded only because a statement's
     // parameter count is -- the expansion itself is capped by nothing but the matches above it, exactly as
@@ -106,7 +105,7 @@ public static class DatabaseSearchHelper
         {
             // Long terms narrow the candidate set through trigram MATCH; only all-short queries
             // need to visit every document. Apply every literal term before LIMIT.
-            var longTerms = tokens.Where(t => !RequiresContentScan([t])).ToArray();
+            var longTerms = tokens.Where(t => !DatabaseFtsQueryHelper.IsShortTerm(t)).ToArray();
             var source = "files_fts";
             if (longTerms.Length > 0)
             {
@@ -132,7 +131,7 @@ public static class DatabaseSearchHelper
             cmd.Parameters.AddWithValue("@window", tokens[0]);
             cmd.CommandText = $"""
                 SELECT f.id, f.path, files_fts.rowid,
-                       substr(files_fts.content, max(1, instr(files_fts.content, @window) - 300), 1000)
+                       substr(files_fts.content, max(1, instr(files_fts.content, @window) - 300), 1000), f.file_size, f.last_modified
                 FROM {source}
                 JOIN files f ON f.id = files_fts.rowid
                 WHERE {string.Join(" AND ", tokens.Select((_, i) => $"files_fts.content LIKE @token{i} ESCAPE '\\'"))}
@@ -149,7 +148,7 @@ public static class DatabaseSearchHelper
                 var content = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
                 var snippet = SnippetGenerator.CreateSnippet(content, rawQuery);
                 snippetBySource[sourceId] = snippet;
-                yield return CreateHit(reader.GetString(1), snippet, 1.0);
+                yield return CreateHit(reader, snippet, 1.0);
             }
         }
 
@@ -174,26 +173,32 @@ public static class DatabaseSearchHelper
             // pasting values into the text of a statement is how an injection gets a foothold.
             for (var i = 0; i < count; i++)
                 cmd.Parameters.AddWithValue($"@src{i}", ids[from + i]);
-            cmd.CommandText = $"SELECT id, path, content_ref FROM files WHERE content_ref IN ({string.Join(",", Enumerable.Range(0, count).Select(i => $"@src{i}"))});";
+            cmd.CommandText = $"SELECT id, path, content_ref, file_size, last_modified FROM files WHERE content_ref IN ({string.Join(",", Enumerable.Range(0, count).Select(i => $"@src{i}"))});";
 
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
                 var fileId = reader.GetInt64(0);
                 if (!seenFileIds.Add(fileId)) continue;
-                yield return CreateHit(reader.GetString(1), snippetBySource[reader.GetInt64(2)], 1.0);
+                yield return CreateHit(reader, snippetBySource[reader.GetInt64(2)], 1.0);
             }
         }
     }
 
-    private static SearchHitItem CreateHit(string filePath, string snippet, double score) => new()
+    private static SearchHitItem CreateHit(SqliteDataReader reader, string snippet, double score)
     {
-        FilePath = filePath,
-        FileName = Path.GetFileName(filePath),
-        DirectoryPath = Path.GetDirectoryName(filePath) ?? string.Empty,
-        Snippet = snippet,
-        Score = score
-    };
+        var path = reader.GetString(1);
+        return new SearchHitItem
+        {
+            FilePath = path,
+            FileName = Path.GetFileName(path),
+            DirectoryPath = Path.GetDirectoryName(path) ?? string.Empty,
+            Snippet = snippet,
+            Score = score,
+            Metadata = new(reader.GetInt64(reader.FieldCount - 2), default,
+                DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(reader.FieldCount - 1)).LocalDateTime, default)
+        };
+    }
 
     private static IEnumerable<SearchHitItem> ExecuteFts(SqliteConnection conn, string query, int limit, HashSet<long> seenFileIds)
     {
@@ -219,10 +224,10 @@ public static class DatabaseSearchHelper
                 ORDER BY rank
                 LIMIT @limit
             )
-            SELECT f.id, f.path, hits.rank, hits.snip
+            SELECT f.id, f.path, hits.rank, hits.snip, f.file_size, f.last_modified
             FROM hits JOIN files f ON f.id = hits.src_id
             UNION ALL
-            SELECT f.id, f.path, hits.rank, hits.snip
+            SELECT f.id, f.path, hits.rank, hits.snip, f.file_size, f.last_modified
             FROM hits JOIN files f ON f.content_ref = hits.src_id
             ORDER BY 3;
             """;
@@ -235,13 +240,12 @@ public static class DatabaseSearchHelper
             var fileId = reader.GetInt64(0);
             if (!seenFileIds.Add(fileId)) continue;
 
-            var filePath = reader.GetString(1);
             var rank = reader.GetDouble(2);
             var snip = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
             // FTS5's snippet is already the right window around the match; only the whitespace needs
             // flattening for a single-line row. Building one from the whole document instead would mean
             // reading the whole document out here.
-            yield return CreateHit(filePath, SnippetGenerator.NormalizeWhitespace(snip), -rank);
+            yield return CreateHit(reader, SnippetGenerator.NormalizeWhitespace(snip), -rank);
         }
     }
 }

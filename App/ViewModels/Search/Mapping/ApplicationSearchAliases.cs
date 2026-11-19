@@ -9,17 +9,14 @@ internal static class ApplicationSearchAliases
     internal static List<string> Collect(string title, string launchPath, Func<string, LaunchShortcut?> readShortcut)
     {
         var aliases = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var words = Regex.Matches(Regex.Replace(title, @"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", " "), @"[A-Za-z0-9]+").Select(match => match.Value).ToArray();
-        foreach (Match word in Regex.Matches(title, @"[A-Za-z][A-Za-z0-9]+")) aliases.Add(word.Value);
-        if (words.Length > 1)
+        AddTitleAliases(title, aliases);
+        // Start-menu labels often append a location or architecture, e.g. "Visual Studio Code (D drive)".
+        // Keep the full name searchable and derive the same shortcuts as the unqualified product name.
+        var product = Regex.Replace(title, @"(?:\s*[（(][^()（）]*[)）]|\s*\[[^\[\]]*\])+\s*$", "").TrimEnd();
+        if (product.Length > 0 && product != title)
         {
-            aliases.Add(string.Concat(words));
-            for (var start = 0; start < words.Length - 1; start++)
-            {
-                var initials = string.Concat(words.Skip(start).Select(word => word[0]));
-                aliases.Add(initials);
-                aliases.Add(string.Concat(words.Skip(start).Take(words.Length - start - 1).Select(word => word[0])) + words[^1]);
-            }
+            aliases.Add(product);
+            AddTitleAliases(product, aliases);
         }
         var target = Path.GetExtension(launchPath).Equals(".lnk", StringComparison.OrdinalIgnoreCase)
             ? readShortcut(launchPath)?.Target : launchPath;
@@ -34,12 +31,32 @@ internal static class ApplicationSearchAliases
         return aliases.ToList();
     }
 
-    internal static bool IsExactMatch(string query, IEnumerable<string> aliases, IEnumerable<char> separators)
+    private static void AddTitleAliases(string title, HashSet<string> aliases)
     {
-        var ignored = separators.Where(separator => separator != '\0').ToHashSet();
-        string Normalize(string text) => string.Concat(text.Where(character => !char.IsWhiteSpace(character) && !ignored.Contains(character)));
-        var normalized = Normalize(query);
-        return normalized.Length > 0 && aliases.Any(group => group.Split('|').Any(alias =>
-            normalized.Equals(Normalize(alias), StringComparison.OrdinalIgnoreCase)));
+        var words = Regex.Matches(Regex.Replace(title, @"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", " "), @"[A-Za-z0-9]+").Select(match => match.Value).ToArray();
+        foreach (Match word in Regex.Matches(title, @"[A-Za-z][A-Za-z0-9]+")) aliases.Add(word.Value);
+        if (words.Length > 1)
+        {
+            aliases.Add(string.Concat(words));
+            // Allow an acronym to omit a trailing version or edition, as in CFS for Copper Finch Studio 2026.
+            var titleInitials = string.Concat(words.Select(word => word[0]));
+            for (var length = 3; length < titleInitials.Length; length++)
+                aliases.Add(titleInitials[..length]);
+            for (var start = 0; start < words.Length - 1; start++)
+            {
+                var initials = string.Concat(words.Skip(start).Select(word => word[0]));
+                aliases.Add(initials);
+                aliases.Add(string.Concat(words.Skip(start).Take(words.Length - start - 1).Select(word => word[0])) + words[^1]);
+            }
+        }
     }
+
+    internal static HashSet<string> BuildExactAliases(IEnumerable<string> aliases, char[] separators) =>
+        aliases.SelectMany(group => group.Split('|')).Select(alias => Normalize(alias, separators))
+            .Where(alias => alias.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    internal static string Normalize(string text, char[] separators) =>
+        text.Any(c => char.IsWhiteSpace(c) || Array.IndexOf(separators, c) >= 0)
+            ? string.Concat(text.Where(c => !char.IsWhiteSpace(c) && Array.IndexOf(separators, c) < 0))
+            : text;
 }

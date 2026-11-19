@@ -17,6 +17,9 @@ public class SearchService : IDisposable
 
     public Task<UsnIndexer.IndexerStatus> GetStatusAsync(CancellationToken token = default) => _pipeClient.GetStatusAsync(token);
 
+    internal Task<(bool Connected, UsnIndexer.IndexerStatus? Status)> GetStatusForReadinessAsync(
+        CancellationToken token = default) => _pipeClient.GetStatusForReadinessAsync(token);
+
     public Task<bool> PingAsync(CancellationToken token = default) => _pipeClient.PingAsync(token);
 
     // Asks the already-running --service instance to spawn the hook process directly into this caller's

@@ -67,6 +67,18 @@ public static class KeywordHistoryStore
             Changed?.Invoke();
     }
 
+    /// <summary>Removes keywords staged for deletion without replacing unrelated live entries.</summary>
+    public static void RemoveEntries(IReadOnlySet<string> keywords)
+    {
+        lock (Gate)
+        {
+            EnsureCacheNoLock();
+            if (_entriesCache!.RemoveAll(entry => keywords.Contains(entry.Keyword)) == 0) return;
+            SaveNoLock();
+        }
+        Changed?.Invoke();
+    }
+
     /// <summary>Every keyword in most-recent-first order, bare strings (open counts dropped).</summary>
     public static IReadOnlyList<string> GetEntries()
     {

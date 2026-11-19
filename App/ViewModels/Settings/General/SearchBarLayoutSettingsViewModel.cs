@@ -89,9 +89,9 @@ public class SearchBarLayoutSettingsViewModel : ViewModelBase
         SearchBarHeight = 60;
         ShowClock = false;
         ReopenAsFullWindowOnRepeatHotkey = false;
-        // Unlocked as well as re-centred: Reset exists to undo a layout you no longer want, and leaving
-        // the lock on would hand back a window that cannot be moved off wherever it lands.
+        // Restore the default summon mode as well as clearing the remembered position.
         LockPosition = false;
+        FollowCursorOnSummon = true;
         _resetPosition = true;
     }
 

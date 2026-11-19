@@ -88,12 +88,17 @@ internal sealed class SearchQueryDispatchController
 
     public void OnAdvancedQueryChanged(string query)
     {
+        query = QueryFilterSupport.StripStealthPrefix(query);
         _tokenDispatchWork.ClearPending();
         _queryTokens = Array.Empty<string>();
         var globalPrefixChar = GetGlobalTokenPrefixChar();
         var strippedTrailing = SearchQuerySortParser.Strip(query, out var tokens, globalPrefixChar);
         _queryTokens = tokens;
         var cleanQuery = SearchQuerySortParser.StripExclusionBypass(strippedTrailing, out var bypassExclusions);
+        var termWithoutFilters = QueryFilterSupport.Extract(cleanQuery, out var filters);
+        QueryFilterSupport.Activate(filters);
+        var providerQuery = filters.IsEmpty ? query : termWithoutFilters;
+        if (!filters.IsEmpty) cleanQuery = termWithoutFilters;
         // A file-filter scope keyword ("tf report" -> search "report" only inside the tf filter's folders)
         // resolves first, in the same order SearchDispatchController applies it: the scope is the more
         // specific prefix and its own resolver owns stripping its word, so the trigger-word strip below is
@@ -128,8 +133,7 @@ internal sealed class SearchQueryDispatchController
         // order already established, so the total cost of painting twenty times is the cost of painting
         // once. Built here rather than on the first mapper call because the content append has to reach it
         // even when the file search never answers. See StreamingResultAccumulator.
-        var accumulator = new StreamingResultAccumulator(cleanQuery, new Dictionary<string, int>(),
-            usageCounts: SearchHistoryStore.GetFrequencies());
+        var accumulator = new StreamingResultAccumulator(cleanQuery, new Dictionary<string, int>());
         var prioritiesApplied = false;
         _accumulator = accumulator;
         _searchSettled = false;
@@ -155,10 +159,14 @@ internal sealed class SearchQueryDispatchController
         void StartContentRowAppend()
         {
             if (wantsContentRows)
-                Task.Run(() => FullSearchContentRowStreamer.StreamFullSearchFileRows(query,
+                Task.Run(() => FullSearchContentRowStreamer.StreamFullSearchFileRows(providerQuery,
                     PluginManager.Instance.FullSearchFileResultProviders,
                     () => queryGeneration == Volatile.Read(ref _contentAppendGeneration),
-                    rows => AppendContentRows(rows, queryGeneration)));
+                    rows =>
+                    {
+                        if (!filters.IsEmpty) rows.RemoveAll(row => !filters.Matches(row));
+                        if (rows.Count > 0) AppendContentRows(rows, queryGeneration);
+                    }));
         }
 
         _searchEngine.QueueSearch(
@@ -203,8 +211,8 @@ internal sealed class SearchQueryDispatchController
                 // synthetic "Empty" placeholder in exactly one case (a final render that found nothing),
                 // so on every other paint this filter used to duplicate the entire row list -- megabytes
                 // onto the large object heap, on the UI thread, once per paint -- to remove nothing.
-                var filteredResults = results.Exists(r => r.IsEmptyResult)
-                    ? results.FindAll(r => !r.IsEmptyResult)
+                var filteredResults = final && results.Count == 1 && results[0].IsEmptyResult
+                    ? new List<AppSearchResult>()
                     : results;
                 // The last batch is never read through LastBatchRows on the final render. Release its
                 // duplicate row-reference buffer before sidebar/filter rendering can allocate more state.

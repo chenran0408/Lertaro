@@ -11,7 +11,7 @@ public sealed class ClipboardInstantProvider : IInstantResultProvider
 
     public IEnumerable<InstantResultItem> GetInstantResults(string query)
     {
-        if (!ClipboardSettings.Enabled || !TriggerWord.TryMatch(query, ClipboardSettings.TriggerKeyword, out var term))
+        if (!TriggerWord.TryMatch(query, ClipboardSettings.TriggerKeyword, out var term))
             return [];
         // The dedicated panel row leads; the rows under it are the same results the panel would
         // show for the typed term, so a quick "cb <term>" search still works from the main box.

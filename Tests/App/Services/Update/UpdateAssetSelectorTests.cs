@@ -90,6 +90,18 @@ public sealed class UpdateAssetSelectorTests
         Assert.IsNull(UpdateAssetSelector.SelectPortableZip<Asset>(null, a => a.Name, Architecture.X64));
     }
 
+    [TestMethod]
+    public void SelectPortableSignature_MatchesTheSelectedZipAndRejectsAmbiguity()
+    {
+        var x64 = new Asset("Lertaro-Portable.zip.sig");
+        var arm64 = new Asset("Lertaro-Portable-arm64.zip.sig");
+
+        Assert.AreSame(arm64, UpdateAssetSelector.SelectPortableSignature([x64, arm64], a => a.Name, "Lertaro-Portable-arm64.zip"));
+        Assert.IsNull(UpdateAssetSelector.SelectPortableSignature([arm64], a => a.Name, "Lertaro-Portable.zip"));
+        Assert.IsNull(UpdateAssetSelector.SelectPortableSignature(
+            [x64, new Asset("LERTARO-PORTABLE.ZIP.SIG")], a => a.Name, "Lertaro-Portable.zip"));
+    }
+
     // --- SelectSetup ---
 
     private static Asset? SelectSetupFor(string[] names, Architecture arch)

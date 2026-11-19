@@ -21,6 +21,8 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
     private readonly SpaceAnalyzerRefreshWatcher _refreshWatcher;
     private readonly SpaceAnalyzerPreviewSupport _previewSupport;
     private IReadOnlyList<SpaceDisplayItem> _items = Array.Empty<SpaceDisplayItem>();
+    private IReadOnlyList<SpaceDisplayItem> _visibleItems = Array.Empty<SpaceDisplayItem>();
+    private bool? _showTreemap;
     private CancellationTokenSource? _loadCts;
     private bool _isLoading;
     private bool _loadFailed;
@@ -61,6 +63,7 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
         ItemsList.SelectedItem = null;
         if (_history.Count > 1)
             _history.RemoveRange(1, _history.Count - 1);
+        LocationFilter.Clear();
         _refreshWatcher.Watch(_history.Select(location => location.Path).ToList());
         _previewSupport.SetVisible(true);
         await ReloadAsync();
@@ -83,6 +86,7 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
         if (!background)
         {
             _loadFailed = false;
+            RebuildBreadcrumbs();
             SetLoading(true);
         }
         try
@@ -106,7 +110,7 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
                 return;
             _loadFailed = true;
             _items = Array.Empty<SpaceDisplayItem>();
-            ItemsList.ItemsSource = _items;
+            ShowCurrentLocation();
         }
         finally
         {
@@ -118,19 +122,25 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
     {
         if (_history.Count == 0)
             return;
-        ItemsList.ItemsSource = _items;
+        ParentListButton.Visibility = _history.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        RebuildBreadcrumbs();
+        ApplyLocationFilter(selectedPath);
+        if (IsVisible)
+            _refreshWatcher.Watch(_history.Select(location => location.Path).ToList());
+    }
+
+    private void ApplyLocationFilter(string? selectedPath)
+    {
+        var filter = LocationFilter.Text.Trim();
+        _visibleItems = filter.Length == 0 ? _items
+            : _items.Where(item => item.Name.Contains(filter, StringComparison.CurrentCultureIgnoreCase)).ToArray();
+        ItemsList.ItemsSource = _visibleItems;
         ItemsList.SelectedItem = selectedPath == null
             ? null
-            : _items.FirstOrDefault(item => string.Equals(item.Path, selectedPath, StringComparison.OrdinalIgnoreCase));
-        var canGoBack = _history.Count > 1;
-        BackButton.IsEnabled = canGoBack;
-        ParentListButton.Visibility = canGoBack ? Visibility.Visible : Visibility.Collapsed;
-        RebuildBreadcrumbs();
+            : _visibleItems.FirstOrDefault(item => string.Equals(item.Path, selectedPath, StringComparison.OrdinalIgnoreCase));
         UpdateEmptyState();
         UpdateSummary();
         RenderTreemap();
-        if (IsVisible)
-            _refreshWatcher.Watch(_history.Select(location => location.Path).ToList());
     }
     private async void ActivateItem(SpaceDisplayItem item)
     {
@@ -146,6 +156,7 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
         }
         ItemsList.SelectedItem = null;
         _history.Add(new SpaceAnalyzerLocation(item.Path, item.Name));
+        LocationFilter.Clear();
         await ReloadAsync();
     }
     private async void NavigateToHistory(int index)
@@ -154,6 +165,7 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
             return;
         ItemsList.SelectedItem = null;
         _history.RemoveRange(index + 1, _history.Count - index - 1);
+        LocationFilter.Clear();
         await ReloadAsync();
     }
 
@@ -163,7 +175,7 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
         for (var index = 0; index < _history.Count; index++)
         {
             if (index > 0)
-                BreadcrumbPanel.Children.Add(SpaceAnalyzerBreadcrumbFactory.Create(this));
+                BreadcrumbPanel.Children.Add(SpaceAnalyzerBreadcrumbFactory.Create());
             var target = index;
             var isCurrent = index == _history.Count - 1;
             var button = new Button
@@ -176,11 +188,40 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
                 button.Click += (_, _) => NavigateToHistory(target);
             BreadcrumbPanel.Children.Add(button);
         }
+        BreadcrumbScroller.ScrollToRightEnd();
     }
 
     private void RenderTreemap()
-        => SpaceTreemapPresenter.Render(TreemapCanvas, _items, ItemsList.SelectedItem as SpaceDisplayItem,
-            SelectFromTreemap, NavigateFromTreemap, ShowActions);
+    {
+        if (MapPane.Visibility == Visibility.Visible)
+            SpaceTreemapPresenter.Render(TreemapCanvas, _visibleItems, ItemsList.SelectedItem as SpaceDisplayItem,
+                SelectFromTreemap, NavigateFromTreemap, ShowActions);
+    }
+
+    private void View_SizeChanged(object sender, SizeChangedEventArgs e) => UpdateViewLayout(e.NewSize.Width);
+
+    private void TreemapToggle_Click(object sender, RoutedEventArgs e)
+    {
+        _showTreemap = TreemapToggle.IsChecked == true;
+        UpdateViewLayout(ActualWidth);
+    }
+
+    private void UpdateViewLayout(double width)
+    {
+        var wide = width >= 840;
+        var showMap = _showTreemap ?? wide;
+        var showList = wide || !showMap;
+        TreemapToggle.IsChecked = showMap;
+        ListPane.Visibility = showList ? Visibility.Visible : Visibility.Collapsed;
+        MapPane.Visibility = showMap ? Visibility.Visible : Visibility.Collapsed;
+        ListColumn.Width = showList ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        MapColumn.Width = showMap ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        MapPane.Margin = new Thickness(showList ? 10 : 0, 0, 0, 0);
+        UpdateEmptyState();
+    }
+
+    private void LocationFilter_TextChanged(object sender, TextChangedEventArgs e)
+        => ApplyLocationFilter((ItemsList.SelectedItem as SpaceDisplayItem)?.Path);
 
     private void SelectFromTreemap(SpaceDisplayItem item)
     {
@@ -214,7 +255,8 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
 
     private void UpdateEmptyState()
     {
-        EmptyState.Visibility = _isLoading || _items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        var noChartData = ListPane.Visibility == Visibility.Collapsed && !_visibleItems.Any(item => item.Size > 0);
+        EmptyState.Visibility = _isLoading || _visibleItems.Count == 0 || noChartData ? Visibility.Visible : Visibility.Collapsed;
         if (_isLoading)
             EmptyText.Text = TranslationManager.Instance["Space_Loading"];
         else if (_loadFailed)
@@ -223,13 +265,19 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
             EmptyText.Text = TranslationManager.Instance["Space_NoIndexes"];
         else if (_items.Count == 0)
             EmptyText.Text = TranslationManager.Instance["Space_Empty"];
+        else if (_visibleItems.Count == 0)
+            EmptyText.Text = TranslationManager.Instance["Space_NoMatches"];
+        else if (noChartData)
+            EmptyText.Text = TranslationManager.Instance["Space_NoChartData"];
     }
 
     private void UpdateSummary()
     {
         var total = _items.Aggregate(0L, static (sum, item) => sum > long.MaxValue - item.Size ? long.MaxValue : sum + item.Size);
         LogicalSizeHint.Text = TranslationManager.Instance[_history.Count == 1 ? "Space_VolumeCapacityHint" : "Space_LogicalSize"];
-        SummaryText.Text = string.Format(TranslationManager.Instance["Space_Summary"], _items.Count, SpaceSizeFormatter.Format(total));
+        SummaryText.Text = string.IsNullOrWhiteSpace(LocationFilter.Text)
+            ? string.Format(TranslationManager.Instance["Space_Summary"], _items.Count, SpaceSizeFormatter.Format(total))
+            : string.Format(TranslationManager.Instance["Space_FilterSummary"], _visibleItems.Count, _items.Count);
     }
 
     private void SetLoading(bool loading)
@@ -238,6 +286,9 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
         BackButton.IsEnabled = !loading && _history.Count > 1;
         ParentListButton.IsEnabled = !loading && _history.Count > 1;
         ItemsList.IsEnabled = !loading;
+        LocationFilter.IsEnabled = !loading;
+        OpenSelectionButton.IsEnabled = !loading && ItemsList.SelectedItem != null;
+        SummaryText.Visibility = loading ? Visibility.Collapsed : Visibility.Visible;
         UpdateEmptyState();
     }
 
@@ -270,6 +321,7 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
         ItemsList.ItemsSource = null;
         TreemapCanvas.Children.Clear();
         _items = Array.Empty<SpaceDisplayItem>();
+        _visibleItems = Array.Empty<SpaceDisplayItem>();
         _history.Clear();
         ShellIconHelper.ClearCache();
         PathCacheMaintenance.ClearAllPathCaches();
@@ -278,8 +330,20 @@ public partial class SpaceAnalyzerView : UserControl, IDisposable
 
     private void ItemsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        OpenSelectionButton.IsEnabled = !_isLoading && ItemsList.SelectedItem != null;
         RenderTreemap();
         _previewSupport.SelectionChanged((ItemsList.SelectedItem as SpaceDisplayItem)?.Path);
+    }
+    private void OpenSelection_Click(object sender, RoutedEventArgs e)
+    {
+        if (ItemsList.SelectedItem is SpaceDisplayItem item)
+            ActivateItem(item);
+    }
+    private void ItemsList_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || ItemsList.SelectedItem is not SpaceDisplayItem item) return;
+        e.Handled = true;
+        ActivateItem(item);
     }
     private void ItemsList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {

@@ -96,13 +96,16 @@ public class PluginInfoViewModel : ViewModelBase
         string? websiteLabel = null,
         bool isPluginEnabled = true,
         Func<Task>? onSaveAsync = null,
-        Func<IReadOnlyDictionary<string, object?>, Task>? onPreviewAsync = null)
+        Func<IReadOnlyDictionary<string, object?>, Task>? onPreviewAsync = null,
+        bool wasDisabledAtStartup = false)
     {
         _isPluginEnabled = isPluginEnabled && (!components.Any(c => c.IsToggleable) || components.Any(c => c.IsToggleable && c.IsEnabled));
         Name = name;
         Version = version;
         DllFileName = dllFileName;
+        ConfigurationCategoryKey = PluginConfigurationCategory.KeyFor(dllFileName);
         SdkVersion = sdkVersion;
+        WasDisabledAtStartup = wasDisabledAtStartup;
         RawComponents = components;
         ConfigFields = new ObservableCollection<PluginConfigFieldViewModel>(configFields);
         _configTabState = new PluginConfigTabState(this);
@@ -143,6 +146,8 @@ public class PluginInfoViewModel : ViewModelBase
     public string Description { get; }
     public string Version { get; }
     public string DllFileName { get; }
+    internal string ConfigurationCategoryKey { get; }
+    public string ConfigurationCategory => TranslationManager.Instance["Plugins_Category" + ConfigurationCategoryKey];
     private bool _isPluginEnabled;
     public bool IsPluginEnablementDirty { get; private set; }
     public bool IsPluginEnabled
@@ -179,6 +184,7 @@ public class PluginInfoViewModel : ViewModelBase
 
     public bool HasConfigFields => ConfigFields.Count > 0;
     public bool HasNoComponents => RawComponents.Count == 0;
+    public bool WasDisabledAtStartup { get; }
 
     /// <summary>
     /// Whether this plugin's config holds edits the user staged and has not had applied yet -- kept
@@ -259,10 +265,30 @@ public class PluginInfoViewModel : ViewModelBase
         }
     }
 
-    public Action? OnSave { get; }
-    public Func<Task>? OnSaveAsync { get; }
-    public Func<IReadOnlyDictionary<string, object?>, Task>? OnPreviewAsync { get; }
-    public Action? OnRollback { get; }
+    // Custom controls and their callbacks share plugin-owned state. Keep them together until Apply or Cancel.
+    internal void RestoreConfigSession(PluginInfoViewModel previous)
+    {
+        if (previous.HasPendingConfigEdits || previous.RequiresCustomConfigSave)
+        {
+            ConfigFields.Clear();
+            foreach (var field in previous.ConfigFields) ConfigFields.Add(field);
+            OnSave = previous.OnSave;
+            OnSaveAsync = previous.OnSaveAsync;
+            OnPreviewAsync = previous.OnPreviewAsync;
+            OnRollback = previous.OnRollback;
+            _configTabState.Opened();
+            if (!previous.IsConfigTab) _configTabState.Closed();
+        }
+
+        IsConfigTab = previous.IsConfigTab;
+        if (previous._selectedConfigGroup is { } group)
+            SelectedConfigGroup = ConfigGroups.FirstOrDefault(f => f.SchemaField.Key == group.SchemaField.Key);
+    }
+
+    public Action? OnSave { get; private set; }
+    public Func<Task>? OnSaveAsync { get; private set; }
+    public Func<IReadOnlyDictionary<string, object?>, Task>? OnPreviewAsync { get; private set; }
+    public Action? OnRollback { get; private set; }
 
     /// <summary>Discards every staged config edit on this plugin, returning its fields to persisted values.</summary>
     /// <remarks>Used by Cancel (SettingsViewModel.Cleanup) and by tests.</remarks>

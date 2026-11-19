@@ -11,6 +11,10 @@ public class PluginConfigArrayItemViewModel : ViewModelBase
 
     public ObservableCollection<PluginConfigFieldViewModel> Children { get; } = new();
 
+    public IEnumerable<PluginConfigFieldViewModel> BasicFields => Children.Where(child => !child.SchemaField.IsAdvanced);
+    public IEnumerable<PluginConfigFieldViewModel> AdvancedFields => Children.Where(child => child.SchemaField.IsAdvanced);
+    public bool HasAdvancedFields => Children.Any(child => child.SchemaField.IsAdvanced);
+
     public PluginConfigFieldViewModel? SimpleValueViewModel { get; }
 
     public ICommand DeleteCommand { get; }

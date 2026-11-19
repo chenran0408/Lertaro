@@ -38,6 +38,8 @@
   "Calendar_Unpin": "항상 위 표시 해제",
   "Calendar_Add": "추가",
   "Calendar_Delete": "삭제",
+  "Calendar_Hour": "시",
+  "Calendar_Minute": "분",
   "Calendar_TimeHint": "시각 HH:MM",
   "Calendar_TextHint": "알림 내용",
   "Calendar_TextAdvice": "5개까지 권장",

@@ -55,7 +55,7 @@ public sealed class SettingsWindowSearchExtensionsTests
         var targetItem = results.FirstOrDefault(r => r.Label == "Settings_TestLabelKey");
 
         Assert.IsNotNull(targetItem, "Expected plugin config field label to be indexed.");
-        Assert.AreEqual("Plugins", targetItem.Section);
+        Assert.AreEqual("PluginSettings", targetItem.Section);
         StringAssert.Contains(targetItem.SectionLabel, "TestPlugin");
         Assert.IsNotNull(targetItem.Reveal, "Expected dynamic reveal metadata for targeting UI element.");
     }

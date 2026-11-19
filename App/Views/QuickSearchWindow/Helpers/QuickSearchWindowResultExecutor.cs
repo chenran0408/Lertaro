@@ -66,9 +66,9 @@ public class QuickSearchWindowResultExecutor
         if (result.IsEmptyResult || result.IsSearchSectionHeader)
             return;
         _window.RecordKeywordHistory();
-        if (!result.IsPluginSearchAction && !result.IsInstantResult)
+        if (!result.IsPluginSearchAction && !result.IsInstantResult && !QueryFilterSupport.IsStealthQuery(_window.TxtSearch.Text))
         {
-            if (!QueryFilterSupport.IsStealth) SearchHistoryStore.Record(SearchResultHelper.HistoryKeywordOf(result, _window.TxtSearch.Text), result.FullPath, SearchResultHelper.HistoryKindOf(result));
+            SearchHistoryStore.Record(SearchResultHelper.HistoryKeywordOf(result, _window.TxtSearch.Text), result.FullPath, SearchResultHelper.HistoryKindOf(result));
         }
 
         if (result.IsPluginSearchAction)

@@ -83,7 +83,7 @@ El plugin de Búsqueda web incluye accesos directos para los principales motores
 | `wiki` | Wikipedia | `wiki mecanica cuantica` | Consultar artículos de Wikipedia |
 | `yt` | YouTube | `yt lofi hip hop` | Buscar vídeos en YouTube |
 
-Puedes añadir, editar o eliminar motores y plantillas de URL en **Configuración → Plugins → Búsqueda web → Configurar**.
+Abre el plugin de búsqueda web en **Ajustes de complementos** para añadir sitios o editar atajos. Incluye Bilibili (`bili`), Zhihu (`zh`), Douban (`douban`) y JD (`jd`).
 
 ## 4. Traducción instantánea
 

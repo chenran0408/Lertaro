@@ -148,6 +148,8 @@ public class AppSearchResult : System.ComponentModel.INotifyPropertyChanged, Plu
         }
     }
     public bool IsApplication => ResultKind == "Application";
+    public bool IsShortcutFile => ResultKind == "File" && !IsDir && FullPath.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase);
+    public bool IsExecutableFile => ResultKind == "File" && !IsDir && FullPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase);
     public bool IsPluginSearchAction => ResultKind == "PluginAction";
     public bool IsSearchSectionHeader => ResultKind == "SectionHeader";
     public bool IsJumpToExplorerPath => ResultKind == "JumpToExplorerPath";
@@ -163,7 +165,7 @@ public class AppSearchResult : System.ComponentModel.INotifyPropertyChanged, Plu
     // Mirrors the exact conditions DataTemplates.xaml's path-subtitle row collapses under (applications,
     // a blank ParentDir, or the "no results" placeholder) -- single source of truth for both that
     // visibility and the name-line font size below, so they can never drift out of sync with each other.
-    public bool HasPathSubtitle => !IsApplication && ParentDir != "" && !IsEmptyResult;
+    public bool HasPathSubtitle => ParentDir != "" && !IsEmptyResult;
     // A row must be at least as tall as its own icon plus the row border's own vertical margin (see
     // UiMetrics.ResultRowVerticalMargin) -- otherwise the icon can exceed the row and either get clipped
     // or force it to overflow past its allotted layout space. Section headers used to get their own

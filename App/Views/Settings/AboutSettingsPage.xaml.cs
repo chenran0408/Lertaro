@@ -1,4 +1,5 @@
 using System.IO;
+using System.Security.Cryptography;
 using System.Windows;
 using System.ComponentModel;
 using Lertaro.App.Services;
@@ -10,12 +11,14 @@ using Brushes = System.Windows.Media.Brushes;
 using Lertaro.App.Services.Update;
 
 using Lertaro.App.Services.Theme;
+using Lertaro.Core.Services.Installation;
 using Lertaro.Core.Services.Search;
 namespace Lertaro.App.Views.Settings;
 
 public partial class AboutSettingsPage : System.Windows.Controls.UserControl, INotifyPropertyChanged
 {
     private GitHubReleaseInfo? _latestRelease;
+    private CancellationTokenSource? _updateDownload;
 
     public event PropertyChangedEventHandler? PropertyChanged;
     protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -92,6 +95,7 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
         ThemeManager.Instance.ThemeChanged += UpdateServiceStatusBrush;
         Unloaded += (_, _) =>
         {
+            _updateDownload?.Cancel();
             ThemeManager.Instance.ThemeChanged -= UpdateServiceStatusBrush;
             TranslationManager.Instance.PropertyChanged -= _translationHandler;
         };
@@ -194,10 +198,6 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
                 // What's new: the release body rendered under the actions, so the user can decide
                 // with the changelog in front of them instead of a bare version number.
                 RenderReleaseNotes(release.Body);
-
-                // The service applies signed packages as LocalSystem, so a standard user can update
-                // from this button without elevating the App or opening a download page.
-                BtnDownloadUpdate.IsEnabled = true;
             }
             else
             {
@@ -236,13 +236,10 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
 
     private async void BtnDownloadUpdate_Click(object sender, RoutedEventArgs e)
     {
-        if (_latestRelease == null) return;
+        if (_latestRelease == null || _updateDownload != null) return;
 
-        // Installer installs take the setup executable; portable installs take the zip (they run it
-        // by extracting over their folder, so the guidance differs). One download, no service handoff,
-        // no file replacement while this app runs.
-        var serviceHere = ServiceInstallManager.IsInstalledAtCurrentPath();
-        var asset = serviceHere
+        var installed = InstallationDetector.Detect() == InstallationMode.Installed;
+        var asset = installed
             ? UpdateAssetSelector.SelectSetup(_latestRelease.Assets, a => a.Name)
             : UpdateAssetSelector.SelectPortableZip(_latestRelease.Assets, a => a.Name);
         if (asset == null)
@@ -251,39 +248,71 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
             return;
         }
 
-        BtnCheckUpdate.IsEnabled = false;
-        BtnDownloadUpdate.IsEnabled = false;
-        BtnGoToPage.IsEnabled = false;
-        PbUpdate.Visibility = Visibility.Visible;
-        PbUpdate.Value = 0;
+        var signatureUrl = installed ? null
+            : UpdateAssetSelector.SelectPortableSignature(_latestRelease.Assets, a => a.Name, asset.Name)?.BrowserDownloadUrl;
 
-        var downloadingFormat = TranslationManager.Instance["About_Downloading"];
+        using var download = new CancellationTokenSource();
+        _updateDownload = download;
+        BtnCheckUpdate.IsEnabled = false;
+        BtnDownloadUpdate.Visibility = Visibility.Collapsed;
+        BtnCancelUpdate.Visibility = Visibility.Visible;
+        BtnCancelUpdate.Focus();
+        PbUpdate.Value = 0;
+        PbUpdate.IsIndeterminate = true;
+        PbUpdate.Visibility = Visibility.Visible;
+        TxtUpdateStatus.Text = TranslationManager.Instance["About_DownloadInProgress"];
+
+        string filePath;
         try
         {
-            var filePath = await UpdateSetupDownloader.Instance.DownloadAsync(asset.BrowserDownloadUrl, asset.Name,
-                progress => Dispatcher.Invoke(() =>
+            filePath = await UpdateSetupDownloader.Instance.DownloadAsync(asset.BrowserDownloadUrl, asset.Name, signatureUrl,
+                percent => Dispatcher.Invoke(() =>
                 {
-                    PbUpdate.Value = progress * 100;
-                    TxtUpdateStatus.Text = string.Format(downloadingFormat, (int)(progress * 100));
-                }));
-
-            PbUpdate.Visibility = Visibility.Collapsed;
+                    PbUpdate.IsIndeterminate = false;
+                    PbUpdate.Value = percent;
+                    TxtUpdateStatus.Text = string.Format(TranslationManager.Instance["About_Downloading"], percent);
+                }), download.Token);
             TxtUpdateStatus.Text = TranslationManager.Instance["About_Downloaded"];
-            OfferManualInstall(filePath, serviceHere);
+        }
+        catch (OperationCanceledException) when (download.IsCancellationRequested)
+        {
+            TxtUpdateStatus.Text = TranslationManager.Instance["About_DownloadCanceled"];
+            return;
+        }
+        catch (TimeoutException)
+        {
+            TxtUpdateStatus.Text = TranslationManager.Instance["About_DownloadTimedOut"];
+            return;
+        }
+        catch (CryptographicException ex)
+        {
+            Logger.Log($"[AboutSettingsPage] Update signature verification failed: {ex.Message}", LogLevel.Warn);
+            TxtUpdateStatus.Text = TranslationManager.Instance["About_UpdateSignatureFailed"];
+            return;
         }
         catch (Exception ex)
         {
             Logger.Log($"[AboutSettingsPage] Update download failed: {ex.Message}", LogLevel.Warn);
-            PbUpdate.Visibility = Visibility.Collapsed;
             TxtUpdateStatus.Text = TranslationManager.Instance["About_Failed"];
+            return;
         }
         finally
         {
+            _updateDownload = null;
+            PbUpdate.Visibility = Visibility.Collapsed;
+            PbUpdate.IsIndeterminate = false;
             BtnCheckUpdate.IsEnabled = true;
-            BtnDownloadUpdate.IsEnabled = true;
-            BtnGoToPage.IsEnabled = true;
+            BtnDownloadUpdate.Visibility = Visibility.Visible;
+            if (BtnCancelUpdate.IsKeyboardFocused)
+                BtnDownloadUpdate.Focus();
+            BtnCancelUpdate.Visibility = Visibility.Collapsed;
         }
+
+        if (IsLoaded)
+            OfferManualInstall(filePath, installed);
     }
+
+    private void BtnCancelUpdate_Click(object sender, RoutedEventArgs e) => _updateDownload?.Cancel();
 
     /// <summary>
     /// The post-download guidance: where the package landed and what to do with it. Running the
@@ -297,9 +326,10 @@ public partial class AboutSettingsPage : System.Windows.Controls.UserControl, IN
             filePath);
         var dialog = new Controls.Dialogs.UpdateDialogWindow(
             TranslationManager.Instance["About_CheckUpdate"], guidance, showNeverPrompt: false);
-        dialog.SetButtons(
-            installerInstall ? TranslationManager.Instance["About_RunInstaller"] : TranslationManager.Instance["About_OpenFolder"],
-            TranslationManager.Instance["About_OpenFolder"]);
+        if (installerInstall)
+            dialog.SetButtons(TranslationManager.Instance["About_RunInstaller"], TranslationManager.Instance["About_OpenFolder"]);
+        else
+            dialog.SetButtons(TranslationManager.Instance["About_OpenFolder"]);
         dialog.ShowDialog();
 
         switch (dialog.Result)

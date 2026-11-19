@@ -13,7 +13,7 @@ internal static class ClipboardImageIngest
     public static async Task<ClipboardEntryDraft?> BuildDraftAsync(ClipboardCapture capture, string imagesDirectory)
     {
         if (capture.Kind == ClipboardEntryKind.Text)
-            return new ClipboardEntryDraft(ClipboardEntryKind.Text, capture.Text);
+            return new ClipboardEntryDraft(ClipboardEntryKind.Text, capture.Text, Html: capture.Html);
         if (capture.Kind == ClipboardEntryKind.FilePaths)
             return new ClipboardEntryDraft(ClipboardEntryKind.FilePaths, string.Join("\n", capture.FilePaths));
 

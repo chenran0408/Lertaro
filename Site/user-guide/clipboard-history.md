@@ -4,9 +4,9 @@ The Clipboard History plugin records what you copy on this machine and lets you 
 
 ## Opening the panel
 
-Press `Win+V` (configurable in Settings → Hotkeys) or type the trigger keyword `cb` in the search box and choose **Open clipboard panel**. The panel opens at your mouse position.
+Press `Alt+V` (configurable in Settings → Hotkeys) or type the trigger keyword `cb` in the search box and choose **Open clipboard panel**. The panel opens at your mouse position.
 
-If `Win+V` does nothing, Windows' own clipboard history still owns the key: open **Settings → Plugins → Clipboard History → Configure** and use **Open Windows clipboard settings** to turn the system feature off.
+Windows keeps its own clipboard history on `Win+V`. To change Lertaro's shortcut, open **Settings → Hotkeys → Clipboard panel**.
 
 ## What gets recorded
 

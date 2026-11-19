@@ -14,6 +14,25 @@ public sealed class WebSearchInstantProviderTests
         Assert.AreEqual("https://x.com/?q=hello%20world", WebSearchInstantProvider.BuildUrl("https://x.com/?q={0}", "hello world"));
 
     [TestMethod]
+    public void FormatPlaceholder_PreservesOtherLiteralBracesAndEscapedFormatStrings()
+    {
+        Assert.AreEqual("https://x/?q=a%20b&options={name}", WebSearchInstantProvider.BuildUrl("https://x/?q={0}&options={name}", "a b"));
+        Assert.AreEqual("https://x/?q=a&options={name}", WebSearchInstantProvider.BuildUrl("https://x/?q={0}&options={{name}}", "a"));
+    }
+
+    [TestMethod]
+    public void Suggestions_UseTriggerSeparatorsAndReturnOnlyDistinctDisplayableRows()
+    {
+        var request = new WebSearchSuggestionFetcher.Request("g", "https://x", "天气", "zh-CN");
+        Assert.IsTrue(request.Matches("G　天气"));
+        Assert.IsFalse(request.Matches("g 天气预报"));
+        var json = """["天气",["天气"," ","A","a","B","C","D","E","F"]]""";
+        CollectionAssert.AreEqual(new[] { "A", "B", "C", "D", "E" }, WebSearchSuggestionFetcher.ParseOpenSearchSuggestions(json, "天气"));
+        Assert.AreNotEqual(request, request with { Endpoint = "https://y" });
+        Assert.AreNotEqual(request, request with { Culture = "en-US" });
+    }
+
+    [TestMethod]
     public void BuildUrl_NoPlaceholder_AppendsEncodedTermToEnd() =>
         Assert.AreEqual("https://x.com/search/hello", WebSearchInstantProvider.BuildUrl("https://x.com/search/", "hello"));
 
@@ -45,6 +64,23 @@ public sealed class WebSearchInstantProviderSettingsTests
 
     private static WebSearchInstantProvider.SearchSourceItem MakeSource(string keyword = "g", string url = "https://x.com/?q=%s", string suggestUrl = "") =>
         new() { Name = "TestEngine", Keyword = keyword, Url = url, SuggestUrl = suggestUrl };
+
+    [TestMethod]
+    [DataRow("bili", "search.bilibili.com", "keyword=")]
+    [DataRow("zh", "www.zhihu.com", "q=")]
+    [DataRow("douban", "www.douban.com", "q=")]
+    [DataRow("jd", "search.jd.com", "keyword=")]
+    public void BuiltInSitesPublishTheirKeywordAndExecuteAnEncodedQuery(string keyword, string host, string parameter)
+    {
+        ConfigureSources(WebSearchPlugin.GetDefaultSearchSources());
+        var provider = new WebSearchInstantProvider();
+        CollectionAssert.Contains(provider.QueryTriggerKeywords.ToList(), keyword);
+        var result = provider.GetInstantResults(keyword + " 动画 & C++").Single();
+        var target = new Uri(result.ActionArgument!);
+        Assert.AreEqual(host, target.Host);
+        StringAssert.Contains(target.Query, parameter + Uri.EscapeDataString("动画 & C++"));
+        Assert.AreEqual("Execute", result.ActionType);
+    }
 
     [TestMethod]
     public void GetInstantResults_EmptyQuery_ReturnsNothing() =>

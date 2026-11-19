@@ -6,7 +6,6 @@
              xmlns:services="clr-namespace:Lertaro.App.Services"
              xmlns:conv="clr-namespace:Lertaro.App.Converters"
              xmlns:local="clr-namespace:Lertaro.App.Views.Settings.Plugins"
-             xmlns:ctrl="clr-namespace:Lertaro.App.Views.Controls"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="620">
     <UserControl.Resources>
@@ -22,89 +21,94 @@
                  already registers it under that key, and a second declaration would be a second instance
                  of the same stateless converter. -->
             <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
-            <conv:BoolToVisibilityConverter x:Key="InvertBoolToVis" Invert="True"/>
-            <conv:NullToVisibilityConverter x:Key="NullToVis"/>
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <!-- IsSharedSizeScope lets every field row's editor column (SharedSizeGroup="FieldEditor") sync to
-         the widest editor currently on screen, so their editors all start at the same X instead of each
-         row sizing its own independently. Scoped to this control rather than the page, so one plugin's
-         wide editor cannot push another plugin's rows across. -->
     <Grid Grid.IsSharedSizeScope="True" Margin="0,4,0,0">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Global NonGroup fields (e.g. 设置搜索触发词), positioned ABOVE sub-tabs -->
-        <ItemsControl Grid.Row="0" ItemsSource="{Binding NonGroupConfigFields}"
-                      Visibility="{Binding HasMultipleConfigGroups, Converter={StaticResource BoolToVis}}"/>
-
-        <!-- Fixed Sub-tab Header Bar and Hairline Divider Line (when 2+ groups exist) -->
-        <StackPanel Grid.Row="1" Visibility="{Binding HasMultipleConfigGroups, Converter={StaticResource BoolToVis}}">
-            <ctrl:TabStripScrollView Margin="0,12,0,16">
-                <ItemsControl ItemsSource="{Binding ConfigGroups}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Margin="0,0,28,0">
-                                <Button Content="{Binding Label}"
-                                        Command="{Binding DataContext.SelectConfigGroupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}">
-                                    <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource TabHeaderButtonStyle}">
-                                            <Style.Triggers>
-                                                <DataTrigger Value="True">
-                                                    <DataTrigger.Binding>
-                                                        <MultiBinding Converter="{StaticResource RefEquals}">
-                                                            <Binding/>
-                                                            <Binding Path="DataContext.SelectedConfigGroup" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                                        </MultiBinding>
-                                                    </DataTrigger.Binding>
-                                                    <Setter Property="Foreground" Value="{DynamicResource AccentBlue}"/>
-                                                    <Setter Property="FontWeight" Value="SemiBold"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-                                <Border>
-                                    <Border.Style>
-                                        <Style TargetType="Border" BasedOn="{StaticResource TabUnderlineStyle}">
-                                            <Style.Triggers>
-                                                <DataTrigger Value="True">
-                                                    <DataTrigger.Binding>
-                                                        <MultiBinding Converter="{StaticResource RefEquals}">
-                                                            <Binding/>
-                                                            <Binding Path="DataContext.SelectedConfigGroup" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                                        </MultiBinding>
-                                                    </DataTrigger.Binding>
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                </Border>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ctrl:TabStripScrollView>
-            <Border Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,12"/>
+        <StackPanel Grid.Row="0" Visibility="{Binding HasMultipleConfigGroups, Converter={StaticResource BoolToVis}}">
+            <ItemsControl Margin="0,4,0,4" ItemsSource="{Binding ConfigGroups}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="0,0,18,4">
+                            <Button Content="{Binding Label}"
+                                    Command="{Binding DataContext.SelectConfigGroupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource TabHeaderButtonStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Value="True">
+                                                <DataTrigger.Binding>
+                                                    <MultiBinding Converter="{StaticResource RefEquals}">
+                                                        <Binding/>
+                                                        <Binding Path="DataContext.SelectedConfigGroup" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                                    </MultiBinding>
+                                                </DataTrigger.Binding>
+                                                <Setter Property="Foreground" Value="{DynamicResource AccentBlue}"/>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Border>
+                                <Border.Style>
+                                    <Style TargetType="Border" BasedOn="{StaticResource TabUnderlineStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Value="True">
+                                                <DataTrigger.Binding>
+                                                    <MultiBinding Converter="{StaticResource RefEquals}">
+                                                        <Binding/>
+                                                        <Binding Path="DataContext.SelectedConfigGroup" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                                    </MultiBinding>
+                                                </DataTrigger.Binding>
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Border Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,6"/>
         </StackPanel>
 
-        <ScrollViewer Grid.Row="2" Margin="0,4,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="1" Margin="0,4,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
-                <ItemsControl ItemsSource="{Binding ActiveConfigGroupChildren}"
-                              Visibility="{Binding HasMultipleConfigGroups, Converter={StaticResource BoolToVis}}"/>
-                <ItemsControl ItemsSource="{Binding FlatConfigFields}"
-                              Visibility="{Binding HasMultipleConfigGroups, Converter={StaticResource InvertBoolToVis}}"/>
+                <ItemsControl>
+                    <ItemsControl.Style>
+                        <Style TargetType="ItemsControl">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasMultipleConfigGroups}" Value="True">
+                                    <Setter Property="ItemsSource" Value="{Binding NonGroupConfigFields}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ItemsControl.Style>
+                </ItemsControl>
+                <ItemsControl>
+                    <ItemsControl.Style>
+                        <Style TargetType="ItemsControl">
+                            <Setter Property="ItemsSource" Value="{Binding FlatConfigFields}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasMultipleConfigGroups}" Value="True">
+                                    <Setter Property="ItemsSource" Value="{Binding ActiveConfigGroupChildren}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ItemsControl.Style>
+                </ItemsControl>
             </StackPanel>
         </ScrollViewer>
     </Grid>

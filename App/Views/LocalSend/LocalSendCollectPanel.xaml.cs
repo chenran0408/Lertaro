@@ -11,7 +11,6 @@ namespace Lertaro.App.Views.LocalSend;
 public partial class LocalSendCollectPanel : WpfUserControl
 {
     public event EventHandler? CloseRequested;
-    public event EventHandler? NextRequested;
 
     public LocalSendCollectPanel() => InitializeComponent();
 
@@ -19,7 +18,7 @@ public partial class LocalSendCollectPanel : WpfUserControl
     private void FilesMode_Click(object sender, RoutedEventArgs e) => ViewModel?.SelectedMode = 0;
     private void TextMode_Click(object sender, RoutedEventArgs e) => ViewModel?.SelectedMode = 1;
     private void Cancel_Click(object sender, RoutedEventArgs e) => CloseRequested?.Invoke(this, EventArgs.Empty);
-    private void Next_Click(object sender, RoutedEventArgs e) { ViewModel?.ProceedToStep1(); NextRequested?.Invoke(this, EventArgs.Empty); }
+    private void Next_Click(object sender, RoutedEventArgs e) => ViewModel?.ProceedToStep1();
 
     private void AddFiles_Click(object sender, RoutedEventArgs e)
     {

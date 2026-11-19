@@ -251,6 +251,7 @@ public sealed class SearchBarLayoutSettingsViewModelTests
 
         Assert.IsNull(settings.SearchWindow.RelativeLeft);
         Assert.IsNull(settings.SearchWindow.RelativeTop);
+        Assert.IsTrue(settings.SearchWindow.FollowCursorOnSummon);
     }
 
     [TestMethod]

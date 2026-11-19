@@ -334,7 +334,7 @@ public partial class App : Application
 
         // Listary-style first-run tour: once per tour version, at ApplicationIdle so it never
         // fights startup. The card shows the steps; the real practice happens in the live windows.
-        if (!settings.OnboardingCompleted || settings.OnboardingVersion < UserSettings.CurrentOnboardingVersion)
+        if (settings.ShouldShowOnboarding())
             _ = Dispatcher.BeginInvoke(new Action(() =>
                 Views.Onboarding.OnboardingWindow.ShowTour()),
                 System.Windows.Threading.DispatcherPriority.ApplicationIdle);
@@ -343,7 +343,8 @@ public partial class App : Application
         Services.Diagnostics.DiagnosticHelper.RegisterLocalDumps();
 
         // B1: taskbar JumpList with recent searches and favorite directories
-        Services.TaskbarIntegration.JumpListService.Refresh();
+        _ = Dispatcher.BeginInvoke(new Action(Services.TaskbarIntegration.JumpListService.Refresh),
+            System.Windows.Threading.DispatcherPriority.ApplicationIdle);
 
         // Background update check on startup
         UpdateCheckService.RunOnStartupAsync();

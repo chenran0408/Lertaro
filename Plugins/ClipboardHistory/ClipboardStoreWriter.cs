@@ -19,6 +19,8 @@ internal static class ClipboardStoreWriter
             : ClipboardStoreSupport.BuildContent(draft);
         if (draft.Kind == ClipboardEntryKind.Text && content.Length == 0) return null;
         if (draft.Kind == ClipboardEntryKind.Image && string.IsNullOrEmpty(draft.ImagePath)) return null;
+        if (draft.Kind == ClipboardEntryKind.Text && content != draft.Content)
+            draft = draft with { Html = string.Empty };
 
         var preview = ClipboardStoreSupport.BuildPreview(draft with { Content = content });
         var hash = draft.ComputeHash();
@@ -34,11 +36,11 @@ internal static class ClipboardStoreWriter
         var maxStamp = ClipboardDatabase.GetMaxStamp(connection, transaction);
         var stamp = Math.Max(now, maxStamp + 1);
 
-        var existing = FindByHash(connection, transaction, hash);
+        var existing = FindByHash(connection, transaction, hash, draft.Kind);
         ClipboardEntry entry;
         if (existing != null)
         {
-            entry = Promote(connection, transaction, existing, stamp);
+            entry = Promote(connection, transaction, existing, stamp, content, preview, draft.Html);
         }
         else
         {
@@ -96,36 +98,48 @@ internal static class ClipboardStoreWriter
         UnlinkImages(database.ImagesDirectory, images);
     }
 
-    private static ClipboardEntry? FindByHash(SqliteConnection connection, SqliteTransaction transaction, byte[] hash)
+    private static ClipboardEntry? FindByHash(SqliteConnection connection, SqliteTransaction transaction, byte[] hash, ClipboardEntryKind kind)
     {
         using var select = connection.CreateCommand();
         select.Transaction = transaction;
         select.CommandText =
-            $"SELECT {ClipboardEntryColumns.EntryColumns} FROM clipboard_history WHERE content_sha256 = @hash ORDER BY id LIMIT 1";
+            $"SELECT {ClipboardEntryColumns.EntryColumns} FROM clipboard_history WHERE content_sha256 = @hash AND kind = @kind ORDER BY id LIMIT 1";
         select.Parameters.AddWithValue("@hash", hash);
+        select.Parameters.AddWithValue("@kind", (int)kind);
         using var reader = select.ExecuteReader();
         return reader.Read() ? ClipboardEntryColumns.Map(reader) : null;
     }
 
     private static ClipboardEntry Promote(SqliteConnection connection, SqliteTransaction transaction,
-        ClipboardEntry existing, long stamp)
+        ClipboardEntry existing, long stamp, string content, string preview, string html)
     {
         // Promotion updates the stamp and count but keeps the FIRST capture's source: "where did
         // this come from" should answer the origin, not whoever re-copied it most recently.
         using var update = connection.CreateCommand();
         update.Transaction = transaction;
-        update.CommandText = """
+        var updateContent = content != existing.Content;
+        update.CommandText = $"""
             UPDATE clipboard_history
-            SET seen_count = seen_count + 1, last_seen_at_ms = @stamp
+            SET seen_count = seen_count + 1, last_seen_at_ms = @stamp, html = @html
+                {(updateContent ? ", content = @content, plain_preview = @preview" : string.Empty)}
             WHERE id = @id
             """;
         update.Parameters.AddWithValue("@stamp", stamp);
+        if (updateContent)
+        {
+            update.Parameters.AddWithValue("@content", content);
+            update.Parameters.AddWithValue("@preview", preview);
+        }
+        update.Parameters.AddWithValue("@html", html);
         update.Parameters.AddWithValue("@id", existing.Id);
         update.ExecuteNonQuery();
         return existing with
         {
             SeenCount = existing.SeenCount + 1,
             LastSeenAtMs = stamp,
+            Content = content,
+            PlainPreview = updateContent ? preview : existing.PlainPreview,
+            Html = html,
         };
     }
 
@@ -229,6 +243,7 @@ internal static class ClipboardStoreWriter
     {
         foreach (var fileName in fileNames)
         {
+            if (!ClipboardStoreSupport.IsImageFileName(fileName)) continue;
             try { File.Delete(Path.Combine(imagesDirectory, fileName)); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {

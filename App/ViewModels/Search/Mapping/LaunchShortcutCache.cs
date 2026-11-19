@@ -15,6 +15,10 @@ internal static class LaunchShortcutCache
 {
     private static readonly ConcurrentDictionary<string, (long Expires, LaunchShortcut? Link)> Cache = new(StringComparer.OrdinalIgnoreCase);
 
+    // A catalog load reads many links on the same worker. Reuse the full-size buffer without sharing it
+    // between COM calls on different threads or truncating long paths, arguments and directories.
+    [ThreadStatic] private static StringBuilder? _buffer;
+
     internal static LaunchShortcut? Read(string path)
     {
         if (!Path.IsPathFullyQualified(path) || path.StartsWith(@"\\", StringComparison.Ordinal)) return null;
@@ -27,14 +31,16 @@ internal static class LaunchShortcutCache
             instance = new ShellIconNativeMethods.ShellLink();
             ((IPersistFile)instance).Load(path, 0);
             var link = (ShellIconNativeMethods.IShellLinkW)instance;
-            var target = new StringBuilder(32768);
-            var arguments = new StringBuilder(32768);
-            var directory = new StringBuilder(32768);
-            link.GetPath(target, target.Capacity, IntPtr.Zero, 4); // SLGP_RAWPATH: do not resolve the target.
-            link.GetArguments(arguments, arguments.Capacity);
-            link.GetWorkingDirectory(directory, directory.Capacity);
-            if (target.Length > 0)
-                result = new(Environment.ExpandEnvironmentVariables(target.ToString()), arguments.ToString(), Environment.ExpandEnvironmentVariables(directory.ToString()));
+            var buffer = _buffer ??= new StringBuilder(32768);
+            link.GetPath(buffer.Clear(), buffer.Capacity, IntPtr.Zero, 4); // SLGP_RAWPATH: do not resolve the target.
+            if (buffer.Length > 0)
+            {
+                var target = Environment.ExpandEnvironmentVariables(buffer.ToString());
+                link.GetArguments(buffer.Clear(), buffer.Capacity);
+                var arguments = buffer.ToString();
+                link.GetWorkingDirectory(buffer.Clear(), buffer.Capacity);
+                result = new(target, arguments, Environment.ExpandEnvironmentVariables(buffer.ToString()));
+            }
         }
         catch (Exception ex) when (ex is COMException or IOException or UnauthorizedAccessException or ArgumentException) { }
         finally { if (instance != null) Marshal.FinalReleaseComObject(instance); }

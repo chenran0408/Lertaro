@@ -76,6 +76,7 @@
                             <Button Content="&#xE711;" Command="{Binding CloseCommand}"
                                     Margin="6,0,0,7" Width="13" Height="13" FontSize="8"
                                     ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_CloseWorkspaceTooltip]}"
+                                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                                     VerticalAlignment="Bottom"
                                     Style="{StaticResource QuickPanelTabCloseStyle}"/>
                         </StackPanel>

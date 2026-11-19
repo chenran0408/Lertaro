@@ -2,7 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:app="clr-namespace:Lertaro.App"
                     xmlns:local="clr-namespace:Lertaro.App.Converters"
-                    xmlns:helpers="clr-namespace:Lertaro.App.Helpers.Visuals">
+                    xmlns:helpers="clr-namespace:Lertaro.App.Helpers.Visuals"
+                    xmlns:services="clr-namespace:Lertaro.App.Services">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="Styles/Tokens/Colors.xaml"/>
         <ResourceDictionary Source="DataTemplates/ShortcutHintBadge.xaml"/>
@@ -67,6 +68,29 @@
                                Content="{Binding}"
                                ContentTemplate="{StaticResource ShortcutHintBadgeTemplate}"/>
 
+            <TextBlock DockPanel.Dock="Right" Margin="6,0,12,0" VerticalAlignment="Center" FontSize="11"
+                       Foreground="{DynamicResource TextSecondary}" ToolTip="{Binding FullPath}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsExecutableFile}" Value="True">
+                                <Setter Property="Text" Value="EXE"/>
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsShortcutFile}" Value="True">
+                                <Setter Property="Text" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_ResultShortcut]}"/>
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsApplication}" Value="True">
+                                <Setter Property="Text" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_ResultApp]}"/>
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
             <!-- Name + directory path -->
             <StackPanel VerticalAlignment="Center">
                 <StackPanel.Style>
@@ -117,9 +141,6 @@
                         <Style TargetType="ScrollViewer">
                             <Setter Property="Visibility" Value="Visible"/>
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsApplication}" Value="True">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                </DataTrigger>
                                 <!-- Blank subtitle (e.g. applications) shows name-only: hide the empty row. -->
                                 <DataTrigger Binding="{Binding ParentDir}" Value="">
                                     <Setter Property="Visibility" Value="Collapsed"/>

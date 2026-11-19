@@ -8,6 +8,18 @@
         <ResourceDictionary Source="Slider.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
+    <Style x:Key="SearchFieldChrome" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusControl}"/>
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- ═══════════ Modern Arc Spinner ═══════════ -->
     <Style x:Key="ModernSpinnerStyle" TargetType="{x:Type Control}">
         <Setter Property="Width" Value="20"/>

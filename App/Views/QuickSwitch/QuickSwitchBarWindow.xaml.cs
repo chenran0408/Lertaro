@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Interop;
 using Lertaro.App.Helpers.Visuals;
-using Lertaro.App.Services;
 using Lertaro.Core.Hook;
 using Lertaro.Core.Wire;
+using Path = System.IO.Path;
 
 namespace Lertaro.App.Views.QuickSwitch;
 
@@ -23,7 +23,10 @@ public partial class QuickSwitchBarWindow : Window
         InitializeComponent();
         _dialogHwnd = dialogHwnd;
         _path = suggestedPath;
-        SuggestionText.Text = string.Format(TranslationManager.Instance["QuickSwitch_BarSuggestion"], suggestedPath);
+        var folderName = Path.GetFileName(Path.TrimEndingDirectorySeparator(suggestedPath));
+        FolderName.Text = string.IsNullOrEmpty(folderName) ? suggestedPath : folderName;
+        FolderPath.Text = suggestedPath;
+        FolderPath.Visibility = FolderName.Text == suggestedPath ? Visibility.Collapsed : Visibility.Visible;
         AltTabExcluder.Attach(this);
         SourceInitialized += (_, _) =>
         {

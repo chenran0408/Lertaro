@@ -101,15 +101,11 @@
     </UserControl.Resources>
 
     <StackPanel>
-        <TextBlock Style="{StaticResource SettingsHintText}" Margin="0,0,0,12"
-                    Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutHint]}"/>
 
         <Border Style="{StaticResource SettingsCard}">
             <StackPanel>
                 <TextBlock x:Name="RowLayoutSectionTitle" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutSectionTitle]}"
                            FontWeight="SemiBold" FontSize="14" Margin="0,0,0,4"/>
-                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutSectionHint]}"
-                           Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
                 <Grid x:Name="RowLayoutWidth" Margin="0,4,0,0">
                     <Grid.ColumnDefinitions>
@@ -137,24 +133,21 @@
                            IsChecked="{Binding General.Layout.ReopenAsFullWindowOnRepeatHotkey, Mode=TwoWay}"
                            Margin="0,8,0,0"/>
 
-                <CheckBox x:Name="RowLayoutFollowCursor" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutFollowCursor]}"
+                <CheckBox x:Name="RowLayoutFollowCursor"
+                          ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutFollowCursorHint]}" AutomationProperties.HelpText="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutFollowCursorHint]}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutFollowCursor]}"
                            IsChecked="{Binding General.Layout.FollowCursorOnSummon, Mode=TwoWay}"
                            Margin="0,8,0,0"/>
-                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutFollowCursorHint]}"
-                           Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" FontSize="14" TextWrapping="Wrap" Margin="24,4,0,0"/>
 
-                <CheckBox x:Name="RowLayoutLockPosition" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutLockPosition]}"
+                <CheckBox x:Name="RowLayoutLockPosition"
+                          ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutLockPositionHint]}" AutomationProperties.HelpText="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutLockPositionHint]}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutLockPosition]}"
                            IsChecked="{Binding General.Layout.LockPosition, Mode=TwoWay}"
                            Margin="0,8,0,0"/>
-                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutLockPositionHint]}"
-                           Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" FontSize="14" TextWrapping="Wrap" Margin="24,4,0,0"/>
 
                 <CheckBox x:Name="RowLayoutAutoFillClipboard"
+                          ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutAutoFillClipboardHint]}" AutomationProperties.HelpText="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutAutoFillClipboardHint]}"
                            Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutAutoFillClipboard]}"
                            IsChecked="{Binding General.EnableQuickSearchClipboardAutoFill, Mode=TwoWay}"
                            Margin="0,8,0,0"/>
-                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_LayoutAutoFillClipboardHint]}"
-                           Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" FontSize="14" TextWrapping="Wrap" Margin="24,4,0,0"/>
 
                 <Grid x:Name="RowLayoutReset" Margin="0,16,0,0">
                     <Grid.ColumnDefinitions>
@@ -173,8 +166,10 @@
             <StackPanel>
                 <TextBlock x:Name="RowResultTypeOrderList" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ResultTypeOrderTitle]}"
                            FontWeight="SemiBold" FontSize="14" Margin="0,0,0,4"/>
-                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ResultTypeOrderHint]}"
-                           Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                <Expander Style="{DynamicResource SettingsDetailsExpander}">
+                    <TextBlock Style="{DynamicResource SettingsHintText}" Margin="0,6,0,0"
+                               Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ResultTypeOrderHint]}"/>
+                </Expander>
 
                 <ItemsControl ItemsSource="{Binding General.ResultTypeOrder.Items}" ItemTemplate="{StaticResource ResultTypeOrderItemTemplate}" helpers:DragReorder.IsEnabled="True">
                     <ItemsControl.ItemsPanel>

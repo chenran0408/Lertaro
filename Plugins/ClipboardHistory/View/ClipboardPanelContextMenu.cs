@@ -22,12 +22,11 @@ internal sealed class ClipboardPanelContextMenu
     private readonly Action _clearHistory;
     private readonly Action _exportHistory;
     private readonly Action _importHistory;
-    private readonly Action _togglePreview;
     private readonly Action _togglePause;
 
     public ClipboardPanelContextMenu(Action paste, Action copy, Action togglePin, Action delete,
         Action clearNote, Action exportHistory, Action importHistory, Action openSource, Action<string> copyText,
-        Action saveImageAs, Action clearHistory, Action togglePreview, Action togglePause)
+        Action saveImageAs, Action clearHistory, Action togglePause)
     {
         _paste = paste;
         _copy = copy;
@@ -40,15 +39,18 @@ internal sealed class ClipboardPanelContextMenu
         _copyText = copyText;
         _saveImageAs = saveImageAs;
         _clearHistory = clearHistory;
-        _togglePreview = togglePreview;
         _togglePause = togglePause;
     }
 
-    public ContextMenu Build(ClipboardEntry entry)
+    public void Populate(ContextMenu menu, IReadOnlyList<ClipboardEntry> selected)
     {
-        var menu = new ContextMenu();
+        menu.Items.Clear();
 
-        menu.Items.Add(Item("ClipboardHistory_Paste", (_, _) => _paste()));
+        var paste = Item("ClipboardHistory_Paste", (_, _) => _paste());
+        paste.IsEnabled = ClipboardMergeSupport.CanPasteTogether(selected);
+        menu.Items.Add(paste);
+        if (selected is not [var entry]) return;
+
         menu.Items.Add(Item("ClipboardHistory_Copy", (_, _) => _copy()));
         menu.Items.Add(Item(entry.Pinned ? "ClipboardHistory_Unpin" : "ClipboardHistory_Pin", (_, _) => _togglePin()));
         menu.Items.Add(new Separator());
@@ -76,15 +78,16 @@ internal sealed class ClipboardPanelContextMenu
         var source = Item("ClipboardHistory_OpenSource", (_, _) => _openSource());
         source.IsEnabled = ClipboardRuntime.Instance.CanOpenSource(entry.Id);
         menu.Items.Add(source);
-        menu.Items.Add(new Separator());
+    }
+
+    public void PopulateHistory(ContextMenu menu)
+    {
         menu.Items.Add(Item(
             ClipboardRuntime.IsCapturePaused() ? "ClipboardHistory_PanelResumeCapture" : "ClipboardHistory_PanelPauseCapture",
             (_, _) => _togglePause()));
-        menu.Items.Add(Item("ClipboardHistory_PanelTogglePreview", (_, _) => _togglePreview()));
         menu.Items.Add(Item("ClipboardHistory_PanelExport", (_, _) => _exportHistory()));
         menu.Items.Add(Item("ClipboardHistory_PanelImport", (_, _) => _importHistory()));
         menu.Items.Add(Item("ClipboardHistory_ClearHistory", (_, _) => _clearHistory()));
-        return menu;
     }
 
     private static MenuItem Item(string key, RoutedEventHandler onClick)

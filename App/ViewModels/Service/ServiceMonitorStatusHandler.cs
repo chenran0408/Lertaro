@@ -28,8 +28,9 @@ internal sealed class ServiceMonitorStatusHandler
 
     public void ProcessStatusTimerTick(UsnIndexer.IndexerStatus status)
     {
-        if (status.State == "reconnecting")
+        if (status.State is "error" or "reconnecting")
         {
+            _vm.IsServiceConnected = false;
             _vm.ShowServiceReconnectState(TranslationManager.Instance["Service_WaitingStart"], TranslationManager.Instance["Service_StartedDetail"]);
             return;
         }
@@ -78,7 +79,7 @@ internal sealed class ServiceMonitorStatusHandler
                 _vm.LoadingStats = string.Format(TranslationManager.Instance["Service_StatsTemplate"], status.TotalFiles, status.TotalDirs);
             }
         }
-        else if (status.State == "ready")
+        else if (status.State is "ready" or "cached")
         {
             _connectionHandler.Stop();
             _vm.IsIndexReady = true;
@@ -89,6 +90,16 @@ internal sealed class ServiceMonitorStatusHandler
             if (hasQuery)
                 _mainVm.Search.PerformSearch(_mainVm.Search.SearchQuery);
             Logger.Log($"[ServiceMonitor] Index ready. Files={status.TotalFiles}, Dirs={status.TotalDirs}");
+        }
+        else if (status.State is "idle" or SearchIndexBootstrapHelper.IndexError)
+        {
+            _vm.IsIndexReady = false;
+            _vm.LoadingPanelVisibility = Visibility.Collapsed;
+            _vm.StatusBarVisibility = Visibility.Visible;
+            _vm.StatusText = status.State == "idle"
+                ? TranslationManager.Instance["Service_IndexIdle"]
+                : TranslationManager.Instance["Service_IndexUnavailable"];
+            if (status.State != "idle") _connectionHandler.Stop();
         }
     }
 }

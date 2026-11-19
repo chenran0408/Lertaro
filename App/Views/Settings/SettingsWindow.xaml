@@ -41,7 +41,7 @@
                     <RowDefinition Height="52"/>
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Background="Transparent" BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelBorderBrush}" BorderThickness="0,0,0,1"
+                <Border Grid.Row="0" Background="{DynamicResource HeaderBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1"
                         MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -60,10 +60,9 @@
                         <!-- Centered in the remaining space between the title and the window buttons,
                              not the sidebar, so the sidebar stays full-width and the search box lives
                              in the title bar as requested. -->
-                        <Border x:Name="SearchBoxBorder" Grid.Column="1" Width="320" Height="28" CornerRadius="{StaticResource CornerRadiusControl}"
-                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                Background="{DynamicResource ControlBackground}"
-                                BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1">
+                        <Border x:Name="SearchBoxBorder" Grid.Column="1" MaxWidth="420" Height="32"
+                                Margin="20,0,12,0" VerticalAlignment="Center"
+                                Style="{StaticResource SearchFieldChrome}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -111,7 +110,8 @@
                      instead driven explicitly (see SettingsWindow.xaml.cs) by text-empty/Escape/section
                      changes/window deactivation. -->
                 <Popup x:Name="SearchResultsPopup" PlacementTarget="{Binding ElementName=SearchBoxBorder}"
-                       Placement="Bottom" Width="320" VerticalOffset="4" StaysOpen="True" AllowsTransparency="True"
+                       Placement="Bottom" Width="{Binding ActualWidth, ElementName=SearchBoxBorder}"
+                       VerticalOffset="4" StaysOpen="True" AllowsTransparency="True"
                        PopupAnimation="Fade">
                     <Border Background="{DynamicResource MenuBackground}" BorderBrush="{DynamicResource MenuBorderBrush}"
                             BorderThickness="1" CornerRadius="{StaticResource CornerRadiusPopover}" Padding="0,4"
@@ -153,7 +153,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="Transparent" BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelBorderBrush}" BorderThickness="0,0,1,0">
+                    <Border Grid.Column="0" Background="{DynamicResource SidebarBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
                         <DockPanel LastChildFill="True">
                             <!-- Docked Bottom so "About" always sits at the sidebar's bottom edge regardless
                                  of window height, instead of just trailing the last item in the main list. -->
@@ -165,16 +165,16 @@
                                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                      SelectionChanged="LstSectionsBottom_SelectionChanged">
                                 <ListBoxItem Tag="Appearance" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Appearance]}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE790;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Left" Text="&#xE790;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
                                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Appearance]}" Style="{StaticResource SidebarNavigationLabel}"/>
-                                    </StackPanel>
+                                    </DockPanel>
                                 </ListBoxItem>
                                 <ListBoxItem Tag="About" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_About]}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE946;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Left" Text="&#xE946;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
                                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_About]}" Style="{StaticResource SidebarNavigationLabel}"/>
-                                    </StackPanel>
+                                    </DockPanel>
                                 </ListBoxItem>
                             </ListBox>
                             <Border DockPanel.Dock="Bottom" Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="8,4"/>
@@ -192,64 +192,70 @@
                                  ScrollViewer.CanContentScroll="False"
                                  SelectionChanged="LstSections_SelectionChanged">
                             <ListBoxItem Tag="Service" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Service]}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE9F5;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" Text="&#xE9F5;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
                                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Service]}" Style="{StaticResource SidebarNavigationLabel}"/>
-                                </StackPanel>
+                                </DockPanel>
                             </ListBoxItem>
                             <ListBoxItem Tag="Index" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Index]}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE8EF;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" Text="&#xE8EF;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
                                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Index]}" Style="{StaticResource SidebarNavigationLabel}"/>
-                                </StackPanel>
+                                </DockPanel>
                             </ListBoxItem>
                             <ListBoxItem Tag="General" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_General]}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE713;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" Text="&#xE713;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
                                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_General]}" Style="{StaticResource SidebarNavigationLabel}"/>
-                                </StackPanel>
+                                </DockPanel>
                             </ListBoxItem>
                             <ListBoxItem Tag="Hotkeys" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Hotkeys]}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE765;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" Text="&#xE765;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
                                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Hotkeys]}" Style="{StaticResource SidebarNavigationLabel}"/>
-                                </StackPanel>
+                                </DockPanel>
                             </ListBoxItem>
                             <ListBoxItem Tag="Plugins" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Plugins]}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xECAA;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" Text="&#xECAA;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
                                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Plugins]}" Style="{StaticResource SidebarNavigationLabel}"/>
-                                </StackPanel>
+                                </DockPanel>
+                            </ListBoxItem>
+                            <ListBoxItem Tag="PluginSettings" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_PluginSettings]}">
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" Text="&#xE713;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
+                                    <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_PluginSettings]}" Style="{StaticResource SidebarNavigationLabel}"/>
+                                </DockPanel>
                             </ListBoxItem>
                             <ListBoxItem Tag="Favorites" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Favorites]}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE728;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" Text="&#xE728;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
                                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Favorites]}" Style="{StaticResource SidebarNavigationLabel}"/>
-                                </StackPanel>
+                                </DockPanel>
                             </ListBoxItem>
                             <ListBoxItem Tag="History" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_History]}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE81C;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" Text="&#xE81C;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
                                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_History]}" Style="{StaticResource SidebarNavigationLabel}"/>
-                                </StackPanel>
+                                </DockPanel>
                             </ListBoxItem>
                             <ListBoxItem Tag="QuickLaunch" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_QuickLaunch]}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE768;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" Text="&#xE768;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
                                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_QuickLaunch]}" Style="{StaticResource SidebarNavigationLabel}"/>
-                                </StackPanel>
+                                </DockPanel>
                             </ListBoxItem>
                             <ListBoxItem Tag="QuickPanel" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_QuickPanel]}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE8A1;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" Text="&#xE8A1;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
                                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_QuickPanel]}" Style="{StaticResource SidebarNavigationLabel}"/>
-                                </StackPanel>
+                                </DockPanel>
                             </ListBoxItem>
                             <ListBoxItem Tag="LocalSend" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_Title]}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE898;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" Text="&#xE898;" FontFamily="{DynamicResource AppIconFontFamily}" Style="{StaticResource SidebarNavigationIcon}"/>
                                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_Title]}" Style="{StaticResource SidebarNavigationLabel}"/>
-                                </StackPanel>
+                                </DockPanel>
                             </ListBoxItem>
                         </ListBox>
                         </DockPanel>
@@ -267,20 +273,18 @@
                     </AdornerDecorator>
                 </Grid>
 
-                <Border Grid.Row="2" Background="Transparent" BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelBorderBrush}" BorderThickness="0,1,0,0">
+                <Border Grid.Row="2" Background="{DynamicResource StatusBarBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,1,0,0">
                     <Grid Margin="16,0">
-                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_SaveTip]}" 
-                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <Button Style="{StaticResource PrimarySettingsButton}"
-                                    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_OK]}"
-                                    IsEnabled="{Binding CanApply}" Click="BtnOk_Click"/>
                             <Button Style="{StaticResource SettingsButton}"
                                     Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Cancel]}"
                                     Click="BtnClose_Click"/>
                             <Button Style="{StaticResource SettingsButton}"
                                     Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Apply]}"
                                     Command="{Binding ApplyCommand}" IsEnabled="{Binding CanApply}"/>
+                            <Button Style="{StaticResource PrimarySettingsButton}"
+                                    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_OK]}"
+                                    IsEnabled="{Binding CanApply}" Click="BtnOk_Click"/>
                         </StackPanel>
                     </Grid>
                 </Border>

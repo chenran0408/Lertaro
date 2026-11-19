@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -32,13 +31,6 @@ internal sealed class ReminderTimeFieldSupport
         _hour = hour;
         _minute = minute;
         _onTimeChanged = onTimeChanged;
-    }
-
-    /// <summary>Names both halves for a screen reader; the frame around them carries no label of its own.</summary>
-    internal void SetAccessibleName(string name)
-    {
-        AutomationProperties.SetName(_hour, name);
-        AutomationProperties.SetName(_minute, name);
     }
 
     /// <summary>

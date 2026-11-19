@@ -1,5 +1,6 @@
 using System.IO;
 using Lertaro.App.Helpers;
+using Lertaro.App.Services;
 using Lertaro.App.ViewModels.Settings.Plugins;
 using Lertaro.Core;
 using Lertaro.PluginSdk.Abstractions.Plugins;
@@ -44,6 +45,7 @@ public sealed class PluginLoaderHelperTests
             Assert.IsEmpty(plugin.ConfigFields);
             Assert.IsNull(plugin.OnSave);
             Assert.IsFalse(plugin.IsPluginEnabled);
+            Assert.IsTrue(plugin.WasDisabledAtStartup);
         }
         finally { directory.Delete(true); }
     }
@@ -70,6 +72,16 @@ public sealed class PluginLoaderHelperTests
             Assert.IsEmpty(settings.DisabledPluginAssemblies);
         }
         finally { directory.Delete(recursive: true); }
+    }
+
+    [TestMethod]
+    public void HostTranslations_OfferAllBuiltInLanguagesWithoutPlugins()
+    {
+        var cultures = TranslationManager.GetAvailableCultures([]);
+
+        CollectionAssert.AreEquivalent(
+            new[] { "en-US", "es-ES", "ja-JP", "ko-KR", "zh-CN", "zh-HK", "zh-TW" },
+            cultures.ToArray());
     }
 
     [TestMethod]

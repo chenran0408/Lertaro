@@ -27,7 +27,8 @@ public sealed class PluginPagePerformanceInvariantTests
     {
         var card = LoadPage().Descendants().Single(e => e.Name.LocalName == "PluginCard");
         Assert.AreEqual("Grid", card.Parent?.Name.LocalName);
-        Assert.AreEqual("2", (string?)card.Attribute("Grid.Column"));
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
+        Assert.AreEqual("DetailsPane", (string?)card.Parent?.Attribute(xaml + "Name"));
         Assert.AreEqual("{Binding SelectedPlugin}", (string?)card.Attribute("DataContext"));
     }
 

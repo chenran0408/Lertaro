@@ -13,25 +13,26 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1.5*"/>
-            <ColumnDefinition Width="3.5*"/>
-            <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
-        <TextBox Grid.Column="0" Margin="0,0,8,0"
-                 Text="{Binding EntryName, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-        <TextBox Grid.Column="1" Margin="8,0,8,0"
-                 Text="{Binding EntryPath, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-        <StackPanel Grid.Column="2" Orientation="Horizontal">
-            <Button Content="&#xED25;" Style="{StaticResource RuleIconButton}" Width="30" Height="30" Margin="0,0,4,0"
-                    ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_BrowseFolderTooltip]}"
-                    Command="{Binding BrowseFolderCommand, ElementName=Root}"
-                    CommandParameter="{Binding DataContext, ElementName=Root}"/>
-            <Button Content="&#xE8A5;" Style="{StaticResource RuleIconButton}" Width="30" Height="30"
-                    ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_BrowseFileTooltip]}"
+    <StackPanel>
+        <TextBlock x:Name="RowFieldPath" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[PathEntry_TargetTitle]}"
+                   Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,4" TextWrapping="Wrap"/>
+        <DockPanel>
+            <Button DockPanel.Dock="Right" Content="&#xE8A5;" Style="{StaticResource RuleIconButton}"
+                    Width="32" Height="32" Margin="6,0,0,0" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_BrowseFileTooltip]}"
+                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                     Command="{Binding BrowseFileCommand, ElementName=Root}"
                     CommandParameter="{Binding DataContext, ElementName=Root}"/>
-        </StackPanel>
-    </Grid>
+            <Button DockPanel.Dock="Right" Content="&#xED25;" Style="{StaticResource RuleIconButton}"
+                    Width="32" Height="32" Margin="6,0,0,0" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_BrowseFolderTooltip]}"
+                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
+                    Command="{Binding BrowseFolderCommand, ElementName=Root}"
+                    CommandParameter="{Binding DataContext, ElementName=Root}"/>
+            <TextBox x:Name="TargetBox" MinHeight="32" AutomationProperties.LabeledBy="{Binding ElementName=RowFieldPath}"
+                     Text="{Binding EntryPath, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        </DockPanel>
+        <TextBlock x:Name="RowFieldName" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[PathEntry_NameOptional]}"
+                   Foreground="{DynamicResource TextSecondary}" Margin="0,9,0,4" TextWrapping="Wrap"/>
+        <TextBox x:Name="NameBox" MinHeight="32" AutomationProperties.LabeledBy="{Binding ElementName=RowFieldName}"
+                 Text="{Binding EntryName, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+    </StackPanel>
 </UserControl>

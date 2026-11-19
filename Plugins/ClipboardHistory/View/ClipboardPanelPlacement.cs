@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Interop;
 
 namespace Lertaro.Plugins.ClipboardHistory.View;
 
@@ -10,59 +11,63 @@ namespace Lertaro.Plugins.ClipboardHistory.View;
 /// </summary>
 internal static class ClipboardPanelPlacement
 {
+    internal readonly record struct Bounds(int Left, int Top, int Width, int Height, double Scale)
+    {
+        internal double WidthDip => Width / Scale;
+        internal double HeightDip => Height / Scale;
+    }
+
+    private const uint NoZOrderNoActivate = 0x0014;
+
+    internal readonly record struct Anchor(int X, int Y);
+
     [StructLayout(LayoutKind.Sequential)]
     private struct POINT { public int X, Y; }
 
     [DllImport("user32.dll")]
     private static extern bool GetCursorPos(out POINT point);
 
-    /// <summary>The cursor position clamped so a window of <paramref name="width"/>×<paramref name="height"/>
-    /// fits on screen; falls back to screen-center when the cursor query fails.</summary>
-    public static (double Left, double Top) Place(double width, double height)
+    public static Anchor? ReadAnchor() => GetCursorPos(out var point) ? new Anchor(point.X, point.Y) : null;
+
+    public static void PositionHandle(Window window, Anchor? anchor, double width, double height)
     {
-        if (!GetCursorPos(out var point)) return FallbackCenter(width, height);
-        var area = MonitorArea(point.X, point.Y);
-        return ClampCursor(point.X, point.Y, DpiScale(), width, height, area);
+        if (anchor is not { } cursor) return;
+        var point = new POINT { X = cursor.X, Y = cursor.Y };
+        var monitor = MonitorFromPoint(point, MonitorDefaultToNearest);
+        var info = new MonitorInfo { CbSize = Marshal.SizeOf<MonitorInfo>() };
+        if (monitor == nint.Zero || !GetMonitorInfo(monitor, ref info)) return;
+
+        var hwnd = new WindowInteropHelper(window).EnsureHandle();
+        var work = info.RcWork;
+        if (MonitorFromWindow(hwnd, MonitorDefaultToNearest) != monitor)
+        {
+            // Move the hidden HWND first so WPF processes the DPI change before its final placement.
+            SetWindowPos(hwnd, nint.Zero, work.Left, work.Top, work.Right - work.Left,
+                work.Bottom - work.Top, NoZOrderNoActivate);
+        }
+
+        var dpi = GetDpiForWindow(hwnd);
+        var placement = FitToWorkArea(point.X, point.Y, dpi > 0 ? dpi / 96.0 : 1.0, width, height,
+            (work.Left, work.Top, work.Right, work.Bottom));
+        window.MinWidth = Math.Min(window.MinWidth, placement.WidthDip);
+        window.MinHeight = Math.Min(window.MinHeight, placement.HeightDip);
+        window.Width = placement.WidthDip;
+        window.Height = placement.HeightDip;
+        SetWindowPos(hwnd, nint.Zero, placement.Left, placement.Top, placement.Width, placement.Height, NoZOrderNoActivate);
     }
 
-    /// <summary>Pure placement math over one monitor's work area: pixel cursor + scale in,
-    /// DIP window position out. Unit-testable without a screen.</summary>
-    internal static (double Left, double Top) ClampCursor(int cursorPixelX, int cursorPixelY, double scale,
-        double width, double height,
-        (double left, double top, double right, double bottom) area)
+    internal static Bounds FitToWorkArea(int cursorPixelX, int cursorPixelY, double scale,
+        double width, double height, (int left, int top, int right, int bottom) area)
     {
-        // GetCursorPos is physical pixels; WPF window coordinates are DIPs. The work area is
-        // converted inside MonitorArea -- the cursor must ride the same conversion, or on any
-        // scaled monitor (125%+) the raw pixel value overflows the DIP space and the clamp drags
-        // the panel into the bottom-right corner no matter where the cursor is.
-        return Clamp(cursorPixelX / scale, cursorPixelY / scale, width, height,
+        var pixelWidth = Math.Min((int)Math.Round(width * scale), area.right - area.left);
+        var pixelHeight = Math.Min((int)Math.Round(height * scale), area.bottom - area.top);
+        var (left, top) = Clamp(cursorPixelX, cursorPixelY, pixelWidth, pixelHeight,
             area.left, area.top, area.right, area.bottom);
+        return new Bounds(left, top, pixelWidth, pixelHeight, scale);
     }
 
-    /// <summary>The work area of the monitor containing the point (falls back to the primary work
-    /// area). Win32 screen coordinates are pixels; WPF window coordinates are DIPs, so the border
-    /// is converted with the system DPI scale.</summary>
-    internal static (double left, double top, double right, double bottom) MonitorArea(int x, int y)
-    {
-        var scale = DpiScale();
-        try
-        {
-            var handle = MonitorFromPoint(new POINT { X = x, Y = y }, MonitorDefaultToNearest);
-            var info = new MonitorInfo { CbSize = Marshal.SizeOf<MonitorInfo>() };
-            if (handle != nint.Zero && GetMonitorInfo(handle, ref info))
-                return (info.RcWork.Left / scale, info.RcWork.Top / scale,
-                    info.RcWork.Right / scale, info.RcWork.Bottom / scale);
-        }
-        catch (Exception ex) when (ex is InvalidOperationException or DllNotFoundException)
-        {
-        }
-        var fallback = SystemParameters.WorkArea;
-        return (fallback.Left, fallback.Top, fallback.Right, fallback.Bottom);
-    }
-
-    internal static (double Left, double Top) Clamp(
-        double cursorX, double cursorY, double width, double height,
-        double left, double top, double right, double bottom)
+    private static (int Left, int Top) Clamp(
+        int cursorX, int cursorY, int width, int height, int left, int top, int right, int bottom)
     {
         var maxLeft = Math.Max(left, right - width);
         var maxTop = Math.Max(top, bottom - height);
@@ -79,20 +84,7 @@ internal static class ClipboardPanelPlacement
         return (x, y);
     }
 
-    private static (double Left, double Top) FallbackCenter(double width, double height)
-    {
-        var area = SystemParameters.WorkArea;
-        return ((area.Left + area.Right - width) / 2, (area.Top + area.Bottom - height) / 2);
-    }
-
-    private static double DpiScale()
-    {
-        var source = PresentationSource.FromVisual(Application.Current?.MainWindow);
-        return source?.CompositionTarget?.TransformToDevice.M11 ?? 1.0;
-    }
-
-    private const uint MonitorDefaultToNearest = 1;
-
+    private const uint MonitorDefaultToNearest = 2;
     [StructLayout(LayoutKind.Sequential)]
     private struct RECT { public int Left, Top, Right, Bottom; }
 
@@ -110,4 +102,13 @@ internal static class ClipboardPanelPlacement
 
     [DllImport("user32.dll")]
     private static extern bool GetMonitorInfo(nint monitor, ref MonitorInfo info);
+
+    [DllImport("user32.dll")]
+    private static extern nint MonitorFromWindow(nint window, uint flags);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetDpiForWindow(nint window);
+
+    [DllImport("user32.dll")]
+    private static extern bool SetWindowPos(nint window, nint after, int x, int y, int width, int height, uint flags);
 }

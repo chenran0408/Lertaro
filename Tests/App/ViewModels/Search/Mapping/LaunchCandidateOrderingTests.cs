@@ -189,6 +189,46 @@ public sealed class LaunchCandidateOrderingTests
     }
 
     [TestMethod]
+    public void HabitCanPutAPortableExecutableAheadOfAnEquallyNamedInstalledApp()
+    {
+        var query = FuzzyQuery.Parse("editor");
+        var portable = Candidate("Editor.exe", @"D:\Portable\Editor.exe") with { Match = query.Rank("Editor.exe") };
+        var installed = Candidate("Editor", @"shell:AppsFolder\editor", application: true) with { Match = query.Rank("Editor") };
+        var opens = new Dictionary<string, int> { [portable.NormalizedPath] = 12 };
+
+        var ranked = LaunchCandidateOrdering.Order([installed, portable], "editor", _ => null, opens);
+
+        Assert.AreSame(portable.Result, ranked[0].Result);
+    }
+
+    [TestMethod]
+    public void EquivalentShortcutInheritsUsageFromItsExecutable()
+    {
+        var executable = Candidate("Editor.exe", @"D:\Apps\Editor.exe", history: true);
+        var shortcut = Candidate("Launch Editor", @"C:\Links\Editor.lnk");
+        var other = Candidate("Editor", @"shell:AppsFolder\editor", application: true);
+        var opens = new Dictionary<string, int> { [executable.NormalizedPath] = 20, [other.NormalizedPath] = 3 };
+
+        var ranked = LaunchCandidateOrdering.Order([other, shortcut, executable], "editor",
+            _ => new(executable.Result.FullPath, "", ""), opens);
+
+        Assert.AreSame(shortcut.Result, ranked[0].Result);
+        Assert.HasCount(2, ranked);
+    }
+
+    [TestMethod]
+    public void ExplicitFileNameIgnoresCatalogTitleAndKeepsTheBinary()
+    {
+        var executable = Candidate("Editor.exe", @"D:\Apps\Editor.exe");
+        var catalog = Candidate("Editor.exe", @"C:\Links\Editor.lnk", history: true, application: true);
+
+        var ranked = LaunchCandidateOrdering.Order([catalog, executable], "editor.exe",
+            _ => throw new AssertFailedException("Explicit file searches do not resolve shortcuts."));
+
+        Assert.AreSame(executable.Result, ranked[0].Result);
+    }
+
+    [TestMethod]
     public void FolderAndDocumentLinksAreNotTreatedAsApplications()
     {
         var row = Candidate("Workspace", @"C:\Links\Workspace.lnk", application: true).Result;
@@ -300,6 +340,54 @@ public sealed class LaunchCandidateOrderingTests
         Assert.AreSame(shallow.Result, results[0].Result);
         Assert.AreSame(deep.Result, results[1].Result);
         Assert.AreSame(old.Result, results[2].Result);
+    }
+
+    [TestMethod]
+    public void LiteralApplicationNameBeatsAnotherProgramsSharedAlias()
+    {
+        var literal = Candidate("Code", @"C:\Apps\Code.exe", application: true);
+        var alias = Candidate("Code Helper", @"C:\Apps\Tools.exe", application: true) with { IsExactAliasMatch = true };
+        Assert.AreSame(literal.Result, Order("Code", alias, literal)[0].Result);
+    }
+
+    [TestMethod]
+    public void ExecutableNameAliasKeepsTheCatalogTitleAheadOfARawShortcutAndOtherBinaries()
+    {
+        var main = Candidate("AutoCAD 2023", @"C:\Menu\AutoCAD.lnk", application: true) with { IsExactAliasMatch = true };
+        var alternate = Candidate("acad.lnk", @"C:\Other\acad.lnk");
+        var exe = Candidate("acad.exe", @"C:\Old\acad.exe");
+        var ranked = LaunchCandidateOrdering.Order([alternate, exe, main], "acad", path =>
+            new(@"C:\CAD\acad.exe", path == main.NormalizedPath ? "/language zh-CN" : "", ""));
+        Assert.AreSame(main.Result, ranked[0].Result);
+        Assert.HasCount(3, ranked);
+    }
+
+    [TestMethod]
+    [DataRow("CopperFinch", "Copper Finch Studio")]
+    [DataRow("Finch Copper", "Copper Finch Studio")]
+    [DataRow("Desk", "Desk")]
+    public void SharedLaunchTargetShowsTheNameThatExplainsTheQuery(string query, string title)
+    {
+        var desktop = Candidate("Desk", @"C:\Desk.lnk", application: true);
+        var product = Candidate("Copper Finch Studio", @"C:\Menu\Copper Finch Studio.lnk", application: true);
+        var exe = Candidate("CopperFinch.exe", @"C:\Apps\CopperFinch.exe");
+        var ordered = LaunchCandidateOrdering.Order([desktop, product, exe], query,
+            _ => new(exe.NormalizedPath, "", ""));
+        Assert.AreEqual(title, Assert.ContainsSingle(ordered).Result.Name);
+    }
+
+    [TestMethod]
+    public void IdenticalApplicationTitlesShowTheInstallationOrProfileThatDistinguishesThem()
+    {
+        var regular = Candidate("Editor", @"C:\Apps\Editor.exe", application: true);
+        var work = Candidate("Editor", regular.NormalizedPath, application: true);
+        work.Result.ApplicationArguments = "--profile Work";
+        var other = Candidate("Viewer", @"C:\Apps\Viewer.exe", application: true);
+        Assert.HasCount(3, Order("e", regular, work, other));
+        Assert.AreEqual(regular.NormalizedPath, regular.Result.ParentDir);
+        StringAssert.Contains(work.Result.ParentDir, "--profile Work");
+        Assert.IsTrue(work.Result.HasPathSubtitle);
+        Assert.IsFalse(other.Result.HasPathSubtitle);
     }
 
     private static List<SearchResultMapper.RankedCandidate> Order(string query, params SearchResultMapper.RankedCandidate[] candidates)

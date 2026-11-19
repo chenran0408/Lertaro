@@ -10,7 +10,7 @@ public sealed class QuickSearchWindowPositionerTests
     {
         var (physX, physY) = QuickSearchWindowPositioner.CalculatePhysicalPosition(
             waLeft: 0, waTop: 0, waWidth: 1920, waHeight: 1080,
-            windowDipWidth: 600, targetDpiScaleX: 1.0,
+            windowDipWidth: 600, windowDipHeight: 500, targetDpiScaleX: 1.0, targetDpiScaleY: 1.0,
             relativeLeft: null, relativeTop: null,
             cursorPhysX: 960, cursorPhysY: 500);
 
@@ -25,7 +25,7 @@ public sealed class QuickSearchWindowPositionerTests
         // Target display: 125% DPI (1.25x), 1080p secondary screen at physical X=3840
         var (physX, physY) = QuickSearchWindowPositioner.CalculatePhysicalPosition(
             waLeft: 3840, waTop: 0, waWidth: 1920, waHeight: 1080,
-            windowDipWidth: 648, targetDpiScaleX: 1.25,
+            windowDipWidth: 648, windowDipHeight: 500, targetDpiScaleX: 1.25, targetDpiScaleY: 1.25,
             relativeLeft: null, relativeTop: null,
             cursorPhysX: 4800, cursorPhysY: 300);
 
@@ -42,7 +42,7 @@ public sealed class QuickSearchWindowPositionerTests
         // Target display: 125% DPI (1.25x), 1080p secondary screen at X=3840
         var (left, top) = QuickSearchWindowPositioner.CalculatePosition(
             waLeft: 3840, waTop: 0, waWidth: 1920, waHeight: 1080,
-            windowDipWidth: 648, targetDpiScaleX: 1.25, targetDpiScaleY: 1.25,
+            windowDipWidth: 648, windowDipHeight: 500, targetDpiScaleX: 1.25, targetDpiScaleY: 1.25,
             relativeLeft: null, relativeTop: null,
             cursorPhysX: 4800, cursorPhysY: 300);
 
@@ -61,7 +61,7 @@ public sealed class QuickSearchWindowPositionerTests
     {
         var (physX, physY) = QuickSearchWindowPositioner.CalculatePhysicalPosition(
             waLeft: 3840, waTop: 0, waWidth: 1920, waHeight: 1080,
-            windowDipWidth: 648, targetDpiScaleX: 1.25,
+            windowDipWidth: 648, windowDipHeight: 500, targetDpiScaleX: 1.25, targetDpiScaleY: 1.25,
             relativeLeft: 0.2, relativeTop: 0.1,
             cursorPhysX: 4800, cursorPhysY: 300);
 
@@ -78,18 +78,30 @@ public sealed class QuickSearchWindowPositionerTests
         // Left edge: the bar would reach past the monitor's left border.
         var (leftClamped, _) = QuickSearchWindowPositioner.CalculatePhysicalPosition(
             waLeft: 0, waTop: 0, waWidth: 1920, waHeight: 1080,
-            windowDipWidth: 600, targetDpiScaleX: 1.0,
+            windowDipWidth: 600, windowDipHeight: 500, targetDpiScaleX: 1.0, targetDpiScaleY: 1.0,
             relativeLeft: null, relativeTop: null,
             cursorPhysX: 10, cursorPhysY: 500);
         Assert.AreEqual(8.0, leftClamped, 0.001);
 
-        // Bottom edge: the bar rides up so the results list keeps room below it
-        // (64 bar + 5*48 rows = 304px reserve at 1.0x).
+        // The whole expanded window fits above the bottom inset.
         var (_, bottomClamped) = QuickSearchWindowPositioner.CalculatePhysicalPosition(
             waLeft: 0, waTop: 0, waWidth: 1920, waHeight: 1080,
-            windowDipWidth: 600, targetDpiScaleX: 1.0,
+            windowDipWidth: 600, windowDipHeight: 500, targetDpiScaleX: 1.0, targetDpiScaleY: 1.0,
             relativeLeft: null, relativeTop: null,
             cursorPhysX: 960, cursorPhysY: 1050);
-        Assert.AreEqual(1080.0 - 304.0, bottomClamped, 0.001);
+        Assert.AreEqual(1080.0 - 500.0 - 8.0, bottomClamped, 0.001);
+    }
+
+    [TestMethod]
+    public void CalculatePhysicalPosition_RememberedNearEdge_ClampsBothAxesForSmallerMonitor()
+    {
+        var (x, y) = QuickSearchWindowPositioner.CalculatePhysicalPosition(
+            waLeft: -1280, waTop: 20, waWidth: 1280, waHeight: 900,
+            windowDipWidth: 600, windowDipHeight: 500, targetDpiScaleX: 1.25, targetDpiScaleY: 1.5,
+            relativeLeft: 0.95, relativeTop: 0.9,
+            cursorPhysX: -800, cursorPhysY: 250);
+
+        Assert.AreEqual(-8.0, x + 600 * 1.25, 0.001);
+        Assert.AreEqual(912.0, y + 500 * 1.5, 0.001);
     }
 }

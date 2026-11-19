@@ -1,7 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using Lertaro.App.Services;
-using Brush = System.Windows.Media.Brush;
 
 namespace Lertaro.App.Views.SpaceAnalyzer;
 
@@ -11,13 +10,17 @@ namespace Lertaro.App.Views.SpaceAnalyzer;
 /// </summary>
 internal static class SpaceAnalyzerBreadcrumbFactory
 {
-    public static TextBlock Create(FrameworkElement resourceOwner) => new()
+    public static TextBlock Create()
     {
-        Text = "\uE76C",
-        FontFamily = AppTypography.IconFont,
-        FontSize = 9,
-        Foreground = (Brush)resourceOwner.FindResource("TextSecondary"),
-        VerticalAlignment = VerticalAlignment.Center,
-        Margin = new Thickness(1, 0, 1, 0)
-    };
+        var separator = new TextBlock
+        {
+            Text = "\uE76C",
+            FontFamily = AppTypography.IconFont,
+            FontSize = 9,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(2, 0, 2, 0)
+        };
+        separator.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
+        return separator;
+    }
 }

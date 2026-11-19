@@ -259,6 +259,8 @@ public class QuickSearchWindowInputHandler
             return;
         }
         var completion = GetCompletionText(result);
+        if (QueryFilterSupport.IsStealthQuery(_window.TxtSearch.Text))
+            completion = ";" + completion;
         if (string.Equals(_window.TxtSearch.Text, completion, StringComparison.Ordinal))
         {
             return;
@@ -272,7 +274,7 @@ public class QuickSearchWindowInputHandler
         if (result.IsEmptyResult || result.IsSearchSectionHeader)
             return;
         _window.RecordKeywordHistory();
-        if (!result.IsPluginSearchAction && !result.IsInstantResult)
+        if (!result.IsPluginSearchAction && !result.IsInstantResult && !QueryFilterSupport.IsStealthQuery(_window.TxtSearch.Text))
         {
             SearchHistoryStore.Record(SearchResultHelper.HistoryKeywordOf(result, _window.TxtSearch.Text), result.FullPath, SearchResultHelper.HistoryKindOf(result));
         }

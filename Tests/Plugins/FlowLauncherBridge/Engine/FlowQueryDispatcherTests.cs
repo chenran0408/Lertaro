@@ -50,6 +50,20 @@ public sealed class FlowQueryDispatcherTests
     }
 
     [TestMethod]
+    [DataRow("词　动画\t合集", "词")]
+    [DataRow("动画\u00a0合集", "")]
+    public void UnicodeWhitespaceRoutesKeywordsAndSeparatesSearchTerms(string input, string keyword)
+    {
+        var host = new FlowPluginHost(new FlowSettingsStorage(Path.GetTempPath()), []);
+        host.RegisterPlugin(new PluginPair { Metadata = new PluginMetadata { ID = "test", ActionKeyword = "词" }, Plugin = new FakeFlowPlugin() });
+        var query = new FlowQueryDispatcher(host).ParseQuery(input);
+
+        Assert.AreEqual(keyword, query.ActionKeyword);
+        CollectionAssert.AreEqual(new[] { "动画", "合集" }, query.SearchTerms);
+        Assert.AreEqual(input, query.OriginalQuery);
+    }
+
+    [TestMethod]
     public async Task DispatchQueryAsync_RoutesToGlobalPlugin()
     {
         var storage = new FlowSettingsStorage(Path.GetTempPath());

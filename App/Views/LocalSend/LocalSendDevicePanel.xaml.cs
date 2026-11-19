@@ -10,7 +10,7 @@ namespace Lertaro.App.Views.LocalSend;
 /// <summary>Lets the hosting send window select recipient devices and their optional PINs.</summary>
 public partial class LocalSendDevicePanel : WpfUserControl
 {
-    public event EventHandler? CloseRequested;
+    public event EventHandler? BackRequested;
     public event EventHandler<LocalSendDeviceSelectionEventArgs>? SendRequested;
 
     public LocalSendDevicePanel()
@@ -22,7 +22,7 @@ public partial class LocalSendDevicePanel : WpfUserControl
     }
 
     private void DeviceList_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateButtons();
-    private void Cancel_Click(object sender, RoutedEventArgs e) => CloseRequested?.Invoke(this, EventArgs.Empty);
+    private void Back_Click(object sender, RoutedEventArgs e) => BackRequested?.Invoke(this, EventArgs.Empty);
     private void Send_Click(object sender, RoutedEventArgs e) => SendRequested?.Invoke(this, new LocalSendDeviceSelectionEventArgs(DeviceList.SelectedItems.OfType<LocalSendSendDeviceItem>().ToList()));
 
     private void SelectAll_Click(object sender, RoutedEventArgs e)
@@ -31,7 +31,7 @@ public partial class LocalSendDevicePanel : WpfUserControl
         UpdateButtons();
     }
 
-    private void UpdateButtons()
+    internal void UpdateButtons()
     {
         SendButton.IsEnabled = DeviceList.SelectedItems.Count > 0;
         SelectAllButton.IsEnabled = DeviceList.HasItems;

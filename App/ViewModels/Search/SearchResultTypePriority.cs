@@ -77,8 +77,9 @@ public static class SearchResultTypePriority
     // graph loaded or need the decision without touching it (see SearchResultExecutionHelper).
     public static string StripLeadingTrigger(string query, IReadOnlyDictionary<string, string> triggers)
     {
-        if (query.Length == 0)
+        var search = QueryFilterSupport.StripStealthPrefix(query);
+        if (search.Length == 0 || ResolveTrigger(search[0], triggers) == null)
             return query;
-        return ResolveTrigger(query[0], triggers) != null ? query.Substring(1) : query;
+        return QueryFilterSupport.IsStealthQuery(query) ? ";" + search[1..] : search[1..];
     }
 }

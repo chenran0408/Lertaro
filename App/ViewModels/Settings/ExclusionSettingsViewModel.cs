@@ -156,21 +156,21 @@ public class ExclusionSettingsViewModel : ViewModelBase
     {
         AddUnique(ExcludedPaths, NewExcludedPath);
         NewExcludedPath = string.Empty;
-        RefreshBulkText();
+        RefreshBulkText(ExcludedPaths);
     }
 
     private void AddGlob()
     {
         AddUnique(IgnoredGlobs, NewIgnoredGlob);
         NewIgnoredGlob = string.Empty;
-        RefreshBulkText();
+        RefreshBulkText(IgnoredGlobs);
     }
 
     private void AddRegex()
     {
         AddUnique(IgnoredRegexes, NewIgnoredRegex);
         NewIgnoredRegex = string.Empty;
-        RefreshBulkText();
+        RefreshBulkText(IgnoredRegexes);
     }
 
     private static void AddUnique(ObservableCollection<ExclusionRuleItem> items, string value)
@@ -190,7 +190,7 @@ public class ExclusionSettingsViewModel : ViewModelBase
         if (item != null)
         {
             ExcludedPaths.Remove(item);
-            RefreshBulkText();
+            RefreshBulkText(ExcludedPaths);
         }
     }
 
@@ -199,7 +199,7 @@ public class ExclusionSettingsViewModel : ViewModelBase
         if (item != null)
         {
             IgnoredGlobs.Remove(item);
-            RefreshBulkText();
+            RefreshBulkText(IgnoredGlobs);
         }
     }
 
@@ -208,7 +208,7 @@ public class ExclusionSettingsViewModel : ViewModelBase
         if (item != null)
         {
             IgnoredRegexes.Remove(item);
-            RefreshBulkText();
+            RefreshBulkText(IgnoredRegexes);
         }
     }
 
@@ -244,16 +244,16 @@ public class ExclusionSettingsViewModel : ViewModelBase
 
         item.Value = NormalizeRule(item.EditValue);
         item.IsEditing = false;
-        RefreshBulkText();
+        RefreshBulkText(items);
     }
     private static void CancelEdit(ExclusionRuleItem item) => item?.IsEditing = false;
     private static string NormalizeRule(string value) => value.Trim().Trim('"');
 
-    private void RefreshBulkText()
+    private void RefreshBulkText(ObservableCollection<ExclusionRuleItem>? target = null)
     {
-        ExcludedPathsText = JoinLines(ExcludedPaths);
-        IgnoredGlobsText = JoinLines(IgnoredGlobs);
-        IgnoredRegexesText = JoinLines(IgnoredRegexes);
+        if (target == null || target == ExcludedPaths) ExcludedPathsText = JoinLines(ExcludedPaths);
+        if (target == null || target == IgnoredGlobs) IgnoredGlobsText = JoinLines(IgnoredGlobs);
+        if (target == null || target == IgnoredRegexes) IgnoredRegexesText = JoinLines(IgnoredRegexes);
     }
 
     private static string JoinLines(ObservableCollection<ExclusionRuleItem> items) => string.Join(Environment.NewLine, items.Select(x => x.Value));
@@ -281,6 +281,6 @@ public class ExclusionSettingsViewModel : ViewModelBase
     private void ApplyBulkText(ObservableCollection<ExclusionRuleItem> target, string text)
     {
         SyncCollection(target, ParseLines(text));
-        RefreshBulkText();
+        RefreshBulkText(target);
     }
 }

@@ -191,12 +191,14 @@ internal sealed class ClipboardMonitorService : IDisposable
     private ClipboardCapture? ReadTextCapture(ClipboardCaptureOptions options, uint sequence, nint owner,
         ProcessIdentity identity, int processId)
     {
-        var text = ReadSnapshot(options.MaxTextLength, sequence, owner);
+        if (_source == null) return null;
+        var hwnd = _source.Handle;
+        var text = new ClipboardTextReader(_native, hwnd).Read(options.MaxTextLength, sequence, owner, out var complete);
         if (string.IsNullOrEmpty(text)) return null;
 
         // HTML rides along when the source offers it; its absence or a size cap never blocks the
         // text capture. A changed clipboard under the HTML read only drops the flavor, not the row.
-        var html = _source == null ? null : new ClipboardHtmlReader(_native, _source.Handle).Read(sequence, owner);
+        var html = complete ? new ClipboardHtmlReader(_native, hwnd).Read(sequence, owner) : null;
         return ClipboardCapture.FromText(text, identity, processId, identity.MainWindowHandle, html ?? string.Empty);
     }
 
@@ -215,14 +217,6 @@ internal sealed class ClipboardMonitorService : IDisposable
         if (!hasBitmap) return null;
         var payload = new ClipboardImageReader(_native).Read(sequence, owner);
         return payload == null ? null : ClipboardCapture.FromImage(payload.Png, payload.Width, payload.Height, identity, processId, identity.MainWindowHandle);
-    }
-
-    private string? ReadSnapshot(int maxTextLength, uint sequence, nint owner)
-    {
-        if (_source == null) return null;
-        // Open with our own message window (never the external owner window) and
-        // let the reader validate the sequence/owner snapshot inside the open.
-        return new ClipboardTextReader(_native, _source.Handle).Read(maxTextLength, sequence, owner);
     }
 
     private bool IsStillClipboardOwner(nint owner, int processId)

@@ -26,6 +26,8 @@ public class PluginComponentViewModel : ViewModelBase
     public string DisplayName { get; }
 
     public string Description { get; }
+    public bool HasDescription => !string.IsNullOrWhiteSpace(Description);
+    public bool IsDescriptionExpanded { get; set; }
 
     /// <summary>
     /// Whether the user can toggle this component on/off.

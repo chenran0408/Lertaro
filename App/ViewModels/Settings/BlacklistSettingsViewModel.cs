@@ -28,6 +28,13 @@ public class BlacklistSettingsViewModel : ViewModelBase
     /// </summary>
     public ProcessBlacklistEditorViewModel QuickPanel { get; }
 
+    private int _selectedScope;
+    public int SelectedScope
+    {
+        get => _selectedScope;
+        set => SetProperty(ref _selectedScope, value);
+    }
+
     public void Save()
     {
         _userSettings.BlacklistedProcesses = Global.ToSettingsList();

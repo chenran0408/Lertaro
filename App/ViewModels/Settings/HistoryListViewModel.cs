@@ -19,6 +19,8 @@ public class HistoryListViewModel<T> : ViewModelBase
     private readonly Func<T, HistoryEntryViewModel<T>> _mapEntry;
     private readonly Func<bool> _getEnabled;
     private readonly Action<bool> _setEnabled;
+    private readonly Func<HistoryEntryViewModel<T>, string> _key;
+    private readonly HashSet<string> _pendingRemovals = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<HistoryEntryViewModel<T>> _allItems = new();
     private string _searchText = string.Empty;
 
@@ -26,20 +28,22 @@ public class HistoryListViewModel<T> : ViewModelBase
         Func<IReadOnlyList<T>> loadEntries,
         Func<T, HistoryEntryViewModel<T>> mapEntry,
         Func<bool> getEnabled,
-        Action<bool> setEnabled)
+        Action<bool> setEnabled,
+        Func<T, string>? entryKey = null)
     {
         _loadEntries = loadEntries;
         _mapEntry = mapEntry;
         _getEnabled = getEnabled;
         _setEnabled = setEnabled;
+        _key = entryKey == null ? row => row.Primary : row => entryKey(row.RawValue);
 
         foreach (var raw in _loadEntries())
             _allItems.Add(_mapEntry(raw));
 
         FilteredItems = new ObservableCollection<HistoryEntryViewModel<T>>(_allItems);
         RemoveItemCommand = new RelayCommand<HistoryEntryViewModel<T>>(RemoveItem);
-        ClearAllCommand = new RelayCommand(ClearAll);
-        ClearBelowCommand = new RelayCommand(ClearBelow);
+        ClearAllCommand = new RelayCommand(ClearAll, () => _allItems.Count > 0);
+        ClearBelowCommand = new RelayCommand(ClearBelow, () => _allItems.Any(item => item.UsageCount <= UsageThreshold));
     }
 
     public bool IsHistoryEnabled
@@ -71,7 +75,10 @@ public class HistoryListViewModel<T> : ViewModelBase
         set
         {
             if (SetProperty(ref _usageThreshold, value))
+            {
                 OnPropertyChanged(nameof(ClearBelowButtonLabel));
+                CommandManager.InvalidateRequerySuggested();
+            }
         }
     }
 
@@ -79,7 +86,16 @@ public class HistoryListViewModel<T> : ViewModelBase
         TranslationManager.Instance["Settings_History_Clear_Below"],
         UsageThreshold);
 
-    public void NotifyLanguageChanged() => OnPropertyChanged(nameof(ClearBelowButtonLabel));
+    public string ResultSummary => string.Format(TranslationManager.Instance["History_ResultSummary"], FilteredItems.Count, _allItems.Count);
+    public bool HasPendingRemovals => _pendingRemovals.Count > 0;
+    public string PendingSummary => string.Format(TranslationManager.Instance["History_PendingRemovals"], _pendingRemovals.Count);
+
+    public void NotifyLanguageChanged()
+    {
+        OnPropertyChanged(nameof(ClearBelowButtonLabel));
+        OnPropertyChanged(nameof(ResultSummary));
+        OnPropertyChanged(nameof(PendingSummary));
+    }
 
     public string SearchText
     {
@@ -93,24 +109,22 @@ public class HistoryListViewModel<T> : ViewModelBase
 
     private void RemoveItem(HistoryEntryViewModel<T>? item)
     {
-        if (item == null) return;
-        _allItems.Remove(item);
+        if (item == null || !_allItems.Remove(item)) return;
+        _pendingRemovals.Add(_key(item));
         FilteredItems.Remove(item);
+        UpdateSummary();
     }
 
-    private void ClearAll()
-    {
-        _allItems.Clear();
-        FilteredItems.Clear();
-    }
+    private void ClearAll() => StageRemovals(_allItems);
 
-    private void ClearBelow()
+    private void ClearBelow() => StageRemovals(_allItems.Where(item => item.UsageCount <= UsageThreshold));
+
+    private void StageRemovals(IEnumerable<HistoryEntryViewModel<T>> entries)
     {
-        // "At most N times" (<=), from the fixed 1..20 dropdown so the value is always in range.
-        _allItems.RemoveAll(item => item.UsageCount <= UsageThreshold);
-        FilteredItems.Clear();
-        foreach (var item in _allItems)
-            FilteredItems.Add(item);
+        foreach (var entry in entries)
+            _pendingRemovals.Add(_key(entry));
+        _allItems.RemoveAll(item => _pendingRemovals.Contains(_key(item)));
+        ApplyFilter();
     }
 
     /// <summary>Re-reads the backing store and rebuilds the rows, keeping the current filter/search.</summary>
@@ -118,7 +132,11 @@ public class HistoryListViewModel<T> : ViewModelBase
     {
         _allItems.Clear();
         foreach (var raw in _loadEntries())
-            _allItems.Add(_mapEntry(raw));
+        {
+            var row = _mapEntry(raw);
+            if (!_pendingRemovals.Contains(_key(row)))
+                _allItems.Add(row);
+        }
         ApplyFilter();
     }
 
@@ -137,6 +155,23 @@ public class HistoryListViewModel<T> : ViewModelBase
                 FilteredItems.Add(item);
             }
         }
+        UpdateSummary();
+    }
+
+    private void UpdateSummary()
+    {
+        OnPropertyChanged(nameof(ResultSummary));
+        OnPropertyChanged(nameof(PendingSummary));
+        OnPropertyChanged(nameof(HasPendingRemovals));
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    internal void SaveRemovals(Action<IReadOnlySet<string>> remove)
+    {
+        if (_pendingRemovals.Count == 0) return;
+        remove(_pendingRemovals);
+        _pendingRemovals.Clear();
+        RefreshFromStore();
     }
 
     /// <summary>Returns the current entries (in their edited order) for the caller to persist.</summary>

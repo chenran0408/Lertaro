@@ -1,5 +1,6 @@
 using System.IO;
 using Lertaro.App.Helpers;
+using Lertaro.App.ViewModels.Search;
 using Lertaro.PluginSdk.Abstractions.Plugins;
 
 namespace Lertaro.App.Tests.Helpers;
@@ -78,6 +79,18 @@ public sealed class SearchResultExecutionHelperTests
         var settingsRow = SettingsRow("环境");
         Assert.AreSame(settingsRow, SearchResultExecutionHelper.ResolveCurrent(settingsRow, "环境", isInlineWindow: false));
     }
+
+    [TestMethod]
+    public void PrivateQueryExecutesTheCurrentProviderRow()
+    {
+        var row = SettingsRow("environment");
+
+        Assert.AreSame(row, SearchResultExecutionHelper.ResolveCurrent(row, "; environment", isInlineWindow: false));
+    }
+
+    [TestMethod]
+    public void ExpandingPrivateSearchRemovesItsTypeTriggerAndKeepsItsHistoryMarker() =>
+        Assert.AreEqual(";environment", SearchResultTypePriority.StripLeadingTrigger("; ，environment", CommaTriggers));
 
     [TestMethod]
     public void AStaleSearchableRow_IsRefreshedFromTheSearchableItemMapper()

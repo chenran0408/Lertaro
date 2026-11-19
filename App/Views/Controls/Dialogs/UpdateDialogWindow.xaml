@@ -24,16 +24,17 @@
 
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="38"/>
+                <RowDefinition Height="42"/>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="52"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- Title Bar -->
-            <Border Grid.Row="0" Background="Transparent" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1"
+            <Border Grid.Row="0" Background="{DynamicResource HeaderBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1"
                     MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Grid>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,12,0">
                         <Image x:Name="TitleBarLogo" Width="16" Height="16" Margin="0,0,8,0"/>
                         <TextBlock x:Name="TxtTitle" Text="Lertaro"
                                     FontSize="14" FontWeight="SemiBold"
@@ -44,21 +45,26 @@
 
             <!-- Message + optional never-prompt checkbox -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="320">
-                <StackPanel Margin="20,18,20,8">
-                    <TextBlock x:Name="TxtMessage" TextWrapping="Wrap" FontSize="14"
+                <StackPanel Margin="20,20">
+                    <TextBlock x:Name="TxtMessage" TextWrapping="Wrap" FontSize="14" LineHeight="22"
                                Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
-                    <CheckBox x:Name="ChkNeverPrompt" Margin="0,14,0,0" Visibility="Collapsed"
-                              Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_NeverPromptAgain]}"
-                              Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
+
                 </StackPanel>
             </ScrollViewer>
 
+            <CheckBox Grid.Row="2" x:Name="ChkNeverPrompt" Margin="20,0,20,12" Visibility="Collapsed"
+                              Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_NeverPromptAgain]}"
+                              Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
+
             <!-- Buttons -->
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0">
-                <Button x:Name="BtnPrimary" Style="{StaticResource PrimarySettingsButton}" Margin="0,0,10,0" MinWidth="110" Click="BtnPrimary_Click"/>
-                <Button x:Name="BtnSecondary" Style="{StaticResource SettingsButton}" Margin="0,0,10,0" MinWidth="110" Click="BtnSecondary_Click" Visibility="Collapsed"/>
-                <Button x:Name="BtnClose" Style="{StaticResource SettingsButton}" MinWidth="90" Click="BtnClose_Click" IsCancel="True"/>
-            </StackPanel>
+            <Border Grid.Row="3" Background="{DynamicResource StatusBarBg}" BorderBrush="{DynamicResource BorderColor}"
+                    BorderThickness="0,1,0,0" Padding="12,8,16,8">
+                <WrapPanel HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button x:Name="BtnClose" Style="{StaticResource SettingsButton}" Click="BtnClose_Click" IsCancel="True"/>
+                    <Button x:Name="BtnSecondary" Style="{StaticResource SettingsButton}" Click="BtnSecondary_Click" Visibility="Collapsed"/>
+                    <Button x:Name="BtnPrimary" Style="{StaticResource PrimarySettingsButton}" Click="BtnPrimary_Click"/>
+                </WrapPanel>
+            </Border>
         </Grid>
     </Grid>
 </appWindow:AppWindow>

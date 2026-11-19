@@ -46,6 +46,8 @@ public partial class QuickPanelWindow
             && Keyboard.Modifiers == ModifierKeys.None)
         {
             var key = Helpers.WpfUiHelper.GetActualKey(e);
+            if (FilterBox.IsKeyboardFocusWithin && FilterBox.HasFilterText && key is Key.Left or Key.Right)
+                return false;
             var movement = key switch
             {
                 Key.Up => (-1, 0),

@@ -57,7 +57,7 @@ public static class PluginLoaderHelper
 
             var sdkVersion = "1.0.0";
             var referencedSdk = assembly.GetReferencedAssemblies()
-                .FirstOrDefault(r => r.Name != null && r.Name.Equals("PluginSdk", StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(r => r.Name is "Lertaro.PluginSdk" or "PluginSdk");
             if (referencedSdk != null && referencedSdk.Version != null)
             {
                 sdkVersion = referencedSdk.Version.ToString(3);
@@ -111,7 +111,7 @@ public static class PluginLoaderHelper
                 || result.Any(p => p.DllFileName.Equals(dllName, StringComparison.OrdinalIgnoreCase))) continue;
             var metadata = PluginMetadataReader.Read(file, TranslationManager.Instance.CurrentCulture);
             result.Add(new PluginInfoViewModel(metadata.Name, metadata.Version, dllName, metadata.SdkVersion, [], [],
-                description: metadata.Description, isPluginEnabled: false));
+                description: metadata.Description, isPluginEnabled: false, wasDisabledAtStartup: true));
         }
     }
 

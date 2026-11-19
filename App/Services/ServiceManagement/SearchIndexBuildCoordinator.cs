@@ -20,7 +20,7 @@ internal static class SearchIndexBuildCoordinator
 
                                                _ = Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                                                {
-                                                   if (status.State == "ready")
+                                                   if (status.State is "ready" or "cached")
                                                    {
                                                        connectionHandler.ClearServiceReconnectState();
                                                        onReadyStatus(status);
@@ -33,7 +33,8 @@ internal static class SearchIndexBuildCoordinator
                                                    }
 
                                                    onPendingStatus(status);
-                                                   connectionHandler.Start(requireDetailedStatus: true);
+                                                   if (status.State != SearchIndexBootstrapHelper.IndexError)
+                                                       connectionHandler.Start(requireDetailedStatus: true);
                                                }));
                                            });
 }

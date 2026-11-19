@@ -34,100 +34,36 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <!-- ═══════════ 1. Title Bar + Search ═══════════ -->
-                <Border Grid.Row="0" Background="Transparent"
+                <Border Grid.Row="0" Background="{DynamicResource HeaderBg}"
                         BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelBorderBrush}" BorderThickness="0,0,0,1"
                         CornerRadius="{StaticResource CornerRadiusWindowTop}">
-                    <!-- The drag handler sits HERE, on the header's full-width layout grid, rather than on
-                         the search bar's own container below. On that container it covered almost nothing:
-                         a Margin lies OUTSIDE the element, so the 12px around the search bar belonged to
-                         the parent Border, and the container's own area is filled edge to edge by
-                         SearchBoxControl, whose text box is deliberately excluded (see
-                         SearchWindowChromeHandler) and whose icon has handlers of its own. What was left to
-                         grab was a sliver beside the logo, which is why the window could only be moved by
-                         aiming at its top-left corner (issue #195).
-
-                         Transparent remains hit-testable while letting the the shell glass surface show through. -->
                     <Grid x:Name="HeaderDragArea" Background="Transparent" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="36"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <!-- Trade some vertical margin for a 24px icon plus its outline, keeping the
-                             overall header compact. The remaining margin still belongs to the drag area. -->
-                        <Grid Grid.Column="0" Margin="12,12,8,12">
-                            <!-- No dedicated drag grip: the header itself is the grab area now, and the
-                                 logo has its own click handler now, so it stays out of the drag gesture. -->
-                            <!-- Shared SearchBoxControl component -->
-                            <app:SearchBoxControl x:Name="SearchBox" FontSize="14" Padding="0" Height="26"
+                        <TextBlock Grid.Row="0" Margin="16,0,12,0" VerticalAlignment="Center"
+                                   FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_Title]}"/>
+                        <Border Grid.Row="1" Grid.ColumnSpan="2" Margin="12,0,12,10"
+                                Padding="10,3" Style="{StaticResource SearchFieldChrome}">
+                            <app:SearchBoxControl x:Name="SearchBox" FontSize="16" Padding="0" Height="30"
                                                   LeftIconSize="26" RightIconSize="26" MinimumIconFrameSize="24"
-                                                  IsIconOnLeft="True" IsIconClickable="True" IconClickHint="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[SearchWindow_LogoClickHint]}" SearchText="{Binding AdvancedQuery, Mode=TwoWay}" IsServiceRunning="{Binding IsServiceConnected}"/>
-                        </Grid>
-                        <!-- Drag grip: the affordance for the drag region above, which is otherwise
-                             invisible and so undiscoverable (issue #195 asked for a title bar precisely
-                             because there was nothing to aim at). Hidden at rest so the header stays as
-                             clean as it is now, and fades in whenever the pointer is anywhere in the
-                             header.
-
-                             TextSecondary rather than the accent: this is chrome, not an action, and it
-                             is the same brush the minimize/maximize/close glyphs beside it already use, so
-                             the grip reads as part of the same furniture on every one of the themes. Every
-                             theme defines it, which a drag affordance has to be able to rely on.
-
-                             IsHitTestVisible is false so it never takes a click away from the drag grid
-                             underneath it: it is a hint about where to grab, not the grabbable thing. It
-                             sits centred in the band above the search bar, which is free space already.
-
-                             Width is 30% of the header, expressed as star columns rather than a binding
-                             with a multiplying converter: proportional layout is what star sizing already
-                             is, so the grip simply stretches into the middle column and tracks the window
-                             as it resizes with no converter, no code and no measure pass of its own.
-
-                             The hover trigger binds to HeaderDragArea by name rather than by ancestor
-                             type, because the nearest ancestor Grid is now this wrapper, whose own
-                             IsMouseOver is always false: it is not hit-testable. -->
-                        <Grid Grid.Column="0" Grid.ColumnSpan="2"
-                              VerticalAlignment="Top" Margin="0,5,0,0" IsHitTestVisible="False">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="35*"/>
-                                <ColumnDefinition Width="30*"/>
-                                <ColumnDefinition Width="35*"/>
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="1" Height="6" CornerRadius="3"
-                                    Background="{DynamicResource TextSecondary}">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="Opacity" Value="0"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsMouseOver, ElementName=HeaderDragArea}" Value="True">
-                                                <DataTrigger.EnterActions>
-                                                    <BeginStoryboard>
-                                                        <Storyboard>
-                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.45"
-                                                                             Duration="{StaticResource DurationHover}"
-                                                                             EasingFunction="{StaticResource EaseOutCubic}"/>
-                                                        </Storyboard>
-                                                    </BeginStoryboard>
-                                                </DataTrigger.EnterActions>
-                                                <DataTrigger.ExitActions>
-                                                    <BeginStoryboard>
-                                                        <Storyboard>
-                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0"
-                                                                             Duration="{StaticResource DurationHover}"
-                                                                             EasingFunction="{StaticResource EaseOutCubic}"/>
-                                                        </Storyboard>
-                                                    </BeginStoryboard>
-                                                </DataTrigger.ExitActions>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                            </Border>
-                        </Grid>
+                                                  IsIconOnLeft="True" IsIconClickable="True"
+                                                  IconClickHint="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[SearchWindow_LogoClickHint]}"
+                                                  SearchText="{Binding AdvancedQuery, Mode=TwoWay}"
+                                                  IsServiceRunning="{Binding IsServiceConnected}"/>
+                        </Border>
                         <!-- Window controls -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,6,6,0">
                             <Button x:Name="BtnClearFilters"
                                     Content="&#xE711;"
                                     ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_ClearFiltersTooltip]}"
+                                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                                     Command="{Binding ClearAllFiltersCommand}"
                                     Margin="0,0,8,0">
                                 <Button.Style>
@@ -143,6 +79,7 @@
                             </Button>
                             <Button x:Name="BtnToggleFilters"
                                     ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_HideFiltersTooltip]}"
+                                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                                     Style="{StaticResource WindowControlButton}"
                                     Click="BtnToggleFilters_Click" Margin="0,0,8,0">
                                 <Button.Content>
@@ -213,6 +150,7 @@
                         <!-- Shared ResultsControl component in Grid Mode -->
                         <results:ResultsControl x:Name="ResultsPanelControl"
                                             ItemsSource="{Binding FilteredResults}"
+                                            ChipFilter="{Binding ActiveChip, Mode=TwoWay}"
                                             ViewMode="Grid"
                                             UsesFloatingActionsLayout="True"
                                             UseRoomyActionRows="True"
@@ -221,7 +159,8 @@
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_NoResult]}"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
-                                   FontSize="16"
+                                   FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"
+                                   TextAlignment="Center" Margin="20"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                    >
                             <TextBlock.Style>
@@ -239,7 +178,7 @@
                     </Grid>
                 </Grid>
                 <!-- ═══════════ 3. Status Bar ═══════════ -->
-                <Border Grid.Row="2" Background="Transparent"
+                <Border Grid.Row="2" Background="{DynamicResource StatusBarBg}"
                         BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelBorderBrush}" BorderThickness="0,1,0,0"
                         CornerRadius="{StaticResource CornerRadiusWindowBottom}"
                         Padding="16,8,16,8">
@@ -259,13 +198,14 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <!-- Result count with accent dot -->
+                        <!-- Result count -->
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                             <Ellipse Width="6" Height="6" Fill="{DynamicResource AccentColor}"
                                      Margin="0,0,8,0" VerticalAlignment="Center"/>
                             <TextBlock x:Name="TxtResultCount" Text="{Binding ResultCountText}"
+                                       ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_HintKeyboard]}"
+                                       AutomationProperties.HelpText="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_HintKeyboard]}"
                                        FontSize="12" FontWeight="Medium"
                                        Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                        
@@ -277,13 +217,12 @@
                                        Margin="12,0,0,0"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
-                        <!-- Keyboard hint -->
-                        <TextBlock Grid.Column="2"
-                                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_HintKeyboard]}"
-                                   FontSize="14"
-                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
-                                   
-                                   VerticalAlignment="Center"/>
+                        <!-- Selection context stays readable even when the results grid is scrolled horizontally. -->
+                        <TextBlock Grid.Column="1" Margin="16,0"
+                                   Text="{Binding SelectedItem.ParentDir, ElementName=ResultsPanelControl}"
+                                   ToolTip="{Binding SelectedItem.FullPath, ElementName=ResultsPanelControl}"
+                                   TextTrimming="CharacterEllipsis" FontSize="12"
+                                   Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
                     </Grid>
                 </Border>
             </Grid>

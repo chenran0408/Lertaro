@@ -16,6 +16,7 @@ internal static class SearchResultExecutionHelper
         if (!result.IsPluginSearchAction && !result.IsInstantResult)
             return result;
 
+        query = QueryFilterSupport.StripStealthPrefix(query);
         if (string.Equals(result.SearchQuery, query, StringComparison.Ordinal))
             return result;
 
@@ -30,12 +31,12 @@ internal static class SearchResultExecutionHelper
         {
             PluginSearchResultMapper.AddPluginSearchActionResults(current, searchQuery, result.ContextDirectory, isInlineWindow);
         }
-        else if (result.SourceProvider is ISearchableItemProvider)
+        else if (result.SourceProvider is ISearchableItemProvider provider)
         {
             // Rows from an ISearchableItemProvider (system settings, Start Menu apps, ...) are not
             // instant-provider output: asking AddInstantResults alone found nothing for them, which
             // made Enter do nothing on a row that was plainly sitting on screen.
-            current.AddRange(SearchableItemMapper.CollectSearchableItemResults(searchQuery, isInlineWindow)
+            current.AddRange(SearchableItemMapper.CollectSearchableItemResults(searchQuery, isInlineWindow, SearchResultTypePriority.GetProviderTypeId(provider))
                 .Select(candidate => candidate.Result));
         }
         else

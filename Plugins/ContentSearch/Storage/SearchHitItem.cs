@@ -10,4 +10,5 @@ public sealed class SearchHitItem
     public required string DirectoryPath { get; init; }
     public required string Snippet { get; init; }
     public required double Score { get; init; }
+    public Lertaro.PluginSdk.Abstractions.FileMetadata Metadata { get; init; }
 }

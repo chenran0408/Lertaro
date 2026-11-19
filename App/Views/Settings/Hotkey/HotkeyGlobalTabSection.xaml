@@ -4,15 +4,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:services="clr-namespace:Lertaro.App.Services"
+             xmlns:core="clr-namespace:Lertaro.Core;assembly=Lertaro.Core"
              xmlns:local="clr-namespace:Lertaro.App.Views.Settings.Hotkey"
              xmlns:ctrl="clr-namespace:Lertaro.App.Views.Controls"
              mc:Ignorable="d"
              d:DesignHeight="550" d:DesignWidth="700">
-    <!-- Split out of HotkeySettingsPage.xaml (the "Global" tab) to keep that file under the project's
-         line-count convention. DataContext is inherited from the host page: this control's own bindings
-         are HotkeySettingsViewModel members, same as everything else on that page. SharedSizeGroup
-         "HotkeyLabel" still aligns across this control's Grids because Grid.IsSharedSizeScope on the
-         host page's outer StackPanel scopes by visual tree, not by NameScope/UserControl boundary. -->
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -30,32 +26,16 @@
     </UserControl.Resources>
 
     <StackPanel>
-        <!-- Group: Global Hotkeys -->
-        <StackPanel x:Name="RowGroupGlobal" Orientation="Horizontal">
-            <TextBlock Style="{StaticResource SettingsGroupTitle}" Margin="0,0,16,8"
-                       Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_GroupGlobal]}"/>
-            <CheckBox x:Name="RowAllowHotkeysInFullscreen" VerticalAlignment="Center" Margin="0,0,0,8"
-                      Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_AllowInFullscreen]}"
-                      IsChecked="{Binding AllowHotkeysInFullscreen, Mode=TwoWay}"/>
-        </StackPanel>
-
-        <Grid x:Name="RowToggleHotkey" Margin="0,4,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ToggleLabel]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding ToggleHotkeyValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                RequireModifier="True" AllowBareModifier="True" DefaultValue="Ctrl"/>
-            <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="8,0,0,0"
-                       Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ToggleDoubleTapHint]}">
+        <Grid Margin="0,0,0,12">
+            <TextBox x:Name="HotkeyFilterBox" MinHeight="34" Padding="10,0" TextChanged="Filter_TextChanged"
+                     AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkey_Filter]}"/>
+            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkey_Filter]}" Foreground="{DynamicResource TextSecondary}"
+                       Margin="10,0,6,0" VerticalAlignment="Center" IsHitTestVisible="False">
                 <TextBlock.Style>
-                    <Style TargetType="TextBlock" BasedOn="{StaticResource SettingsHintText}">
+                    <Style TargetType="TextBlock">
                         <Setter Property="Visibility" Value="Collapsed"/>
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsToggleModifierClick}" Value="True">
+                            <DataTrigger Binding="{Binding Text, ElementName=HotkeyFilterBox}" Value="">
                                 <Setter Property="Visibility" Value="Visible"/>
                             </DataTrigger>
                         </Style.Triggers>
@@ -63,231 +43,308 @@
                 </TextBlock.Style>
             </TextBlock>
         </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding ToggleHotkeyValueConflictWarning}"
-                   Visibility="{Binding ToggleHotkeyValueConflictWarning, Converter={StaticResource StringToVis}}"/>
-
-        <CheckBox x:Name="RowOpenFullWindowByDefault" Margin="0,6,0,0"
-                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_OpenFullWindowByDefault]}"
-                  IsChecked="{Binding OpenFullWindowByDefault, Mode=TwoWay}"/>
-
-        <Grid x:Name="RowQuickSwitch" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickSwitchLabel]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding QuickSwitchComboHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                RequireModifier="True" DefaultValue="Ctrl+G"/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding QuickSwitchComboHotkeyConflictWarning}"
-                   Visibility="{Binding QuickSwitchComboHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-
-        <Grid x:Name="RowQuickNavHotkey" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickNavHotkey]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding QuickNavigationHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                RequireModifier="True" DefaultValue=""/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding QuickNavigationHotkeyConflictWarning}"
-                   Visibility="{Binding QuickNavigationHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-
-        <TextBlock x:Name="RowSelectionTitle" Style="{StaticResource SettingsSubHeading}" FontSize="15"
-                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectionTitle]}"/>
-        <TextBlock Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"
-                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SearchWindowScopeHint]}"/>
-
-        <Grid x:Name="RowSelectNext" Margin="0,4,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectNextItem]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding NextItemHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                DefaultValue="Ctrl+N"/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding NextItemHotkeyConflictWarning}"
-                   Visibility="{Binding NextItemHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-        <Grid x:Name="RowSelectPrevious" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectPreviousItem]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding PreviousItemHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                DefaultValue="Ctrl+P"/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding PreviousItemHotkeyConflictWarning}"
-                   Visibility="{Binding PreviousItemHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-        <Grid x:Name="RowSelectJump" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectJumpItem]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <ctrl:HotkeyRecorderControl Width="90" Height="26"
-                    Value="{Binding SelectJumpModifier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    ModifierOnly="True" DefaultValue="Ctrl"/>
-                <TextBlock Text=" + 1~9" VerticalAlignment="Center" Margin="6,0,0,0"/>
-            </StackPanel>
-        </Grid>
-        <Grid x:Name="RowSelectActions" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectActions]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding ActionsMenuHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                DefaultValue="Ctrl+O"/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding ActionsMenuHotkeyConflictWarning}"
-                   Visibility="{Binding ActionsMenuHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-        <Grid x:Name="RowSelectComplete" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectComplete]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding CompleteFromSelectionHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                DefaultValue="Ctrl+Tab"/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding CompleteFromSelectionHotkeyConflictWarning}"
-                   Visibility="{Binding CompleteFromSelectionHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-        <Grid x:Name="RowSelectQuickLook" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectQuickLook]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding QuickLookHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                DefaultValue="Alt+P"/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding QuickLookHotkeyConflictWarning}"
-                   Visibility="{Binding QuickLookHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-        <Grid x:Name="RowKeywordHistoryPrevious" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_KeywordHistoryPrevious]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding KeywordHistoryPreviousHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                DefaultValue="Alt+Up"/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding KeywordHistoryPreviousHotkeyConflictWarning}"
-                   Visibility="{Binding KeywordHistoryPreviousHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-        <Grid x:Name="RowKeywordHistoryNext" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_KeywordHistoryNext]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding KeywordHistoryNextHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                DefaultValue="Alt+Down"/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding KeywordHistoryNextHotkeyConflictWarning}"
-                   Visibility="{Binding KeywordHistoryNextHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-        <Grid x:Name="RowKeywordHistoryDelete" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_KeywordHistoryDelete]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding KeywordHistoryDeleteHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                RequireModifier="True" DefaultValue="Ctrl+Delete"/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding KeywordHistoryDeleteHotkeyConflictWarning}"
-                   Visibility="{Binding KeywordHistoryDeleteHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-        <Grid x:Name="RowOpenFullWindow" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_OpenFullWindow]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding OpenFullWindowHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                RequireModifier="True" DefaultValue="Ctrl+F"/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding OpenFullWindowHotkeyConflictWarning}"
-                   Visibility="{Binding OpenFullWindowHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-        <Grid x:Name="RowLocalSendSendWindow" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_LocalSendSendWindow]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding LocalSendSendWindowHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                RequireModifier="True" DefaultValue="Ctrl+S"/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding LocalSendSendWindowHotkeyConflictWarning}"
-                   Visibility="{Binding LocalSendSendWindowHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-        <Grid x:Name="RowStayOpen" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_StayOpen]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding StayOpenHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                RequireModifier="True" DefaultValue="Ctrl+T"/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding StayOpenHotkeyConflictWarning}"
-                   Visibility="{Binding StayOpenHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-
-        <local:HotkeyQuickPanelWakeSection x:Name="QuickPanelWakeSection" Margin="0,8,0,0"/>
-
-        <Border Style="{StaticResource SettingsGroupDivider}"/>
-
-        <!-- Group: Clipboard Panel. Own group at the end of the tab: it is one hotkey, and the
-             advanced mouse-wake block above it should not push it out of the first screenful. -->
-        <TextBlock x:Name="RowGroupClipboard" Style="{StaticResource SettingsGroupTitle}"
-                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_GroupClipboard]}"/>
-
-        <Grid x:Name="RowClipboardPanelHotkey" Margin="0,4,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
-                <ColumnDefinition Width="200"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ClipboardPanelHotkey]}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-            <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
-                Value="{Binding ClipboardPanelHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                RequireModifier="True" DefaultValue="Win+V"/>
-        </Grid>
-        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding ClipboardPanelHotkeyConflictWarning}"
-                   Visibility="{Binding ClipboardPanelHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
-
-        <CheckBox x:Name="RowQuickSwitchBar" Margin="0,8,0,0" HorizontalAlignment="Left"
-                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_QuickSwitchBarLabel]}"
-                  IsChecked="{Binding QuickSwitchBarEnabled, Mode=TwoWay}"/>
-
-        <CheckBox x:Name="RowClipboardQuickPasteSlots" Margin="0,8,0,0" HorizontalAlignment="Left"
-                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ClipboardQuickPasteSlots]}"
-                  IsChecked="{Binding ClipboardQuickPasteSlots, Mode=TwoWay}"/>
-
-        <!-- Group: Quick Navigation -->
-        <TextBlock x:Name="RowGroupQuickNav" Style="{StaticResource SettingsGroupTitle}"
-                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_GroupQuickNav]}"/>
-
-        <CheckBox x:Name="RowQuickNavDoubleClick" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickNavDoubleClick]}"
-                  IsChecked="{Binding QuickNavTriggerOnDoubleClick, Mode=TwoWay}"
-                  Margin="0,4"/>
-
-        <CheckBox x:Name="RowQuickNavMiddleClick" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickNavMiddleClick]}"
-                  IsChecked="{Binding QuickNavTriggerOnMiddleClick, Mode=TwoWay}"
-                  Margin="0,4"/>
-
+        <StackPanel x:Name="HotkeyGroups">
+            <Border Style="{StaticResource SettingsCard}" Margin="0,0,0,10" Padding="14,11">
+                <StackPanel>
+                    <TextBlock x:Name="RowGroupGlobal" Style="{StaticResource SettingsGroupTitle}" Margin="0,0,0,6" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_GroupGlobal]}"/>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ToggleLabel]}">
+                        <Grid x:Name="RowToggleHotkey" Margin="0,4,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ToggleLabel]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ToggleLabel]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding ToggleHotkeyValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                RequireModifier="True" AllowBareModifier="True" DefaultValue="Ctrl"/>
+                            <TextBlock Grid.Row="1" Grid.ColumnSpan="2" TextWrapping="Wrap" Margin="0,4,0,0"
+                                       Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ToggleDoubleTapHint]}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource SettingsHintText}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsToggleModifierClick}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding ToggleHotkeyValueConflictWarning}"
+                                   Visibility="{Binding ToggleHotkeyValueConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickSwitchLabel]}">
+                        <Grid x:Name="RowQuickSwitch" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickSwitchLabel]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickSwitchLabel]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding QuickSwitchComboHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                RequireModifier="True" DefaultValue="Ctrl+G"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding QuickSwitchComboHotkeyConflictWarning}"
+                                   Visibility="{Binding QuickSwitchComboHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_OpenFullWindowByDefault]}">
+                        <CheckBox x:Name="RowOpenFullWindowByDefault" Margin="0,6,0,0"
+                                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_OpenFullWindowByDefault]}"
+                                  IsChecked="{Binding OpenFullWindowByDefault, Mode=TwoWay}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_AllowInFullscreen]}">
+                        <CheckBox x:Name="RowAllowHotkeysInFullscreen"
+                                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_AllowInFullscreen]}" IsChecked="{Binding AllowHotkeysInFullscreen, Mode=TwoWay}" Margin="0,6,0,0"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_QuickSwitchBarLabel]}">
+                        <CheckBox x:Name="RowQuickSwitchBar" Margin="0,8,0,0" HorizontalAlignment="Left"
+                                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_QuickSwitchBarLabel]}"
+                                  IsChecked="{Binding QuickSwitchBarEnabled, Mode=TwoWay}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource SettingsCard}" Margin="0,0,0,10" Padding="14,11">
+                <StackPanel>
+                    <TextBlock x:Name="RowGroupClipboard" Style="{StaticResource SettingsGroupTitle}" Margin="0,0,0,6" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_GroupClipboard]}"/>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ClipboardPanelHotkey]}">
+                        <Grid x:Name="RowClipboardPanelHotkey" Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ClipboardPanelHotkey]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ClipboardPanelHotkey]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding ClipboardPanelHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                RequireModifier="True" DefaultValue="{x:Static core:HotkeyPageSettings.DefaultClipboardPanelHotkey}"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding ClipboardPanelHotkeyConflictWarning}"
+                                   Visibility="{Binding ClipboardPanelHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ClipboardQuickPasteSlots]}">
+                        <CheckBox x:Name="RowClipboardQuickPasteSlots" Margin="0,8,0,0" HorizontalAlignment="Left"
+                                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_ClipboardQuickPasteSlots]}"
+                                  IsChecked="{Binding ClipboardQuickPasteSlots, Mode=TwoWay}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource SettingsCard}" Margin="0,0,0,10" Padding="14,11">
+                <StackPanel>
+                    <TextBlock x:Name="RowSelectionTitle" Style="{StaticResource SettingsGroupTitle}" Margin="0,0,0,6" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectionTitle]}"/>
+                    <TextBlock Style="{StaticResource SettingsHintText}" Margin="0,0,0,4" TextWrapping="Wrap" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SearchWindowScopeHint]}"/>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectNextItem]}">
+                        <Grid x:Name="RowSelectNext" Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectNextItem]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectNextItem]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding NextItemHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                DefaultValue="Ctrl+N"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding NextItemHotkeyConflictWarning}"
+                                   Visibility="{Binding NextItemHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectPreviousItem]}">
+                        <Grid x:Name="RowSelectPrevious" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectPreviousItem]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectPreviousItem]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding PreviousItemHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                DefaultValue="Ctrl+P"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding PreviousItemHotkeyConflictWarning}"
+                                   Visibility="{Binding PreviousItemHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectJumpItem]}">
+                        <Grid x:Name="RowSelectJump" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectJumpItem]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectJumpItem]}" Width="128" Height="30"
+                                    Value="{Binding SelectJumpModifier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    ModifierOnly="True" DefaultValue="Ctrl"/>
+                                <TextBlock Text=" + 1~9" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectActions]}">
+                        <Grid x:Name="RowSelectActions" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectActions]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectActions]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding ActionsMenuHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                DefaultValue="Ctrl+O"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding ActionsMenuHotkeyConflictWarning}"
+                                   Visibility="{Binding ActionsMenuHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectComplete]}">
+                        <Grid x:Name="RowSelectComplete" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectComplete]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectComplete]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding CompleteFromSelectionHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                DefaultValue="Ctrl+Tab"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding CompleteFromSelectionHotkeyConflictWarning}"
+                                   Visibility="{Binding CompleteFromSelectionHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectQuickLook]}">
+                        <Grid x:Name="RowSelectQuickLook" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectQuickLook]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_SelectQuickLook]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding QuickLookHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                DefaultValue="Alt+P"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding QuickLookHotkeyConflictWarning}"
+                                   Visibility="{Binding QuickLookHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_OpenFullWindow]}">
+                        <Grid x:Name="RowOpenFullWindow" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_OpenFullWindow]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_OpenFullWindow]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding OpenFullWindowHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                RequireModifier="True" DefaultValue="Ctrl+F"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding OpenFullWindowHotkeyConflictWarning}"
+                                   Visibility="{Binding OpenFullWindowHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_LocalSendSendWindow]}">
+                        <Grid x:Name="RowLocalSendSendWindow" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_LocalSendSendWindow]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_LocalSendSendWindow]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding LocalSendSendWindowHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                RequireModifier="True" DefaultValue="Ctrl+S"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding LocalSendSendWindowHotkeyConflictWarning}"
+                                   Visibility="{Binding LocalSendSendWindowHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_StayOpen]}">
+                        <Grid x:Name="RowStayOpen" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_StayOpen]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_StayOpen]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding StayOpenHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                RequireModifier="True" DefaultValue="Ctrl+T"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding StayOpenHotkeyConflictWarning}"
+                                   Visibility="{Binding StayOpenHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_KeywordHistoryPrevious]}">
+                        <Grid x:Name="RowKeywordHistoryPrevious" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_KeywordHistoryPrevious]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_KeywordHistoryPrevious]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding KeywordHistoryPreviousHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                DefaultValue="Alt+Up"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding KeywordHistoryPreviousHotkeyConflictWarning}"
+                                   Visibility="{Binding KeywordHistoryPreviousHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_KeywordHistoryNext]}">
+                        <Grid x:Name="RowKeywordHistoryNext" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_KeywordHistoryNext]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_KeywordHistoryNext]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding KeywordHistoryNextHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                DefaultValue="Alt+Down"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding KeywordHistoryNextHotkeyConflictWarning}"
+                                   Visibility="{Binding KeywordHistoryNextHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_KeywordHistoryDelete]}">
+                        <Grid x:Name="RowKeywordHistoryDelete" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_KeywordHistoryDelete]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_KeywordHistoryDelete]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding KeywordHistoryDeleteHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                RequireModifier="True" DefaultValue="Ctrl+Delete"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding KeywordHistoryDeleteHotkeyConflictWarning}"
+                                   Visibility="{Binding KeywordHistoryDeleteHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource SettingsCard}" Margin="0,0,0,10" Padding="14,11">
+                <StackPanel>
+                    <TextBlock x:Name="RowGroupQuickNav" Style="{StaticResource SettingsGroupTitle}" Margin="0,0,0,6" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_GroupQuickNav]}"/>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickNavHotkey]}">
+                        <Grid x:Name="RowQuickNavHotkey" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="202"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickNavHotkey]}" Margin="0,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <ctrl:HotkeyRecorderControl AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickNavHotkey]}" Grid.Column="1" Width="202" Height="30"
+                                Value="{Binding QuickNavigationHotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                RequireModifier="True" DefaultValue=""/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource HotkeyConflictWarning}" Text="{Binding QuickNavigationHotkeyConflictWarning}"
+                                   Visibility="{Binding QuickNavigationHotkeyConflictWarning, Converter={StaticResource StringToVis}}"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickNavDoubleClick]}">
+                        <CheckBox x:Name="RowQuickNavDoubleClick" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickNavDoubleClick]}"
+                                  IsChecked="{Binding QuickNavTriggerOnDoubleClick, Mode=TwoWay}"
+                                  Margin="0,4"/>
+                    </StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickNavMiddleClick]}">
+                        <CheckBox x:Name="RowQuickNavMiddleClick" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_QuickNavMiddleClick]}"
+                                  IsChecked="{Binding QuickNavTriggerOnMiddleClick, Mode=TwoWay}"
+                                  Margin="0,4"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource SettingsCard}" Margin="0,0,0,10" Padding="14,11">
+                <StackPanel>
+                    <StackPanel Tag="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Title]}">
+                        <local:HotkeyQuickPanelWakeSection x:Name="QuickPanelWakeSection"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+        <TextBlock x:Name="NoMatchingHotkeys" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkey_NoMatches]}" Visibility="Collapsed"
+                   Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="12,20"/>
     </StackPanel>
 </UserControl>

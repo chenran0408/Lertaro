@@ -99,7 +99,7 @@ public static class UpdatePackage
     /// </summary>
     internal const long MaxPackageBytes = 64 * 1024 * 1024;
 
-    private const long MaxSignatureBytes = 4 * 1024;
+    internal const int MaxSignatureBytes = 4 * 1024;
 
     /// <summary>
     /// Reads the staged zip and its signature into memory. The service calls this while impersonating the
@@ -207,7 +207,8 @@ public static class UpdatePackage
     {
         try
         {
-            return Verify(File.ReadAllBytes(zipPath), File.ReadAllBytes(signaturePath), publicKeyPem);
+            using var zip = File.OpenRead(zipPath);
+            return Verify(zip, File.ReadAllBytes(signaturePath), publicKeyPem);
         }
         catch (Exception ex)
         {
@@ -221,6 +222,14 @@ public static class UpdatePackage
     /// positively vouch for is a package that does not get installed.
     /// </summary>
     internal static bool Verify(byte[] zip, byte[] signature, string publicKeyPem)
+    {
+        using var stream = new MemoryStream(zip, writable: false);
+        return Verify(stream, signature, publicKeyPem);
+    }
+
+    internal static bool Verify(Stream zip, byte[] signature) => Verify(zip, signature, PUBLIC_KEY_PEM);
+
+    private static bool Verify(Stream zip, byte[] signature, string publicKeyPem)
     {
         try
         {

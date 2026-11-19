@@ -89,6 +89,12 @@ public partial class HotkeyRecorderControl : System.Windows.Controls.UserControl
         InitializeComponent();
         _singleKeyTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(320) };
         _singleKeyTimer.Tick += (_, _) => CommitPendingSingleKey();
+        HotkeyBox.LostKeyboardFocus += (_, _) =>
+        {
+            CommitPendingSingleKey();
+            _trackedModifiers = ModifierKeys.None;
+            _realKeyPressedDuringModifierHold = false;
+        };
         IsKeyboardFocusWithinChanged += (_, _) => UpdateRecordingFocus(IsKeyboardFocusWithin);
         Unloaded += (_, _) => UpdateRecordingFocus(false);
         IsVisibleChanged += (_, e) => { if (e.NewValue is false) UpdateRecordingFocus(false); };
@@ -124,10 +130,17 @@ public partial class HotkeyRecorderControl : System.Windows.Controls.UserControl
 
     private void HotkeyBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        e.Handled = true;
         var key = WpfUiHelper.GetActualKey(e);
+        if (key == Key.Tab && (Keyboard.Modifiers & ~ModifierKeys.Shift) == ModifierKeys.None)
+            return;
 
-        if (key == Key.Escape) { CancelPendingSingleKey(); Value = string.Empty; return; }
+        e.Handled = true;
+        if (key == Key.Escape)
+        {
+            CancelPendingSingleKey();
+            HotkeyBox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+            return;
+        }
         if (key is Key.Clear or Key.OemClear) return;
 
         if (HotkeyRecorderModifierState.FromKey(key) != ModifierKeys.None)
@@ -196,18 +209,11 @@ public partial class HotkeyRecorderControl : System.Windows.Controls.UserControl
         var key = WpfUiHelper.GetActualKey(e);
 
         var releasedModifier = ModifierName(key);
-        if (releasedModifier == null) return;
+        var modifier = HotkeyRecorderModifierState.FromKey(key);
+        if (releasedModifier == null || !_trackedModifiers.HasFlag(modifier)) return;
 
-        if (!_realKeyPressedDuringModifierHold)
-        {
-            // Released alone -- nothing else was pressed while it was held. For ModifierOnly (matched
-            // by comparing held-modifier state, no key needed) or AllowBareModifier (a field with its
-            // own separate meaning for a bare modifier) this is a real, working value. A plain combo
-            // recorder has no key to pair it with, so runtime matching (which needs both a modifier
-            // AND a key) would never fire -- treat it as a clear instead of saving a value that looks
-            // configured but silently does nothing.
-            Value = (ModifierOnly || AllowBareModifier) ? releasedModifier : string.Empty;
-        }
+        if (!_realKeyPressedDuringModifierHold && (ModifierOnly || AllowBareModifier))
+            Value = releasedModifier;
 
         _trackedModifiers = HotkeyRecorderModifierState.Remove(_trackedModifiers, key);
         if (_trackedModifiers == ModifierKeys.None)

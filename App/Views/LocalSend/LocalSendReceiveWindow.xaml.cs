@@ -21,7 +21,6 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
     private string? _lastRootSavedPath;
     private LocalSendTransferStage _transferStage = LocalSendTransferStage.Transferring;
     private List<LocalSendReceiveFileItem> _fileItems = new();
-    private string _senderAlias = string.Empty;
     private bool _isTextMessage;
     private bool _isTextUrl;
     public LocalSendReceiveWindow(LocalSendUploadRequestArgs requestArgs)
@@ -39,8 +38,6 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
     }
     private void OnLanguageChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        var deviceLabel = TranslationManager.Instance["Settings_LocalSend_Device"];
-        TxtSender.Text = $"{deviceLabel}: {_senderAlias}";
         if (_isTextMessage)
         {
             TxtWindowTitle.Text = TranslationManager.Instance["Settings_LocalSend_TextReceivedTitle"];
@@ -63,10 +60,8 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
     }
     private void PopulateRequestData(PrepareUploadRequestDto dto)
     {
-        _senderAlias = dto.Info.Alias;
-        var deviceLabel = TranslationManager.Instance["Settings_LocalSend_Device"];
-        TxtSender.Text = $"{deviceLabel}: {_senderAlias}";
-        SenderSecureIndicator.Visibility = dto.Info.Https ? Visibility.Visible : Visibility.Collapsed;
+        TxtSender.Text = dto.Info.Alias;
+        TxtProtocol.Text = dto.Info.Https ? "HTTPS" : "HTTP";
         if (LocalSendTextMessageHelper.TryGetMessage(dto, out var textMessage))
         {
             _isTextMessage = true;
@@ -78,9 +73,7 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
             TextMessageBorder.Visibility = Visibility.Visible;
             GridStep1Footer.Visibility = Visibility.Collapsed;
             PanelTextFooter.Visibility = Visibility.Visible;
-            BtnToggleSelectAll.Visibility = Visibility.Collapsed;
-            TxtSpeed.Visibility = Visibility.Collapsed;
-            TxtCounter.Visibility = Visibility.Collapsed;
+            SelectionRow.Visibility = Visibility.Collapsed;
             _isCompleted = true;
             return;
         }
@@ -107,8 +100,10 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
         var selectedFiles = LstFiles.SelectedItems.OfType<LocalSendReceiveFileItem>().ToList();
         var totalBytes = selectedFiles.Sum(i => i.Size);
         var sizeFormatted = LocalSendServerHelper.FormatBytes(totalBytes);
-        var msgFormat = TranslationManager.Instance["Settings_LocalSend_UploadRequestMsg"];
-        TxtSummary.Text = string.Format(msgFormat, _senderAlias, selectedFiles.Count, sizeFormatted);
+        var msgFormat = TranslationManager.Instance["Settings_LocalSend_SelectedFilesSummary"];
+        TxtSummary.Text = string.Format(msgFormat, selectedFiles.Count, _fileItems.Count, sizeFormatted);
+        BtnToggleSelectAll.Content = TranslationManager.Instance[selectedFiles.Count == _fileItems.Count
+            ? "Common_DeselectAll" : "Common_SelectAll"];
         var hasSelection = selectedFiles.Count > 0;
         BtnSaveTo.IsEnabled = hasSelection;
         BtnAcceptDefault.IsEnabled = hasSelection;
@@ -188,6 +183,7 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
         // progress event, and nothing else ever made it visible, so a long multi-file receive had
         // per-file rows and a speed label but no overall progress.
         PbTransfer.Visibility = Visibility.Visible;
+        TxtSummary.Text = $"0 / {selectedItems.Count}";
         BtnToggleSelectAll.Visibility = Visibility.Collapsed;
         GridStep1Footer.Visibility = Visibility.Collapsed;
         PanelStep2Footer.Visibility = Visibility.Visible;
@@ -234,10 +230,10 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
         if (args.IsFailed) _inactivityTimer?.Stop();
         var realFinishedCount = isAllDone ? args.TotalFiles : LstFiles.Items.OfType<LocalSendReceiveFileItem>().Count(i => i.IsFinished);
         _maxCompletedCount = Math.Max(_maxCompletedCount, realFinishedCount);
-        TxtSummary.Text = $"({_maxCompletedCount}/{args.TotalFiles})";
+        TxtSummary.Text = $"{_maxCompletedCount} / {args.TotalFiles}";
         var activeTitle = args.Stage == LocalSendTransferStage.VerifyingChecksum
             ? TranslationManager.Instance["Settings_LocalSend_VerifyingChecksum"]
-            : $"{TranslationManager.Instance["Settings_LocalSend_Receiving"]} ({_maxCompletedCount}/{args.TotalFiles})";
+            : TranslationManager.Instance["Settings_LocalSend_Receiving"];
         TxtWindowTitle.Text = hasError ? TranslationManager.Instance["Local_StateFailed"] : activeTitle;
         var elapsedSec = _stopwatch.Elapsed.TotalSeconds;
         var curBytes = args.SessionBytesTransferred > 0 ? args.SessionBytesTransferred : args.BytesTransferred;
@@ -251,6 +247,7 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
         if (isAllDone)
         {
             _inactivityTimer?.Stop();
+            TxtSpeed.Text = string.Empty;
             TxtWindowTitle.Text = TranslationManager.Instance[hasError ? "Local_StateFailed" : "Settings_LocalSend_Completed"];
             _lastSavedPath = args.SavedPath;
             _lastRootSavedPath = args.RootSavedPath;

@@ -6,6 +6,14 @@ namespace Lertaro.App.Tests.Services.ShellMenu.QuickNav.RightClickActions;
 [TestClass]
 public sealed class PluginContextMenuBuilderTests
 {
+    [TestMethod]
+    [DataRow(-1, 1, 0)]
+    [DataRow(-1, -1, 3)]
+    [DataRow(3, 1, 0)]
+    [DataRow(0, -1, 3)]
+    public void ArrowNavigationStartsAtAnEdgeAndWraps(int current, int direction, int expected) =>
+        Assert.AreEqual(expected, PluginContextMenuKeyHandler.GetNextIndex(current, 4, direction));
+
     [StaTestMethod]
     public void GetActiveMenuState_NoOpenSubmenu_ReturnsRootWithItsEnabledItems()
     {

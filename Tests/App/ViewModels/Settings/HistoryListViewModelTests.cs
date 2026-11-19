@@ -173,6 +173,36 @@ public sealed class HistoryListViewModelTests
     }
 
     [TestMethod]
+    public void ClearBelow_PreservesTheCurrentSearchFilter()
+    {
+        var vm = MakeCountedVm(("report draft", 1), ("report approved", 4), ("budget", 4));
+        vm.SearchText = "report";
+        vm.ClearBelowCommand.Execute(null);
+
+        CollectionAssert.AreEqual(new[] { "report approved" }, vm.FilteredItems.Select(x => x.Primary).ToArray());
+        CollectionAssert.AreEqual(new[] { "report approved", "budget" }, vm.GetEntriesToSave().ToArray());
+    }
+
+    [TestMethod]
+    public void StoreRefresh_PreservesStagedRemovalAndIncludesNewEntries()
+    {
+        var rows = new List<(string Key, int Count)> { ("report", 1) };
+        var vm = new HistoryListViewModel<(string Key, int Count)>(() => rows,
+            row => new HistoryEntryViewModel<(string, int)> { RawValue = row, Primary = row.Key, UsageCount = row.Count },
+            () => true, _ => { }, row => row.Key);
+        vm.ClearAllCommand.Execute(null);
+        rows[0] = ("REPORT", 5);
+        rows.Add(("new item", 1));
+
+        vm.RefreshFromStore();
+
+        CollectionAssert.AreEqual(new[] { "new item" }, vm.FilteredItems.Select(x => x.Primary).ToArray());
+        vm.SaveRemovals(keys => rows.RemoveAll(row => keys.Contains(row.Key)));
+        Assert.IsFalse(vm.HasPendingRemovals);
+        CollectionAssert.AreEqual(new[] { "new item" }, rows.Select(x => x.Key).ToArray());
+    }
+
+    [TestMethod]
     public void ClearBelowCommand_AllAtOrBelowThreshold_EmptiesList()
     {
         var vm = MakeCountedVm(("one", 1), ("two", 2));

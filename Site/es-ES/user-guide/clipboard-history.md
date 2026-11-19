@@ -4,9 +4,9 @@ El complemento de historial del portapapeles registra lo que copias en este equi
 
 ## Abrir el panel
 
-Pulsa `Win+V` (configurable en Ajustes → Atajos) o escribe la palabra clave `cb` en el cuadro de búsqueda y elige **Abrir el panel del portapapeles**. El panel se abre en la posición del ratón.
+Pulsa `Alt+V` (configurable en Ajustes → Atajos) o escribe la palabra clave `cb` en el cuadro de búsqueda y elige **Abrir el panel del portapapeles**. El panel se abre en la posición del ratón.
 
-Si `Win+V` no hace nada, el historial del portapapeles de Windows aún posee esa tecla: abre **Ajustes → Complementos → Historial del portapapeles → Configurar** y usa **Abrir la configuración del portapapeles de Windows** para desactivar la función del sistema.
+Windows mantiene su historial del portapapeles en `Win+V`. Cambia el atajo de Lertaro en **Ajustes → Atajos → Panel del portapapeles**.
 
 ## Qué se registra
 

@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:surface="clr-namespace:Lertaro.App.Views.Controls"
         xmlns:services="clr-namespace:Lertaro.App.Services"
         Title="Lertaro"
-        Width="440" MinHeight="180" SizeToContent="Height"
+        Width="460" MinHeight="180" SizeToContent="Height"
         WindowStartupLocation="CenterOwner" Background="{DynamicResource ContentBg}" AllowsTransparency="False"
         WindowStyle="None"
         BorderBrush="{Binding RelativeSource={RelativeSource Self}, Path=PanelBorderBrush}" BorderThickness="1"
@@ -26,16 +26,16 @@
 
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="38"/>
+                    <RowDefinition Height="42"/>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="52"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- Title Bar -->
-                <Border Grid.Row="0" Background="Transparent" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1"
+                <Border Grid.Row="0" Background="{DynamicResource HeaderBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1"
                         MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <Grid>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,12,0">
                             <Image x:Name="TitleBarLogo" Width="16" Height="16" Margin="0,0,8,0"/>
                             <TextBlock x:Name="TxtTitle" Text="Lertaro"
                                         FontSize="14" FontWeight="SemiBold"
@@ -46,7 +46,7 @@
                 </Border>
 
                 <!-- Content Area -->
-                <Grid Grid.Row="1" Margin="20,18,20,18">
+                <Grid Grid.Row="1" Margin="20,20">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
@@ -62,29 +62,28 @@
                     <ScrollViewer Grid.Column="1" MaxHeight="400" VerticalScrollBarVisibility="Auto"
                                   VerticalAlignment="Center" Margin="14,0,0,0">
                         <TextBlock x:Name="TxtMessage"
-                                   TextWrapping="Wrap" FontSize="14" LineHeight="20"
+                                   TextWrapping="Wrap" FontSize="14" LineHeight="22"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
                     </ScrollViewer>
                 </Grid>
 
                 <!-- Button Bar -->
-                <Border Grid.Row="2" Background="Transparent" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,1,0,0">
-                    <Grid Margin="12,0">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <Button x:Name="BtnYes" Style="{StaticResource PrimarySettingsButton}" 
-                                    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Yes]}" 
-                                    Width="80" Height="28" Margin="0,0,8,0" Click="BtnYes_Click"/>
+                <Border Grid.Row="2" Background="{DynamicResource StatusBarBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,1,0,0"
+                        Padding="12,8,16,8">
+                        <WrapPanel HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Button x:Name="BtnCancel" Style="{StaticResource SettingsButton}"
+                                    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Cancel]}"
+                                    Click="BtnCancel_Click"/>
                             <Button x:Name="BtnNo" Style="{StaticResource SettingsButton}" 
                                     Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_No]}" 
-                                    Width="80" Height="28" Margin="0,0,8,0" Click="BtnNo_Click"/>
+                                    Click="BtnNo_Click"/>
                             <Button x:Name="BtnOK" Style="{StaticResource PrimarySettingsButton}" 
                                     Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_OK]}" 
-                                    Width="80" Height="28" Margin="0,0,8,0" Click="BtnOK_Click"/>
-                            <Button x:Name="BtnCancel" Style="{StaticResource SettingsButton}" 
-                                    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Cancel]}" 
-                                    Width="80" Height="28" Click="BtnCancel_Click"/>
-                        </StackPanel>
-                    </Grid>
+                                    Click="BtnOK_Click"/>
+                            <Button x:Name="BtnYes" Style="{StaticResource PrimarySettingsButton}"
+                                    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Yes]}"
+                                    Click="BtnYes_Click"/>
+                        </WrapPanel>
                 </Border>
             </Grid>
     </Grid>

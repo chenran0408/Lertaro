@@ -1,11 +1,11 @@
 # Plugins (Gestión)
 
-Lertaro cuenta con una arquitectura modular de extensiones. Tanto los componentes internos como los plugins nativos en C# y el ecosistema de Flow Launcher se gestionan en **Configuración → Plugins**.
+En **Configuración → Complementos** puedes activar plugins y consultar sus componentes.
 
 ## 1. Diseño de página y versión del SDK
 
 - **Insignia del SDK**: En la esquina superior derecha se muestra la versión cargada de `Lertaro.PluginSdk`. Al hacer clic se abre la [**Guía de desarrollo**](../../dev-guide/).
-- **Diseño de doble panel independiente**: La columna izquierda muestra los plugins instalados y la derecha presenta los detalles y el formulario de configuración del plugin seleccionado, con desplazamiento independiente.
+- En **Ajustes de complementos** puedes buscar por categoría o nombre. Selecciona un plugin para configurarlo.
 
 ### Activación de complementos y reinicio
 
@@ -13,7 +13,7 @@ Desactivar todos los componentes con interruptor desactiva el complemento comple
 
 ## 2. Detalles del plugin y conmutadores de componentes
 
-Al seleccionar un plugin a la izquierda, el panel derecho muestra su icono, nombre, versión y descripción:
+Selecciona un plugin instalado para ver sus detalles.
 
 ### Pestaña Detalles (Details)
 

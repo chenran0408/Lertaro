@@ -54,6 +54,7 @@ public class QuickSearchWindowController
     }
 
     public void PositionWindow() => _positioner.PositionWindow();
+    internal void FitViewportAtCurrentPosition() => _positioner.FitViewportAtCurrentPosition();
     public void SaveWindowPosition() => _positioner.SaveWindowPosition();
 
     // Wired to the search box's status icon right-click -- clears the saved position and immediately

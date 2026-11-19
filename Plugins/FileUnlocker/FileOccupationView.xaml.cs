@@ -3,7 +3,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Media.Animation;
 using Lertaro.PluginSdk.Services;
 using Lertaro.PluginSdk.Windows;
 
@@ -11,16 +10,10 @@ namespace Lertaro.Plugins.FileUnlocker;
 
 public partial class FileOccupationView : UserControl
 {
-    private const double BaseMarqueeSpeed = 40.0;
-    private const double MaximumMarqueeSpeed = 240.0;
-    private const double SpeedGrowthPerOverflowPixel = 0.2;
-
     private readonly string _path;
     private bool _busy;
-    private bool _pathIsHovered;
     private bool _hasProcesses;
-    private Window? _containingWindow;
-    private EventHandler? _windowActivationHandler;
+    private Button? _refreshButton;
     private Button? _releaseButton;
     private string? _sortProperty;
     private ListSortDirection _sortDirection = ListSortDirection.Ascending;
@@ -34,6 +27,7 @@ public partial class FileOccupationView : UserControl
         InitializeComponent();
         _path = path;
         PathText.Text = path;
+        System.Windows.Automation.AutomationProperties.SetName(PathText, path);
         _processHeader = TranslationService.Get("FileUnlocker_ProcessName");
         _pidHeader = TranslationService.Get("FileUnlocker_ProcessId");
         _pathHeader = TranslationService.Get("FileUnlocker_ProcessPath");
@@ -46,99 +40,19 @@ public partial class FileOccupationView : UserControl
         var refresh = new Button { Style = window.FindResource("SettingsButton") as Style };
         refresh.Content = TranslationService.Get("FileUnlocker_Refresh");
         refresh.Click += RefreshButton_Click;
+        _refreshButton = refresh;
 
         var release = new Button { Style = window.FindResource("PrimarySettingsButton") as Style };
         release.Content = TranslationService.Get("FileUnlocker_RequestRelease");
-        release.IsDefault = true;
         release.Click += ReleaseButton_Click;
         _releaseButton = release;
+        UpdateActionButtons();
 
         window.Footer.Children.Add(refresh);
         window.Footer.Children.Add(release);
     }
 
-    private async void Window_Loaded(object sender, RoutedEventArgs e)
-    {
-        _containingWindow = Window.GetWindow(this);
-        if (_containingWindow != null)
-        {
-            _windowActivationHandler = (s, args) => UpdatePathMarquee();
-            _containingWindow.Activated += _windowActivationHandler;
-            _containingWindow.Deactivated += _windowActivationHandler;
-        }
-
-        await RefreshAsync();
-    }
-
-    private void Window_Unloaded(object sender, RoutedEventArgs e)
-    {
-        if (_containingWindow != null && _windowActivationHandler != null)
-        {
-            _containingWindow.Activated -= _windowActivationHandler;
-            _containingWindow.Deactivated -= _windowActivationHandler;
-        }
-
-        _containingWindow = null;
-        _windowActivationHandler = null;
-        StopPathMarquee();
-    }
-
-    private void PathViewport_MouseEnter(object sender, MouseEventArgs e)
-    {
-        _pathIsHovered = true;
-        UpdatePathMarquee();
-    }
-
-    private void PathViewport_MouseLeave(object sender, MouseEventArgs e)
-    {
-        _pathIsHovered = false;
-        StopPathMarquee();
-    }
-
-    private void PathViewport_SizeChanged(object sender, SizeChangedEventArgs e) => UpdatePathMarquee();
-
-    private void PathText_SizeChanged(object sender, SizeChangedEventArgs e) => UpdatePathMarquee();
-
-    private void UpdatePathMarquee()
-    {
-        var availableWidth = PathViewport.ActualWidth;
-        var elementWidth = PathText.ActualWidth;
-        if (!_pathIsHovered || (_containingWindow != null && !_containingWindow.IsActive)
-            || availableWidth <= 0 || elementWidth <= 0)
-        {
-            StopPathMarquee();
-            return;
-        }
-
-        var overflow = elementWidth - availableWidth;
-        if (overflow <= 0)
-        {
-            StopPathMarquee();
-            return;
-        }
-
-        var speed = CalculateMarqueeSpeed(overflow);
-        var durationSeconds = overflow / speed;
-        var animation = new DoubleAnimationUsingKeyFrames
-        {
-            AutoReverse = true,
-            RepeatBehavior = RepeatBehavior.Forever
-        };
-        animation.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.Zero)));
-        animation.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(0.8))));
-        animation.KeyFrames.Add(new LinearDoubleKeyFrame(-overflow, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(0.8 + durationSeconds))));
-        animation.KeyFrames.Add(new LinearDoubleKeyFrame(-overflow, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(0.8 + durationSeconds + 0.6))));
-        PathTransform.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, animation);
-    }
-
-    internal static double CalculateMarqueeSpeed(double overflow)
-        => Math.Clamp(BaseMarqueeSpeed + Math.Max(0, overflow) * SpeedGrowthPerOverflowPixel, BaseMarqueeSpeed, MaximumMarqueeSpeed);
-
-    private void StopPathMarquee()
-    {
-        PathTransform.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, null);
-        PathTransform.X = 0;
-    }
+    private async void Window_Loaded(object sender, RoutedEventArgs e) => await RefreshAsync();
 
     private async void RefreshButton_Click(object sender, RoutedEventArgs e) => await RefreshAsync();
 
@@ -169,7 +83,7 @@ public partial class FileOccupationView : UserControl
             ProcessList.ItemsSource = null;
             EmptyText.Visibility = Visibility.Collapsed;
             _hasProcesses = false;
-            UpdateReleaseButtonState();
+            UpdateActionButtons();
             return;
         }
 
@@ -179,19 +93,27 @@ public partial class FileOccupationView : UserControl
         _hasProcesses = result.Processes.Count > 0;
         EmptyText.Visibility = result.Processes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         StatusText.Text = result.Processes.Count == 0
-            ? TranslationService.Get("FileUnlocker_NoProcesses")
+            ? string.Empty
             : string.Format(TranslationService.Get("FileUnlocker_Detected"), result.Processes.Count);
-        UpdateReleaseButtonState();
+        UpdateActionButtons();
     }
 
     private void SetBusy(bool busy)
     {
         _busy = busy;
-        StatusText.Text = busy ? TranslationService.Get("FileUnlocker_Querying") : StatusText.Text;
-        UpdateReleaseButtonState();
+        if (busy)
+        {
+            EmptyText.Visibility = Visibility.Collapsed;
+            StatusText.Text = TranslationService.Get("FileUnlocker_Querying");
+        }
+        UpdateActionButtons();
     }
 
-    private void UpdateReleaseButtonState() => _releaseButton?.IsEnabled = !_busy && _hasProcesses;
+    private void UpdateActionButtons()
+    {
+        _refreshButton?.IsEnabled = !_busy;
+        _releaseButton?.IsEnabled = !_busy && _hasProcesses;
+    }
 
     private void ProcessList_ColumnHeaderClick(object sender, RoutedEventArgs e)
     {

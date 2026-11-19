@@ -97,6 +97,17 @@ public sealed class ProcessBlacklistEditorViewModelTests
     }
 
     [TestMethod]
+    public void PastedExecutablePathsMatchRunningProcessesAndDeduplicateByName()
+    {
+        var vm = new ProcessBlacklistEditorViewModel([null!, " ", @"D:\Apps\First\Editor.exe"]);
+        vm.NewProcessName = """ "C:\Program Files\Browser\browser.exe" """;
+        vm.AddProcessCommand.Execute(null);
+        vm.BulkText += "\neditor";
+
+        CollectionAssert.AreEqual(new[] { "Editor.exe", "browser.exe" }, vm.ToSettingsList());
+    }
+
+    [TestMethod]
     public void AddedProgramsCannotBeSelectedAgainAndBecomeAvailableAfterRemoval()
     {
         var vm = Create();

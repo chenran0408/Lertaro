@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows.Input;
 
 using Lertaro.App.Helpers;
@@ -17,7 +18,7 @@ public class ProcessBlacklistEditorViewModel : ViewModelBase
     public ProcessBlacklistEditorViewModel(IEnumerable<string> initial)
     {
         foreach (var value in initial.Where(x => !string.IsNullOrWhiteSpace(x)))
-            Items.Add(new BlacklistProcessItem(value));
+            AddUnique(value);
         RefreshBulkText();
 
         AddProcessCommand = new RelayCommand(AddProcess, () => !string.IsNullOrWhiteSpace(NewProcessName));
@@ -160,7 +161,10 @@ public class ProcessBlacklistEditorViewModel : ViewModelBase
         set
         {
             if (SetProperty(ref _newProcessName, value))
+            {
+                ManualError = string.Empty;
                 CommandManager.InvalidateRequerySuggested();
+            }
         }
     }
 
@@ -184,7 +188,7 @@ public class ProcessBlacklistEditorViewModel : ViewModelBase
     private void AddProcess()
     {
         ApplyBulkText();
-        var normalized = NewProcessName.Trim().Trim('"');
+        var normalized = NormalizeProcessName(NewProcessName);
         if (normalized.Length == 0) return;
         var original = Items.FirstOrDefault(x => string.Equals(x.Value, _editingOriginal, StringComparison.OrdinalIgnoreCase));
         if (Core.ProcessNameFilter.Matches(normalized, Items.Where(x => x != original).Select(x => x.Value)))
@@ -208,11 +212,14 @@ public class ProcessBlacklistEditorViewModel : ViewModelBase
 
     private void AddUnique(string value)
     {
-        var normalized = value.Trim().Trim('"');
+        var normalized = NormalizeProcessName(value);
         if (normalized.Length == 0 || Core.ProcessNameFilter.Matches(normalized, Items.Select(x => x.Value)))
             return;
         Items.Add(new BlacklistProcessItem(normalized));
     }
+
+    private static string NormalizeProcessName(string value) =>
+        Path.GetFileName(value.Trim().Trim('"').Trim()).Trim();
 
     private void RemoveProcess(BlacklistProcessItem? item)
     {
@@ -232,6 +239,7 @@ public class ProcessBlacklistEditorViewModel : ViewModelBase
         _editingOriginal = item.Value;
         NewProcessName = item.Value;
         ManualError = string.Empty;
+        IsProcessPickerOpen = false;
         IsManualEditorOpen = true;
         OnPropertyChanged(nameof(IsEditing));
     }

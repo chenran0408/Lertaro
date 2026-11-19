@@ -101,22 +101,32 @@
         <Border Style="{StaticResource SettingsRow}">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="40"/><ColumnDefinition Width="70"/><ColumnDefinition Width="1.1*"/><ColumnDefinition Width="1.1*"/><ColumnDefinition Width="1*"/><ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="32"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" IsEnabled="{Binding CanEditEnabled}" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="14" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="2" Text="{Binding Kind}" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="3" Text="{Binding State}" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="4" Text="{Binding ItemCount}" VerticalAlignment="Center"/>
-                <Button Grid.Column="5"
-                        Style="{StaticResource SettingsButton}"
-                        MinWidth="72"
-                        Height="28"
-                        Padding="10,0"
-                        Content="{Binding RowActionText}"
-                        Command="{Binding RowActionCommand}"
-                        IsEnabled="{Binding CanRunRowAction}"
-                        Visibility="{Binding IsRowActionVisible, Converter={StaticResource BoolToVis}}"/>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" IsEnabled="{Binding CanEditEnabled}"
+                          AutomationProperties.Name="{Binding Name}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                <WrapPanel Grid.Row="2" Grid.Column="1" Margin="0,5,0,0">
+                    <TextBlock Text="{Binding State}" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               Margin="0,0,12,0"/>
+                    <TextBlock Foreground="{DynamicResource TextSecondary}">
+                        <Run Text="{Binding Kind, Mode=OneWay}"/><Run Text=" · "/>
+                        <Run Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Local_HeaderItems], Mode=OneWay}"/>
+                        <Run Text=" "/><Run Text="{Binding ItemCount, Mode=OneWay}"/>
+                    </TextBlock>
+                </WrapPanel>
+                <WrapPanel Grid.Row="3" Grid.Column="1" Margin="0,5,0,0">
+                    <Button Margin="0,0,0,4" VerticalAlignment="Bottom" MinWidth="0"
+                            Style="{StaticResource SettingsButton}" Content="{Binding RowActionText}" Command="{Binding RowActionCommand}"
+                            IsEnabled="{Binding CanRunRowAction}" Visibility="{Binding IsRowActionVisible, Converter={StaticResource BoolToVis}}"/>
+                </WrapPanel>
             </Grid>
         </Border>
     </DataTemplate>
@@ -125,38 +135,41 @@
         <Border Style="{StaticResource SettingsRow}">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="40"/>
-                    <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="1.2*"/>
-                    <ColumnDefinition Width="1.1*"/>
-                    <ColumnDefinition Width="1.4*" MinWidth="126"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="32"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-                          IsEnabled="{Binding CanEditEnabled}"
-                          VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" Text="{Binding Drive, StringFormat={}{0}:}" FontSize="14" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="2" Text="{Binding State}" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="3" Text="{Binding ItemCount}" VerticalAlignment="Center"/>
-                <ComboBox Grid.Column="4"
-                          Width="116"
-                          HorizontalAlignment="Left"
-                          VerticalAlignment="Center"
-                          Style="{StaticResource SettingsComboBox}"
-                          ItemsSource="{Binding DataContext.NetworkDrive.RefreshModeOptions, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                          DisplayMemberPath="Label"
-                          SelectedValuePath="Value"
-                          SelectedValue="{Binding RefreshMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                          IsEnabled="{Binding CanEditRefreshMode}"/>
-                <Button Grid.Column="5"
-                        Style="{StaticResource SettingsButton}"
-                        MinWidth="72"
-                        Height="28"
-                        Padding="10,0"
-                        Content="{Binding RowActionText}"
-                        Command="{Binding RowActionCommand}"
-                        IsEnabled="{Binding CanRunRowAction}"
-                        Visibility="{Binding IsRowActionVisible, Converter={StaticResource BoolToVis}}"/>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" IsEnabled="{Binding CanEditEnabled}"
+                          AutomationProperties.Name="{Binding Drive, StringFormat={}{0}:}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="{Binding Drive, StringFormat={}{0}:}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                <WrapPanel Grid.Row="2" Grid.Column="1" Margin="0,5,0,0">
+                    <TextBlock Text="{Binding State}" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               Margin="0,0,12,0"/>
+                    <TextBlock Foreground="{DynamicResource TextSecondary}">
+                        <Run Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Local_HeaderItems], Mode=OneWay}"/>
+                        <Run Text=" "/><Run Text="{Binding ItemCount, Mode=OneWay}"/>
+                    </TextBlock>
+                </WrapPanel>
+                <WrapPanel Grid.Row="3" Grid.Column="1" Margin="0,5,0,0">
+                    <StackPanel Margin="0,0,8,4">
+                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_HeaderMode]}"
+                                   Foreground="{DynamicResource TextSecondary}" FontSize="12" Margin="0,0,0,3"/>
+                        <ComboBox Width="160" Style="{StaticResource SettingsComboBox}"
+                                  AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_HeaderMode]}"
+                                  ItemsSource="{Binding DataContext.NetworkDrive.RefreshModeOptions, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                  DisplayMemberPath="Label" SelectedValuePath="Value"
+                                  SelectedValue="{Binding RefreshMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="{Binding CanEditRefreshMode}"/>
+                    </StackPanel>
+                    <Button Margin="0,0,0,4" VerticalAlignment="Bottom" MinWidth="0"
+                            Style="{StaticResource SettingsButton}" Content="{Binding RowActionText}" Command="{Binding RowActionCommand}"
+                            IsEnabled="{Binding CanRunRowAction}" Visibility="{Binding IsRowActionVisible, Converter={StaticResource BoolToVis}}"/>
+                </WrapPanel>
             </Grid>
         </Border>
     </DataTemplate>
@@ -165,38 +178,43 @@
         <Border Style="{StaticResource SettingsRow}">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="40"/>
-                    <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="1.2*"/>
-                    <ColumnDefinition Width="1.1*"/>
-                    <ColumnDefinition Width="1.4*" MinWidth="126"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="32"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-                          IsEnabled="{Binding CanEditEnabled}"
-                          VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" Text="{Binding DistroName}" FontSize="14" VerticalAlignment="Center" ToolTip="{Binding UncPath}"/>
-                <TextBlock Grid.Column="2" Text="{Binding State}" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="3" Text="{Binding ItemCount}" VerticalAlignment="Center"/>
-                <ComboBox Grid.Column="4"
-                          Width="116"
-                          HorizontalAlignment="Left"
-                          VerticalAlignment="Center"
-                          Style="{StaticResource SettingsComboBox}"
-                          ItemsSource="{Binding DataContext.NetworkDrive.RefreshModeOptions, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                          DisplayMemberPath="Label"
-                          SelectedValuePath="Value"
-                          SelectedValue="{Binding RefreshMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                          IsEnabled="{Binding CanEditRefreshMode}"/>
-                <Button Grid.Column="5"
-                        Style="{StaticResource SettingsButton}"
-                        MinWidth="72"
-                        Height="28"
-                        Padding="10,0"
-                        Content="{Binding RowActionText}"
-                        Command="{Binding RowActionCommand}"
-                        IsEnabled="{Binding CanRunRowAction}"
-                        Visibility="{Binding IsRowActionVisible, Converter={StaticResource BoolToVis}}"/>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" IsEnabled="{Binding CanEditEnabled}"
+                          AutomationProperties.Name="{Binding DistroName}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="{Binding DistroName}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding UncPath}" ToolTip="{Binding UncPath}"
+                           Foreground="{DynamicResource TextSecondary}" FontSize="12" TextWrapping="Wrap" Margin="0,3,0,0"/>
+                <WrapPanel Grid.Row="2" Grid.Column="1" Margin="0,5,0,0">
+                    <TextBlock Text="{Binding State}" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               Margin="0,0,12,0"/>
+                    <TextBlock Foreground="{DynamicResource TextSecondary}">
+                        <Run Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Local_HeaderItems], Mode=OneWay}"/>
+                        <Run Text=" "/><Run Text="{Binding ItemCount, Mode=OneWay}"/>
+                    </TextBlock>
+                </WrapPanel>
+                <WrapPanel Grid.Row="3" Grid.Column="1" Margin="0,5,0,0">
+                    <StackPanel Margin="0,0,8,4">
+                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_HeaderMode]}"
+                                   Foreground="{DynamicResource TextSecondary}" FontSize="12" Margin="0,0,0,3"/>
+                        <ComboBox Width="160" Style="{StaticResource SettingsComboBox}"
+                                  AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_HeaderMode]}"
+                                  ItemsSource="{Binding DataContext.NetworkDrive.RefreshModeOptions, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                  DisplayMemberPath="Label" SelectedValuePath="Value"
+                                  SelectedValue="{Binding RefreshMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="{Binding CanEditRefreshMode}"/>
+                    </StackPanel>
+                    <Button Margin="0,0,0,4" VerticalAlignment="Bottom" MinWidth="0"
+                            Style="{StaticResource SettingsButton}" Content="{Binding RowActionText}" Command="{Binding RowActionCommand}"
+                            IsEnabled="{Binding CanRunRowAction}" Visibility="{Binding IsRowActionVisible, Converter={StaticResource BoolToVis}}"/>
+                </WrapPanel>
             </Grid>
         </Border>
     </DataTemplate>
@@ -205,40 +223,44 @@
         <Border Style="{StaticResource SettingsRow}">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="40"/>
-                    <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="1.2*"/>
-                    <ColumnDefinition Width="1.1*"/>
-                    <ColumnDefinition Width="1.4*" MinWidth="126"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="32"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-                          IsEnabled="{Binding CanEditEnabled}"
-                          VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="14" VerticalAlignment="Center" ToolTip="{Binding Path}"/>
-                <TextBlock Grid.Column="2" Text="{Binding State}" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="3" Text="{Binding ItemCount}" VerticalAlignment="Center"/>
-                <ComboBox Grid.Column="4"
-                          Width="116"
-                          HorizontalAlignment="Left"
-                          VerticalAlignment="Center"
-                          Style="{StaticResource SettingsComboBox}"
-                          ItemsSource="{Binding DataContext.NetworkDrive.RefreshModeOptions, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                          DisplayMemberPath="Label"
-                          SelectedValuePath="Value"
-                          SelectedValue="{Binding RefreshMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                          IsEnabled="{Binding CanEditRefreshMode}"/>
-                <Button Grid.Column="5"
-                        Style="{StaticResource SettingsButton}"
-                        MinWidth="72"
-                        Height="28"
-                        Padding="10,0"
-                        Content="{Binding RowActionText}"
-                        Command="{Binding RowActionCommand}"
-                        IsEnabled="{Binding CanRunRowAction}"
-                        Visibility="{Binding IsRowActionVisible, Converter={StaticResource BoolToVis}}"/>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" IsEnabled="{Binding CanEditEnabled}"
+                          AutomationProperties.Name="{Binding DisplayName}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Path}" ToolTip="{Binding Path}"
+                           Foreground="{DynamicResource TextSecondary}" FontSize="12" TextWrapping="Wrap" Margin="0,3,0,0"/>
+                <WrapPanel Grid.Row="2" Grid.Column="1" Margin="0,5,0,0">
+                    <TextBlock Text="{Binding State}" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}"
+                               Margin="0,0,12,0"/>
+                    <TextBlock Foreground="{DynamicResource TextSecondary}">
+                        <Run Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Local_HeaderItems], Mode=OneWay}"/>
+                        <Run Text=" "/><Run Text="{Binding ItemCount, Mode=OneWay}"/>
+                    </TextBlock>
+                </WrapPanel>
+                <WrapPanel Grid.Row="3" Grid.Column="1" Margin="0,5,0,0">
+                    <StackPanel Margin="0,0,8,4">
+                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_HeaderMode]}"
+                                   Foreground="{DynamicResource TextSecondary}" FontSize="12" Margin="0,0,0,3"/>
+                        <ComboBox Width="160" Style="{StaticResource SettingsComboBox}"
+                                  AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_HeaderMode]}"
+                                  ItemsSource="{Binding DataContext.NetworkDrive.RefreshModeOptions, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                  DisplayMemberPath="Label" SelectedValuePath="Value"
+                                  SelectedValue="{Binding RefreshMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="{Binding CanEditRefreshMode}"/>
+                    </StackPanel>
+                    <Button Margin="0,0,0,4" VerticalAlignment="Bottom" MinWidth="0"
+                            Style="{StaticResource SettingsButton}" Content="{Binding RowActionText}" Command="{Binding RowActionCommand}"
+                            IsEnabled="{Binding CanRunRowAction}" Visibility="{Binding IsRowActionVisible, Converter={StaticResource BoolToVis}}"/>
+                </WrapPanel>
             </Grid>
         </Border>
     </DataTemplate>
-
 </ResourceDictionary>

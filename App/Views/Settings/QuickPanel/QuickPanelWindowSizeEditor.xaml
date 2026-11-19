@@ -7,21 +7,26 @@
   <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles/Windows/SettingsWindow.xaml"/>
  </ResourceDictionary.MergedDictionaries></ResourceDictionary></UserControl.Resources>
  <StackPanel>
-  <CheckBox IsChecked="{Binding UseCustomWindowSize, Mode=TwoWay}"
+  <CheckBox x:Name="CustomSizeCheckBox" IsChecked="{Binding UseCustomWindowSize, Mode=TwoWay}"
    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_CustomSize]}"/>
-  <Grid Margin="0,8,0,0" IsEnabled="{Binding UseCustomWindowSize}">
-   <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-   <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
-   <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_WindowWidth]}"/>
-   <Slider Grid.Column="1" Margin="0,4,12,4" Minimum="280" Maximum="4096" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding Width, Mode=TwoWay}"/>
-   <TextBox Grid.Column="2" Margin="0,2,8,2" Text="{Binding Width, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}"/>
-   <TextBlock Grid.Row="1" VerticalAlignment="Center" Margin="0,0,12,0" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_WindowHeight]}"/>
-   <Slider Grid.Row="1" Grid.Column="1" Margin="0,4,12,4" Minimum="200" Maximum="4096" TickFrequency="10" IsSnapToTickEnabled="True" Value="{Binding Height, Mode=TwoWay}"/>
-   <TextBox Grid.Row="1" Grid.Column="2" Margin="0,2,8,2" Text="{Binding Height, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}"/>
-   <Button Grid.Column="3" Grid.RowSpan="2" VerticalAlignment="Center" Padding="12,6" Click="OnPreview"
-    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_SizePreview]}"/>
-   <TextBlock Grid.Row="2" Grid.ColumnSpan="4" Margin="0,6,0,0" TextWrapping="Wrap" Style="{StaticResource SettingsHintText}"
-    Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_SizeHint]}"/>
-  </Grid>
+  <StackPanel Margin="0,10,0,0" Visibility="{Binding UseCustomWindowSize, Converter={StaticResource BoolToVis}}">
+   <Grid>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+    <Grid.RowDefinitions><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+    <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_WindowWidth]}"/>
+    <Slider Grid.Column="1" Margin="0,4,12,4" Minimum="280" Maximum="4096" TickFrequency="10" IsSnapToTickEnabled="True"
+            AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_WindowWidth]}" Value="{Binding Width, Mode=TwoWay}"/>
+    <TextBox x:Name="WidthBox" Grid.Column="2" Margin="0,2" Style="{StaticResource SettingsTextBox}"
+             AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_WindowWidth]}" Text="{Binding Width, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}"/>
+    <TextBlock Grid.Row="1" VerticalAlignment="Center" Margin="0,0,12,0" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_WindowHeight]}"/>
+    <Slider Grid.Row="1" Grid.Column="1" Margin="0,4,12,4" Minimum="200" Maximum="4096" TickFrequency="10" IsSnapToTickEnabled="True"
+            AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_WindowHeight]}" Value="{Binding Height, Mode=TwoWay}"/>
+    <TextBox Grid.Row="1" Grid.Column="2" Margin="0,2" Style="{StaticResource SettingsTextBox}"
+             AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_WindowHeight]}" Text="{Binding Height, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}"/>
+   </Grid>
+   <TextBlock Margin="0,8,0,0" Style="{StaticResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_SizeHint]}"/>
+   <Button HorizontalAlignment="Left" Margin="0,10,0,0" Style="{StaticResource SettingsButton}" Click="OnPreview"
+           Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_SizePreview]}"/>
+  </StackPanel>
  </StackPanel>
 </UserControl>

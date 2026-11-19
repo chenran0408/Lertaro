@@ -23,9 +23,7 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Border Height="26" CornerRadius="{StaticResource CornerRadiusControl}"
-            Background="{DynamicResource ControlBackground}"
-            BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1">
+    <Border Height="32" Style="{StaticResource SearchFieldChrome}">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -37,7 +35,8 @@
                        Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center" Margin="8,0,4,0"/>
 
             <Grid Grid.Column="1">
-                <TextBox x:Name="TxtFilter" Background="Transparent" BorderThickness="0" FontSize="14"
+                <TextBox x:Name="TxtFilter" AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_SearchPlaceholder]}"
+                         Background="Transparent" BorderThickness="0" FontSize="14"
                          Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                          CaretBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                          Padding="0,0,4,0" VerticalContentAlignment="Center"
@@ -60,8 +59,10 @@
 
             <!-- Only once there is something to clear. A permanent x on a box this small is one more
                  thing to aim at, in a panel that is already mostly aiming targets. -->
-            <Button Grid.Column="2" Content="&#xE711;" Command="{Binding ClearSearchCommand}"
-                    Width="16" Height="16" Margin="2,0,5,0" FontSize="8">
+            <Button x:Name="ClearPanelFilter" Grid.Column="2" Content="&#xE711;" Command="{Binding ClearSearchCommand}"
+                    ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Search_ClearFiltersTooltip]}"
+                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
+                    Click="ClearFilter_Click" Width="28" Height="28" Margin="0,0,2,0" FontSize="10">
                 <Button.Style>
                     <Style TargetType="Button" BasedOn="{StaticResource QuickPanelTabCloseStyle}">
                         <Setter Property="Visibility" Value="Visible"/>

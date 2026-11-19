@@ -59,6 +59,9 @@ public static class InlinePathDisplayBehavior
         if (GetState(textBlock) is not { } state) return;
         state.Dispose();
         SetState(textBlock, null);
+        // A recycled row must return to its style's filename binding and trimming.
+        textBlock.ClearValue(TextHighlighter.TextProperty);
+        textBlock.ClearValue(TextBlock.TextTrimmingProperty);
     }
 
     private static void QueueRefresh(TextBlock textBlock)

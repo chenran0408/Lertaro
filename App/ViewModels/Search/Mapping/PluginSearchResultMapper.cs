@@ -196,6 +196,7 @@ public static class PluginSearchResultMapper
                     {
                         Name = SanitizeSingleLine(item.Title),
                         FullPath = fullPath,
+                        Metadata = (item as PluginSdk.Abstractions.ISearchResult)?.Metadata ?? default,
                         ParentDir = SanitizeSingleLine(parentDir),
                         IsDir = isRealDir,
                         Drive = string.Empty,

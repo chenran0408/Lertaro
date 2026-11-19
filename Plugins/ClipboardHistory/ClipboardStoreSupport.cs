@@ -9,15 +9,19 @@ namespace Lertaro.Plugins.ClipboardHistory;
 /// </summary>
 internal static class ClipboardStoreSupport
 {
+    internal static bool IsImageFileName(string name) =>
+        name.Length > 4 && name.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
+        && name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
+
     private const int PreviewLength = 200;
     private const int MaxListedPathsInPreview = 3;
 
     /// <summary>The text that goes into the content column: text as captured; for a file list the
-    /// normalized (case-insensitive) joined paths so FTS can find copies by file name; empty for an
+    /// original paths so root directories, casing, and the copy order survive; empty for an
     /// image, whose pixels live on disk and whose identity is the PNG hash.</summary>
     public static string BuildContent(ClipboardEntryDraft draft) => draft.Kind switch
     {
-        ClipboardEntryKind.FilePaths => ClipboardEntryDraft.JoinPaths(ClipboardEntryDraft.ToPathList(draft.Content)),
+        ClipboardEntryKind.FilePaths => draft.Content,
         ClipboardEntryKind.Image => string.Empty,
         _ => draft.Content,
     };

@@ -6,6 +6,18 @@ namespace Lertaro.Core.Tests.Settings;
 public sealed class UserSettingsNormalizeHotkeysTests
 {
     [TestMethod]
+    [DataRow("Win+V", "Alt+V")]
+    [DataRow("win+v", "Alt+V")]
+    [DataRow("Ctrl+Shift+V", "Ctrl+Shift+V")]
+    [DataRow("", "")]
+    public void TryParse_MigratesTheOldClipboardDefaultAndKeepsOtherChoices(string persisted, string expected)
+    {
+        var settings = UserSettings.TryParse($$$"""{"Hotkeys":{"ClipboardPanelHotkey":"{{{persisted}}}"}}""");
+        Assert.IsNotNull(settings);
+        Assert.AreEqual(expected, settings.Hotkeys.ClipboardPanelHotkey);
+    }
+
+    [TestMethod]
     public void NormalizeHotkeys_EmptyToggleWindowHotkey_FallsBackToDefault()
     {
         var settings = new UserSettings();

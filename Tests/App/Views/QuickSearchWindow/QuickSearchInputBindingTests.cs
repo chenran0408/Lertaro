@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using Lertaro.App.ViewModels.Search.Mapping;
 using QuickSearchPopup = global::Lertaro.App.QuickSearchWindow;
@@ -59,6 +61,54 @@ public sealed class QuickSearchInputBindingTests
             Assert.AreSame(window.ViewModel, outerBinding?.ResolvedSource);
             Assert.AreEqual(nameof(window.ViewModel.SearchQuery), outerBinding?.ResolvedSourcePropertyName);
             Assert.IsTrue(window.Height > 0);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [STATestMethod]
+    public void QuickSearchWindow_RightClickFileKeepsSearchBoxAnchoredNearScreenBottom()
+    {
+        EnsureApplicationResources();
+        var window = new QuickSearchPopup();
+        try
+        {
+            window.Show();
+            window.ViewModel.ResultsPanelVisibility = Visibility.Visible;
+            var file = new AppSearchResult { Name = "example.txt", FullPath = @"C:\example.txt" };
+            window.ViewModel.Results.Add(file);
+            window.ApplyResultsLayoutImmediate();
+            DrainDispatcher(window.Dispatcher);
+
+            var origin = window.PointToScreen(new Point());
+            var area = System.Windows.Forms.Screen.FromPoint(new System.Drawing.Point((int)origin.X, (int)origin.Y)).WorkingArea;
+            var dpiY = VisualTreeHelper.GetDpi(window).DpiScaleY;
+            window.Top += (area.Bottom - origin.Y) / dpiY - 340;
+            window.UpdateLayout();
+            var searchBoxOrigin = window.SearchTextBox.PointToScreen(new Point());
+            var row = window.LstResults.ItemContainerGenerator.ContainerFromItem(file);
+            Assert.IsNotNull(row);
+
+            var click = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right)
+            {
+                RoutedEvent = UIElement.PreviewMouseRightButtonUpEvent,
+                Source = row,
+            };
+            window.LstResults.RaiseEvent(click);
+            DrainDispatcher(window.Dispatcher);
+
+            Assert.IsTrue(click.Handled);
+            Assert.IsTrue(window.IsInActionsMode);
+            Assert.AreEqual(searchBoxOrigin, window.SearchTextBox.PointToScreen(new Point()));
+            Assert.IsLessThanOrEqualTo(area.Bottom, window.PointToScreen(new Point(0, window.ActualHeight)).Y);
+
+            window.MenuPresenter!.ExitActionsMode();
+            DrainDispatcher(window.Dispatcher);
+
+            Assert.IsFalse(window.IsInActionsMode);
+            Assert.AreEqual(searchBoxOrigin, window.SearchTextBox.PointToScreen(new Point()));
         }
         finally
         {

@@ -13,8 +13,6 @@
     <Expander Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" IsExpanded="{Binding IsProcessPickerOpen, Mode=TwoWay}"
               Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_SelectRunning]}">
         <StackPanel Margin="0,10,0,0">
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_RunningHint]}"
-                       Style="{DynamicResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
             <DockPanel Margin="0,0,0,8">
                 <Button DockPanel.Dock="Right" Command="{Binding RefreshProcessesCommand}"
                         Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_RefreshProcesses]}"
@@ -48,6 +46,7 @@
             </TextBlock>
             <TextBlock Text="{Binding ProcessLoadError}" TextWrapping="Wrap" Foreground="{DynamicResource AccentColor}"/>
             <ListBox ItemsSource="{Binding RunningProcesses}" MaxHeight="220" MinHeight="80"
+                     AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_SelectRunning]}"
                      Background="{DynamicResource ControlBackground}" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                      BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -84,8 +83,18 @@
                                     </TextBlock>
                                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
                                 </DockPanel>
-                                <TextBlock Text="{Binding WindowTitle}" FontSize="14" TextTrimming="CharacterEllipsis"
-                                           ToolTip="{Binding WindowTitle}" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
+                                <TextBlock Text="{Binding WindowTitle}" FontSize="13" TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding WindowTitle}" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding WindowTitle}" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </StackPanel>
                         </CheckBox>
                     </DataTemplate>

@@ -112,35 +112,26 @@ public partial class PluginConfigTemplates : ResourceDictionary
 
     private void BrowsePath_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not System.Windows.Controls.Button btn) return;
-        var panel = btn.Parent as System.Windows.Controls.StackPanel;
-        var textBox = panel?.Children.OfType<System.Windows.Controls.TextBox>().FirstOrDefault();
-        if (textBox == null)
-            return;
+        if (sender is not System.Windows.Controls.Button { DataContext: PluginConfigFieldViewModel field } btn) return;
+        var owner = Window.GetWindow(btn);
 
         if (btn.Tag as string == "Folder")
         {
             var dlg = new OpenFolderDialog();
-            if (dlg.ShowDialog() == true)
-            {
-                textBox.Text = dlg.FolderName;
-                textBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)?.UpdateSource();
-            }
+            if ((owner != null ? dlg.ShowDialog(owner) : dlg.ShowDialog()) == true)
+                field.Value = dlg.FolderName;
         }
         else
         {
             var dlg = new Microsoft.Win32.OpenFileDialog();
-            if (btn.DataContext is PluginConfigFieldViewModel field && !string.IsNullOrWhiteSpace(field.SchemaField.FilePathPattern)
+            if (!string.IsNullOrWhiteSpace(field.SchemaField.FilePathPattern)
                 && !field.SchemaField.FilePathPattern.Contains('|'))
             {
                 dlg.Filter = field.Label.Replace('|', '/') + "|" + field.SchemaField.FilePathPattern;
                 dlg.DereferenceLinks = false;
             }
-            if (dlg.ShowDialog() == true)
-            {
-                textBox.Text = dlg.FileName;
-                textBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)?.UpdateSource();
-            }
+            if ((owner != null ? dlg.ShowDialog(owner) : dlg.ShowDialog()) == true)
+                field.Value = dlg.FileName;
         }
     }
 }

@@ -14,6 +14,30 @@ public sealed class PluginConfigArrayFieldSupportTests
         null);
 
     [TestMethod]
+    public void PresetsKeepAnEmptyListAndRespectRenamedSourcesAndOccupiedKeywords()
+    {
+        var settings = new UserSettings();
+        settings.SetPluginSetting("plugin", "sites", new List<object>());
+        var preset = new Dictionary<string, object> { ["Name"] = "Bilibili", ["Keyword"] = "bili", ["Url"] = "https://b.example/%s" };
+        var schema = new PluginConfigField
+        {
+            Key = "sites", FieldType = ConfigFieldType.Array, PresetIdentityKey = "Url", DefaultValue = new List<object> { preset },
+            SubFields = [new() { Key = "Name", FieldType = ConfigFieldType.Text }, new() { Key = "Keyword", FieldType = ConfigFieldType.Text, IsTriggerWord = true },
+                         new() { Key = "Url", FieldType = ConfigFieldType.Text }]
+        };
+        var field = new PluginConfigFieldViewModel("plugin", schema, settings);
+        Assert.IsEmpty(field.ArrayItems);
+        field.ArraySupport.SelectOrAddPreset(new(preset) { ["Url"] = "https://custom.example/%s" });
+        field.ArraySupport.SelectOrAddPreset(preset);
+        Assert.AreEqual("bili2", field.SelectedArrayItem!.Children[1].Value);
+        field.SelectedArrayItem.Children[0].Value = "My B site";
+        field.ArraySupport.SelectOrAddPreset(preset);
+        Assert.HasCount(2, field.ArrayItems);
+        Assert.AreEqual("My B site", field.SelectedArrayItem.Children[0].Value);
+        Assert.AreEqual("bili", preset["Keyword"]);
+    }
+
+    [TestMethod]
     public void LoadArrayItems_PersistedValue_PopulatesArrayItemsFromSettings()
     {
         var settings = new UserSettings();

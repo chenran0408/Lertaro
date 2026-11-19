@@ -8,7 +8,7 @@
 
     <!-- ═══════════ Settings Button Styles ═══════════ -->
     <Style x:Key="SettingsButton" TargetType="Button">
-        <Setter Property="Height" Value="32"/>
+        <Setter Property="Height" Value="34"/>
         <Setter Property="MinWidth" Value="92"/>
         <Setter Property="Padding" Value="14,0"/>
         <Setter Property="Margin" Value="8,0,0,0"/>
@@ -102,7 +102,17 @@
         </Setter>
     </Style>
 
+    <Style x:Key="QuietActionButton" TargetType="Button" BasedOn="{StaticResource SettingsButton}">
+        <Setter Property="Height" Value="30"/>
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="Padding" Value="10,0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
     <Style x:Key="PrimarySettingsButton" TargetType="Button" BasedOn="{StaticResource SettingsButton}">
+        <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Background" Value="{DynamicResource AccentBlue}"/>
         <Setter Property="Foreground" Value="{DynamicResource PrimaryButtonText}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>

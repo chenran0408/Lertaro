@@ -33,7 +33,6 @@ public class WebSearchInstantProvider : IInstantResultProvider
         public string SuggestUrl { get; set; } = string.Empty;
     }
 
-    private const int MaxSuggestions = 5;
 
     private const string PluginId = "Lertaro.Plugins.WebSearch";
 
@@ -131,7 +130,7 @@ public class WebSearchInstantProvider : IInstantResultProvider
         yield return new InstantResultItem
         {
             Title = TranslationService.Format("WebSearch_ResultTitle", searchEngineName, searchTerm),
-            Description = TranslationService.Get("WebSearch_ResultDesc"),
+            Description = Uri.TryCreate(searchUrl, UriKind.Absolute, out var address) ? address.Host : searchEngineName,
             IconData = iconData,
             IconColor = iconColor,
             ActionType = "Execute",
@@ -141,36 +140,20 @@ public class WebSearchInstantProvider : IInstantResultProvider
         if (string.IsNullOrWhiteSpace(matchedSource.SuggestUrl))
             yield break;
 
-        var suggestionKey = matchedSource.Keyword + ":" + searchTerm;
-        var suggestions = WebSearchSuggestionFetcher.GetCached(suggestionKey);
-
-        if (suggestions != null)
+        var request = new WebSearchSuggestionFetcher.Request(TriggerWord.Normalize(matchedSource.Keyword),
+            matchedSource.SuggestUrl, searchTerm, TranslationService.GetCurrentCulture());
+        foreach (var suggestion in WebSearchSuggestionFetcher.GetOrFetch(request))
         {
-            var shownCount = 0;
-            foreach (var suggestion in suggestions)
+            yield return new InstantResultItem
             {
-                if (shownCount >= MaxSuggestions)
-                    break;
-
-                if (string.Equals(suggestion, searchTerm, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                shownCount++;
-                yield return new InstantResultItem
-                {
-                    Title = suggestion,
-                    Description = TranslationService.Format("WebSearch_SuggestionDesc", searchEngineName),
-                    IconData = iconData,
-                    IconColor = iconColor,
-                    ActionType = "Execute",
-                    ActionArgument = BuildUrl(matchedSource.Url, suggestion),
-                    TabCompletion = prefix + suggestion
-                };
-            }
-        }
-        else
-        {
-            WebSearchSuggestionFetcher.EnsureFetchStarted(matchedSource, searchTerm, suggestionKey, prefix);
+                Title = suggestion,
+                Description = searchEngineName,
+                IconData = iconData,
+                IconColor = iconColor,
+                ActionType = "Execute",
+                ActionArgument = BuildUrl(matchedSource.Url, suggestion),
+                TabCompletion = prefix + suggestion
+            };
         }
     }
 
@@ -183,7 +166,8 @@ public class WebSearchInstantProvider : IInstantResultProvider
         }
         if (template.Contains("{0}"))
         {
-            return string.Format(template, encoded);
+            try { return string.Format(template, encoded); }
+            catch (FormatException) { return template.Replace("{0}", encoded, StringComparison.Ordinal); }
         }
         return template + encoded;
     }

@@ -95,6 +95,8 @@ internal static class UserSettingsPersistence
     {
         if (string.IsNullOrWhiteSpace(settings.Hotkeys.ToggleWindowHotkey))
             settings.Hotkeys.ToggleWindowHotkey = new HotkeyPageSettings().ToggleWindowHotkey;
+        if (string.Equals(settings.Hotkeys.ClipboardPanelHotkey, "Win+V", StringComparison.OrdinalIgnoreCase))
+            settings.Hotkeys.ClipboardPanelHotkey = HotkeyPageSettings.DefaultClipboardPanelHotkey;
     }
 
     /// <summary>

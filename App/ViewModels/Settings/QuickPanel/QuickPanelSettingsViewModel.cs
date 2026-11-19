@@ -34,7 +34,6 @@ public class QuickPanelSettingsViewModel : ViewModelBase
         _blacklistText = string.Join(Environment.NewLine, panel.BlacklistedProcesses);
 
         SelectSubTabCommand = new RelayCommand<string>(tab => SelectedSubTab = tab ?? "Sources");
-        SelectSectionCommand = new RelayCommand<string>(section => SelectedSection = section ?? "Workspaces");
         AddTabCommand = new RelayCommand(AddTab);
         DuplicateTabCommand = new RelayCommand(DuplicateTab, () => SelectedTab != null);
         RemoveTabCommand = new RelayCommand(RemoveTab, () => SelectedTab != null);
@@ -127,7 +126,7 @@ public class QuickPanelSettingsViewModel : ViewModelBase
 
     private string _selectedSection = "Workspaces";
 
-    /// <summary>Which half of the page is on screen: the workspaces, or the plugins' own tabs.</summary>
+    /// <summary>The visible category: workspaces, plugin tabs, or panel-wide options.</summary>
     /// <remarks>
     /// A tab row rather than one section under the other. Both are lists that grow, and stacked they
     /// pushed each other off the page -- the same reason the workspace pane below splits its own two
@@ -139,7 +138,6 @@ public class QuickPanelSettingsViewModel : ViewModelBase
         set => SetProperty(ref _selectedSection, value);
     }
 
-    public ICommand SelectSectionCommand { get; }
 
     private string _blacklistText;
 
@@ -279,16 +277,19 @@ public class QuickPanelSettingsViewModel : ViewModelBase
         {
             Id = QuickPanelTab.NewId(),
             Name = SelectedTab.EffectiveName,
+            Processes = source.Processes.ToList(),
             DisabledGroupIds = source.DisabledGroupIds.ToList(),
         };
         var idMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var folder in source.Folders)
         {
             var clone = QuickPanelFolderSource.For(folder.Path, folder.Kind);
+            clone.SortByModified = folder.SortByModified;
             clone.Recursive = folder.Recursive;
             clone.FilterPattern = folder.FilterPattern;
             clone.MaxItems = folder.MaxItems;
             clone.MaxAgeMinutes = folder.MaxAgeMinutes;
+            clone.AcceptsDrops = folder.AcceptsDrops;
             idMap[folder.Id] = clone.Id;
             copy.Folders.Add(clone);
         }

@@ -63,13 +63,19 @@ public sealed class SearchResultRankComparer : IComparer<SearchResult>
         if (right == null)
             return -1;
 
-        var leftPath = NormalizeForLookup(left.Path);
-        var rightPath = NormalizeForLookup(right.Path);
+        return CompareRanked(left, GetHistoryRank(left), right, GetHistoryRank(right));
+    }
 
-        var leftHistoryPriority = _historySnapshot.TryGetValue(leftPath, out var lp) ? lp : int.MaxValue;
-        var rightHistoryPriority = _historySnapshot.TryGetValue(rightPath, out var rp) ? rp : int.MaxValue;
+    internal (int Priority, int Opens) GetHistoryRank(SearchResult row)
+    {
+        var path = NormalizeForLookup(row.Path);
+        return (_historySnapshot.GetValueOrDefault(path, int.MaxValue), _usageCounts?.GetValueOrDefault(path) ?? 0);
+    }
 
-        var compare = leftHistoryPriority.CompareTo(rightHistoryPriority);
+    internal static int CompareRanked(SearchResult left, (int Priority, int Opens) leftHistory,
+        SearchResult right, (int Priority, int Opens) rightHistory)
+    {
+        var compare = leftHistory.Priority.CompareTo(rightHistory.Priority);
         if (compare != 0)
             return compare;
 
@@ -79,14 +85,9 @@ public sealed class SearchResultRankComparer : IComparer<SearchResult>
 
         // Usage tie-breaker (A2): equal fzf score, the more-opened entry first. A null or all-zero
         // map makes every comparison fall through, so ordering is bit-identical to pre-A2 builds.
-        if (_usageCounts != null)
-        {
-            var leftUsage = _usageCounts.TryGetValue(leftPath, out var lu) ? lu : 0;
-            var rightUsage = _usageCounts.TryGetValue(rightPath, out var ru) ? ru : 0;
-            compare = leftUsage.CompareTo(rightUsage);
-            if (compare != 0)
-                return -compare;
-        }
+        compare = rightHistory.Opens.CompareTo(leftHistory.Opens);
+        if (compare != 0)
+            return compare;
 
         compare = left.Path.Length.CompareTo(right.Path.Length);
         if (compare != 0)

@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using Lertaro.Core;
+using Lertaro.Core.Indexer.Usn;
 using Lertaro.App.Helpers;
 using Lertaro.App.Services;
 using MessageBox = Lertaro.App.Views.Controls.Dialogs.CustomMessageBox;
@@ -103,14 +104,13 @@ public class SearchServiceStatusViewModel : ViewModelBase, IDisposable
     {
         _isRecovering = true;
         _statusPresenter.ShowConnecting(_connectionHandler.ShouldWaitForServiceReconnect());
-        IsSearchBoxEnabled = false;
         SearchIndexBuildCoordinator.Trigger(
             _searchService,
             _connectionHandler,
             shouldWaitForReconnect: _connectionHandler.ShouldWaitForServiceReconnect,
             resetAutoInstallFlag: _connectionHandler.ResetAutoInstallFlag,
-            onReadyStatus: status => _statusPresenter.ProcessStatus(status),
-            onPendingStatus: status => _statusPresenter.ProcessStatus(status));
+            onReadyStatus: OnStatusUpdated,
+            onPendingStatus: OnStatusUpdated);
     }
 
     public void ResetAutoInstallFlag() => _connectionHandler.ResetAutoInstallFlag();
@@ -144,9 +144,20 @@ public class SearchServiceStatusViewModel : ViewModelBase, IDisposable
     private void OnServiceFailedToStart()
     {
         IsServiceConnected = false;
-        // Degraded Mode: Collapse loading panel so search box remains usable
+        // Keep app and plugin search available when the file index service cannot start.
+        IsSearchBoxEnabled = true;
         LoadingPanelVisibility = Visibility.Collapsed;
         Logger.Log("[SearchServiceStatus] Degraded Mode active: Service failed to start.");
+    }
+
+    private void OnStatusUpdated(UsnIndexer.IndexerStatus status)
+    {
+        IsServiceConnected = status.State is not ("error" or "reconnecting");
+        if (!_isRecovering && status.State is ("ready" or "cached")) return;
+
+        _statusPresenter.ProcessStatus(status);
+        if (status.State == SearchIndexBootstrapHelper.IndexError)
+            _connectionHandler.Stop();
     }
 
     private void InitializeServiceConnection()
@@ -165,18 +176,7 @@ public class SearchServiceStatusViewModel : ViewModelBase, IDisposable
 
         _connectionHandler = new ServiceConnectionHandler(
             _searchService,
-            onStatusUpdated: status =>
-            {
-                if (status.State == "ready" || status.State == "indexing" || status.State == "loading-cache")
-                {
-                    IsServiceConnected = true;
-                }
-
-                if (!_isRecovering && status.State == "ready")
-                    return;
-
-                _statusPresenter.ProcessStatus(status);
-            },
+            onStatusUpdated: OnStatusUpdated,
             onServiceInstallStarted: OnServiceInstallStarted,
             onServiceInstallCompleted: CheckServiceStatusOnStartup,
             onServiceInstallError: ex => MessageBox.Show(string.Format(TranslationManager.Instance["Service_InstallFailedPrompt"], ex.Message), TranslationManager.Instance["Service_Error"], MessageBoxButton.OK, MessageBoxImage.Error),

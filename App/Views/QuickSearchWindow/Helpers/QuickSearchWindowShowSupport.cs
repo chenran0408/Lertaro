@@ -59,11 +59,11 @@ internal sealed class QuickSearchWindowShowSupport
             window.ViewModel.RefreshEmptyState();
         }
         window.ViewModel.RefreshLayoutSettings();
+        _controller.PositionWindow();
         window.UpdateLayout();
         window.ApplyResultsLayoutImmediate();
         window.Topmost = false;
         window.Topmost = true;
-        _controller.PositionWindow();
 
         var fadeContent = window.Content as UIElement;
         fadeContent?.BeginAnimation(UIElement.OpacityProperty, null);

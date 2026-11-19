@@ -78,13 +78,13 @@ internal static class ServiceConnectionMonitor
             {
                 if (RequiresDetailedStatus())
                 {
-                    var status = await searchService.GetStatusAsync().ConfigureAwait(false);
+                    var status = await SearchIndexBootstrapHelper.ReadStatusAsync(searchService).ConfigureAwait(false);
                     _ = System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                     {
                         try
                         {
                             NotifySubscribers(subscriber => subscriber.ProcessStatus(status));
-                            ApplyPollInterval(reachable: true);
+                            ApplyPollInterval(reachable: status.State != "error");
                         }
                         finally
                         {

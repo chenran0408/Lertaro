@@ -11,50 +11,82 @@
                 <ResourceDictionary Source="../../../Resources/Styles/Windows/SearchWindow.xaml"/>
                 <ResourceDictionary Source="../../../Resources/Styles/Windows/SettingsWindow.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            <Style x:Key="QuickLaunchIconButton" TargetType="Button" BasedOn="{StaticResource RuleIconButton}">
-                <Setter Property="Width" Value="30"/>
-                <Setter Property="Height" Value="30"/>
-                <Setter Property="Margin" Value="4,0,0,0"/>
+            <Style x:Key="PathListIconButton" TargetType="Button" BasedOn="{StaticResource RuleIconButton}">
+                <Setter Property="Width" Value="31"/>
+                <Setter Property="Height" Value="31"/>
+                <Setter Property="Margin" Value="5,0,0,0"/>
             </Style>
-            <DataTemplate x:Key="QuickLaunchItemTemplate">
-                <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,8">
+            <DataTemplate x:Key="PathListItemTemplate">
+                <Border Style="{StaticResource SettingsRow}" Padding="0,9">
                     <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="28"/><ColumnDefinition Width="24"/><ColumnDefinition Width="2*"/><ColumnDefinition Width="3*"/><ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid Grid.ColumnSpan="5">
-                            <Grid.Style><Style TargetType="Grid"><Style.Triggers><DataTrigger Binding="{Binding IsEditing}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Grid.Style>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="28"/><ColumnDefinition Width="24"/><ColumnDefinition Width="2*"/><ColumnDefinition Width="3*"/><ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid Grid.Column="0" Width="18" Height="24" Background="Transparent" Cursor="SizeAll" helpers:DragReorder.IsHandle="True">
-                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
-                                <Ellipse Grid.Row="0" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="0" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
-                                <Ellipse Grid.Row="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="1" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
-                                <Ellipse Grid.Row="2" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
-                            </Grid>
-                            <TextBlock Grid.Column="1" Text="&#xE71B;" FontFamily="{DynamicResource AppIconFontFamily}" Foreground="{DynamicResource AccentColor}" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="2" Text="{Binding DisplayName}" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="4,0,8,0"/>
-                            <TextBlock Grid.Column="3" Text="{Binding Path}" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                            <StackPanel Grid.Column="4" Orientation="Horizontal">
-                                <Button Content="&#xE74A;" Style="{StaticResource QuickLaunchIconButton}" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_MoveUpTooltip]}" Command="{Binding DataContext.MoveUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                <Button Content="&#xE74B;" Style="{StaticResource QuickLaunchIconButton}" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_MoveDownTooltip]}" Command="{Binding DataContext.MoveDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                <Button Content="&#xE70F;" Style="{StaticResource QuickLaunchIconButton}" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_EditTooltip]}" Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                <Button Content="&#xE74D;" Style="{StaticResource QuickLaunchIconButton}" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_RemoveTooltip]}" Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                        <StackPanel>
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="6,0,0,0">
+                                <Button Content="&#xE74A;" Style="{StaticResource PathListIconButton}"
+                                        ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_MoveUpTooltip]}"
+                                        AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
+                                        Command="{Binding DataContext.MoveUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                <Button Content="&#xE74B;" Style="{StaticResource PathListIconButton}"
+                                        ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_MoveDownTooltip]}"
+                                        AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
+                                        Command="{Binding DataContext.MoveDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                <Button Content="&#xE70F;" Style="{StaticResource PathListIconButton}"
+                                        ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_EditTooltip]}"
+                                        AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
+                                        Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                <Button Content="&#xE74D;" Style="{StaticResource PathListIconButton}"
+                                        ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_RemoveTooltip]}"
+                                        AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
+                                        Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                </StackPanel>
+                                <Border Width="22" Height="30" Background="Transparent" Cursor="SizeNS" VerticalAlignment="Center"
+        helpers:DragReorder.IsHandle="True"
+        Visibility="{Binding DataContext.CanReorder, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
+    <TextBlock Text="&#xE76F;" FontFamily="{DynamicResource AppIconFontFamily}"
+               HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
+</Border>
+                                <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="15"
+                                           ToolTip="{Binding DisplayName}" TextTrimming="CharacterEllipsis"
+                                           Margin="6,0,0,0" VerticalAlignment="Center"/>
+                            </DockPanel>
+                            <DockPanel Margin="28,3,0,0">
+                                <TextBlock Text="{Binding Path}" ToolTip="{Binding Path}" TextTrimming="CharacterEllipsis"
+                                           Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" FontSize="13"/>
+                            </DockPanel>
+                        </StackPanel>
+                        <Border Background="{DynamicResource ControlBackground}" CornerRadius="{DynamicResource CornerRadiusControl}" Padding="12">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel>
+                                <settings:PathEntryEditor EntryName="{Binding EditName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    EntryPath="{Binding EditPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    BrowseFolderCommand="{Binding DataContext.BrowseEditFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    BrowseFileCommand="{Binding DataContext.BrowseEditFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <WrapPanel HorizontalAlignment="Right" Margin="0,10,0,0">
+                                    <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Cancel]}" Style="{StaticResource SettingsButton}" MinWidth="0"
+        Command="{Binding DataContext.CancelEditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                    <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[PathEntry_Save]}" Style="{StaticResource PrimarySettingsButton}" MinWidth="0"
+        Command="{Binding DataContext.SaveEditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                </WrapPanel>
                             </StackPanel>
-                        </Grid>
-                        <Grid Grid.ColumnSpan="5">
-                            <Grid.Style><Style TargetType="Grid"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsEditing}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Grid.Style>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="28"/><ColumnDefinition Width="24"/><ColumnDefinition Width="2*"/><ColumnDefinition Width="3*"/><ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <settings:PathEntryEditor Grid.Column="2" Grid.ColumnSpan="2" EntryName="{Binding EditName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" EntryPath="{Binding EditPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" BrowseFolderCommand="{Binding DataContext.BrowseEditFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" BrowseFileCommand="{Binding DataContext.BrowseEditFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                            <StackPanel Grid.Column="4" Orientation="Horizontal">
-                                <Button Content="&#xE73E;" Style="{StaticResource PrimarySettingsButton}" Width="30" MinWidth="30" Height="30" Padding="0" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="14" Command="{Binding DataContext.SaveEditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                <Button Content="&#xE711;" Style="{StaticResource QuickLaunchIconButton}" Command="{Binding DataContext.CancelEditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                            </StackPanel>
-                        </Grid>
+                        </Border>
                     </Grid>
                 </Border>
             </DataTemplate>
@@ -63,18 +95,15 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="0,0,0,24">
             <TextBlock Style="{StaticResource SettingsSectionTitle}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_Title]}"/>
-            <TextBlock Style="{StaticResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_Hint]}"/>
-            <CheckBox x:Name="RowQuickLaunchEnabled" Margin="0,12,0,8"
-                      Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_Enabled]}"
-                      IsChecked="{Binding IsEnabled}" FontSize="14"/>
-            <CheckBox x:Name="RowQuickLaunchShowShortcutBadges" Margin="0,0,0,8"
-                      Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ShowShortcutBadges]}"
-                      IsChecked="{Binding ShowShortcutBadges}" FontSize="14"/>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ShiftWheelHint]}"
-                       Style="{StaticResource SettingsHintText}" Margin="0,0,0,14"/>
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+            <WrapPanel Margin="0,10,0,8">
+                <CheckBox x:Name="RowQuickLaunchEnabled" Margin="0,0,18,6" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_Enabled]}"
+                          IsChecked="{Binding IsEnabled}" FontSize="14"/>
+                <CheckBox x:Name="RowQuickLaunchShowShortcutBadges" Margin="0,0,0,6" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ShowShortcutBadges]}"
+                          IsChecked="{Binding ShowShortcutBadges}" FontSize="14"/>
+            </WrapPanel>
+            <WrapPanel Margin="0,0,0,6">
                 <StackPanel>
-                    <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_Title]}"
+                    <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ItemsTitle]}"
                             Command="{Binding SelectSectionCommand}" CommandParameter="Items">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource TabHeaderButtonStyle}">
@@ -125,7 +154,7 @@
                         </Border.Style>
                     </Border>
                 </StackPanel>
-            </StackPanel>
+            </WrapPanel>
             <Grid VerticalAlignment="Top">
                 <Border VerticalAlignment="Top">
                     <Border.Style>
@@ -139,26 +168,58 @@
                         </Style>
                     </Border.Style>
                     <StackPanel>
-                        <TextBlock x:Name="RowQuickLaunchItemsTitle"
-                                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ItemsTitle]}"
-                                   FontWeight="SemiBold" FontSize="14"/>
-                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ItemsDesc]}"
-                                   Style="{StaticResource SettingsHintText}" Margin="0,4,0,12"/>
-                        <Grid Margin="0,0,0,12">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="1.5*"/><ColumnDefinition Width="3.5*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <settings:PathEntryEditor Grid.Column="0" Grid.ColumnSpan="3" EntryName="{Binding NewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" EntryPath="{Binding NewPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" BrowseFolderCommand="{Binding BrowseFolderCommand}" BrowseFileCommand="{Binding BrowseFileCommand}"/>
-                            <Button Grid.Column="3" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_Add]}" Style="{StaticResource PrimarySettingsButton}" Command="{Binding AddCommand}" Height="34" MinWidth="56" Padding="12,0" Margin="8,0,0,0"/>
+                        <TextBlock x:Name="RowQuickLaunchItemsTitle" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ItemsTitle]}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8"/>
+                        <Grid Margin="0,0,0,9">
+                            <TextBox x:Name="PathFilterBox" MinHeight="34" Padding="10,0"
+                                     Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                                     AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[PathList_Filter]}"/>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[PathList_Filter]}" Margin="10,0,5,0" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextSecondary}" IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding FilterText}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </Grid>
-                        <Separator Background="{DynamicResource ControlBorderBrush}" Height="1" Margin="0,0,0,12"/>
-                        <Grid Margin="0,0,0,8">
-                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ListTitle]}"
-                                       FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
-                            <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ClearList]}"
-                                    Style="{StaticResource SettingsButton}" HorizontalAlignment="Right"
-                                    Visibility="{Binding HasItems, Converter={StaticResource BoolToVis}}"
-                                    Command="{Binding ClearCommand}"/>
-                        </Grid>
-                        <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource QuickLaunchItemTemplate}" helpers:DragReorder.IsEnabled="True"/>
+                        <Expander x:Name="AddEntryForm" IsExpanded="{Binding IsAddFormOpen, Mode=TwoWay}"
+                                  Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,8">
+                            <Expander.Header>
+                                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_AddEntry]}" FontWeight="SemiBold"/>
+                            </Expander.Header>
+                            <StackPanel Margin="0,10,0,4">
+                                <settings:PathEntryEditor x:Name="AddQuickLaunchEditor" EntryName="{Binding NewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    EntryPath="{Binding NewPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    BrowseFolderCommand="{Binding BrowseFolderCommand}" BrowseFileCommand="{Binding BrowseFileCommand}"/>
+                                <WrapPanel HorizontalAlignment="Right" Margin="0,10,0,0">
+                                    <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_Add]}" Style="{StaticResource PrimarySettingsButton}"
+                                            Command="{Binding AddCommand}" MinWidth="0"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Expander>
+                        <ItemsControl x:Name="PathItemsList" ItemsSource="{Binding Items}" ItemTemplate="{StaticResource PathListItemTemplate}"
+                                      helpers:DragReorder.IsEnabled="True"/>
+                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[PathList_Empty]}" Margin="0,12" HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasItems, ElementName=PathItemsList}" Value="False">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ClearList]}" Style="{StaticResource SettingsButton}"
+                                HorizontalAlignment="Right" Margin="0,10,0,0" Visibility="{Binding HasItems, Converter={StaticResource BoolToVis}}"
+                                Command="{Binding ClearCommand}"/>
                     </StackPanel>
                 </Border>
                 <Border>
@@ -176,8 +237,6 @@
                         <TextBlock x:Name="RowQuickLaunchSourceTitle"
                                    Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_SourceTitle]}"
                                    FontWeight="SemiBold" FontSize="14"/>
-                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_SourceDesc]}"
-                                   Style="{StaticResource SettingsHintText}" Margin="0,4,0,8"/>
                         <ItemsControl ItemsSource="{Binding Sources}" helpers:DragReorder.IsEnabled="True">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -185,6 +244,7 @@
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="28"/>
                                             <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <Grid Grid.Column="0" Width="18" Height="24" Background="Transparent"
                                               Cursor="SizeAll" helpers:DragReorder.IsHandle="True">
@@ -195,11 +255,32 @@
                                             <Ellipse Grid.Row="2" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
                                         </Grid>
                                         <CheckBox Grid.Column="1" Content="{Binding Name}" IsChecked="{Binding IsEnabled}"
+                                                  VerticalAlignment="Center"
                                                   ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_SourceEnabledTooltip]}"/>
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                            <Button Content="&#xE74A;" Style="{StaticResource PathListIconButton}"
+                                                    ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_MoveUpTooltip]}"
+                                                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
+                                                    Command="{Binding DataContext.MoveSourceUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Content="&#xE74B;" Style="{StaticResource PathListIconButton}"
+                                                    ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_MoveDownTooltip]}"
+                                                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
+                                                    Command="{Binding DataContext.MoveSourceDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <Expander Style="{DynamicResource SettingsDetailsExpander}" Margin="0,12,0,0">
+                            <StackPanel Margin="0,6,0,0">
+                                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_SourceDesc]}"
+                                           Style="{StaticResource SettingsHintText}" Margin="0,4,0,8"/>
+                                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickLaunch_ShiftWheelHint]}" Style="{StaticResource SettingsHintText}"
+                                           Margin="0,0,0,10" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
                 </Border>
             </Grid>

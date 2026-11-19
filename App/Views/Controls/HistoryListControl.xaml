@@ -26,6 +26,7 @@
             </Style>
 
             <Style x:Key="HistoryRowIconButton" TargetType="Button">
+                <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
                 <Setter Property="Width" Value="32"/>
                 <Setter Property="Height" Value="32"/>
                 <Setter Property="Margin" Value="6,0,0,0"/>
@@ -58,7 +59,7 @@
 
             <DataTemplate x:Key="HistoryEntryTemplate">
                 <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,8">
-                    <Grid>
+                    <Grid ToolTip="{Binding Secondary}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="24"/>
                             <ColumnDefinition Width="*"/>
@@ -94,6 +95,8 @@
 
                         <Button Grid.Column="3" Content="&#xE74D;"
                                 Style="{StaticResource HistoryRowIconButton}"
+                                ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[History_RemoveEntry]}"
+                                AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                                 Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                 CommandParameter="{Binding}"/>
                     </Grid>
@@ -104,11 +107,19 @@
 
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Style="{StaticResource SettingsCard}" Padding="16,12">
+        <WrapPanel Margin="0,0,0,8">
+            <CheckBox x:Name="ChkEnable"
+                      Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_History_Enable]}"
+                      IsChecked="{Binding IsHistoryEnabled, Mode=TwoWay}" Margin="0,0,16,4"/>
+            <TextBlock Text="{Binding ResultSummary}" Foreground="{DynamicResource TextSecondary}"
+                       VerticalAlignment="Center" Margin="0,0,0,4"/>
+        </WrapPanel>
+        <Border Grid.Row="1" Style="{StaticResource SettingsCard}" Padding="12" Margin="0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -116,6 +127,7 @@
                 </Grid.RowDefinitions>
 
                 <TextBox x:Name="TxtHistorySearch" Grid.Row="0" Style="{StaticResource HistorySearchTextBox}" Margin="0,0,0,8"
+                         AutomationProperties.Name="{Binding PlaceholderText, RelativeSource={RelativeSource AncestorType=UserControl}}"
                          Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
 
                 <!-- Placeholder: same overlaid-TextBlock technique SearchBoxControl already uses for its
@@ -147,8 +159,8 @@
                      so only the rows actually in view are built. ScrollUnit=Pixel keeps virtualization
                      while scrolling by pixel (matching the plugin list), which is what lets the app-wide
                      smooth-wheel glide target this list without realizing every row. -->
-                <ListBox Grid.Row="1" ItemsSource="{Binding FilteredItems}" ItemTemplate="{StaticResource HistoryEntryTemplate}"
-                         MaxHeight="320" BorderThickness="0" Background="Transparent"
+                <ListBox x:Name="HistoryEntries" Grid.Row="1" ItemsSource="{Binding FilteredItems}" ItemTemplate="{StaticResource HistoryEntryTemplate}"
+                         BorderThickness="0" Background="Transparent"
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          Focusable="False"
@@ -173,23 +185,46 @@
                         </Style>
                     </ListBox.ItemContainerStyle>
                 </ListBox>
+                <TextBlock Grid.Row="1" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[History_Empty]}"
+                           Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Margin="12,4" TextWrapping="Wrap" TextAlignment="Center" IsHitTestVisible="False">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasItems, ElementName=HistoryEntries}" Value="False">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
             </Grid>
         </Border>
 
-        <CheckBox x:Name="ChkEnable" Grid.Row="1" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_History_Enable]}"
-                  IsChecked="{Binding IsHistoryEnabled, Mode=TwoWay}"
-                  VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,12,0,0"/>
-
-        <!-- Clear-below-N: a small numeric box (coerced to 1..99) and button, left of Clear All. -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-            <ComboBox Height="30" MinWidth="52" Margin="0,0,4,0" Style="{StaticResource SettingsComboBox}"
-                      ItemsSource="{Binding UsageThresholds}" SelectedItem="{Binding UsageThreshold}"/>
-            <Button Content="{Binding ClearBelowButtonLabel}"
-                    Style="{StaticResource SettingsButton}"
-                    Command="{Binding ClearBelowCommand}" Margin="0,0,8,0"/>
-            <Button x:Name="BtnClearAll" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_History_Clear_All]}"
-                    Style="{StaticResource SettingsButton}"
-                    Command="{Binding ClearAllCommand}"/>
+        <StackPanel Grid.Row="2" Margin="0,8,0,0">
+            <TextBlock Text="{Binding PendingSummary}" Foreground="{DynamicResource TextSecondary}"
+                       TextWrapping="Wrap" Margin="0,0,0,6">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasPendingRemovals}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <WrapPanel HorizontalAlignment="Right">
+                <ComboBox Height="30" MinWidth="52" Margin="0,0,6,4" Style="{StaticResource SettingsComboBox}"
+                          ItemsSource="{Binding UsageThresholds}" SelectedItem="{Binding UsageThreshold}"
+                          AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[History_UsageThreshold]}"/>
+                <Button Content="{Binding ClearBelowButtonLabel}" Style="{StaticResource SettingsButton}"
+                        Command="{Binding ClearBelowCommand}" Height="30" Margin="0,0,8,4"/>
+                <Button x:Name="BtnClearAll" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[History_ClearTab]}"
+                        Style="{StaticResource SettingsButton}" Height="30" Margin="0,0,0,4" Command="{Binding ClearAllCommand}"/>
+            </WrapPanel>
         </StackPanel>
     </Grid>
 </UserControl>

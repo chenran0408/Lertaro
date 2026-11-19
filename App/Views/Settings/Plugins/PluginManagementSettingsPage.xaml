@@ -1,14 +1,9 @@
 <UserControl x:Class="Lertaro.App.Views.Settings.Plugins.PluginManagementSettingsPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:services="clr-namespace:Lertaro.App.Services"
              xmlns:conv="clr-namespace:Lertaro.App.Converters"
-             xmlns:vm="clr-namespace:Lertaro.App.ViewModels.Settings.Plugins"
-             xmlns:local="clr-namespace:Lertaro.App.Views.Settings.Plugins"
-             mc:Ignorable="d"
-             d:DesignHeight="520" d:DesignWidth="700">
+             xmlns:local="clr-namespace:Lertaro.App.Views.Settings.Plugins">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -16,24 +11,15 @@
                 <ResourceDictionary Source="../../../Resources/Styles/Windows/SearchWindow.xaml"/>
                 <ResourceDictionary Source="../../../Resources/Styles/Windows/SettingsWindow.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-
             <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
-            <conv:BoolToVisibilityConverter x:Key="InvertBoolToVis" Invert="True"/>
-            <local:ComponentTypeToLabelConverter x:Key="TypeToLabel"/>
-
-            <!-- SidebarItemStyle with tighter sides. Its 16 is sized for the settings window's own
-                 section list, where a row is one short label; these rows carry an icon and two lines in
-                 a narrower pane, so the same inset leaves the content squeezed into the middle with
-                 whitespace either side. Vertical padding is left alone, the rows being tall already. -->
+            <conv:BoolToVisibilityConverter x:Key="InverseVis" Invert="True"/>
             <Style x:Key="PluginListItemStyle" TargetType="ListBoxItem" BasedOn="{StaticResource SidebarItemStyle}">
-                <Setter Property="Padding" Value="8,10"/>
+                <Setter Property="Padding" Value="8,8"/>
+                <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
             </Style>
-
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <!-- No page-level ScrollViewer: the two panes scroll on their own (see below), and wrapping them in
-         one would scroll the header away and drag both panes with it as a single tall column. -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -41,247 +27,200 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4"
-                    Visibility="{Binding IsEmpty, Converter={StaticResource InvertBoolToVis}}">
-            <StackPanel Margin="0,0,28,0">
-                <Button x:Name="TabManagement"
-                        Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_TabManagement]}"
-                        Command="{Binding ShowPluginManagementCommand}">
+        <DockPanel Visibility="{Binding IsConfigurationDirectory, Converter={StaticResource InverseVis}}" Margin="0,0,0,10" LastChildFill="False">
+            <Button DockPanel.Dock="Right" Style="{StaticResource SettingsButton}" MinWidth="0" Height="30"
+                    Content="{Binding HostSdkVersionLabel}" Click="SdkGuide_Click"
+                    ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_DevGuideTooltip]}"
+                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
+            <WrapPanel>
+                <Button x:Name="TabManagement" Command="{Binding ShowPluginManagementCommand}"
+                        Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_TabManagement]}">
                     <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource TabHeaderButtonStyle}">
+                        <Style TargetType="Button" BasedOn="{StaticResource SettingsButton}">
+                            <Setter Property="Margin" Value="0,0,6,4"/>
+                            <Setter Property="MinWidth" Value="0"/>
+                            <Setter Property="Height" Value="30"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsPluginManagementTab}" Value="True">
-                                    <Setter Property="Foreground" Value="{DynamicResource AccentBlue}"/>
-                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Background" Value="{DynamicResource SidebarSelected}"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Button.Style>
                 </Button>
-                <Border>
-                    <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource TabUnderlineStyle}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsPluginManagementTab}" Value="True">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                </Border>
-            </StackPanel>
-            <StackPanel>
-                <Button x:Name="TabRuntimeStatus"
-                        Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_TabRuntimeStatus]}"
-                        Command="{Binding ShowRuntimeStatusCommand}">
+                <Button x:Name="TabRuntimeStatus" Command="{Binding ShowRuntimeStatusCommand}"
+                        Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_TabRuntimeStatus]}">
                     <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource TabHeaderButtonStyle}">
+                        <Style TargetType="Button" BasedOn="{StaticResource SettingsButton}">
+                            <Setter Property="Margin" Value="0,0,6,4"/>
+                            <Setter Property="MinWidth" Value="0"/>
+                            <Setter Property="Height" Value="30"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsRuntimeStatusTab}" Value="True">
-                                    <Setter Property="Foreground" Value="{DynamicResource AccentBlue}"/>
-                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Background" Value="{DynamicResource SidebarSelected}"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Button.Style>
                 </Button>
-                <Border>
-                    <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource TabUnderlineStyle}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsRuntimeStatusTab}" Value="True">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
+            </WrapPanel>
+        </DockPanel>
+
+        <Border Grid.Row="1" Style="{StaticResource SettingsCard}" Padding="10,7" Margin="0,0,0,8"
+                Visibility="{Binding DataContext.RequiresPluginRestart, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_RestartPending]}"
+                       TextWrapping="Wrap" FontWeight="SemiBold"/>
+        </Border>
+
+        <Grid Grid.Row="2" Visibility="{Binding IsPluginManagementTab, Converter={StaticResource BoolToVis}}">
+            <Grid x:Name="ListPane" Visibility="{Binding IsPluginDetailsOpen, Converter={StaticResource InverseVis}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <ComboBox Grid.Column="1" x:Name="PluginCategoryFilter" MinWidth="120" MaxWidth="220" Margin="8,0,0,0"
+                              Style="{StaticResource SettingsComboBox}" ItemsSource="{Binding CategoryChoices}" DisplayMemberPath="Name"
+                              SelectedValuePath="Key" SelectedValue="{Binding SelectedCategory}"
+                              Visibility="{Binding IsConfigurationDirectory, Converter={StaticResource BoolToVis}}"
+                              AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_CategoryFilter]}"/>
+                    <TextBox x:Name="PluginSearchBox" PreviewKeyDown="PluginSearchBox_PreviewKeyDown" Height="34" Padding="9,0"
+                             AutomationProperties.Name="{Binding PluginSearchLabel}"
+                             Text="{Binding InstalledPluginSearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Margin="10,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"
+                               Text="{Binding PluginSearchLabel}"
+                               IsHitTestVisible="False" TextTrimming="CharacterEllipsis">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding InstalledPluginSearchText}" Value="">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+                <WrapPanel Visibility="{Binding IsConfigurationDirectory, Converter={StaticResource InverseVis}}" Grid.Row="1" Margin="0,0,0,5">
+                    <ComboBox x:Name="PluginStatusFilter" Style="{StaticResource SettingsComboBox}" MinWidth="90" Margin="0,0,6,4"
+                              SelectedValuePath="Tag" SelectedValue="{Binding InstalledPluginFilter}"
+                              AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_FilterStatus]}">
+                        <ComboBoxItem Tag="All" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_FilterAll]}"/>
+                        <ComboBoxItem Tag="Configurable" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_FilterConfigurable]}"/>
+                        <ComboBoxItem Tag="Enabled" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_FilterEnabled]}"/>
+                        <ComboBoxItem Tag="Disabled" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_FilterDisabled]}"/>
+                    </ComboBox>
+                    <Button Style="{StaticResource SettingsButton}" MinWidth="0" Height="30" Margin="0,0,0,4"
+                            Click="PluginColumnHeader_Click" Content="{Binding PluginSortLabel}"
+                            AutomationProperties.Name="{Binding PluginSortLabel}"/>
+                </WrapPanel>
+
+                <Border Grid.Row="2" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}"
+                        BorderThickness="1" CornerRadius="{DynamicResource CornerRadiusControl}" Padding="3">
+                    <Grid>
+                        <ListBox x:Name="PluginsList" ItemsSource="{Binding VisiblePlugins}"
+                                 SelectedItem="{Binding SelectedPlugin, Mode=OneWay}"
+                                 ItemContainerStyle="{StaticResource PluginListItemStyle}" SelectionChanged="PluginsList_SelectionChanged"
+                                 PreviewKeyDown="PluginsList_PreviewKeyDown" MouseLeftButtonUp="PluginsList_MouseLeftButtonUp"
+                                 BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                                 VirtualizingPanel.ScrollUnit="Pixel" VirtualizingPanel.VirtualizationMode="Recycling">
+                            <ListBox.GroupStyle>
+                                <GroupStyle HidesIfEmpty="True">
+                                    <GroupStyle.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Name}" Margin="10,12,8,4" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextSecondary}"/>
+                                        </DataTemplate>
+                                    </GroupStyle.HeaderTemplate>
+                                </GroupStyle>
+                            </ListBox.GroupStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel ToolTip="{Binding Name}">
+                                        <Border Background="{DynamicResource ContentBg}" CornerRadius="{DynamicResource CornerRadiusControl}"
+                                                Width="32" Height="32" Margin="0,0,8,0">
+                                            <TextBlock Text="&#xE71D;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="15"
+                                                       Foreground="{DynamicResource AccentBlue}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock DockPanel.Dock="Right" Text="&#xE76C;" VerticalAlignment="Center" Margin="12,0,10,0"
+                                                   FontFamily="{DynamicResource AppIconFontFamily}" Foreground="{DynamicResource TextSecondary}"
+                                                   Visibility="{Binding DataContext.IsConfigurationDirectory, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource BoolToVis}}"/>
+                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                                    Visibility="{Binding DataContext.IsConfigurationDirectory, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource InverseVis}}">
+                                            <Button Style="{StaticResource SettingsButton}"
+                                                    AutomationProperties.AutomationId="ConfigurePluginButton" Click="OpenPlugin_Click"
+                                                    Visibility="{Binding HasConfigFields, Converter={StaticResource BoolToVis}}"
+                                                    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Configure]}"
+                                                    VerticalAlignment="Center" Margin="12,0,4,0"/>
+                                            <Button Style="{StaticResource SettingsButton}"
+                                                    AutomationProperties.AutomationId="PluginDetailsButton" Click="OpenPlugin_Click"
+                                                    Visibility="{Binding HasConfigFields, Converter={StaticResource InverseVis}}"
+                                                    Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_TabDetails]}"
+                                                    VerticalAlignment="Center" Margin="12,0,4,0"/>
+                                        </StackPanel>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                            <DockPanel Margin="0,3,0,0"
+                                                       Visibility="{Binding DataContext.IsConfigurationDirectory, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource InverseVis}}">
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding Version, StringFormat='v{0}'}"
+                                                           FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="6,0,0,0"/>
+                                                <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_FilterEnabled]}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsFullyDisabled}" Value="True">
+                                                                    <Setter Property="Text" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_FilterDisabled]}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </DockPanel>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"
+                                   TextWrapping="Wrap" Margin="12" Foreground="{DynamicResource TextSecondary}" IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Setter Property="Text" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_NoMatches]}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasItems, ElementName=PluginsList}" Value="False">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                            <Setter Property="Text" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_NoPlugins]}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
                 </Border>
-            </StackPanel>
-        </StackPanel>
-
-        <StackPanel Grid.Row="1" Visibility="{Binding IsPluginManagementTab, Converter={StaticResource BoolToVis}}">
-            <StackPanel Margin="0,0,0,8"
-                        Visibility="{Binding DataContext.RequiresPluginRestart, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVis}}">
-                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_RestartPending]}" TextWrapping="Wrap" FontWeight="Bold"/>
-            </StackPanel>
-            <!-- Page header -->
-            <Grid Margin="0,0,0,4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource SettingsSectionTitle}"
-                               Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_Title]}"
-                               VerticalAlignment="Center"/>
-                    <Border CornerRadius="4" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" Margin="8,0,0,0" Padding="5,1,5,2" VerticalAlignment="Center"
-                            Cursor="Hand" MouseLeftButtonUp="SdkBadge_MouseLeftButtonUp"
-                            ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_DevGuideTooltip]}">
-                        <TextBlock Text="{Binding HostSdkVersion, StringFormat='SDK v{0}'}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource BadgeText}" />
-                    </Border>
-                </StackPanel>
-
-                <!-- Nothing here any more: expand-all/collapse-all only meant something while every
-                     plugin was rendered down the page at once. -->
             </Grid>
-            <TextBlock Style="{StaticResource SettingsHintText}"
-                       Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_Hint]}"/>
 
-            <!-- Empty state -->
-            <Border Style="{StaticResource SettingsCard}"
-                    Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
-                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_NoPlugins]}"
-                           Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
-                           HorizontalAlignment="Center" Padding="0,8"/>
-            </Border>
-
-        </StackPanel>
-
-        <!-- Two independently scrolling panes with a hairline between them, matching how the settings
-             window itself divides its own section list from its content (SettingsWindow.xaml uses the
-             same BorderColor on a 1px edge). One shared scrollbar would have moved both panes together
-             and taken the header with them; a long plugin list and a long config form have nothing to do
-             with each other's scroll position.
-
-             Kept named PluginsList: the settings search reveals a plugin by looking this element up by
-             name (SettingsWindowSearchExtensions), and selecting the row is now what revealing means. -->
-        <Grid Grid.Row="2" Margin="0,12,0,0"
-              Visibility="{Binding IsPluginManagementTab, Converter={StaticResource BoolToVis}}">
-            <!-- Both panes are proportional so a wider window widens the list too. Fixed at 200 it
-                 truncated plugin names at every window size, since the one thing that would have
-                 fixed that, more width, was the one thing it could never get. The detail side still
-                 takes the larger share: it holds the description, the component rows and the config
-                 form, where the list holds a name and a version. MinWidth on each keeps the split
-                 from starving either one on a narrow window. -->
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="200"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="3*" MinWidth="360"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Left pane: a sortable column header row over the plugin list. -->
-            <Grid Grid.Column="0" Margin="0,0,8,0">
+            <Grid x:Name="DetailsPane" Visibility="{Binding IsPluginDetailsOpen, Converter={StaticResource BoolToVis}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-
-                <!-- Single column header: the whole row is clickable and toggles between the default
-                     rank order and "disabled sink to the bottom"; its text follows the current rule. -->
-                <Grid Grid.Row="0" Margin="8,0,8,4" Background="Transparent"
-                      Cursor="Hand" MouseLeftButtonUp="PluginColumnHeader_Click">
-                    <StackPanel Orientation="Horizontal" IsHitTestVisible="False">
-                        <TextBlock Text="↑↓" FontSize="12"
-                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <TextBlock Text="{Binding PluginSortLabel}"
-                                   FontSize="14" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Grid>
-
-            <!-- PluginListItemStyle is SidebarItemStyle with tighter sides (see Resources above), so this
-                 list still reads as the settings window nav list one level in, not a raw ListBox. -->
-            <ListBox x:Name="PluginsList" Grid.Row="1" ItemsSource="{Binding Plugins}"
-                     SelectedItem="{Binding SelectedPlugin, Mode=TwoWay}"
-                     ItemContainerStyle="{StaticResource PluginListItemStyle}"
-                     SelectionChanged="PluginsList_SelectionChanged"
-                     BorderThickness="0" Background="Transparent"
-                     ScrollViewer.VerticalScrollBarVisibility="Auto"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     VirtualizingPanel.IsVirtualizing="True"
-                     VirtualizingPanel.ScrollUnit="Pixel"
-                     VirtualizingPanel.CacheLength="8"
-                     VirtualizingPanel.CacheLengthUnit="Item"
-                     VirtualizingPanel.VirtualizationMode="Recycling">
-                <!-- Keep virtualization enabled while using pixel scrolling. Setting CanContentScroll to
-                     False would also produce pixel scrolling, but it disables the virtualizing panel and
-                     realizes every plugin row up front. ScrollUnit changes only the scroll granularity,
-                     while recycling keeps realized containers reusable. -->
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <!-- Single column: icon + name + version pill, faded to 35% while disabled. -->
-                        <Grid Margin="0,2">
-                            <Grid.Style>
-                                <Style TargetType="Grid">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsFullyDisabled}" Value="True">
-                                            <Setter Property="Opacity" Value="0.35"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Grid.Style>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Icon tile at 80% of its former height so the rows sit tighter. -->
-                            <Grid Grid.Column="0" Width="34" Height="34" Margin="0,0,8,0" VerticalAlignment="Center">
-                                <Border CornerRadius="8" IsHitTestVisible="False"
-                                        Background="{DynamicResource ControlHoverBackground}" Opacity="0.5"/>
-                                <Border CornerRadius="8" IsHitTestVisible="False">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Background" Value="{DynamicResource AccentBlue}"/>
-                                            <Setter Property="Opacity" Value="0"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}, Path=IsSelected}" Value="True">
-                                                    <Setter Property="Opacity" Value="0.05"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                </Border>
-                                <TextBlock Text="&#xE71D;" FontFamily="{DynamicResource AppIconFontFamily}"
-                                           FontSize="16" Foreground="{DynamicResource AccentBlue}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Grid>
-
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis"/>
-                                <Border CornerRadius="4" BorderThickness="1" BorderBrush="Transparent"
-                                        Margin="0,3,0,0" HorizontalAlignment="Left">
-                                    <Grid>
-                                        <Border CornerRadius="4" IsHitTestVisible="False"
-                                                Background="{DynamicResource ControlHoverBackground}" Opacity="0.5"/>
-                                        <Border CornerRadius="4" IsHitTestVisible="False">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="{DynamicResource AccentBlue}"/>
-                                                    <Setter Property="Opacity" Value="0"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}, Path=IsSelected}" Value="True">
-                                                            <Setter Property="Opacity" Value="0.05"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                        </Border>
-                                        <TextBlock Text="{Binding Version, StringFormat='v{0}'}" FontSize="14"
-                                                   Padding="7,2,7,2" Foreground="{DynamicResource ShortcutColor}"/>
-                                    </Grid>
-                                </Border>
-                            </StackPanel>
-                        </Grid>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+                <Button x:Name="BackToPluginsButton" HorizontalAlignment="Left" Margin="0,0,0,8"
+                        Style="{StaticResource SettingsButton}" Click="BackToPlugins_Click"
+                        Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_BackToList]}"/>
+                <local:PluginCard x:Name="SelectedPluginCard" Grid.Row="1" DataContext="{Binding SelectedPlugin}" Focusable="False"/>
             </Grid>
-
-            <Border Grid.Column="1" Width="1" Background="{DynamicResource ControlBorderBrush}"/>
-
-            <!-- The detail pane (PluginCard) handles header fixing and internal content scrolling on its own.
-                 One card instance whose DataContext is swapped, rather than a ContentControl with a
-                 ContentTemplate: a template re-instantiates the whole PluginCard (its three merged
-                 resource dictionaries, the nested component ItemsControls, and an eagerly built
-                 PluginConfigSection) on every selection. The card's bindings are all to the plugin it is
-                 given, so re-pointing DataContext is all a switch actually needs. -->
-            <local:PluginCard Grid.Column="2" Margin="8,0,0,0" Focusable="False"
-                              DataContext="{Binding SelectedPlugin}"
-                              Visibility="{Binding DataContext.IsEmpty, RelativeSource={RelativeSource AncestorType={x:Type local:PluginManagementSettingsPage}}, Converter={StaticResource InvertBoolToVis}}"/>
         </Grid>
 
-        <local:PluginRuntimeStatusView Grid.Row="1" Grid.RowSpan="2" Margin="0,12,0,0"
-                                       Visibility="{Binding IsRuntimeStatusTab, Converter={StaticResource BoolToVis}}"/>
+        <local:PluginRuntimeStatusView Grid.Row="2" Visibility="{Binding IsRuntimeStatusTab, Converter={StaticResource BoolToVis}}"/>
     </Grid>
 </UserControl>

@@ -23,7 +23,6 @@
     </UserControl.Resources>
     <StackPanel DataContext="{Binding QuickPanelWake}">
         <TextBlock Style="{StaticResource SettingsSubHeading}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Title]}"/>
-        <TextBlock Style="{StaticResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Intro]}"/>
         <WrapPanel x:Name="RowAddWake" Margin="0,10,0,0">
             <ComboBox Width="200" ItemsSource="{Binding Presets}" DisplayMemberPath="Label" SelectedValuePath="Value"
                       SelectedValue="{Binding SelectedPreset}" AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_Preset]}"/>
@@ -119,11 +118,17 @@
         <Expander x:Name="RowMouseScope" Margin="0,8,0,0" IsExpanded="{Binding ScopeExpanded}" Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_ScopeTitle]}">
             <StackPanel>
                 <CheckBox x:Name="RowMouseAllowDesktop" Margin="0,8" IsChecked="{Binding AllowDesktop}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_Desktop]}"/>
-                <TextBlock Style="{StaticResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_WhitelistHint]}"/>
+                <Expander Style="{DynamicResource SettingsDetailsExpander}">
+                    <TextBlock Style="{DynamicResource SettingsHintText}" Margin="0,6,0,0"
+                               Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_WhitelistHint]}"/>
+                </Expander>
                 <Expander Margin="0,8" IsExpanded="{Binding ExtraProgramsExpanded}" Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[MouseWake_OtherApps]}">
                     <ContentControl x:Name="RowMouseAllowedProcesses" Margin="0,8,0,0" Content="{Binding MouseWhitelist}" ContentTemplate="{StaticResource ProcessListEditorTemplate}"/>
                 </Expander>
-                <TextBlock Margin="0,8,0,0" Style="{StaticResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_KeyboardScopeHint]}"/>
+                <Expander Style="{DynamicResource SettingsDetailsExpander}">
+                    <TextBlock Style="{DynamicResource SettingsHintText}" Margin="0,6,0,0"
+                               Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Wake_KeyboardScopeHint]}"/>
+                </Expander>
             </StackPanel>
         </Expander>
     </StackPanel>

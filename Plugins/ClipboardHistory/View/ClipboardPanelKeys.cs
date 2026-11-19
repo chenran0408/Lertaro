@@ -30,54 +30,61 @@ internal readonly record struct ClipboardPanelKeyResult(ClipboardPanelAction Act
     public static implicit operator ClipboardPanelKeyResult(ClipboardPanelAction action) => new(action, 0);
 }
 
-/// <summary>
-/// The panel's full keyboard surface, resolved as a pure function so every binding is unit-testable.
-/// Digits paste the Nth visible row only while focus is OUT of the search box: in the box they type,
-/// which is why search focus is an input here and not an implementation detail. Bare arrows move the
-/// selection, Shift+arrows extend it (merged multi-paste), Ctrl+A selects the whole view; in the
-/// search box those stay native text behaviors. Esc mirrors every mainstream manager: first press
-/// clears the search, the next one closes the panel.
-/// </summary>
+internal enum ClipboardPanelFocus
+{
+    Search,
+    List,
+    Other,
+}
+
 internal static class ClipboardPanelKeys
 {
-    public static ClipboardPanelKeyResult Resolve(Key key, ModifierKeys modifiers, bool searchFocused,
-        bool searchHasText = false)
+    public static ClipboardPanelKeyResult Resolve(Key key, ModifierKeys modifiers, ClipboardPanelFocus focus, bool searchHasText)
     {
-        switch (key)
+        if (key == Key.Escape && modifiers == ModifierKeys.None)
+            return searchHasText && focus != ClipboardPanelFocus.Other ? ClipboardPanelAction.ClearSearch : ClipboardPanelAction.Close;
+        if (key == Key.F && modifiers == ModifierKeys.Control)
+            return ClipboardPanelAction.FocusSearch;
+
+        // The preview and note editor keep their native text editing and keyboard behavior.
+        if (focus == ClipboardPanelFocus.Other)
+            return ClipboardPanelAction.None;
+
+        if (modifiers == ModifierKeys.None)
         {
-            case Key.Escape when searchFocused && searchHasText:
-                return ClipboardPanelAction.ClearSearch;
-            case Key.Escape:
-                return ClipboardPanelAction.Close;
-            case Key.Up when !searchFocused && modifiers == ModifierKeys.None:
-                return ClipboardPanelAction.MoveUp;
-            case Key.Home when !searchFocused && modifiers == ModifierKeys.None:
-                return ClipboardPanelAction.MoveTop;
-            case Key.End when !searchFocused && modifiers == ModifierKeys.None:
-                return ClipboardPanelAction.MoveBottom;
-            case Key.Up when !searchFocused && modifiers == ModifierKeys.Shift:
-                return ClipboardPanelAction.ExtendUp;
-            case Key.Down when !searchFocused && modifiers == ModifierKeys.None:
-                return ClipboardPanelAction.MoveDown;
-            case Key.Down when !searchFocused && modifiers == ModifierKeys.Shift:
-                return ClipboardPanelAction.ExtendDown;
-            case Key.A when !searchFocused && modifiers == ModifierKeys.Control:
-                return ClipboardPanelAction.SelectAll;
-            case Key.Enter:
-                return modifiers == ModifierKeys.Control
-                    ? ClipboardPanelAction.PasteSelectedPlainText
-                    : ClipboardPanelAction.PasteSelected;
-            case Key.Delete when !searchFocused:
-                return ClipboardPanelAction.DeleteSelected;
-            case Key.P when modifiers == ModifierKeys.Control && !searchFocused:
-                return ClipboardPanelAction.TogglePinSelected;
-            case Key.F when modifiers == ModifierKeys.Control:
-                return ClipboardPanelAction.FocusSearch;
+            switch (key)
+            {
+                case Key.Up: return ClipboardPanelAction.MoveUp;
+                case Key.Down: return ClipboardPanelAction.MoveDown;
+                case Key.Enter: return ClipboardPanelAction.PasteSelected;
+                case Key.Home when focus == ClipboardPanelFocus.List: return ClipboardPanelAction.MoveTop;
+                case Key.End when focus == ClipboardPanelFocus.List: return ClipboardPanelAction.MoveBottom;
+                case Key.Delete when focus == ClipboardPanelFocus.List: return ClipboardPanelAction.DeleteSelected;
+            }
+        }
+        if (modifiers == ModifierKeys.Control)
+        {
+            switch (key)
+            {
+                case Key.Enter: return ClipboardPanelAction.PasteSelectedPlainText;
+                case Key.A when focus == ClipboardPanelFocus.List: return ClipboardPanelAction.SelectAll;
+                case Key.P when focus == ClipboardPanelFocus.List: return ClipboardPanelAction.TogglePinSelected;
+            }
+        }
+        if (modifiers == ModifierKeys.Shift && focus == ClipboardPanelFocus.List)
+        {
+            if (key == Key.Up) return ClipboardPanelAction.ExtendUp;
+            if (key == Key.Down) return ClipboardPanelAction.ExtendDown;
         }
 
-        if (!searchFocused && key is Key.D1 or Key.D2 or Key.D3 or Key.D4 or Key.D5 or Key.D6 or Key.D7 or Key.D8 or Key.D9)
-            return new ClipboardPanelKeyResult(ClipboardPanelAction.PasteByIndex, key - Key.D1 + 1);
-
-        return ClipboardPanelAction.None;
+        var slot = key switch
+        {
+            >= Key.D1 and <= Key.D9 => key - Key.D1 + 1,
+            >= Key.NumPad1 and <= Key.NumPad9 => key - Key.NumPad1 + 1,
+            _ => 0,
+        };
+        return slot > 0 && (modifiers == ModifierKeys.Control || (modifiers == ModifierKeys.None && focus == ClipboardPanelFocus.List))
+            ? new ClipboardPanelKeyResult(ClipboardPanelAction.PasteByIndex, slot)
+            : ClipboardPanelAction.None;
     }
 }

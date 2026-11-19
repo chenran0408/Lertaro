@@ -72,7 +72,7 @@ internal sealed class SearchServiceStatusPresenter
 
     public void ProcessStatus(UsnIndexer.IndexerStatus status)
     {
-        if (status.State == "reconnecting")
+        if (status.State is "error" or "reconnecting")
         {
             ShowReconnecting();
             return;
@@ -97,11 +97,16 @@ internal sealed class SearchServiceStatusPresenter
             _setLoadingStats(string.Format(TranslationManager.Instance["Service_StatsTemplate"], status.TotalFiles, status.TotalDirs));
             _setSearchBoxEnabled(false);
         }
-        else if (status.State == "ready")
+        else if (status.State is "ready" or "cached")
         {
             _setLoadingPanelVisibility(Visibility.Collapsed);
             _setSearchBoxEnabled(true);
             _onReady();
+        }
+        else if (status.State is "idle" or SearchIndexBootstrapHelper.IndexError)
+        {
+            _setLoadingPanelVisibility(Visibility.Collapsed);
+            _setSearchBoxEnabled(true);
         }
     }
 

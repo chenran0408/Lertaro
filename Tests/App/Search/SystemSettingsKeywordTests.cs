@@ -62,6 +62,21 @@ public sealed class SystemSettingsKeywordTests
             Match(entries[0].Item.Title, entries[0]));
     }
 
+    [TestMethod]
+    public void CatalogCapKeepsExactApplicationAliasesAndTitlePrefixesAheadOfKeywordOnlyHits()
+    {
+        var noise = Entry("Options", ["editor"]);
+        var matches = Enumerable.Repeat(new SearchableItemMapper.CatalogMatch(noise, Match("edi", noise), null!, false), 60).ToList();
+        var alias = Entry("Development Environment", []);
+        var prefix = Entry("Editing tools", []);
+        matches.Add(new(alias, MatchRank.NoMatch, null!, true));
+        matches.Add(new(prefix, Match("edi", prefix), null!, false));
+        var visible = SearchableItemMapper.SelectDisplayCandidates(matches, "edi").ToArray();
+        Assert.HasCount(50, visible);
+        Assert.AreSame(alias, visible[0].Entry);
+        Assert.AreSame(prefix, visible[1].Entry);
+    }
+
     private static SearchableItemCache.CacheEntry Entry(string title, string[] keywords) =>
         new(new SearchableItem { Title = title, Keywords = keywords }, [], null);
 

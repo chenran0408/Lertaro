@@ -83,7 +83,7 @@ The Web Search plugin provides built-in shortcuts for major search engines. Type
 | `wiki` | Wikipedia | `wiki quantum computing` | Look up Wikipedia entries |
 | `yt` | YouTube | `yt lofi hip hop` | Search YouTube videos |
 
-You can add, edit, or remove search engines and custom URL templates under **Settings → Plugins → Web Search → Configure**.
+Open **Settings → Plugin settings → Web search** to add sites or edit shortcuts. The built-in sites include Bilibili (`bili`), Zhihu (`zh`), Douban (`douban`) and JD (`jd`).
 
 ## 4. Instant Translation
 

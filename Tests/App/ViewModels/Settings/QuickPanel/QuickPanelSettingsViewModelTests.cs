@@ -187,9 +187,12 @@ public sealed class QuickPanelSettingsViewModelTests
     public void DuplicateTab_RemapsEverythingThatAddressesASourceById()
     {
         var settings = BuildSettings(@"C:\a", @"C:\b");
+        settings.QuickPanel.Tabs.Single().Processes.Add("notepad.exe");
         var vm = new QuickPanelSettingsViewModel(settings);
         var original = vm.Tabs.Single();
         original.Sources[0].DisplayName = "素材";
+        original.Sources[0].AcceptsDrops = false;
+        original.Sources[0].SortMode = QuickPanelSortMode.ModifiedDescending;
         original.Sources[1].IsVisible = false;
 
         vm.DuplicateTabCommand.Execute(null);
@@ -203,6 +206,9 @@ public sealed class QuickPanelSettingsViewModelTests
         Assert.IsFalse(copy.DisabledGroupIds.Any(originalIds.Contains), "hidden list still points at the original's sources");
         Assert.IsTrue(copy.GroupPreferences.Values.Any(p => p.DisplayName == "素材"));
         Assert.IsFalse(copy.GroupPreferences.Keys.Any(originalIds.Contains));
+        CollectionAssert.AreEqual(new[] { "notepad.exe" }, copy.Processes);
+        Assert.IsFalse(copy.Folders[0].AcceptsDrops);
+        Assert.IsTrue(copy.Folders[0].SortByModified);
     }
 
     // Each row carries its own reorder/delete buttons, so the commands they bind to have to exist by

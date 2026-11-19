@@ -146,7 +146,30 @@ public static class SearchHistoryStore
         }
     }
 
-    /// <summary>Replaces the whole store with exactly these entries (Settings' edited/removed list).</summary>
+    /// <summary>Removes paths selected in Settings while preserving entries recorded in the meantime.</summary>
+    public static void RemoveEntries(IReadOnlySet<string> paths)
+    {
+        lock (Gate)
+        {
+            EnsureCacheNoLock();
+            var buckets = _buckets!;
+            var removed = 0;
+            foreach (var keyword in buckets.Keys.ToArray())
+            {
+                var entries = buckets[keyword];
+                removed += entries.RemoveAll(entry => paths.Contains(entry.Path));
+                if (entries.Count == 0) buckets.Remove(keyword);
+            }
+            if (removed == 0) return;
+            PersistNoLock();
+            _priorityCache = BuildPriorityCache(buckets);
+            _frequencyCache = SearchHistoryBucketSupport.BuildFrequencyCache(buckets);
+        }
+
+        Changed?.Invoke();
+    }
+
+    /// <summary>Replaces the whole store with the supplied entries.</summary>
     public static void SaveEntries(IEnumerable<HistoryEntry> entries)
     {
         // Network-path probes must happen outside Gate (see Record's comment above): File.Exists/

@@ -75,10 +75,15 @@ internal static class ClipboardPanelRows
         Func<ClipboardEntry, string> tooltip,
         string pinnedLabel)
     {
-        var visible = entries
-            .Where(entry => MatchesTab(entry, tab) && MatchesQuery(entry, query, isMatch))
-            .ToList();
+        return BuildVisible(entries.Where(entry => MatchesTab(entry, tab) && MatchesQuery(entry, query, isMatch)).ToArray(),
+            query, subtitle, dateLabel, tooltip, pinnedLabel);
+    }
 
+    internal static List<ClipboardPanelItem> BuildVisible(
+        IReadOnlyList<ClipboardEntry> visible, string query,
+        Func<ClipboardEntry, string> subtitle, Func<ClipboardEntry, string> dateLabel,
+        Func<ClipboardEntry, string> tooltip, string pinnedLabel)
+    {
         var items = new List<ClipboardPanelItem>(visible.Count + 8);
         var currentLabel = string.Empty;
         foreach (var entry in visible)

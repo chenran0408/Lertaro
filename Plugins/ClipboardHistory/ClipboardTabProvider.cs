@@ -8,7 +8,7 @@ public sealed class ClipboardTabProvider : IQuickPanelTabProvider
 {
     public string Name => TranslationService.Get("ClipboardHistory_TabName");
 
-    /// <summary>Opens the dedicated panel. The host's Win+V wake path calls this through reflection
+    /// <summary>Opens the dedicated panel. The host's clipboard shortcut calls this through reflection
     /// (it cannot reference this assembly); a false return sends that path to the Quick Panel tab
     /// fallback, which happens when there is no UI thread to host the window.</summary>
     public static bool TryOpenPanel() => View.ClipboardPanelView.TryShow();
@@ -21,7 +21,6 @@ public sealed class ClipboardTabProvider : IQuickPanelTabProvider
     public async Task<IReadOnlyList<ISearchResult>> GetEntriesAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (!ClipboardSettings.Enabled) return [];
         var entries = await ClipboardRuntime.Instance.GetEntriesAsync(cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
         return entries.Select(entry => (ISearchResult)new ClipboardSearchResult(entry)).ToArray();
@@ -39,7 +38,7 @@ internal sealed class ClipboardSearchResult : InstantResultItem, ISearchResult
         ActionArgument = $"clip:{entry.Id}";
         IconData = ClipboardInstantProvider.ClipboardIcon;
         IconColor = "AccentBlue";
-        OnExecuteFunc = () => ClipboardRuntime.Instance.PasteAndClose(entry.Id);
+        OnExecuteFunc = () => ClipboardRuntime.Instance.Paste(entry.Id);
         Metadata = new FileMetadata(0, DateTimeOffset.FromUnixTimeMilliseconds(entry.CreatedAtMs).LocalDateTime,
             DateTimeOffset.FromUnixTimeMilliseconds(entry.LastSeenAtMs).LocalDateTime, DateTime.MinValue);
     }

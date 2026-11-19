@@ -135,9 +135,10 @@ public partial class QuickPanelWindow : Controls.AppWindow,
         // Enter opens the selection, which is what a click does -- the filter box has the keyboard
         // after a summon and does not want Enter for anything, so the whole gesture is "type, then
         // press Enter" without ever leaving it.
-        if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None)
+        if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None
+            && (FilterBox.IsKeyboardFocusWithin || _activeList?.IsKeyboardFocusWithin == true))
         {
-            if (_activeList?.SelectedItem is AppSearchResult)
+            if (_activeList is { IsVisible: true, SelectedItem: AppSearchResult })
             {
                 e.Handled = true;
                 OpenSelected();

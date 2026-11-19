@@ -9,11 +9,19 @@ public static class DatabaseFtsQueryHelper
 {
     private static readonly char[] TrimChars = ['"', '*', '^', ':', '(', ')', '{', '}', '[', ']'];
 
+    internal static bool IsShortTerm(string token)
+    {
+        var count = 0;
+        foreach (var _ in token.EnumerateRunes())
+            if (++count == 3) return false;
+        return true;
+    }
+
     public static string BuildFtsQuery(string input)
     {
         if (string.IsNullOrWhiteSpace(input)) return string.Empty;
 
-        var tokens = input.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        var tokens = input.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
         if (tokens.Length == 0) return string.Empty;
 
         var sb = new StringBuilder();
@@ -29,7 +37,7 @@ public static class DatabaseFtsQueryHelper
             // this index, with or without a trailing '*'. The prefix form below is still emitted
             // for completeness, but nothing in the search path relies on it -- DatabaseSearchHelper
             // answers any query holding such a term with its content scan instead.
-            if (cleaned.Length < 3)
+            if (IsShortTerm(cleaned))
             {
                 sb.Append('"').Append(cleaned).Append("\"*");
             }

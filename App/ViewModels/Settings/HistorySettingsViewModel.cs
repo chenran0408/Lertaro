@@ -11,6 +11,8 @@ public class HistorySettingsViewModel : ViewModelBase
 {
     private readonly UserSettings _userSettings;
     private bool _clearHistoryOnExit;
+    private bool _searchHistoryEnabled;
+    private bool _keywordHistoryEnabled;
     private string _selectedTab = "Search";
     private ICommand? _selectTabCommand;
 
@@ -26,18 +28,22 @@ public class HistorySettingsViewModel : ViewModelBase
     {
         _userSettings = userSettings;
         _clearHistoryOnExit = userSettings.ClearHistoryOnExit;
+        _searchHistoryEnabled = userSettings.EnableHistory;
+        _keywordHistoryEnabled = userSettings.EnableKeywordHistory;
 
         SearchHistory = new HistoryListViewModel<HistoryEntry>(
             () => SearchHistoryStore.GetEntries().ToList(),
             MapSearchEntry,
-            () => _userSettings.EnableHistory,
-            v => _userSettings.EnableHistory = v);
+            () => _searchHistoryEnabled,
+            v => _searchHistoryEnabled = v,
+            entry => entry.Path);
 
         KeywordHistory = new HistoryListViewModel<KeywordHistoryEntry>(
             KeywordHistoryStore.GetCountedEntries,
             MapKeywordEntry,
-            () => _userSettings.EnableKeywordHistory,
-            v => _userSettings.EnableKeywordHistory = v);
+            () => _keywordHistoryEnabled,
+            v => _keywordHistoryEnabled = v,
+            entry => entry.Keyword);
 
         // Live counts: the store raises Changed on every Record/Save/Delete, so the visible rows stay
         // in step with what the user just opened in any search window -- no manual refresh needed.
@@ -74,6 +80,12 @@ public class HistorySettingsViewModel : ViewModelBase
     }
 
     public ICommand SelectTabCommand => _selectTabCommand ??= new RelayCommand<string>(tab => SelectedTab = tab);
+
+    public bool ClearHistoryOnExit
+    {
+        get => _clearHistoryOnExit;
+        set => SetProperty(ref _clearHistoryOnExit, value);
+    }
 
     public HistoryListViewModel<HistoryEntry> SearchHistory { get; }
     public HistoryListViewModel<KeywordHistoryEntry> KeywordHistory { get; }
@@ -119,10 +131,17 @@ public class HistorySettingsViewModel : ViewModelBase
         UsageCount = entry.Count
     };
 
-    public void Save()
+    public void StagePreferences()
     {
-        SearchHistoryStore.SaveEntries(SearchHistory.GetEntriesToSave());
-        KeywordHistoryStore.SaveEntries(KeywordHistory.GetEntriesToSave());
+        _userSettings.EnableHistory = _searchHistoryEnabled;
+        _userSettings.EnableKeywordHistory = _keywordHistoryEnabled;
+        _userSettings.ClearHistoryOnExit = ClearHistoryOnExit;
+    }
+
+    public void SaveRemovals()
+    {
+        SearchHistory.SaveRemovals(SearchHistoryStore.RemoveEntries);
+        KeywordHistory.SaveRemovals(KeywordHistoryStore.RemoveEntries);
     }
 
     public void NotifyLanguageChanged()

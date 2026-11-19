@@ -121,6 +121,9 @@ public sealed class FlowPublicApiTests
         api.ChangeQuery("ac o ", true);
         Assert.AreEqual("audio o ", changedQuery);
 
+        api.ChangeQuery("ac　设备 ", true);
+        Assert.AreEqual("audio 设备 ", changedQuery);
+
         // Plugin sends "ac" -> normalized to "audio"
         api.ChangeQuery("ac", true);
         Assert.AreEqual("audio", changedQuery);

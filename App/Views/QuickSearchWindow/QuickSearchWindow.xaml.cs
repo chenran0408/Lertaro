@@ -58,7 +58,7 @@ public partial class QuickSearchWindow : Views.Controls.AppWindow, ISearchWindow
         InitializeChildControls();
         KeywordHistoryController = new QuickSearchKeywordHistoryController(this);
         _launchActions = new QuickSearchLaunchActionsCoordinator(this);
-        this.DpiChanged += (_, _) => { if (IsVisible) PositionWindow(); };
+        DpiChanged += (_, _) => _controller.FitViewportAtCurrentPosition();
     }
     public ShellMenuPresenter? MenuPresenter => _menuPresenter;
     public QuickSearchViewModel ViewModel => _viewModel;
@@ -99,14 +99,16 @@ public partial class QuickSearchWindow : Views.Controls.AppWindow, ISearchWindow
     internal void EnterLaunchPanelActions(AppSearchResult result) => _launchActions.Enter(result);
     public void UpdateActionsLayout()
     {
-        if (GridActions.Visibility != Visibility.Visible)
+        if (GridActions.Visibility == Visibility.Visible)
+            _controller.FitViewportAtCurrentPosition();
+        else
             _launchActions.PrepareExit();
         _layoutManager.UpdateActionsLayout();
     }
     internal void ExecuteFavorite(AppSearchResult result) => _resultExecutor.Execute(result);
     internal void RecordKeywordHistory()
     {
-        if (!QueryFilterSupport.IsStealth) try { KeywordHistoryStore.Record(_viewModel.SearchQuery); } catch { }
+        if (!QueryFilterSupport.IsStealthQuery(_viewModel.SearchQuery)) try { KeywordHistoryStore.Record(_viewModel.SearchQuery); } catch { }
     }
     // Runs the results-panel height computation synchronously instead of through the normal deferred
     // QueueResultsLayoutUpdate -- see QuickSearchWindowController.ShowWindow's own comment on why it needs

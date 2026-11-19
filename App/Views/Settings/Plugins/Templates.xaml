@@ -17,6 +17,40 @@
     <local:EmptyStringToPlaceholderConverter x:Key="EmptyOrPlaceholder"/>
     <conv:ReferenceEqualsConverter x:Key="RefEquals"/>
     <local:BadgeFieldToVisibilityConverter x:Key="BadgeFieldToVis"/>
+    <DataTemplate x:Key="PluginFieldHeading">
+        <Grid>
+            <TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Description, Converter={StaticResource StringToVis}}" Value="Visible">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <Expander Visibility="{Binding Description, Converter={StaticResource StringToVis}}"
+                      Foreground="{DynamicResource TextPrimary}" AutomationProperties.HelpText="{Binding Description}">
+                <Expander.Header>
+                    <TextBlock FontWeight="SemiBold" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="{Binding Label}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Label, Converter={StaticResource StringToVis}}" Value="Collapsed">
+                                        <Setter Property="Text" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_InlineHelp]}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Expander.Header>
+                <TextBlock Text="{Binding Description}" Style="{DynamicResource SettingsHintText}" Margin="0,6,0,0"/>
+            </Expander>
+        </Grid>
+    </DataTemplate>
+
     <!-- Selectable row container for the array master list -->
     <Style x:Key="ArrayMasterListItemStyle" TargetType="ListBoxItem">
         <Setter Property="Padding" Value="0"/>
@@ -83,25 +117,41 @@
     <DataTemplate x:Key="HotkeyFieldTemplate">
         <ctrl:HotkeyRecorderControl Value="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                     RequireModifier="{Binding HotkeyRequireModifier}"
-                                    Width="180" Height="26"/>
+                                    Width="180" Height="32" AutomationProperties.Name="{Binding Label}"/>
     </DataTemplate>
     <DataTemplate x:Key="FilePathFieldTemplate">
-        <StackPanel Orientation="Horizontal">
-            <TextBox x:Name="PathEditor" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" MaxLength="{Binding MaxLength}" Width="150" Height="26"/>
-            <Button Content="..." Style="{StaticResource SettingsButton}" MinWidth="0" Padding="4,0" Width="28" Height="26" Margin="4,0,0,0" Tag="File" Click="BrowsePath_Click"/>
-        </StackPanel>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                     MaxLength="{Binding MaxLength}" MinWidth="120" MinHeight="32" AutomationProperties.Name="{Binding Label}"/>
+            <Button Grid.Column="1" Content="&#xE8B7;" Style="{StaticResource SettingsButton}" FontFamily="{DynamicResource AppIconFontFamily}" Padding="0"
+                    MinWidth="32" MinHeight="32" Margin="6,0,0,0" Tag="File" Click="BrowsePath_Click"
+                    ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_BrowseFileTooltip]}"
+                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
+        </Grid>
     </DataTemplate>
 
     <DataTemplate x:Key="FolderPathFieldTemplate">
-        <StackPanel Orientation="Horizontal">
-            <TextBox x:Name="PathEditor" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" MaxLength="{Binding MaxLength}" Width="150" Height="26"/>
-            <Button Content="..." Style="{StaticResource SettingsButton}" MinWidth="0" Padding="4,0" Width="28" Height="26" Margin="4,0,0,0" Tag="Folder" Click="BrowsePath_Click"/>
-        </StackPanel>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                     MaxLength="{Binding MaxLength}" MinWidth="120" MinHeight="32" AutomationProperties.Name="{Binding Label}"/>
+            <Button Grid.Column="1" Content="&#xE8B7;" Style="{StaticResource SettingsButton}" FontFamily="{DynamicResource AppIconFontFamily}" Padding="0"
+                    MinWidth="32" MinHeight="32" Margin="6,0,0,0" Tag="Folder" Click="BrowsePath_Click"
+                    ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_BrowseFolderTooltip]}"
+                    AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
+        </Grid>
     </DataTemplate>
 
     <DataTemplate x:Key="IconTextFieldTemplate">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" MaxLength="{Binding MaxLength}" Width="{Binding EditorWidth}" TextAlignment="{Binding TextAlignment}" Height="26" DataObject.Pasting="IconTextBox_OnPasting" LostFocus="IconTextBox_OnLostFocus">
+            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" MaxLength="{Binding MaxLength}" Width="{Binding EditorWidth}" TextAlignment="{Binding TextAlignment}" MinHeight="32" AutomationProperties.Name="{Binding Label}" DataObject.Pasting="IconTextBox_OnPasting" LostFocus="IconTextBox_OnLostFocus">
                 <TextBox.ToolTip>
                     <ToolTip>
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_IconInputTooltip]}" TextWrapping="Wrap" MaxWidth="360"/>
@@ -117,7 +167,7 @@
 
     <!-- Implicit ComboBox styling to match SettingsComboBox -->
     <Style TargetType="ComboBox" BasedOn="{StaticResource SettingsComboBox}">
-        <Setter Property="Height" Value="26"/>
+        <Setter Property="Height" Value="32"/>
     </Style>
 
     <!-- Renders just the value editor for a field (no label/description), shared by the
@@ -131,20 +181,26 @@
         <Style.Triggers>
             <!-- Boolean fields -->
             <DataTrigger Binding="{Binding IsBoolean}" Value="True">
-                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><CheckBox IsChecked="{Binding Value, Mode=TwoWay}" Margin="0"/></DataTemplate></Setter.Value></Setter>
+                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><CheckBox AutomationProperties.Name="{Binding Label}" IsChecked="{Binding Value, Mode=TwoWay}" Margin="0"/></DataTemplate></Setter.Value></Setter>
             </DataTrigger>
             <!-- Text fields -->
             <DataTrigger Binding="{Binding IsText}" Value="True">
                 <Setter Property="ContentTemplate">
                     <Setter.Value>
                         <DataTemplate>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" MaxLength="{Binding MaxLength}" local:PluginConfigTemplates.ApplyInitialSelection="True" Width="{Binding EditorWidth}" TextAlignment="{Binding TextAlignment}" Height="26"/>
-                                <Border Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" Visibility="{Binding IsIconField, Converter={StaticResource InvertBoolToVis}}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                <Border Width="24" Height="24" Margin="8,0,0,0" CornerRadius="4" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" Visibility="{Binding IsIconField, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                    <Path Data="{Binding Value}" Fill="{DynamicResource DefaultPluginIconColor}" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                </Border>
-                            </StackPanel>
+                            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                     MaxLength="{Binding MaxLength}" local:PluginConfigTemplates.ApplyInitialSelection="True"
+                                     AutomationProperties.Name="{Binding Label}" TextAlignment="{Binding TextAlignment}" MinHeight="32">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSingleChar}" Value="True">
+                                                <Setter Property="Width" Value="{Binding EditorWidth}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
                         </DataTemplate>
                     </Setter.Value>
                 </Setter>
@@ -155,23 +211,23 @@
             </DataTrigger>
             <!-- StringList fields -->
             <DataTrigger Binding="{Binding IsStringList}" Value="True">
-                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" MaxLength="{Binding MaxLength}" Width="260" Height="80" AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top" Padding="6,4" FontFamily="{DynamicResource AppMonospaceFontFamily}"/></DataTemplate></Setter.Value></Setter>
+                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" MaxLength="{Binding MaxLength}" MinWidth="120" Height="96" AutomationProperties.Name="{Binding Label}" AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top" Padding="6,4" FontFamily="{DynamicResource AppMonospaceFontFamily}"/></DataTemplate></Setter.Value></Setter>
             </DataTrigger>
             <!-- Integer fields -->
             <DataTrigger Binding="{Binding IsInteger}" Value="True">
-                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Width="80" Height="26"/></DataTemplate></Setter.Value></Setter>
+                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" AutomationProperties.Name="{Binding Label}" Width="80" MinHeight="32"/></DataTemplate></Setter.Value></Setter>
             </DataTrigger>
             <!-- Hotkey / Path / Choice fields -->
             <DataTrigger Binding="{Binding IsHotkey}" Value="True"><Setter Property="ContentTemplate" Value="{StaticResource HotkeyFieldTemplate}"/></DataTrigger>
             <DataTrigger Binding="{Binding IsFilePath}" Value="True"><Setter Property="ContentTemplate" Value="{StaticResource FilePathFieldTemplate}"/></DataTrigger>
             <DataTrigger Binding="{Binding IsFolderPath}" Value="True"><Setter Property="ContentTemplate" Value="{StaticResource FolderPathFieldTemplate}"/></DataTrigger>
             <DataTrigger Binding="{Binding IsChoice}" Value="True">
-                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><ComboBox ItemsSource="{Binding ChoiceItems}" SelectedValue="{Binding Value, Mode=TwoWay}" SelectedValuePath="Value" DisplayMemberPath="Label" MinWidth="180"/></DataTemplate></Setter.Value></Setter>
+                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><ComboBox AutomationProperties.Name="{Binding Label}" ItemsSource="{Binding ChoiceItems}" SelectedValue="{Binding Value, Mode=TwoWay}" SelectedValuePath="Value" DisplayMemberPath="Label" MinWidth="180"/></DataTemplate></Setter.Value></Setter>
             </DataTrigger>
             <!-- Button fields: a plain action button (e.g. rebuild the plugin's index). The schema's
                  OnClick delegate runs on click; nothing is stored for the field itself. -->
             <DataTrigger Binding="{Binding IsButton}" Value="True">
-                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><Button Command="{Binding ButtonClickCommand}" Content="{Binding Label}" Style="{StaticResource PrimarySettingsButton}" Height="26" MinWidth="96" Padding="10,0" FontSize="14" Cursor="Hand" VerticalAlignment="Center"/></DataTemplate></Setter.Value></Setter>
+                <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><Button Command="{Binding ButtonClickCommand}" Content="{Binding Label}" Style="{StaticResource PrimarySettingsButton}" MinHeight="32" MinWidth="96" Padding="10,0" FontSize="14" Cursor="Hand" VerticalAlignment="Center"/></DataTemplate></Setter.Value></Setter>
             </DataTrigger>
         </Style.Triggers>
     </Style>
@@ -179,10 +235,11 @@
     <!-- Compact array-row delete button, reused by both the object-array table and the
          scalar-array list so their rows line up the same way. -->
     <Style x:Key="ArrayRowDeleteButton" TargetType="Button">
+        <Setter Property="AutomationProperties.Name" Value="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
         <Setter Property="Content" Value="&#xE74D;"/>
         <Setter Property="Command" Value="{Binding DeleteCommand}"/>
         <Setter Property="Width" Value="28"/>
-        <Setter Property="Height" Value="26"/>
+        <Setter Property="Height" Value="32"/>
         <Setter Property="Margin" Value="8,0,0,0"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
@@ -205,6 +262,12 @@
                             <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
                             <Setter Property="Foreground" Value="{DynamicResource AccentBlue}"/>
                         </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45"/>
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -219,7 +282,7 @@
         <Setter Property="Content" Value="&#xE710;"/>
         <Setter Property="Command" Value="{Binding AddCommand}"/>
         <Setter Property="Width" Value="26"/>
-        <Setter Property="Height" Value="24"/>
+        <Setter Property="Height" Value="32"/>
         <Setter Property="Margin" Value="4,0,0,0"/>
     </Style>
 
@@ -231,13 +294,13 @@
     <Style x:Key="ArrayRowMoveUpButton" TargetType="Button" BasedOn="{StaticResource ArrayRowDeleteButton}">
         <Setter Property="Content" Value="&#xE74A;"/>
         <Setter Property="Command" Value="{Binding MoveUpCommand}"/>
-        <Setter Property="Width" Value="22"/>
+        <Setter Property="Width" Value="28"/>
         <Setter Property="Margin" Value="4,0,0,0"/>
     </Style>
     <Style x:Key="ArrayRowMoveDownButton" TargetType="Button" BasedOn="{StaticResource ArrayRowDeleteButton}">
         <Setter Property="Content" Value="&#xE74B;"/>
         <Setter Property="Command" Value="{Binding MoveDownCommand}"/>
-        <Setter Property="Width" Value="22"/>
+        <Setter Property="Width" Value="28"/>
         <Setter Property="Margin" Value="4,0,0,0"/>
     </Style>
     <!-- Label-above-editor row for an array item's detail panel. The window is wide enough
@@ -245,10 +308,7 @@
          awkward gap between them; stacking keeps each field readable at any window width. -->
     <DataTemplate x:Key="ArrayDetailStackedFieldTemplate">
         <StackPanel Margin="0,0,0,14">
-            <TextBlock Text="{Binding Label}" FontSize="14" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
-                       TextWrapping="Wrap" Margin="0,0,0,4" Visibility="{Binding Label, Converter={StaticResource StringToVis}}"/>
-            <TextBlock Text="{Binding Description}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap"
-                       Margin="0,0,0,6" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+            <ContentControl Content="{Binding}" Focusable="False" ContentTemplate="{StaticResource PluginFieldHeading}"/>
             <!-- Two features answering to one trigger word, named at the field that is creating the
                  collision. An array item's sub-fields render through THIS template rather than the
                  implicit PluginConfigFieldViewModel one, so without this line every trigger word a plugin
@@ -261,7 +321,7 @@
                                    EditCompleted="ArrayInlineEditorHost_EditCompleted"
                                    HorizontalAlignment="Stretch">
                 <ctrl:InlineEditorHost.NormalContent>
-                    <ContentControl Content="{Binding}" HorizontalAlignment="Left" Focusable="False" Style="{StaticResource FieldValueEditorStyle}"/>
+                    <ContentControl Content="{Binding}" HorizontalContentAlignment="Stretch" Focusable="False" Style="{StaticResource FieldValueEditorStyle}"/>
                 </ctrl:InlineEditorHost.NormalContent>
             </ctrl:InlineEditorHost>
         </StackPanel>
@@ -272,17 +332,13 @@
     <DataTemplate x:Key="ArrayDetailBooleanFieldTemplate">
         <Grid Margin="0,0,0,14">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
-                <TextBlock Text="{Binding Label}" FontSize="14" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
-                           TextWrapping="Wrap" MaxWidth="320" HorizontalAlignment="Left" Visibility="{Binding Label, Converter={StaticResource StringToVis}}"/>
-                <TextBlock Text="{Binding Description}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap"
-                           MaxWidth="320" HorizontalAlignment="Left" Margin="0,2,0,0" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+                <ContentControl Content="{Binding}" Focusable="False" ContentTemplate="{StaticResource PluginFieldHeading}"/>
             </StackPanel>
-            <CheckBox Grid.Column="1" IsChecked="{Binding Value, Mode=TwoWay}" VerticalAlignment="Center"/>
+            <CheckBox Grid.Column="1" AutomationProperties.Name="{Binding Label}" IsChecked="{Binding Value, Mode=TwoWay}" VerticalAlignment="Center"/>
         </Grid>
     </DataTemplate>
 

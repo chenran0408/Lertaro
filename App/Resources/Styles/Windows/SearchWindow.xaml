@@ -133,9 +133,9 @@
                 <ControlTemplate TargetType="ListViewItem">
                     <Grid>
                         <Rectangle x:Name="AccentBar" Width="3" HorizontalAlignment="Left"
-                                   RadiusX="1.5" RadiusY="1.5" Fill="Transparent" Margin="0,2"/>
+                                   RadiusX="1.5" RadiusY="1.5" Fill="Transparent" Margin="8,7,0,7" Panel.ZIndex="1"/>
                         <Border x:Name="ItemBorder" Background="Transparent"
-                                CornerRadius="6"
+                                CornerRadius="{StaticResource CornerRadiusControl}"
                                 Margin="6,2,6,2"
                                 Padding="12,0,12,0" Cursor="Hand">
                             <GridViewRowPresenter VerticalAlignment="Center"/>
@@ -146,7 +146,7 @@
                             <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ItemHover}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ItemHover}"/>
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource ItemSelected}"/>
                             <Setter TargetName="AccentBar" Property="Fill" Value="{DynamicResource AccentBarColor}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>

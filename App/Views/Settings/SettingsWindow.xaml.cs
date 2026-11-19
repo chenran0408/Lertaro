@@ -102,8 +102,7 @@ public partial class SettingsWindow : Views.Controls.AppWindow
         {
             if (vm.PendingApply.IsCompleted) return;
             e.Cancel = true;
-            await vm.PendingApply;
-            if (IsLoaded) Close();
+            if (await vm.PendingApply && IsLoaded) Close();
         };
         Closed += async (_, _) =>
         {
@@ -279,6 +278,8 @@ public partial class SettingsWindow : Views.Controls.AppWindow
         _currentPage?.Visibility = Visibility.Collapsed;
 
         var page = this.GetSectionPage(tag);
+        if (page is PluginManagementSettingsPage && DataContext is SettingsViewModel vm)
+            vm.Plugins.IsConfigurationDirectory = tag == "PluginSettings";
         page?.Visibility = Visibility.Visible;
         _currentPage = page;
     }

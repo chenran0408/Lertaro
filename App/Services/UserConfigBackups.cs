@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO;
 using Lertaro.App.Views.Controls.Dialogs;
+using Lertaro.App.Services.AppWindow;
 using Lertaro.Core;
 using Lertaro.PluginSdk.Abstractions;
 using Lertaro.App.ViewModels.Settings;
@@ -94,7 +95,7 @@ internal static class UserConfigBackups
         try
         {
             var dialog = new Microsoft.Win32.SaveFileDialog { FileName = SettingsBackup.FileName, DefaultExt = ".zip", Filter = "ZIP (*.zip)|*.zip" };
-            if (dialog.ShowDialog() != true) return;
+            if (AppWindowManager.ShowSettingsFileDialog(dialog) != true) return;
             var options = PromptPluginFiles();
             if (options == null || !Confirm(TranslationManager.Instance["About_ConfigExportConfirm"])) return;
             if (settings != null && !await settings.ApplyAsync(personalOnly: true)) return;
@@ -120,7 +121,7 @@ internal static class UserConfigBackups
             {
                 Filter = $"{TranslationManager.Instance["About_ConfigFileFilter"]} (*.zip;*.json)|*.zip;*.json|All files (*.*)|*.*"
             };
-            if (dialog.ShowDialog() != true) return;
+            if (AppWindowManager.ShowSettingsFileDialog(dialog) != true) return;
 
             await ApplySourceAsync(dialog.FileName);
         }

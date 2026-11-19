@@ -41,6 +41,7 @@
         
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type MenuItem}">
@@ -52,7 +53,8 @@
                              menu item using it too. AccentBar's Fill likewise stays permanently
                              AccentBarColor with only its Opacity toggling. -->
                         <Rectangle x:Name="AccentBar" Width="3" HorizontalAlignment="Left"
-                                   RadiusX="1.5" RadiusY="1.5" Fill="{DynamicResource AccentBarColor}" Opacity="0" Margin="0,2"/>
+                                   RadiusX="1.5" RadiusY="1.5" Fill="{DynamicResource AccentBarColor}" Opacity="0"
+                                   Margin="5,6,0,6" Panel.ZIndex="1" IsHitTestVisible="False"/>
                         <Border x:Name="HighlightOverlay" CornerRadius="{StaticResource CornerRadiusControl}"
                                 Background="{DynamicResource HoverBackground}" Margin="2,1" Opacity="0"/>
                         <Border x:Name="Bg" CornerRadius="{StaticResource CornerRadiusControl}" Background="Transparent" Margin="2,1">

@@ -1,4 +1,5 @@
 using System.Windows;
+using Lertaro.App.Services;
 using Lertaro.App.ViewModels.Service;
 using Lertaro.Core.Indexer.Usn;
 
@@ -124,6 +125,22 @@ public sealed class SearchServiceStatusPresenterTests
         Assert.AreEqual(Visibility.Collapsed, recorder.LoadingPanelVisibility);
         Assert.IsTrue(recorder.SearchBoxEnabled);
         Assert.AreEqual(1, recorder.ReadyCount);
+    }
+
+    [TestMethod]
+    [DataRow("idle")]
+    [DataRow(SearchIndexBootstrapHelper.IndexError)]
+    public void SettledUnavailableIndexClearsProgressAndKeepsSearchEnabled(string state)
+    {
+        var recorder = new Recorder();
+        var presenter = recorder.Build();
+        presenter.ShowConnecting(waitingForReconnect: false);
+
+        presenter.ProcessStatus(new UsnIndexer.IndexerStatus { State = state });
+
+        Assert.AreEqual(Visibility.Collapsed, recorder.LoadingPanelVisibility);
+        Assert.IsTrue(recorder.SearchBoxEnabled);
+        Assert.AreEqual(0, recorder.ReadyCount);
     }
 
     [TestMethod]

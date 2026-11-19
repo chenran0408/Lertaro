@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
+using System.Windows.Data;
 using System.Windows.Input;
 using Lertaro.App.Helpers;
+using Lertaro.App.Services.AppWindow;
 using Lertaro.Core;
 
 namespace Lertaro.App.ViewModels.Settings;
@@ -27,8 +29,10 @@ public class FavoritesSettingsViewModel : ViewModelBase
                 foreach (FavoriteItemViewModel item in e.NewItems) item.PropertyChanged += OnItemPropertyChanged;
             OnPropertyChanged(nameof(HasItems));
             FavoriteHotkeySettingsSupport.RefreshHints(this);
+            CommandManager.InvalidateRequerySuggested();
         };
         FavoriteHotkeySettingsSupport.RefreshHints(this);
+        _isAddFormOpen = Items.Count == 0;
 
         AddCommand = new RelayCommand(Add, CanAdd);
         ClearCommand = new RelayCommand(Clear);
@@ -40,8 +44,8 @@ public class FavoritesSettingsViewModel : ViewModelBase
         BrowseFileCommand = new RelayCommand(BrowseFile);
         BrowseEditFolderCommand = new RelayCommand<FavoriteItemViewModel>(item => BrowseEdit(item, true));
         BrowseEditFileCommand = new RelayCommand<FavoriteItemViewModel>(item => BrowseEdit(item, false));
-        MoveUpCommand = new RelayCommand<FavoriteItemViewModel>(MoveUp);
-        MoveDownCommand = new RelayCommand<FavoriteItemViewModel>(MoveDown);
+        MoveUpCommand = new RelayCommand<FavoriteItemViewModel>(MoveUp, item => CanReorder && item != null && Items.IndexOf(item) > 0);
+        MoveDownCommand = new RelayCommand<FavoriteItemViewModel>(MoveDown, CanMoveDown);
         AddPathPresetCommand = new RelayCommand<string>(AddPathPreset);
     }
 
@@ -69,6 +73,26 @@ public class FavoritesSettingsViewModel : ViewModelBase
     public ICommand AddPathPresetCommand { get; }
 
     public bool HasItems => Items.Count > 0;
+    private bool _isAddFormOpen;
+    public bool IsAddFormOpen { get => _isAddFormOpen; set => SetProperty(ref _isAddFormOpen, value); }
+
+    private string _filterText = string.Empty;
+    public bool CanReorder => string.IsNullOrWhiteSpace(FilterText);
+    public string FilterText
+    {
+        get => _filterText;
+        set
+        {
+            if (!SetProperty(ref _filterText, value)) return;
+            var query = value.Trim();
+            CollectionViewSource.GetDefaultView(Items).Filter = query.Length == 0 ? null :
+                row => row is FavoriteItemViewModel item && (item.IsEditing
+                    || item.DisplayName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+                    || item.Path.Contains(query, StringComparison.OrdinalIgnoreCase));
+            OnPropertyChanged(nameof(CanReorder));
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
 
     private void OnItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -121,7 +145,14 @@ public class FavoritesSettingsViewModel : ViewModelBase
         }
     }
 
-    private bool CanAdd() => FavoritePathResolver.IsPathAvailable(NewPath);
+    private bool CanAdd()
+    {
+        var path = NormalizePath(NewPath);
+        if (!FavoritePathResolver.IsPathAvailable(path)) return false;
+        var normalized = FavoritePathResolver.NormalizeForComparison(path);
+        return !Items.Any(item => string.Equals(FavoritePathResolver.NormalizeForComparison(item.Path),
+            normalized, StringComparison.OrdinalIgnoreCase));
+    }
 
     private void Clear()
     {
@@ -131,8 +162,9 @@ public class FavoritesSettingsViewModel : ViewModelBase
 
     private void Add()
     {
+        if (!CanAdd()) return;
         var name = string.IsNullOrWhiteSpace(NewName) ? string.Empty : NewName.Trim();
-        var path = NewPath.Trim().Trim('"');
+        var path = NormalizePath(NewPath);
 
         if (string.IsNullOrWhiteSpace(path)) return;
 
@@ -146,6 +178,7 @@ public class FavoritesSettingsViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(path)) return;
         NewName = string.Empty;
         NewPath = path;
+        IsAddFormOpen = true;
     }
 
     private void Remove(FavoriteItemViewModel item)
@@ -182,9 +215,20 @@ public class FavoritesSettingsViewModel : ViewModelBase
         item.Name = string.IsNullOrWhiteSpace(item.EditName) ? string.Empty : item.EditName.Trim();
         item.Path = NormalizePath(item.EditPath);
         item.IsEditing = false;
+        RefreshFilter();
     }
 
-    private static void CancelEdit(FavoriteItemViewModel item) => item?.IsEditing = false;
+    private void CancelEdit(FavoriteItemViewModel item)
+    {
+        if (item == null) return;
+        item.IsEditing = false;
+        RefreshFilter();
+    }
+
+    private void RefreshFilter()
+    {
+        if (!CanReorder) CollectionViewSource.GetDefaultView(Items).Refresh();
+    }
 
     private void BrowseEdit(FavoriteItemViewModel item, bool folder)
     {
@@ -192,12 +236,12 @@ public class FavoritesSettingsViewModel : ViewModelBase
         if (folder)
         {
             var dialog = new Microsoft.Win32.OpenFolderDialog();
-            if (dialog.ShowDialog() == true) item.EditPath = dialog.FolderName;
+            if (AppWindowManager.ShowSettingsFileDialog(dialog) == true) item.EditPath = dialog.FolderName;
         }
         else
         {
             var dialog = new Microsoft.Win32.OpenFileDialog { DereferenceLinks = false };
-            if (dialog.ShowDialog() == true) item.EditPath = dialog.FileName;
+            if (AppWindowManager.ShowSettingsFileDialog(dialog) == true) item.EditPath = dialog.FileName;
         }
     }
 
@@ -206,13 +250,13 @@ public class FavoritesSettingsViewModel : ViewModelBase
     private void BrowseFolder()
     {
         var dialog = new Microsoft.Win32.OpenFolderDialog { Multiselect = true };
-        if (dialog.ShowDialog() == true) AddPaths(dialog.FolderNames);
+        if (AppWindowManager.ShowSettingsFileDialog(dialog) == true) AddPaths(dialog.FolderNames);
     }
 
     private void BrowseFile()
     {
         var dialog = new Microsoft.Win32.OpenFileDialog { Multiselect = true, DereferenceLinks = false };
-        if (dialog.ShowDialog() == true) AddPaths(dialog.FileNames);
+        if (AppWindowManager.ShowSettingsFileDialog(dialog) == true) AddPaths(dialog.FileNames);
     }
 
     internal void AddPaths(IEnumerable<string> paths) => FavoritesSettingsPathSupport.AddPaths(this, paths);
@@ -235,6 +279,13 @@ public class FavoritesSettingsViewModel : ViewModelBase
         {
             Items.Move(idx, idx + 1);
         }
+    }
+
+    private bool CanMoveDown(FavoriteItemViewModel item)
+    {
+        if (!CanReorder || item == null) return false;
+        var index = Items.IndexOf(item);
+        return index >= 0 && index < Items.Count - 1;
     }
 
     public void Save() => _userSettings.Favorites = Items.Select(x => new FavoriteItemSetting { Name = x.Name, Path = x.Path, Hotkey = x.Hotkey }).ToList();

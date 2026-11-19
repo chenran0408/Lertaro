@@ -13,7 +13,7 @@ public sealed class ClipboardTextReaderTests
         var native = new FakeClipboardNative { Data = "hello" };
         var reader = new ClipboardTextReader(native, openWindow: 100);
 
-        Assert.AreEqual("hello", reader.Read(1000, expectedSequence: 0, expectedOwner: 1));
+        Assert.AreEqual("hello", reader.Read(1000, expectedSequence: 0, expectedOwner: 1, out _));
         Assert.AreEqual(1, native.OpenCalls);
         Assert.AreEqual(1, native.CloseCalls);
         Assert.AreEqual(1, native.LockCalls);
@@ -30,7 +30,7 @@ public sealed class ClipboardTextReaderTests
         var reader = new ClipboardTextReader(native, 0);
         var clock = Stopwatch.StartNew();
 
-        Assert.AreEqual("hello", reader.Read(1000, 0, 1));
+        Assert.AreEqual("hello", reader.Read(1000, 0, 1, out _));
         clock.Stop();
         Assert.AreEqual(3, native.OpenCalls);
 
@@ -44,7 +44,7 @@ public sealed class ClipboardTextReaderTests
         var native = new FakeClipboardNative { FailAllOpens = true };
         var reader = new ClipboardTextReader(native, 0);
 
-        Assert.IsNull(reader.Read(1000, 0, 1));
+        Assert.IsNull(reader.Read(1000, 0, 1, out _));
         Assert.AreEqual(ClipboardTextReader.MaxRetries + 1, native.OpenCalls);
         Assert.AreEqual(0, native.CloseCalls);
     }
@@ -55,7 +55,7 @@ public sealed class ClipboardTextReaderTests
         var native = new FakeClipboardNative { FormatAvailable = false };
         var reader = new ClipboardTextReader(native, 0);
 
-        Assert.IsNull(reader.Read(1000, 0, 1));
+        Assert.IsNull(reader.Read(1000, 0, 1, out _));
         Assert.AreEqual(1, native.OpenCalls);
         Assert.AreEqual(1, native.CloseCalls);
     }
@@ -68,7 +68,7 @@ public sealed class ClipboardTextReaderTests
         var native = new FakeClipboardNative { Data = "secret", SequenceValue = 1 };
         var reader = new ClipboardTextReader(native, 0);
 
-        Assert.IsNull(reader.Read(1000, expectedSequence: 0, expectedOwner: 1));
+        Assert.IsNull(reader.Read(1000, expectedSequence: 0, expectedOwner: 1, out _));
         Assert.AreEqual(1, native.OpenCalls);
         Assert.AreEqual(0, native.LockCalls);
         Assert.AreEqual(1, native.CloseCalls);
@@ -80,7 +80,7 @@ public sealed class ClipboardTextReaderTests
         var native = new FakeClipboardNative { Data = "secret", OwnerValue = 2 };
         var reader = new ClipboardTextReader(native, 0);
 
-        Assert.IsNull(reader.Read(1000, expectedSequence: 0, expectedOwner: 1));
+        Assert.IsNull(reader.Read(1000, expectedSequence: 0, expectedOwner: 1, out _));
         Assert.AreEqual(0, native.LockCalls);
     }
 
@@ -90,10 +90,11 @@ public sealed class ClipboardTextReaderTests
         var native = new FakeClipboardNative { Data = new string('a', 5000) };
         var reader = new ClipboardTextReader(native, 0);
 
-        var text = reader.Read(100, 0, 1);
+        var text = reader.Read(100, 0, 1, out var complete);
         Assert.IsNotNull(text);
         Assert.AreEqual(100, text.Length);
         Assert.IsTrue(text.All(ch => ch == 'a'));
+        Assert.IsFalse(complete);
     }
 
     [TestMethod]
@@ -102,9 +103,10 @@ public sealed class ClipboardTextReaderTests
         var native = new FakeClipboardNative { Data = new string('b', 100) };
         var reader = new ClipboardTextReader(native, 0);
 
-        var text = reader.Read(100, 0, 1);
+        var text = reader.Read(100, 0, 1, out var complete);
         Assert.IsNotNull(text);
         Assert.AreEqual(100, text.Length);
+        Assert.IsTrue(complete);
     }
 
     [TestMethod]
@@ -114,7 +116,7 @@ public sealed class ClipboardTextReaderTests
         var native = new FakeClipboardNative { Data = new string('a', 99) + "\uD83D" };
         var reader = new ClipboardTextReader(native, 0);
 
-        var text = reader.Read(100, 0, 1);
+        var text = reader.Read(100, 0, 1, out _);
         Assert.IsNotNull(text);
         Assert.AreEqual(99, text.Length);
         Assert.IsTrue(text.All(ch => ch == 'a'));
@@ -126,7 +128,7 @@ public sealed class ClipboardTextReaderTests
         var native = new FakeClipboardNative { Data = new string('a', 98) + "\uD83D\uDE00" };
         var reader = new ClipboardTextReader(native, 0);
 
-        var text = reader.Read(100, 0, 1);
+        var text = reader.Read(100, 0, 1, out _);
         Assert.IsNotNull(text);
         Assert.AreEqual(100, text.Length);
         Assert.IsTrue(char.IsSurrogatePair(text[^2], text[^1]));
@@ -138,7 +140,7 @@ public sealed class ClipboardTextReaderTests
         var native = new FakeClipboardNative { Data = string.Empty };
         var reader = new ClipboardTextReader(native, 0);
 
-        Assert.IsNull(reader.Read(1000, 0, 1));
+        Assert.IsNull(reader.Read(1000, 0, 1, out _));
     }
 
     [TestMethod]
@@ -147,7 +149,7 @@ public sealed class ClipboardTextReaderTests
         var native = new FakeClipboardNative { Data = null };
         var reader = new ClipboardTextReader(native, 0);
 
-        Assert.IsNull(reader.Read(1000, 0, 1));
+        Assert.IsNull(reader.Read(1000, 0, 1, out _));
         Assert.AreEqual(0, native.LockCalls);
     }
 
@@ -157,7 +159,7 @@ public sealed class ClipboardTextReaderTests
         var native = new FakeClipboardNative { Data = "hello", LockSucceeds = false };
         var reader = new ClipboardTextReader(native, 0);
 
-        Assert.IsNull(reader.Read(1000, 0, 1));
+        Assert.IsNull(reader.Read(1000, 0, 1, out _));
         Assert.AreEqual(0, native.UnlockCalls);
         Assert.AreEqual(1, native.CloseCalls);
     }
@@ -168,7 +170,7 @@ public sealed class ClipboardTextReaderTests
         var native = new FakeClipboardNative { Data = "hello", SizeBytesOverride = 0 };
         var reader = new ClipboardTextReader(native, 0);
 
-        Assert.IsNull(reader.Read(1000, 0, 1));
+        Assert.IsNull(reader.Read(1000, 0, 1, out _));
         Assert.AreEqual(0, native.LockCalls);
     }
 

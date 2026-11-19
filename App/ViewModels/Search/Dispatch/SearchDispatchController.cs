@@ -62,14 +62,13 @@ internal sealed class SearchDispatchController
     private SearchWindowType ActionWindowType =>
         _getIsInlineSearchContext() ? SearchWindowType.Inline : SearchWindowType.Main;
 
-    public void DispatchSearch(string value)
-    {
-        // D2: a leading ";" marks the query as stealth -- it runs normally but is excluded from
-        // SearchHistoryStore and KeywordHistoryStore. The prefix is stripped before any parsing.
-        var stealth = value.StartsWith(";");
-        if (stealth) value = value[1..].TrimStart();
-        QueryFilterSupport.SetStealth(stealth);
+    public void DispatchSearch(string value) => RunSearch(value, _engine.QueueSearch);
 
+    private void RunSearch(string originalValue, EngineSearchCall engineCall)
+    {
+        // Keep the submitted text for stale-result checks. The matcher and providers receive
+        // the query without its history marker.
+        var value = QueryFilterSupport.StripStealthPrefix(originalValue);
         var globalPrefixChar = GetGlobalTokenPrefixChar();
         var strippedTrailing = SearchQuerySortParser.Strip(value, out var tokens, globalPrefixChar);
         _queryTokens = tokens;
@@ -101,7 +100,7 @@ internal sealed class SearchDispatchController
             _engine.CancelPendingSearch();
             if (triggeredTypeId != null)
                 _resultTypeTrigger.ShowPrompt(triggeredTypeId);
-            else if (string.IsNullOrWhiteSpace(value))
+            else if (string.IsNullOrWhiteSpace(originalValue))
                 PerformSearch(string.Empty);
             else
                 ClearForTokenOnlyQuery();
@@ -115,7 +114,8 @@ internal sealed class SearchDispatchController
             ClearForTokenOnlyQuery();
             return;
         }
-        RunEngineSearch(_engine.QueueSearch, value, searchQuery, scopeDirective);
+        var providerQuery = queryFilters.IsEmpty ? value : QueryFilterSupport.Extract(value, out _);
+        RunEngineSearch(engineCall, originalValue, providerQuery, searchQuery, scopeDirective);
     }
     // An operator typed with no keyword after it yet -- a token-only query (e.g. "::foo" with no
     // keyword before it), or a bare "*" (bypass exclusion rules) -- strips down to an empty clean
@@ -164,6 +164,7 @@ internal sealed class SearchDispatchController
     private void RunEngineSearch(
         EngineSearchCall engineCall,
         string originalValue,
+        string providerQuery,
         string searchQuery,
         FileFilterScopeDirective? scopeDirective)
     {
@@ -201,7 +202,7 @@ internal sealed class SearchDispatchController
             _getIsInlineSearchContext(),
             fileLimit,
             appLimit,
-            (resp, contextDir) => SearchResultMapper.BuildQuickResults(resp, searchQuery, hasScope ? null : _getIsInlineSearchContext() ? null : _getSearchScope(), contextDir, _getIsInlineSearchContext(), originalValue, skipDisplayCap: hasTokens || hasScope, fileFilterScope: scopeDirective, folderScope: folderScope, instantPass: instantPass, preferLaunches: !hasTokens && !hasScope),
+            (resp, contextDir) => SearchResultMapper.BuildQuickResults(resp, searchQuery, hasScope ? null : _getIsInlineSearchContext() ? null : _getSearchScope(), contextDir, _getIsInlineSearchContext(), providerQuery, skipDisplayCap: hasTokens || hasScope, fileFilterScope: scopeDirective, folderScope: folderScope, instantPass: instantPass, preferLaunches: !hasTokens && !hasScope && QueryFilterSupport.ActiveFilters == null),
             state => _setIsSearching(state),
             (results, status, final) => ApplySearchResults(originalValue, searchQuery, results, status, final),
             HandleLocalServiceUnavailable,
@@ -212,7 +213,7 @@ internal sealed class SearchDispatchController
             scopeDirective,
             // What the instant-result providers are handed: the untouched box text, so a provider that owns a
             // trigger word still recognises it after the word was stripped from the file-search query above.
-            originalValue,
+            providerQuery,
             // The quick window does show instant rows; the late shouldEmitInstantResults above is its only
             // gate, and it has to stay late because "is the list still empty?" is only answerable once the
             // rows land.
@@ -220,7 +221,7 @@ internal sealed class SearchDispatchController
             // Nothing to start alongside a quick-window search: the rows this window can show all come from
             // the one search already, and its instant providers are folded into the mapper above.
             null,
-            contextDir => SearchResultMapper.CollectInstantPass(instantPass, originalValue, searchQuery, _getIsInlineSearchContext(), contextDir),
+            contextDir => SearchResultMapper.CollectInstantPass(instantPass, providerQuery, searchQuery, _getIsInlineSearchContext(), contextDir),
             deferInstantPass ? instantPass.Completion : null
         );
     }
@@ -282,39 +283,7 @@ internal sealed class SearchDispatchController
             }
             return;
         }
-        var globalPrefixChar = GetGlobalTokenPrefixChar();
-        var strippedTrailing = SearchQuerySortParser.Strip(query, out var tokens, globalPrefixChar);
-        _queryTokens = tokens;
-        var cleanQuery = SearchQuerySortParser.StripExclusionBypass(strippedTrailing, out var bypassExclusions);
-        _bypassExclusions = bypassExclusions;
-        var (strippedClean, triggeredTypeId) = _resultTypeTrigger.StripTrigger(query, cleanQuery);
-        cleanQuery = strippedClean;
-        var scopedQuery = cleanQuery;
-        var scopeDirective = triggeredTypeId == null && !_getIsInlineSearchContext()
-            ? FileFilterScopeResolver.Resolve(cleanQuery, out scopedQuery)
-            : null;
-        var searchQuery = scopeDirective != null ? scopedQuery : cleanQuery;
-        // A trigger word -- an instant provider's configured one ("cs report") or a search action's command
-        // word ("mkdir sub") -- is not part of what the user wants found, so it must not be fuzzy
-        // matched against file names nor highlighted. Skipped when
-        // a file-filter scope already claimed the leading keyword -- two prefixes cannot both win, and the
-        // scope is the more specific feature. Instant providers still receive the raw text (instantQuery).
-        if (scopeDirective == null)
-            searchQuery = PluginTriggerQuery.Strip(searchQuery, ActionWindowType);
-        if (string.IsNullOrWhiteSpace(cleanQuery))
-        {
-            if (triggeredTypeId != null)
-                _resultTypeTrigger.ShowPrompt(triggeredTypeId);
-            else
-                ClearForTokenOnlyQuery();
-            return;
-        }
-        if (scopeDirective != null && searchQuery.Length == 0)
-        {
-            ClearForTokenOnlyQuery();
-            return;
-        }
-        RunEngineSearch(_engine.PerformSearch, query, searchQuery, scopeDirective);
+        RunSearch(query, _engine.PerformSearch);
     }
     private void HandleLocalServiceUnavailable() => _mainVm.TriggerIndexBuild();
 

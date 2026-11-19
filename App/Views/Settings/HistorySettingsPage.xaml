@@ -22,6 +22,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
@@ -29,9 +30,8 @@
                        Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_History]}"/>
 
             <!-- Tab header row -->
-            <ctrl:TabStripScrollView Margin="0,16,0,0">
-            <StackPanel Orientation="Horizontal">
-                <StackPanel Margin="0,0,28,0">
+            <WrapPanel Margin="0,10,0,0">
+                <StackPanel Margin="0,0,18,4">
                     <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_History_Tab_Search]}"
                             Command="{Binding SelectTabCommand}" CommandParameter="Search">
                         <Button.Style>
@@ -83,22 +83,9 @@
                         </Border.Style>
                     </Border>
                 </StackPanel>
-            </StackPanel>
-            </ctrl:TabStripScrollView>
+            </WrapPanel>
             <Border Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,10"/>
 
-            <TextBlock Margin="0,0,0,12" TextWrapping="Wrap">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock" BasedOn="{StaticResource SettingsHintText}">
-                        <Setter Property="Text" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_History_Hint]}"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding SelectedTab}" Value="Keyword">
-                                <Setter Property="Text" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_History_KeywordHint]}"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
         </StackPanel>
 
         <!-- Tab: Search History -->
@@ -132,8 +119,9 @@
         </ctrl:HistoryListControl>
 
         <!-- D1: clear search + keyword history on app exit (default off). -->
-        <CheckBox Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_ClearOnExitLabel]}"
+        <CheckBox Grid.Row="2" x:Name="ClearHistoryOnExitCheckBox"
+                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_ClearOnExitLabel]}"
                   IsChecked="{Binding ClearHistoryOnExit, Mode=TwoWay}"
-                  Margin="0,12,0,0"/>
+                  Margin="0,10,0,0"/>
     </Grid>
 </UserControl>

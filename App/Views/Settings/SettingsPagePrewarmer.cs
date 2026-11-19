@@ -55,7 +55,8 @@ internal sealed class SettingsPagePrewarmer
     /// </remarks>
     internal void Begin()
     {
-        var pending = SectionOrder().ToList();
+        // The plugin directory and management routes share one lazily created page.
+        var pending = SectionOrder().Where(tag => tag != "PluginSettings").ToList();
 
         void PrewarmNext()
         {

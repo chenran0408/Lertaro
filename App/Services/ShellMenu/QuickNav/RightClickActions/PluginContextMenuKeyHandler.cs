@@ -50,7 +50,6 @@ internal static class PluginContextMenuKeyHandler
         // The user's configurable next/previous-item hotkeys should move the highlight here too, not
         // just the literal arrow keys -- otherwise a custom binding silently stops working once this
         // menu (or one of its nested submenus) is open.
-        var actualKey = WpfUiHelper.GetActualKey(ev);
         var hotkeys = UserSettings.Load().Hotkeys;
         var effectiveKey = ev.Key;
         if (WpfUiHelper.MatchesHotkey(hotkeys.NextItemHotkey, ev))
@@ -61,12 +60,12 @@ internal static class PluginContextMenuKeyHandler
         if (effectiveKey == Key.Down)
         {
             ev.Handled = true;
-            UpdateStateHighlight((state.highlightedIndex + 1) % state.items.Count);
+            UpdateStateHighlight(GetNextIndex(state.highlightedIndex, state.items.Count, 1));
         }
         else if (effectiveKey == Key.Up)
         {
             ev.Handled = true;
-            UpdateStateHighlight((state.highlightedIndex - 1 + state.items.Count) % state.items.Count);
+            UpdateStateHighlight(GetNextIndex(state.highlightedIndex, state.items.Count, -1));
         }
         else if (ev.Key == Key.Right)
         {
@@ -108,4 +107,7 @@ internal static class PluginContextMenuKeyHandler
             }
         }
     }
+
+    internal static int GetNextIndex(int current, int count, int direction) =>
+        current < 0 ? (direction < 0 ? count - 1 : 0) : (current + direction + count) % count;
 }

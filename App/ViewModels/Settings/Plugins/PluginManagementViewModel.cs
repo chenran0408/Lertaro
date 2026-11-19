@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows.Data;
 using System.Windows.Input;
 using Lertaro.App.Helpers;
 using Lertaro.App.Services;
@@ -13,7 +14,7 @@ namespace Lertaro.App.ViewModels.Settings.Plugins;
 /// ViewModel for the Plugin Management settings page.
 /// Loads installed plugins and exposes their sub-components with enable/disable toggles.
 /// </summary>
-public class PluginManagementViewModel : ViewModelBase
+public partial class PluginManagementViewModel : ViewModelBase
 {
     private readonly System.ComponentModel.PropertyChangedEventHandler _translationHandler;
 
@@ -31,12 +32,16 @@ public class PluginManagementViewModel : ViewModelBase
         // name.
         ApplyPluginSort();
         _selectedPlugin = Plugins.FirstOrDefault();
+        VisiblePlugins = new ListCollectionView(Plugins) { Filter = MatchesInstalledFilter };
+        VisiblePlugins.LiveFilteringProperties.Add(nameof(PluginInfoViewModel.IsFullyDisabled));
+        VisiblePlugins.IsLiveFiltering = true;
 
         // Dynamically refresh the plugin list when language changes to dynamically apply localized plugin names
         _translationHandler = (s, e) =>
         {
             // Keeping the selection across a rebuild means matching on the one stable identifier a
             // rebuilt view model shares with the old one -- the instances themselves are all new.
+            if (e.PropertyName != nameof(TranslationManager.CurrentCulture)) return;
             var selectedDll = SelectedPlugin?.DllFileName;
             var newList = PluginLoaderHelper.BuildPluginList(_userSettings);
             RestoreEnablementEdits(Plugins, newList);
@@ -48,13 +53,19 @@ public class PluginManagementViewModel : ViewModelBase
             if (_runtimeStatusesBuilt) RebuildRuntimeStatuses();
             ApplyPluginSort();
             SelectedPlugin = Plugins.FirstOrDefault(p => p.DllFileName == selectedDll) ?? Plugins.FirstOrDefault();
+            RefreshInstalledFilter();
             OnPropertyChanged(nameof(IsEmpty));
             OnPropertyChanged(nameof(DevGuideUri));
+            OnPropertyChanged(nameof(PluginSortLabel));
+            OnPropertyChanged(nameof(PluginSearchLabel));
+            OnPropertyChanged(nameof(CategoryChoices));
         };
         TranslationManager.Instance.PropertyChanged += _translationHandler;
     }
 
     public ObservableCollection<PluginInfoViewModel> Plugins { get; }
+    public ListCollectionView VisiblePlugins { get; }
+
     private readonly List<PluginRuntimeStatusItemViewModel> _allRuntimeStatuses = new();
     public ObservableCollection<PluginRuntimeStatusItemViewModel> RuntimeStatuses { get; } = new();
 
@@ -184,7 +195,7 @@ public class PluginManagementViewModel : ViewModelBase
 
     /// <summary>The column header text for the current sort rule: "enabled" while disabled plugins are sunk
     /// to the bottom, "name" while the list is in plain name order.</summary>
-    public string PluginSortLabel => TranslationManager.Instance[_disabledLast ? "Plugins_ColumnEnabled" : "Plugins_ColumnName"];
+    public string PluginSortLabel => TranslationManager.Instance[_disabledLast ? "Plugins_SortByState" : "Plugins_SortByName"];
 
     /// <summary>Raised after the list is reordered, so the view can scroll the selection back into view.</summary>
     public event Action? PluginsReordered;
@@ -257,6 +268,7 @@ public class PluginManagementViewModel : ViewModelBase
     public bool IsEmpty => Plugins.Count == 0;
 
     public string HostSdkVersion { get; } = typeof(IPlugin).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+    public string HostSdkVersionLabel => $"SDK v{HostSdkVersion}";
 
     // The dev guide link's target differs per locale (/zh-CN/ prefix), so it's derived from the
     // same translated URL string the link displays -- see AboutSettingsPage.UserGuideUri for the
@@ -312,6 +324,7 @@ public class PluginManagementViewModel : ViewModelBase
         {
             var replacement = current.FirstOrDefault(p => p.DllFileName.Equals(edited.DllFileName, StringComparison.OrdinalIgnoreCase));
             if (replacement == null) continue;
+            replacement.RestoreConfigSession(edited);
             if (edited.IsPluginEnablementDirty) replacement.IsPluginEnabled = edited.IsPluginEnabled;
             foreach (var component in edited.RawComponents.Where(c => c.IsToggleable))
             {

@@ -114,12 +114,9 @@ public sealed partial class QuickPanelManager : IDisposable
         Views.QuickSearchWindow.Helpers.ShellOverlayDismissHelper.DismissOverlayIfForeground();
         var host = GetForegroundWindow();
         if (_window is { IsVisible: true })
-        {
-            Hide();
-            return;
-        }
+            host = _lastHost;
+
         var settings = Core.UserSettings.Load();
-        if (!settings.QuickPanel.Enabled) return;
         var process = ProcessNameOf(host);
         if (Core.QuickPanelTabSelection.IsBlocked(process, settings))
         {
@@ -133,25 +130,25 @@ public sealed partial class QuickPanelManager : IDisposable
             Core.Logger.Log("[QuickPanel] Clipboard history plugin is not available, so not opening the clipboard panel.", Core.LogLevel.Debug);
             return;
         }
-        // The dedicated panel is the Win+V surface; the Quick Panel clipboard tab is the fallback
+        // The clipboard shortcut opens the dedicated panel; the Quick Panel clipboard tab is the fallback
         // for when the plugin cannot host its window. The static TryOpenPanel is resolved by name
         // because the host does not reference plugin assemblies.
+        if (_window is { IsVisible: true })
+            Hide();
+
         try
         {
             var openPanel = provider.GetType().GetMethod("TryOpenPanel",
                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
             if (openPanel?.Invoke(null, null) is true)
-            {
-                Views.Onboarding.Tips.TipCardWindow.ShowTip(
-                    ViewModels.Onboarding.TipRegistry.Clipboard, host);
                 return;
-            }
         }
         catch (Exception ex)
         {
             Core.Logger.Log($"[QuickPanel] Dedicated clipboard panel failed to open, falling back: {ex.GetType().Name}", Core.LogLevel.Warn);
         }
-        Show(host, process, QuickPanelPluginTabs.ComponentId(provider));
+        if (settings.QuickPanel.Enabled)
+            Show(host, process, QuickPanelPluginTabs.ComponentId(provider));
     }
 
     /// <summary>Ditto-style global quick paste: pastes the Nth history entry straight into the

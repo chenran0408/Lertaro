@@ -5,65 +5,45 @@ namespace Lertaro.Plugins.ClipboardHistory.Tests.View;
 [TestClass]
 public sealed class ClipboardPanelPlacementTests
 {
-    // A 125%-scaled 1920x1080 monitor: the DIP work area is 1536x864 (taskbar excluded for round
-    // numbers), the panel defaults to 780x620. This is the shape of the "panel always lands in
-    // the bottom-right corner" bug: the pixel cursor used to ride against DIP bounds.
-    private const double Scale = 1.25;
-    private static readonly (double left, double top, double right, double bottom) Area = (0, 0, 1536, 864);
-    private const double Width = 780;
-    private const double Height = 620;
-
     [TestMethod]
-    public void CursorInTheUpperLeftRegion_PlacesAtTheCursorInDips()
+    [DataRow(1.0, 780, 620)]
+    [DataRow(1.25, 975, 775)]
+    [DataRow(1.5, 1170, 930)]
+    [DataRow(2.0, 1560, 1240)]
+    public void CursorAtUpperLeftRemainsInPhysicalPixels(double scale, int width, int height)
     {
-        // Physical (500,250) = DIP (400,200); room exists down/right, so the panel anchors its
-        // top-left exactly at the cursor -- previously the raw pixel value landed it 25% off.
-        var (left, top) = ClipboardPanelPlacement.ClampCursor(500, 250, Scale, Width, Height, Area);
-        Assert.AreEqual(400, left, 0.01);
-        Assert.AreEqual(200, top, 0.01);
+        var placement = ClipboardPanelPlacement.FitToWorkArea(100, 110, scale, 780, 620, (0, 0, 2560, 1440));
+
+        Assert.AreEqual((100, 110, width, height), (placement.Left, placement.Top, placement.Width, placement.Height));
+        Assert.AreEqual(780, placement.WidthDip);
+        Assert.AreEqual(620, placement.HeightDip);
     }
 
     [TestMethod]
-    public void OversizedPanelAtPhysicalCenter_ClampsIntoTheWorkArea()
+    public void SwitchingFromPrimaryToScaledMonitorOnTheLeftDoesNotScaleTheDesktopOrigin()
     {
-        // The 780x620 panel barely fits a 1536x864 DIP work area: a center cursor has no room on
-        // either side, so the clamp wins and the panel sits as far up-left as possible.
-        var (left, top) = ClipboardPanelPlacement.ClampCursor(960, 540, Scale, Width, Height, Area);
-        Assert.AreEqual(756, left, 0.01);
-        Assert.AreEqual(244, top, 0.01);
+        var primary = ClipboardPanelPlacement.FitToWorkArea(100, 100, 1, 780, 620, (0, 0, 1920, 1040));
+        var secondary = ClipboardPanelPlacement.FitToWorkArea(-2280, -240, 1.5, 780, 620, (-2400, -300, 0, 1260));
+
+        Assert.AreEqual((100, 100, 780, 620), (primary.Left, primary.Top, primary.Width, primary.Height));
+        Assert.AreEqual((-2280, -240, 1170, 930), (secondary.Left, secondary.Top, secondary.Width, secondary.Height));
     }
 
     [TestMethod]
-    public void CursorNearBottomRight_FlipsThePanelUpLeft()
+    public void ScaledSecondaryMonitorFlipsAtItsBottomRightEdge()
     {
-        // Physical (1700,950) = DIP (1360,760): no room down/right for a 780x620 panel, so it
-        // opens with its bottom-right corner at the cursor instead of being clamped into the
-        // work area's bottom-right corner.
-        var (left, top) = ClipboardPanelPlacement.ClampCursor(1700, 950, Scale, Width, Height, Area);
-        Assert.AreEqual(1360 - Width, left, 0.01);
-        Assert.AreEqual(760 - Height, top, 0.01);
+        var placement = ClipboardPanelPlacement.FitToWorkArea(4400, 1310, 1.5, 780, 620, (1920, -100, 4480, 1340));
+
+        Assert.AreEqual((3230, 380, 1170, 930), (placement.Left, placement.Top, placement.Width, placement.Height));
     }
 
     [TestMethod]
-    public void CursorNearTopLeft_AnchorsTopLeftWithoutNegativeOffset()
+    public void OversizedSavedPanelFitsTheWholeWorkAreaOnAScaledMonitor()
     {
-        var (left, top) = ClipboardPanelPlacement.ClampCursor(50, 40, Scale, Width, Height, Area);
-        Assert.AreEqual(40, left, 0.01);   // 50 px / 1.25 = 40 DIP, room down/right exists
-        Assert.AreEqual(32, top, 0.01);
-    }
+        var placement = ClipboardPanelPlacement.FitToWorkArea(-830, 100, 1.5, 900, 750, (-960, -300, 0, 270));
 
-    [TestMethod]
-    public void PanelWiderThanTheWorkArea_ClampsIntoIt()
-    {
-        var (left, _) = ClipboardPanelPlacement.ClampCursor(100, 100, Scale, 1600, Height, Area);
-        Assert.AreEqual(0, left, 0.01); // max(left, right - width) = 0, the clamp wins
-    }
-
-    [TestMethod]
-    public void OneHundredPercentScale_PlacesThePanelExactlyAtTheCursor()
-    {
-        var (left, top) = ClipboardPanelPlacement.ClampCursor(300, 200, 1.0, Width, Height, (0, 0, 1920, 1040));
-        Assert.AreEqual(300, left, 0.01);
-        Assert.AreEqual(200, top, 0.01);
+        Assert.AreEqual((-960, -300, 960, 570), (placement.Left, placement.Top, placement.Width, placement.Height));
+        Assert.AreEqual(640, placement.WidthDip);
+        Assert.AreEqual(380, placement.HeightDip);
     }
 }

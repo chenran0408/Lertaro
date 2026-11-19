@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using System.Text;
+using Lertaro.Plugins.ClipboardHistory.Capture;
 
 namespace Lertaro.Plugins.ClipboardHistory.Tests;
 
@@ -189,20 +190,47 @@ public sealed class ClipboardStoreKindTests
     }
 
     [TestMethod]
+    public async Task FilePathsPreserveRootAndOrderAndDoNotMergeWithText()
+    {
+        var store = CreateStore();
+        await store.InitializeAsync();
+        var paths = new[] { @"D:\Folder\Readme.txt", @"C:\" };
+        var files = await store.AddAsync(new ClipboardEntryDraft(ClipboardEntryKind.FilePaths, string.Join("\n", paths)),
+            "Explorer", "", 10, 1000);
+        var text = await store.AddAsync(new ClipboardEntryDraft(ClipboardEntryKind.Text, ClipboardEntryDraft.JoinPaths(paths)),
+            "Notepad", "", 10, 1000);
+        Assert.IsNotNull(files);
+        Assert.IsNotNull(text);
+        CollectionAssert.AreEqual(paths, files.PathList.ToArray());
+        Assert.AreNotEqual(files.Id, text.Id);
+    }
+
+    [TestMethod]
     public async Task AddAsync_TextWithHtml_StoresAndReadsBackTheFlavor()
     {
         var store = CreateStore();
         await store.InitializeAsync();
         var html = "Version:0.9\r\nStartHTML:0\r\nEndHTML:60\r\n<html><body><b>bold</b></body></html>";
 
-        var entry = await store.AddAsync(
-            new ClipboardEntryDraft(ClipboardEntryKind.Text, "bold") { Html = html },
-            "Word", "Doc", 500, 1000000);
+        var capture = new ClipboardCapture(ClipboardEntryKind.Text, "bold", [], [], 0, 0,
+            "Word", "Doc", 1, 0, 0, html);
+        var draft = await ClipboardImageIngest.BuildDraftAsync(capture, _imagesDirectory);
+        Assert.IsNotNull(draft);
+        var entry = await store.AddAsync(draft, "Word", "Doc", 500, 1000000);
 
         Assert.IsNotNull(entry);
         Assert.AreEqual(html, entry.Html);
         var entries = await store.GetEntriesAsync();
         Assert.AreEqual(html, entries.Single().Html);
+
+        var snapshot = (await store.GetEntriesAsync(includeHtml: false)).Single();
+        Assert.AreEqual(string.Empty, snapshot.Html);
+        Assert.AreEqual(html, await store.GetHtmlAsync(snapshot));
+
+        var plainCopy = await store.AddAsync(draft with { Html = string.Empty }, "Notepad", "", 500, 1000000);
+        Assert.IsNotNull(plainCopy);
+        Assert.AreEqual(entry.Id, plainCopy.Id);
+        Assert.AreEqual(string.Empty, await store.GetHtmlAsync(plainCopy));
     }
 
     [TestMethod]

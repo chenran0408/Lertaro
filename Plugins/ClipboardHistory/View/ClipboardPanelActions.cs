@@ -17,7 +17,7 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
     public ClipboardPanelContextMenu BuildContextMenu() =>
         new(
             () => PasteSelected(plainText: false),
-            () => SelectedEntries().ToList().ForEach(entry => _ = ClipboardRuntime.Instance.CopyAsync(entry.Id)),
+            CopySelected,
             TogglePinSelected,
             DeleteSelected,
             ClearSelectedNote,
@@ -27,17 +27,17 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
             text => _ = ClipboardRuntime.Instance.CopyTextAsync(text),
             SaveSelectedImageAs,
             ClearHistoryWithConfirm,
-            TogglePreview,
             TogglePauseCapture);
 
     // --- selection ---
 
     /// <summary>Every selected row's entry, in display order (headers are not selectable).</summary>
-    public List<ClipboardEntry> SelectedEntries() =>
-        view.Lst.SelectedItems.OfType<ClipboardPanelItem>()
-            .Where(item => item.IsRow && view._entryById.TryGetValue(item.Id, out _))
-            .Select(item => view._entryById[item.Id])
-            .ToList();
+    public List<ClipboardEntry> SelectedEntries()
+    {
+        var selected = view.Lst.SelectedItems.OfType<ClipboardPanelItem>().ToHashSet();
+        return view._items.Where(item => item.IsRow && selected.Contains(item))
+            .Select(item => view._entryById[item.Id]).ToList();
+    }
 
     public ClipboardEntry? SelectedEntry() => SelectedEntries() is [var single] ? single : null;
 
@@ -134,41 +134,58 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
 
     // --- paste ---
 
+    public void CopySelected()
+    {
+        if (SelectedEntry() is { } entry)
+            _ = ClipboardRuntime.Instance.CopyAsync(entry.Id);
+    }
+
     public void PasteSelected(bool plainText)
     {
+        if (view.SearchPending) return;
         var selected = SelectedEntries();
-        if (selected.Count == 0) return;
-
-        // Multi-select pastes the merged payload (texts joined by line breaks, file paths unioned).
-        if (selected.Count > 1)
-        {
-            if (ClipboardRuntime.Instance.PasteEntries(selected, keepFormat: !plainText))
-                view.ClosePanel();
-            return;
-        }
-        PasteAndMaybeClose(selected[0].Id, plainText);
+        if (!ClipboardMergeSupport.CanPasteTogether(selected)) return;
+        _ = PasteAsync(selected, plainText);
     }
 
     public void PasteByIndex(int oneBased)
     {
+        if (view.SearchPending) return;
         var selectable = ClipboardPanelRows.SelectableIds(view._items);
         if (oneBased < 1 || oneBased > selectable.Count) return;
-        PasteAndMaybeClose(selectable[oneBased - 1]);
+        PasteEntry(selectable[oneBased - 1]);
     }
 
-    private void PasteAndMaybeClose(long id, bool plainText = false)
+    internal void PasteEntry(long id)
     {
-        // Pinned rows keep the panel open (the pin means "use repeatedly"); everything else closes
-        // so the injected Ctrl+V lands in the window the user was typing in.
-        if (ClipboardRuntime.Instance.PasteEntries([view._entryById[id]], keepFormat: !plainText))
-            view.ClosePanel();
+        if (view._entryById.TryGetValue(id, out var entry))
+            _ = PasteAsync([entry], plainText: false);
+    }
+
+    private async Task PasteAsync(IReadOnlyList<ClipboardEntry> entries, bool plainText)
+    {
+        if (view.SearchPending || view.PastePending) return;
+        view.PastePending = true;
+        UpdateHintBar();
+        try
+        {
+            // Keep activation until the return window receives focus, so Windows can bring it
+            // forward directly instead of selecting another window when this panel closes.
+            var paste = ClipboardRuntime.Instance.StartPaste(entries, !plainText, view.PasteTarget);
+            if (paste != null && await paste) view.ClosePanel();
+        }
+        finally
+        {
+            view.PastePending = false;
+            UpdateHintBar();
+        }
     }
 
     // --- row actions ---
 
     public void DeleteSelected()
     {
-        if (view.Lst.SelectedItem is not ClipboardPanelItem { IsRow: true } item) return;
+        if (view.Lst.SelectedItems.Count != 1 || view.Lst.SelectedItem is not ClipboardPanelItem { IsRow: true } item) return;
         // Remember where the user was: after the reload the deleted id is gone, and without this
         // the selection would jump back to the very top of the list.
         var items = view._items;
@@ -178,14 +195,12 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
         for (var prev = index - 1; prev >= 0 && _selectAfterReload == 0; prev--)
             if (items[prev].IsRow) _selectAfterReload = items[prev].Id;
         ClipboardRuntime.Instance.Delete(item.Id);
-        _ = view.ReloadAsync();
     }
 
     public void TogglePinSelected()
     {
-        if (view.Lst.SelectedItem is not ClipboardPanelItem { IsRow: true } item) return;
+        if (view.Lst.SelectedItems.Count != 1 || view.Lst.SelectedItem is not ClipboardPanelItem { IsRow: true } item) return;
         ClipboardRuntime.Instance.TogglePin(item.Id);
-        _ = view.ReloadAsync();
     }
 
     /// <summary>Toggles a 10-minute capture pause straight from the panel, no settings trip.</summary>
@@ -195,6 +210,7 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
             ClipboardRuntime.PauseCaptureFor(TimeSpan.Zero);
         else
             ClipboardRuntime.PauseCaptureFor(TimeSpan.FromMinutes(10));
+        view.RefreshCaptureStatus();
     }
 
     /// <summary>PasteBar-style portability: one zip with the database snapshot and every image,
@@ -207,7 +223,7 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
             Filter = "ZIP|*.zip",
             DefaultExt = ".zip",
         };
-        if (dialog.ShowDialog() != true) return;
+        if (view.RunOwnedDialog(() => dialog.ShowDialog(Window.GetWindow(view))) != true) return;
         _ = ExportAndNotifyAsync(dialog.FileName);
     }
 
@@ -220,28 +236,26 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
     public async void ImportHistory()
     {
         var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "ZIP|*.zip", DefaultExt = ".zip" };
-        if (dialog.ShowDialog() != true) return;
-        var result = PluginMessageBoxService.Show(
+        if (view.RunOwnedDialog(() => dialog.ShowDialog(Window.GetWindow(view))) != true) return;
+        var result = view.RunOwnedDialog(() => PluginMessageBoxService.Show(
             TranslationService.Get("ClipboardHistory_PanelImportConfirm"),
             TranslationService.Get("ClipboardHistory_PluginName"),
-            MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+            MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No));
         if (result != MessageBoxResult.Yes) return;
         if (await ClipboardRuntime.Instance.ImportFromAsync(dialog.FileName).ConfigureAwait(true))
         {
             PasteBackHelper.Notify("ClipboardHistory_PanelImportDone");
-            _ = view.ReloadAsync();
         }
     }
 
     public void ClearHistoryWithConfirm()
     {
-        var result = PluginMessageBoxService.Show(
+        var result = view.RunOwnedDialog(() => PluginMessageBoxService.Show(
             TranslationService.Get("ClipboardHistory_PanelClearConfirm"),
             TranslationService.Get("ClipboardHistory_PluginName"),
-            MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+            MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No));
         if (result != MessageBoxResult.Yes) return;
         ClipboardRuntime.Instance.ClearHistory();
-        _ = view.ReloadAsync();
     }
 
     /// <summary>Saves the selected image row's PNG to a user-chosen file.</summary>
@@ -256,7 +270,7 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
             Filter = "PNG|*.png",
             DefaultExt = ".png",
         };
-        if (dialog.ShowDialog() != true) return;
+        if (view.RunOwnedDialog(() => dialog.ShowDialog(Window.GetWindow(view))) != true) return;
         try
         {
             File.Copy(ImageFilePathFor(entry), dialog.FileName, overwrite: true);
@@ -271,12 +285,15 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
 
     public void UpdatePreview()
     {
-        if (!view.PreviewVisible) return;
+        if (!view.IsPreviewShown) return;
         var entry = SelectedEntry();
         FlushNote();
         view.PreviewTitle.Text = entry is null ? string.Empty : ClipboardPanelLabels.Subtitle(entry);
+        view.PreviewContext.Text = view.PreviewTitle.Text;
         view.NoteEditor = ClipboardPanelPreview.Apply(view.PreviewContent, view.PreviewTitle, entry, ImagesDirectory(),
             text => { if (entry != null && text != entry.Note) ClipboardRuntime.Instance.SetNote(entry.Id, text); });
+        if (view.NoteEditor != null)
+            view.NoteEditor.LostKeyboardFocus += (_, _) => view.QueueSnapshotRefresh();
         view.NoteEntryId = entry?.Id ?? 0;
         view.NoteAtLoad = entry?.Note ?? string.Empty;
     }
@@ -308,43 +325,24 @@ internal sealed class ClipboardPanelActions(ClipboardPanelView view)
     /// selected it says so, because "paste" now means "paste merged" and that must be legible.</summary>
     public void UpdateHintBar()
     {
-        var selected = view.Lst.SelectedItems.OfType<ClipboardPanelItem>().Count(item => item.IsRow);
-        view.HintBar.Text = selected > 1
-            ? string.Format(TranslationService.Get("ClipboardHistory_PanelSelectedMerge"), selected)
-            : ClipboardPanelLabels.HintBar();
-    }
-
-    /// <summary>Collapses or restores the preview column; the choice persists across summons.</summary>
-    public void TogglePreview()
-    {
-        if (view.PreviewVisible)
-        {
-            view._previewWidth = view.PreviewColumn.Width.Value;
-            view.PreviewVisible = false;
-            view.PreviewColumn.Width = new GridLength(0);
-            view.PreviewToggle.IsChecked = false;
-            return;
-        }
-        view.PreviewVisible = true;
-        view.PreviewColumn.Width = new GridLength(view._previewWidth);
-        view.PreviewToggle.IsChecked = true;
-        UpdatePreview();
+        var selected = SelectedEntries();
+        var canPaste = ClipboardMergeSupport.CanPasteTogether(selected);
+        view.PasteButton.IsEnabled = !view.SearchPending && !view.PastePending && canPaste;
+        view.CopyButton.IsEnabled = !view.SearchPending && !view.PastePending && selected.Count == 1;
+        view.PreviewToggle.IsEnabled = !view.IsCompactLayout || view.IsCompactPreviewOpen || (!view.SearchPending && selected.Count == 1);
+        view.HintBar.Text = selected.Count > 1
+            ? canPaste
+                ? string.Format(TranslationService.Get("ClipboardHistory_PanelSelectedMerge"), selected.Count)
+                : TranslationService.Get("ClipboardHistory_PanelSelectSingleImage")
+            : view.IsCompactPreviewOpen ? $"Esc · {ClipboardPanelLabels.BackToHistory()}" : ClipboardPanelLabels.HintBar();
     }
 
     // --- drag out ---
 
-    /// <summary>Starts a drag from the selected row when the left button has moved past the drag
-    /// threshold: text rows drag their text, file rows their drop list, image rows the stored PNG
-    /// file itself (already on disk, content-addressed). Returns true when a drag started.</summary>
-    public bool BeginDragIfRequested(MouseEventArgs e, Point dragAnchor)
+    public void DragEntry(long id)
     {
-        if (e.LeftButton != MouseButtonState.Pressed || SelectedEntry() is not { } entry) return false;
-        if ((e.GetPosition(view) - dragAnchor).Length < 4) return false;
-
-        var data = BuildDragData(entry);
-        if (data == null) return false;
-        DragDrop.DoDragDrop(view.Lst, data, DragDropEffects.Copy);
-        return true;
+        if (view._entryById.TryGetValue(id, out var entry) && BuildDragData(entry) is { } data)
+            DragDrop.DoDragDrop(view.Lst, data, DragDropEffects.Copy);
     }
 
     private static DataObject? BuildDragData(ClipboardEntry entry) => entry.Kind switch

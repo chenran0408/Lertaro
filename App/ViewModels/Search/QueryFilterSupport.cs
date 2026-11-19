@@ -22,13 +22,10 @@ public static class QueryFilterSupport
     /// <summary>The filters for the search currently being dispatched. Null = unfiltered.</summary>
     public static ResultFilters? ActiveFilters => ActiveLocal.Value;
 
-    private static readonly AsyncLocal<bool> StealthLocal = new();
+    public static bool IsStealthQuery(string query) => query.StartsWith(';');
 
-    /// <summary>True while a ";" stealth query is being dispatched -- history stores check this
-    /// to suppress recording for the current async chain only.</summary>
-    public static bool IsStealth => StealthLocal.Value;
-
-    public static void SetStealth(bool stealth) => StealthLocal.Value = stealth;
+    public static string StripStealthPrefix(string query) =>
+        IsStealthQuery(query) ? query[1..].TrimStart() : query;
 
     /// <summary>Extracts every filter keyword occurrence and returns the query without them. The
     /// returned filters object is shared; callers push it through <see cref="Activate"/>.</summary>
@@ -61,7 +58,9 @@ public static class QueryFilterSupport
                     extensions = ResultFilterSupport.ExtensionSet(value);
                     return string.Empty;
                 case "datemodified" when value.Length > 0:
-                    (dateRange, monthPrefix) = ParseDateValue(value);
+                    var parsed = ParseDateValue(value);
+                    if (parsed.Range == ResultDateRange.None) return match.Value;
+                    (dateRange, monthPrefix) = parsed;
                     return string.Empty;
                 default:
                     return match.Value; // bare "folder:"/"ext:" with no value: leave the text alone
@@ -87,7 +86,7 @@ public static class QueryFilterSupport
     /// into a later one that parsed none.</summary>
     public static void Clear() => ActiveLocal.Value = null;
 
-    private static (ResultDateRange, string?) ParseDateValue(string value)
+    private static (ResultDateRange Range, string? Month) ParseDateValue(string value)
     {
         if (value.Equals("today", StringComparison.OrdinalIgnoreCase)) return (ResultDateRange.Today, null);
         if (value.Equals("thisweek", StringComparison.OrdinalIgnoreCase)) return (ResultDateRange.ThisWeek, null);

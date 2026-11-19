@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Lertaro.Core.SearchIndex;
 using System.Text.RegularExpressions;
 
 namespace Lertaro.App.ViewModels.Search.Mapping;
@@ -11,54 +12,85 @@ internal static class LaunchCandidateOrdering
         => !inline && string.IsNullOrEmpty(scope) && !filtered && !foldersOnly && triggeredType == null;
 
     internal static List<SearchResultMapper.RankedCandidate> Order(List<SearchResultMapper.RankedCandidate> candidates,
-        string query, Func<string, LaunchShortcut?> readShortcut)
+        string query, Func<string, LaunchShortcut?> readShortcut, IReadOnlyDictionary<string, int>? usageCounts = null)
     {
         var queryName = query.Trim();
         var explicitExtension = !string.IsNullOrEmpty(Path.GetExtension(queryName))
             && (!candidates.Any(candidate => candidate.IsExactAliasMatch)
                 || candidates.Any(candidate => !candidate.Result.IsApplication && !candidate.Result.IsDir
                     && queryName.Equals(Path.GetFileName(candidate.Result.FullPath), StringComparison.OrdinalIgnoreCase)));
-        var entries = candidates.Select(candidate => (Candidate: candidate,
-            Link: Path.GetExtension(candidate.Result.FullPath).Equals(".lnk", StringComparison.OrdinalIgnoreCase)
-                ? readShortcut(candidate.Result.FullPath) : null)).ToList();
-        var preferredLinks = new HashSet<string>(StringComparer.Ordinal);
-        if (!explicitExtension)
-            foreach (var entry in entries.Where(entry => entry.Link.HasValue && IsExecutable(entry.Link.Value.Target)))
-                preferredLinks.Add(Identity(entry.Link!.Value.Target, entry.Link.Value.Arguments, LinkDirectory(entry.Candidate.Result, entry.Link.Value)));
-        // An equivalent exe may match better than its differently named shortcut. Keep that relevance
-        // when replacing it, rather than dropping the useful launch result to the bottom of the list.
-        string? LaunchIdentity(AppSearchResult result, LaunchShortcut? link) => result.IsDir ? null
-            : link is { } resolved && IsExecutable(resolved.Target) ? Identity(resolved.Target, resolved.Arguments, LinkDirectory(result, resolved))
-            : IsExecutable(result.FullPath) ? Identity(result.FullPath, result.ApplicationArguments, result.ApplicationWorkingDirectory) : null;
-        var scores = entries.Where(entry => LaunchIdentity(entry.Candidate.Result, entry.Link) != null)
-            .GroupBy(entry => LaunchIdentity(entry.Candidate.Result, entry.Link)!, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => group.Select(entry => entry.Candidate)
-                .OrderByDescending(candidate => ExactMatch(candidate, query, explicitExtension))
-                .ThenBy(candidate => candidate.Match.Shape).ThenBy(candidate => candidate.Match.Start).ThenByDescending(candidate => candidate.Match.Weight)
-                .ThenBy(candidate => candidate.Match.Tier).First(), StringComparer.Ordinal);
-        var rankedEntries = entries.Select(entry => (entry.Candidate, entry.Link,
-            Score: !explicitExtension && LaunchIdentity(entry.Candidate.Result, entry.Link) is { } identity
-                ? scores[identity] : entry.Candidate));
+        var entries = candidates.Select(candidate =>
+        {
+            var result = candidate.Result;
+            var link = !explicitExtension && !result.IsDir && Path.GetExtension(result.FullPath).Equals(".lnk", StringComparison.OrdinalIgnoreCase)
+                ? readShortcut(result.FullPath) : null;
+            var identity = explicitExtension ? null : LaunchIdentity(result, link);
+            var opens = usageCounts?.GetValueOrDefault(candidate.NormalizedPath) ?? 0;
+            return (Candidate: candidate, Link: link, Identity: identity, Opens: opens);
+        }).ToList();
+        // Transfer relevance and usage to the representative shortcut. The same path may arrive
+        // from the catalog, the index and history, so count it only once.
+        var launchesByIdentity = entries.Where(entry => entry.Identity != null)
+            .GroupBy(entry => entry.Identity!, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => (
+                Score: group.Select(entry => entry.Candidate)
+                    .OrderByDescending(candidate => ExactMatch(candidate, query, explicitExtension))
+                    .ThenByDescending(candidate => ExactName(candidate.Result, queryName))
+                    .ThenBy(candidate => candidate.Match.Shape).ThenBy(candidate => candidate.Match.Start)
+                    .ThenByDescending(candidate => candidate.Match.Weight).ThenBy(candidate => candidate.Match.Tier).First(),
+                Opens: group.GroupBy(entry => entry.Candidate.NormalizedPath, StringComparer.OrdinalIgnoreCase).Sum(path => (long)path.Max(entry => entry.Opens)),
+                Curated: group.Any(entry => entry.Candidate.IsCurated),
+                Priority: group.Min(entry => entry.Candidate.Priority),
+                HasShortcut: group.Any(entry => entry.Link != null)), StringComparer.Ordinal);
+        // Only compare visible labels for competing catalog shortcuts to the same launch command.
+        // The executable alias is shared by those rows and cannot choose a recognizable label.
+        FuzzyQuery? titleQuery = null;
+        var weakerLabels = new HashSet<AppSearchResult>();
+        foreach (var group in entries.Where(e => e.Identity != null && e.Link.HasValue && e.Candidate.Result.IsApplication)
+            .GroupBy(e => e.Identity!, StringComparer.Ordinal))
+        {
+            var labels = group.Select(e => e.Candidate.Result).ToList();
+            if (labels.All(r => string.Equals(r.Name, labels[0].Name, StringComparison.OrdinalIgnoreCase))) continue;
+            titleQuery ??= FuzzyQuery.Parse(queryName);
+            var ranked = labels.Select(row => (Row: row, Match: titleQuery.Value.BestMatch(row.Name)))
+                .OrderBy(e => e.Match.Shape).ThenBy(e => e.Match.Start).ThenByDescending(e => e.Match.Weight)
+                .ThenBy(e => e.Match.Tier).ToList();
+            foreach (var entry in ranked.Where(e => e.Match != ranked[0].Match))
+                weakerLabels.Add(entry.Row);
+        }
+        var rankedEntries = entries.Where(entry => !weakerLabels.Contains(entry.Candidate.Result)).Select(entry =>
+        {
+            var signal = entry.Identity is { } key ? launchesByIdentity[key]
+                : (entry.Candidate, (long)entry.Opens, entry.Candidate.IsCurated, entry.Candidate.Priority, false);
+            return (entry.Candidate, entry.Link, entry.Identity, Score: signal.Item1, Opens: signal.Item2,
+                Curated: signal.Item3, Priority: signal.Item4, HasShortcut: signal.Item5,
+                KindRank: LaunchRank(entry.Candidate.Result, entry.Link),
+                Exact: ExactMatch(signal.Item1, query, explicitExtension));
+        });
         var paths = new HashSet<string>(StringComparer.Ordinal);
         var launches = new HashSet<string>(StringComparer.Ordinal);
         var results = new List<SearchResultMapper.RankedCandidate>();
         foreach (var entry in rankedEntries
-            .OrderByDescending(entry => ExactMatch(entry.Score, query, explicitExtension))
+            .OrderByDescending(entry => entry.Exact)
             // Equal exact names are a launch request: Steam.exe/Steam.lnk must beat a Steam folder,
             // even though the extension lowers coverage and the default type order prefers files.
-            .ThenBy(entry => ExactMatch(entry.Score, query, explicitExtension) ? LaunchRank(entry.Candidate.Result, entry.Link, exact: true) : 0)
-            .ThenBy(entry => entry.Score.Match.Shape)
-            .ThenBy(entry => entry.Score.Match.Start)
+            .ThenBy(entry => entry.Exact && LaunchRank(entry.Candidate.Result, entry.Link, exact: true) >= 2)
+            // A match against the complete name is equally strong with or without ".exe" or ".lnk".
+            .ThenBy(entry => entry.Exact ? default : entry.Score.Match.Shape)
+            .ThenBy(entry => entry.Exact ? 0 : entry.Score.Match.Start)
             // Coverage weights are 0..1. A tenth-wide band allows usage/launch preferences to settle
             // near matches without letting an unrelated old result outrank a much stronger match.
-            .ThenByDescending(entry => Math.Floor(entry.Score.Match.Weight * 10))
-            .ThenBy(entry => LaunchRank(entry.Candidate.Result, entry.Link))
+            .ThenByDescending(entry => entry.Exact ? 0 : Math.Floor(entry.Score.Match.Weight * 10))
+            .ThenBy(entry => !entry.Exact && entry.KindRank == 3)
+            .ThenByDescending(entry => entry.Curated)
+            .ThenByDescending(entry => entry.Opens)
+            .ThenBy(entry => entry.Priority)
+            .ThenBy(entry => entry.KindRank)
             // Preserve the catalog's app title/icon/callback when the index returns that same shortcut.
             // The files-first setting otherwise replaces "QQ" with the raw "QQ.lnk" file row.
-            .ThenByDescending(entry => entry.Candidate.Result.IsApplication && LaunchRank(entry.Candidate.Result, entry.Link) == 0)
+            .ThenByDescending(entry => entry.Candidate.Result.IsApplication && entry.KindRank == 0)
+            .ThenByDescending(entry => entry.Exact && ExactName(entry.Score.Result, queryName))
             .ThenBy(entry => entry.Candidate.TypeRank)
-            .ThenByDescending(entry => entry.Candidate.IsCurated)
-            .ThenBy(entry => entry.Candidate.Priority)
             .ThenBy(entry => entry.Candidate.RecencyBand)
             .ThenBy(entry => entry.Candidate.Depth)
             .ThenByDescending(entry => entry.Score.Match.Weight)
@@ -72,18 +104,24 @@ internal static class LaunchCandidateOrdering
             if (result.IsApplication && (!string.IsNullOrEmpty(result.ApplicationArguments) || !string.IsNullOrEmpty(result.ApplicationWorkingDirectory)))
                 pathKey += "\0" + result.ApplicationArguments + "\0" + result.ApplicationWorkingDirectory.ToUpperInvariant();
             if (!paths.Add(pathKey)) continue;
-            if (!explicitExtension && !result.IsDir)
-            {
-                var identity = entry.Link is { } link && IsExecutable(link.Target)
-                    ? Identity(link.Target, link.Arguments, LinkDirectory(result, link))
-                    : IsExecutable(result.FullPath) ? Identity(result.FullPath, result.ApplicationArguments, result.ApplicationWorkingDirectory) : null;
-                if (identity != null)
-                {
-                    if (entry.Link == null && preferredLinks.Contains(identity)) continue;
-                    if (!launches.Add(identity)) continue;
-                }
-            }
+            if (entry.Identity is { } identity && ((entry.Link == null && entry.HasShortcut) || !launches.Add(identity)))
+                continue;
             results.Add(entry.Candidate);
+        }
+        // A single program fits on one line. When two launch profiles share a title, expose
+        // enough of the launch command to choose the intended installation or working folder.
+        foreach (var group in results.Where(c => c.Result.IsApplication)
+            .GroupBy(c => c.Result.Name, StringComparer.OrdinalIgnoreCase).Where(group => group.Skip(1).Any()))
+        {
+            foreach (var candidate in group)
+            {
+                var app = candidate.Result;
+                app.ParentDir = app.FullPath;
+                if (app.ApplicationArguments.Length > 0)
+                    app.ParentDir += " " + app.ApplicationArguments;
+                if (app.ApplicationWorkingDirectory.Length > 0)
+                    app.ParentDir += "  ·  " + app.ApplicationWorkingDirectory;
+            }
         }
         return results;
     }
@@ -91,8 +129,15 @@ internal static class LaunchCandidateOrdering
     // A full pinyin/initials alias is as exact as the display name. Requiring full coverage avoids
     // promoting a weak fuzzy hit; an explicit extension still means the user requested that file.
     private static bool ExactMatch(SearchResultMapper.RankedCandidate candidate, string query, bool explicitExtension)
-        => ExactName(candidate.Result, query) || (!explicitExtension
-            && (candidate.IsExactAliasMatch || (candidate.Match.IsMatch && candidate.Match.Start == 0 && candidate.Match.Weight >= 1)));
+        => explicitExtension
+            ? query.Trim().Equals(Path.GetFileName(candidate.Result.FullPath), StringComparison.OrdinalIgnoreCase)
+            : ExactName(candidate.Result, query) || candidate.IsExactAliasMatch
+                || (candidate.Match.IsMatch && candidate.Match.Start == 0 && candidate.Match.Weight >= 1);
+
+    private static string? LaunchIdentity(AppSearchResult result, LaunchShortcut? link)
+        => result.IsDir ? null
+            : link is { } resolved && IsExecutable(resolved.Target) ? Identity(resolved.Target, resolved.Arguments, LinkDirectory(result, resolved))
+            : IsExecutable(result.FullPath) ? Identity(result.FullPath, result.ApplicationArguments, result.ApplicationWorkingDirectory) : null;
 
     internal static bool ExactName(AppSearchResult result, string query)
     {

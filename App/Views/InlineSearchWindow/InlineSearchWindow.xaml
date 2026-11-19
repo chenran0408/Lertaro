@@ -40,8 +40,8 @@
                          changing the list's measured height. Its natural height is independent from the
                          result rows, so the complete path can be displayed across as many wrapped lines as
                          it needs. -->
-                    <Border x:Name="PathPreviewBorder" Grid.Row="0" Background="Transparent"
-                            BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1"
+                    <Border x:Name="PathPreviewBorder" Grid.Row="0" Background="{DynamicResource HeaderBg}"
+                            BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1"
                             CornerRadius="{StaticResource CornerRadiusWindowTop}"
                             Padding="14,8,14,8"
                             Visibility="Collapsed">
@@ -67,12 +67,12 @@
 
                     </Grid>
                     <!-- 3. Separator -->
-                    <Rectangle x:Name="ResultsSeparator" Grid.Row="2" Height="1" Fill="{DynamicResource ControlBorderBrush}"
+                    <Rectangle x:Name="ResultsSeparator" Grid.Row="2" Height="1" Fill="{DynamicResource BorderColor}"
                                Margin="12,0,12,0"
                                Visibility="{Binding ResultsSeparatorVisibility}"/>
                     <!-- 4. Search Box (Bottom Anchored) -->
-                    <Border x:Name="SearchBoxBorder" Grid.Row="3" Background="{DynamicResource ControlBackground}"
-                            BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,1,0,0" CornerRadius="{StaticResource CornerRadiusWindowBottom}"
+                    <Border x:Name="SearchBoxBorder" Grid.Row="3" Style="{StaticResource SearchFieldChrome}"
+                            BorderThickness="0,1,0,0" CornerRadius="{StaticResource CornerRadiusWindowBottom}"
                             Padding="12,8,12,8">
                         <local:SearchBoxControl x:Name="SearchBox" FontSize="14" Padding="0" IsIconOnLeft="False"
                                                 SearchText="{Binding SearchQuery, Mode=TwoWay}" IsServiceRunning="{Binding IsServiceConnected}"/>

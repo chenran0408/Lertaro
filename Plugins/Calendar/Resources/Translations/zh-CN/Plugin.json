@@ -38,6 +38,8 @@
   "Calendar_Unpin": "取消置顶",
   "Calendar_Add": "添加",
   "Calendar_Delete": "删除",
+  "Calendar_Hour": "小时",
+  "Calendar_Minute": "分钟",
   "Calendar_TimeHint": "时间 HH:MM",
   "Calendar_TextHint": "提醒内容",
   "Calendar_TextAdvice": "不推荐超过5条",

@@ -15,6 +15,8 @@ internal static class SearchableItemCache
 {
     public sealed record CacheEntry(SearchableItem Item, List<string> Aliases, System.Windows.Media.ImageSource? Icon)
     {
+        public HashSet<string>? ExactAliases { get; init; }
+
         public string[] KeywordWords { get; } = Item.Keywords.Count == 0 ? [] : Item.Keywords.Prepend(Item.Title)
             .SelectMany(text => text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
             .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
@@ -179,21 +181,27 @@ internal static class SearchableItemCache
             {
                 var rawItems = PluginPerformanceMonitor.Measure(provider, () => provider.GetSearchableItems()?.ToList() ?? new List<SearchableItem>());
                 var entries = new List<CacheEntry>();
+                var aliasProviders = AliasProviderRegistry.GetActiveProviders().ToArray();
+                var separators = aliasProviders.Select(p => p.SyllableSeparator).Where(c => c != '\0').Distinct().ToArray();
                 foreach (var item in rawItems)
                 {
                     if (item == null) continue;
                     var aliases = provider.EnableAlias
-                        ? AliasProviderRegistry.GetActiveProviders()
+                        ? aliasProviders
                             .Where(p => PluginPerformanceMonitor.Measure(p, () => p.CanHandle(item.Title)))
                             .SelectMany(p => PluginPerformanceMonitor.Measure(p, () => p.GetAliases(item.Title)?.ToList() ?? new List<string>()))
                             .ToList()
                         : new List<string>();
                     if (provider.EnableAlias && item.ResultKind == "Application")
-                        {
+                    {
                         aliases.AddRange(ApplicationSearchAliases.Collect(item.Title, item.ActionArgument ?? "", LaunchShortcutCache.Read));
                         aliases.AddRange(item.Keywords);
                     }
-                    entries.Add(new CacheEntry(item, aliases.Distinct(StringComparer.OrdinalIgnoreCase).ToList(), MaterializeIcon(item)));
+                    entries.Add(new CacheEntry(item, aliases.Distinct(StringComparer.OrdinalIgnoreCase).ToList(), MaterializeIcon(item))
+                    {
+                        ExactAliases = item.ResultKind == "Application" && aliases.Count > 0
+                            ? ApplicationSearchAliases.BuildExactAliases(aliases, separators) : null
+                    });
                 }
                 if (generation != Volatile.Read(ref _generation))
                     return;

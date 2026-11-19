@@ -71,9 +71,9 @@ public class FlowPublicApi : IPublicAPI
             return activeKeyword + " ";
 
         var trimmed = query.TrimStart();
-        var firstSpace = trimmed.IndexOf(' ');
-        var firstWord = firstSpace > 0 ? trimmed[..firstSpace] : trimmed;
-        var rest = firstSpace > 0 ? trimmed[(firstSpace + 1)..] : string.Empty;
+        var parts = trimmed.Split((char[]?)null, 2, StringSplitOptions.None);
+        var firstWord = parts[0];
+        var rest = parts.Length == 2 ? parts[1] : string.Empty;
 
         // If query explicitly switches to another registered plugin's keyword (e.g. "pm install ..."), preserve it
         if (!firstWord.Equals(activeKeyword, StringComparison.OrdinalIgnoreCase) &&
@@ -83,7 +83,7 @@ public class FlowPublicApi : IPublicAPI
             return query;
         }
 
-        return firstSpace > 0
+        return parts.Length == 2
             ? activeKeyword + " " + rest
             : activeKeyword;
     }

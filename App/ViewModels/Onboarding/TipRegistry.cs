@@ -10,7 +10,6 @@ namespace Lertaro.App.ViewModels.Onboarding;
 internal static class TipRegistry
 {
     public const string QuickSwitch = "quickswitch";
-    public const string Clipboard = "clipboard";
     public const string Filters = "filters";
 
     public static bool TryGetCopy(string tipId, out string title, out string body)
@@ -18,16 +17,12 @@ internal static class TipRegistry
         switch (tipId)
         {
             case QuickSwitch:
-                title = T("Tip_QuickSwitch_Title");
-                body = T("Tip_QuickSwitch_Body");
-                return true;
-            case Clipboard:
-                title = T("Tip_Clipboard_Title");
-                body = T("Tip_Clipboard_Body");
+                title = TranslationManager.Instance["Tip_QuickSwitch_Title"];
+                body = TranslationManager.Instance["Tip_QuickSwitch_Body"];
                 return true;
             case Filters:
-                title = T("Tip_Filters_Title");
-                body = T("Tip_Filters_Body");
+                title = TranslationManager.Instance["Tip_Filters_Title"];
+                body = TranslationManager.Instance["Tip_Filters_Body"];
                 return true;
             default:
                 title = body = string.Empty;
@@ -35,5 +30,4 @@ internal static class TipRegistry
         }
     }
 
-    private static string T(string key) => TranslationManager.Instance[key];
 }

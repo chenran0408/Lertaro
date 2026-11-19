@@ -8,6 +8,9 @@ namespace Lertaro.Plugins.ClipboardHistory;
 /// </summary>
 internal static class ClipboardMergeSupport
 {
+    internal static bool CanPasteTogether(IReadOnlyList<ClipboardEntry> entries) =>
+        entries.Count == 1 || (entries.Count > 1 && entries.All(entry => entry.Kind != ClipboardEntryKind.Image));
+
     public static ClipboardEntry? MergeForPaste(IReadOnlyList<ClipboardEntry> entries)
     {
         var texts = new List<string>();

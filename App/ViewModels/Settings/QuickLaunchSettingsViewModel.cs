@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
+using System.Windows.Data;
 using System.Windows.Input;
 using Lertaro.App.Helpers;
+using Lertaro.App.Services.AppWindow;
 using Lertaro.App.ViewModels.Search;
 using Lertaro.Core;
 
@@ -22,7 +24,12 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
         SelectSectionCommand = new RelayCommand<string>(section => SelectedSection = section ?? "Items");
         foreach (var item in userSettings.QuickLaunch.Items)
             Items.Add(new QuickLaunchItemViewModel { Name = item.Name, Path = item.Path });
-        Items.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasItems));
+        Items.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(HasItems));
+            CommandManager.InvalidateRequerySuggested();
+        };
+        _isAddFormOpen = Items.Count == 0;
 
         var disabledIds = userSettings.QuickLaunch.DisabledSourceIds;
         var sourceOptions = QuickLaunchSourceCatalog.Providers
@@ -46,8 +53,13 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
         EditCommand = new RelayCommand<QuickLaunchItemViewModel>(Edit);
         SaveEditCommand = new RelayCommand<QuickLaunchItemViewModel>(SaveEdit, CanSaveEdit);
         CancelEditCommand = new RelayCommand<QuickLaunchItemViewModel>(CancelEdit);
-        MoveUpCommand = new RelayCommand<QuickLaunchItemViewModel>(item => Move(item, -1));
-        MoveDownCommand = new RelayCommand<QuickLaunchItemViewModel>(item => Move(item, 1));
+        MoveUpCommand = new RelayCommand<QuickLaunchItemViewModel>(item => Move(item, -1), item => CanMove(item, -1));
+        MoveDownCommand = new RelayCommand<QuickLaunchItemViewModel>(item => Move(item, 1), item => CanMove(item, 1));
+        MoveSourceUpCommand = new RelayCommand<QuickLaunchSourceOptionViewModel>(source => MoveSource(source, -1),
+            source => CanMoveSource(source, -1));
+        MoveSourceDownCommand = new RelayCommand<QuickLaunchSourceOptionViewModel>(source => MoveSource(source, 1),
+            source => CanMoveSource(source, 1));
+        Sources.CollectionChanged += (_, _) => CommandManager.InvalidateRequerySuggested();
         BrowseFolderCommand = new RelayCommand(() => Browse(true));
         BrowseFileCommand = new RelayCommand(() => Browse(false));
         BrowseEditFolderCommand = new RelayCommand<QuickLaunchItemViewModel>(item => BrowseEdit(item, true));
@@ -65,12 +77,34 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
     public ICommand CancelEditCommand { get; }
     public ICommand MoveUpCommand { get; }
     public ICommand MoveDownCommand { get; }
+    public ICommand MoveSourceUpCommand { get; }
+    public ICommand MoveSourceDownCommand { get; }
     public ICommand BrowseFolderCommand { get; }
     public ICommand BrowseFileCommand { get; }
     public ICommand BrowseEditFolderCommand { get; }
     public ICommand BrowseEditFileCommand { get; }
 
     public bool HasItems => Items.Count > 0;
+    private bool _isAddFormOpen;
+    public bool IsAddFormOpen { get => _isAddFormOpen; set => SetProperty(ref _isAddFormOpen, value); }
+
+    private string _filterText = string.Empty;
+    public bool CanReorder => string.IsNullOrWhiteSpace(FilterText);
+    public string FilterText
+    {
+        get => _filterText;
+        set
+        {
+            if (!SetProperty(ref _filterText, value)) return;
+            var query = value.Trim();
+            CollectionViewSource.GetDefaultView(Items).Filter = query.Length == 0 ? null :
+                row => row is QuickLaunchItemViewModel item && (item.IsEditing
+                    || item.DisplayName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+                    || item.Path.Contains(query, StringComparison.OrdinalIgnoreCase));
+            OnPropertyChanged(nameof(CanReorder));
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
 
     public bool IsEnabled
     {
@@ -136,14 +170,21 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
             .ToList();
     }
 
-    private bool CanAdd() => FavoritePathResolver.IsPathAvailable(NewPath);
+    private bool CanAdd()
+    {
+        var path = NormalizePath(NewPath);
+        if (!FavoritePathResolver.IsPathAvailable(path)) return false;
+        var normalized = FavoritePathResolver.NormalizeForComparison(path);
+        return !Items.Any(item => string.Equals(FavoritePathResolver.NormalizeForComparison(item.Path),
+            normalized, StringComparison.OrdinalIgnoreCase));
+    }
 
     private void Clear() => Items.Clear();
 
     private void Add()
     {
         if (!CanAdd()) return;
-        Items.Add(new QuickLaunchItemViewModel { Name = NewName.Trim(), Path = NewPath.Trim().Trim('"') });
+        Items.Add(new QuickLaunchItemViewModel { Name = NewName.Trim(), Path = NormalizePath(NewPath) });
         NewName = string.Empty;
         NewPath = string.Empty;
     }
@@ -174,9 +215,20 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
         item.Name = string.IsNullOrWhiteSpace(item.EditName) ? string.Empty : item.EditName.Trim();
         item.Path = NormalizePath(item.EditPath);
         item.IsEditing = false;
+        RefreshFilter();
     }
 
-    private static void CancelEdit(QuickLaunchItemViewModel item) => item?.IsEditing = false;
+    private void CancelEdit(QuickLaunchItemViewModel item)
+    {
+        if (item == null) return;
+        item.IsEditing = false;
+        RefreshFilter();
+    }
+
+    private void RefreshFilter()
+    {
+        if (!CanReorder) CollectionViewSource.GetDefaultView(Items).Refresh();
+    }
 
     private void BrowseEdit(QuickLaunchItemViewModel item, bool folder)
     {
@@ -184,16 +236,24 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
         if (folder)
         {
             var dialog = new Microsoft.Win32.OpenFolderDialog();
-            if (dialog.ShowDialog() == true) item.EditPath = dialog.FolderName;
+            if (AppWindowManager.ShowSettingsFileDialog(dialog) == true) item.EditPath = dialog.FolderName;
         }
         else
         {
             var dialog = new Microsoft.Win32.OpenFileDialog { DereferenceLinks = false };
-            if (dialog.ShowDialog() == true) item.EditPath = dialog.FileName;
+            if (AppWindowManager.ShowSettingsFileDialog(dialog) == true) item.EditPath = dialog.FileName;
         }
     }
 
     private static string NormalizePath(string value) => value.Trim().Trim('"');
+
+    private bool CanMove(QuickLaunchItemViewModel? item, int offset)
+    {
+        if (!CanReorder || item == null) return false;
+        var index = Items.IndexOf(item);
+        var target = index + offset;
+        return index >= 0 && target >= 0 && target < Items.Count;
+    }
 
     private void Move(QuickLaunchItemViewModel? item, int offset)
     {
@@ -203,17 +263,32 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
         if (index >= 0 && target >= 0 && target < Items.Count) Items.Move(index, target);
     }
 
+    private bool CanMoveSource(QuickLaunchSourceOptionViewModel? source, int offset)
+    {
+        if (source == null) return false;
+        var index = Sources.IndexOf(source);
+        var target = index + offset;
+        return index >= 0 && target >= 0 && target < Sources.Count;
+    }
+
+    private void MoveSource(QuickLaunchSourceOptionViewModel source, int offset)
+    {
+        if (!CanMoveSource(source, offset)) return;
+        var index = Sources.IndexOf(source);
+        Sources.Move(index, index + offset);
+    }
+
     private void Browse(bool folder)
     {
         if (folder)
         {
             var dialog = new Microsoft.Win32.OpenFolderDialog { Multiselect = true };
-            if (dialog.ShowDialog() == true) AddPaths(dialog.FolderNames);
+        if (AppWindowManager.ShowSettingsFileDialog(dialog) == true) AddPaths(dialog.FolderNames);
         }
         else
         {
             var dialog = new Microsoft.Win32.OpenFileDialog { Multiselect = true, DereferenceLinks = false };
-            if (dialog.ShowDialog() == true) AddPaths(dialog.FileNames);
+        if (AppWindowManager.ShowSettingsFileDialog(dialog) == true) AddPaths(dialog.FileNames);
         }
     }
 

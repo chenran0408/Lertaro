@@ -229,7 +229,7 @@ public class SettingsViewModel : ViewModelBase
             // _history, not History: an untouched History tab was never constructed, so there is nothing
             // staged to save -- going through the property would construct it (loading both history files)
             // purely to write back what it already read.
-            _deferred.ExistingHistory?.Save();
+            _deferred.ExistingHistory?.StagePreferences();
             Favorites.Save();
             QuickLaunch.Save();
             QuickPanel.Save();
@@ -241,6 +241,7 @@ public class SettingsViewModel : ViewModelBase
                 throw new IOException($"Could not save settings to {UserSettings.SettingsPath}.");
             }
             _deferred.ExistingAppearance?.AcceptBackground();
+            _deferred.ExistingHistory?.SaveRemovals();
             _isSaved = true;
             Hotkeys.QuickPanelWake.MarkSaved();
             SettingsApplyHelpers.RebindFavoriteHotkeys(Favorites);

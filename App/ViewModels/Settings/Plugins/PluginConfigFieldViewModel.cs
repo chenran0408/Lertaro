@@ -92,6 +92,7 @@ public class PluginConfigFieldViewModel : ViewModelBase
     public bool IsObjectArray => IsArray && SchemaField.SubFields is { Count: > 0 };
     public bool SupportsEntryTransfer => !HasValueChangedCallback && !string.IsNullOrEmpty(PluginVersion)
         && PluginConfigEntryTransfer.IsSupported(SchemaField);
+    public bool HasEntryPresets => IsObjectArray && !string.IsNullOrEmpty(SchemaField.PresetIdentityKey);
     public bool CanExportEntry => SupportsEntryTransfer && SelectedArrayItem != null;
     internal byte[] ExportEntry() => _arraySupport.ExportEntry();
     internal string ImportEntry(ReadOnlyMemory<byte> json) => _arraySupport.ImportEntry(json);
@@ -102,6 +103,8 @@ public class PluginConfigFieldViewModel : ViewModelBase
     public bool IsHotkey => FieldType == ConfigFieldType.Hotkey;
     public bool IsFilePath => FieldType == ConfigFieldType.FilePath;
     public bool IsFolderPath => FieldType == ConfigFieldType.FolderPath;
+    public bool UsesWideEditor => IsFilePath || IsFolderPath || IsStringList || IsChoice
+        || (IsText && !IsSingleChar && !IsIconField);
     public bool SupportsInlineEditing => IsText || IsInteger || IsStringList || IsFilePath || IsFolderPath;
     public bool IsCustomControl => FieldType == ConfigFieldType.CustomControl;
     public object? CustomControl => SchemaField.CustomControl;

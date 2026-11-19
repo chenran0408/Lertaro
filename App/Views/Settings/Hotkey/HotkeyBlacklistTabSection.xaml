@@ -6,11 +6,6 @@
              xmlns:services="clr-namespace:Lertaro.App.Services"
              mc:Ignorable="d"
              d:DesignHeight="400" d:DesignWidth="700">
-    <!-- Split out of HotkeySettingsPage.xaml (the "Blacklist" tab) to keep that file under the
-         project's line-count convention. DataContext is inherited from the host page: bindings here
-         (Blacklist.*) are HotkeySettingsViewModel/BlacklistSettingsViewModel members, same as before
-         extraction. Both cards are the one shared ProcessListEditorTemplate (see SettingsWindow.xaml),
-         which is also what the quick panel's per-workspace app list uses. -->
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -22,10 +17,10 @@
     </UserControl.Resources>
 
     <StackPanel>
-        <TextBlock Style="{StaticResource SettingsHintText}" Margin="0,0,0,12" TextWrapping="Wrap"
-                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_Hint]}"/>
 
-        <TabControl Background="Transparent" BorderThickness="0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}">
+        <TabControl SelectedIndex="{Binding Blacklist.SelectedScope, Mode=TwoWay}"
+                    AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Blacklist]}"
+                    Background="Transparent" BorderThickness="0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}">
             <!-- The Windows TabControl template paints its own light content panel. -->
             <TabControl.Template>
                 <ControlTemplate TargetType="TabControl">
@@ -40,7 +35,8 @@
                 <Style TargetType="TabItem">
                     <Setter Property="Foreground"><Setter.Value><Binding Path="ForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextPrimary}"/></Setter.Value></Setter>
                     <Setter Property="Padding" Value="14,8"/>
-                    <Setter Property="Margin" Value="0,0,6,0"/>
+                    <Setter Property="Margin" Value="0,0,6,4"/>
+                    <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
                     <Setter Property="Template"><Setter.Value>
                         <ControlTemplate TargetType="TabItem">
                             <Border x:Name="TabBorder" CornerRadius="6" Padding="{TemplateBinding Padding}" Background="{DynamicResource ControlBackground}"
@@ -48,7 +44,11 @@
                                 <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
-                                <Trigger Property="IsSelected" Value="True"><Setter TargetName="TabBorder" Property="BorderBrush" Value="{DynamicResource AccentBlue}"/></Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource SidebarSelected}"/>
+                                    <Setter TargetName="TabBorder" Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource ControlHoverBackground}"/></Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -57,8 +57,12 @@
             </TabControl.Resources>
             <TabItem Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_GlobalTitle]}">
                 <Border Style="{StaticResource SettingsCard}" Margin="0,10,0,0">
-                    <ContentControl x:Name="RowBlacklistGlobal" Focusable="False" Content="{Binding Blacklist.Global}"
-                                    ContentTemplate="{StaticResource ProcessListEditorTemplate}"/>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SettingsHintText}" Margin="0,0,0,12"
+                                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Blacklist_Hint]}"/>
+                        <ContentControl x:Name="RowBlacklistGlobal" Focusable="False" Content="{Binding Blacklist.Global}"
+                                        ContentTemplate="{StaticResource ProcessListEditorTemplate}"/>
+                    </StackPanel>
                 </Border>
             </TabItem>
             <TabItem Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_BlacklistTitle]}">

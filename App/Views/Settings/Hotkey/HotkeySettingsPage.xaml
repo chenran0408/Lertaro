@@ -27,13 +27,10 @@
         <StackPanel Grid.Row="0">
             <TextBlock Style="{StaticResource SettingsSectionTitle}"
                         Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_Title]}"/>
-            <TextBlock Style="{StaticResource SettingsHintText}"
-                        Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_Hint]}"/>
 
             <!-- Tab header row -->
-            <ctrl:TabStripScrollView Margin="0,16,0,0">
-                <StackPanel Orientation="Horizontal">
-                    <StackPanel Margin="0,0,28,0">
+            <WrapPanel Margin="0,12,0,0">
+                    <StackPanel Margin="0,0,18,4">
                         <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Hotkeys_Tab_Global]}"
                                 Command="{Binding SelectTabCommand}" CommandParameter="Global">
                             <Button.Style>
@@ -85,7 +82,7 @@
                             </Border.Style>
                         </Border>
                     </StackPanel>
-                    <StackPanel Margin="28,0,0,0">
+                    <StackPanel Margin="18,0,0,4">
                         <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_Blacklist]}"
                                 Command="{Binding SelectTabCommand}" CommandParameter="Blacklist">
                             <Button.Style>
@@ -111,8 +108,7 @@
                             </Border.Style>
                         </Border>
                     </StackPanel>
-                </StackPanel>
-            </ctrl:TabStripScrollView>
+            </WrapPanel>
             <Border Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,15"/>
         </StackPanel>
 
@@ -164,11 +160,11 @@
                                                         <RowDefinition Height="Auto"/>
                                                     </Grid.RowDefinitions>
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" SharedSizeGroup="HotkeyLabel"/>
+                                                        <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="200"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="{Binding DisplayName}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-                                                    <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="26"
+                                                    <TextBlock Text="{Binding DisplayName}" Margin="0,0,16,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                                    <ctrl:HotkeyRecorderControl Grid.Column="1" Width="200" Height="30" AutomationProperties.Name="{Binding DisplayName}"
                                                         Value="{Binding HotkeyValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                         DefaultValue="{Binding DefaultHotkey}"/>
                                                     <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ConflictWarning}"

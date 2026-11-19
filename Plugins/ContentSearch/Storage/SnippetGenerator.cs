@@ -17,7 +17,7 @@ public static class SnippetGenerator
 
         var tokens = string.IsNullOrWhiteSpace(query)
             ? Array.Empty<string>()
-            : query.Split(new[] { ' ', '+', '"' }, StringSplitOptions.RemoveEmptyEntries);
+            : query.Replace('+', ' ').Replace('"', ' ').Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
 
         var firstMatchIndex = -1;
         var matchedTokenLength = 0;

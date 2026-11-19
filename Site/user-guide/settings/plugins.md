@@ -1,11 +1,11 @@
 # Plugins
 
-Lertaro features a modular plugin architecture. Core extensions, native C# plugins, and third-party community extensions can all be viewed, configured, and managed in the Plugin Center under **Settings → Plugins**.
+Open **Settings → Plugins** to enable plugins or inspect their components.
 
 ## 1. Page Layout & SDK Version
 
 - **Plugin SDK Badge**: The top-right badge displays the currently loaded `Lertaro.PluginSdk` version. Clicking it opens the [**Developer Guide**](../../dev-guide/) directly.
-- **Independent Dual-Pane Layout**: The left pane lists all installed plugins, while the right pane renders details and configuration forms for the selected plugin, with independent scrolling.
+- In **Plugin settings**, browse by function or search for a category or plugin. Select a row to open its settings.
 
 ### Plugin activation and restart
 
@@ -13,7 +13,7 @@ Turning off all toggleable components also disables the whole plugin. You can ed
 
 ## 2. Plugin Details & Component Toggles
 
-Clicking any plugin on the left displays its icon, name, version, and overview in the right pane:
+Select an installed plugin to see its details.
 
 ### Details Tab
 

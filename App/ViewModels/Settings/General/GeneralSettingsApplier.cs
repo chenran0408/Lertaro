@@ -31,6 +31,7 @@ internal static class GeneralSettingsApplier
     {
         var logLevelChanged = userSettings.LogLevel != logLevel;
         var everythingIpcChanged = userSettings.EnableEverythingIpc != enableEverythingIpc;
+        var startupChanged = userSettings.StartWithWindows != startWithWindows;
 
         userSettings.StartWithWindows = startWithWindows;
         userSettings.AutoCheckUpdates = autoCheckUpdates;
@@ -39,8 +40,7 @@ internal static class GeneralSettingsApplier
         userSettings.ShowHiddenFiles = showHiddenFiles;
         userSettings.OrFirstPrecedence = orFirstPrecedence;
         userSettings.EnableQuickSearchClipboardAutoFill = enableQuickSearchClipboardAutoFill;
-        // Stored under SearchWindow because both windows read it (the quick one on hide, the full one on
-        // Escape), but it is a system-wide search behaviour, so its row lives on the System tab.
+        // The quick search window reads this on hide and the full search window reads it on Escape.
         userSettings.SearchWindow.KeepSearchText = keepSearchText;
         SearchContext.DefaultFuzzyMatchEnabled = enableFuzzyMatch;
         // This process matches outside the search pipeline too (plugin catalog, favorites, shell-menu
@@ -55,7 +55,7 @@ internal static class GeneralSettingsApplier
         // The third-party-file-manager fields are owned by their own sub-VM now; see vm.FileManager.Save
         // below rather than a copy of them threaded through this signature.
 
-        StartupManager.SetEnabled(startWithWindows);
+        if (startupChanged) StartupManager.SetEnabled(startWithWindows);
         (System.Windows.Application.Current.MainWindow as QuickSearchWindow)?.ApplyTrayIconVisibility(hideTrayIcon);
         Logger.MinimumLevel = SettingsOptionGenerator.ParseLogLevel(logLevel);
         if (logLevelChanged)

@@ -1,3 +1,11 @@
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Threading;
+using Lertaro.App.Helpers.Visuals;
+using Lertaro.App.ViewModels.Settings.Plugins;
+using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+
 namespace Lertaro.App.Views.Settings.Plugins;
 
 public partial class PluginManagementSettingsPage : System.Windows.Controls.UserControl
@@ -8,51 +16,100 @@ public partial class PluginManagementSettingsPage : System.Windows.Controls.User
         DataContextChanged += OnDataContextChanged;
     }
 
-    private void OnDataContextChanged(object sender, System.Windows.DependencyPropertyChangedEventArgs e)
+    private PluginManagementViewModel? ViewModel => DataContext as PluginManagementViewModel;
+
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        if (e.OldValue is ViewModels.Settings.Plugins.PluginManagementViewModel oldVm)
+        if (e.OldValue is PluginManagementViewModel oldVm)
+        {
             oldVm.PluginsReordered -= OnPluginsReordered;
-        if (e.NewValue is ViewModels.Settings.Plugins.PluginManagementViewModel newVm)
+        }
+        if (e.NewValue is PluginManagementViewModel newVm)
+        {
             newVm.PluginsReordered += OnPluginsReordered;
+        }
     }
 
-    // A reorder (sort toggle, or Apply/OK reconciling the sort after a toggle) keeps the selection on
-    // the same VM but moves its row, which WPF does not scroll on its own -- bring it back into view so
-    // the user is not left looking at whatever plugin happened to land where the old row was.
-    private void OnPluginsReordered()
-    {
-        if (PluginsList.SelectedItem is null) return;
-        // Background priority runs after layout AND render, and by then the virtualized ListBox has
-        // regenerated its containers around the new item order -- scrolling earlier finds no container
-        // for the moved row and silently no-ops, which is why the selection could still end up off-screen.
+    private void OnPluginsReordered() =>
         Dispatcher.BeginInvoke(new Action(() =>
         {
+            if (PluginsList.SelectedItem is { } selection)
+                PluginsList.ScrollIntoView(selection);
+        }), DispatcherPriority.Background);
+    private void PluginsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.OriginalSource != PluginsList || PluginsList.SelectedItem is not PluginInfoViewModel plugin || ViewModel is not { } vm)
+            return;
+        vm.SelectedPlugin = plugin;
+        PluginsList.ScrollIntoView(plugin);
+    }
+
+    private void PluginsList_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (TreeWalk.Ancestor<ListBoxItem>(e.OriginalSource as DependencyObject)?.Content is PluginInfoViewModel)
+            OpenSelectedPlugin();
+    }
+
+    private void PluginSearchBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || ViewModel is not { IsConfigurationDirectory: true } vm) return;
+        e.Handled = true;
+        if (vm.SelectedPlugin != null) OpenSelectedPlugin();
+    }
+
+    private void PluginsList_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || PluginsList.SelectedItem == null
+            || TreeWalk.Ancestor<System.Windows.Controls.Button>(e.OriginalSource as DependencyObject) != null) return;
+        e.Handled = true;
+        OpenSelectedPlugin();
+    }
+
+    private void OpenPlugin_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: PluginInfoViewModel plugin } && ViewModel is { } vm)
+        {
+            if (plugin.HasConfigFields && Window.GetWindow(this) is SettingsWindow settings)
+                settings.SelectSection("PluginSettings");
+            if (vm.IsConfigurationDirectory && !vm.VisiblePlugins.Contains(plugin))
+                vm.RevealPluginDetails(plugin);
+            vm.SelectedPlugin = plugin;
+            OpenSelectedPlugin();
+        }
+    }
+
+    private void OpenSelectedPlugin()
+    {
+        if (ViewModel is not { SelectedPlugin: not null } vm) return;
+        vm.SelectedPlugin.IsConfigTab = vm.IsConfigurationDirectory && vm.SelectedPlugin.HasConfigFields;
+        vm.IsPluginDetailsOpen = true;
+        if (BackToPluginsButton.IsVisible)
+            BackToPluginsButton.Focus();
+    }
+
+    private void BackToPlugins_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } vm) return;
+        vm.IsPluginDetailsOpen = false;
+        vm.RefreshInstalledFilter();
+        if (PluginsList.SelectedItem is { } plugin)
+        {
+            PluginsList.ScrollIntoView(plugin);
             PluginsList.UpdateLayout();
-            PluginsList.ScrollIntoView(PluginsList.SelectedItem);
-        }), System.Windows.Threading.DispatcherPriority.Background);
+            if (PluginsList.ItemContainerGenerator.ContainerFromItem(plugin) is ListBoxItem row)
+            {
+                row.Focus();
+                return;
+            }
+        }
+        PluginSearchBox.Focus();
     }
 
-    // Brings the selected plugin into view. Clicking a row needs no help, but the settings search
-    // reveals a plugin by setting SelectedPlugin on the view model, and a selection arriving that way
-    // lands wherever it already was: with more plugins than fit, searching for one silently selected it
-    // off-screen and the page looked like it had ignored the result.
-    private void PluginsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private void SdkGuide_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is System.Windows.Controls.ListBox { SelectedItem: not null } listBox)
-            listBox.ScrollIntoView(listBox.SelectedItem);
+        if (ViewModel?.DevGuideUri is { } uri)
+            Helpers.UrlLauncher.Open(uri);
     }
 
-    private void SdkBadge_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
-    {
-        if (DataContext is ViewModels.Settings.Plugins.PluginManagementViewModel vm && vm.DevGuideUri != null)
-            Helpers.UrlLauncher.Open(vm.DevGuideUri);
-    }
-
-    private void PluginColumnHeader_Click(object sender, System.Windows.RoutedEventArgs e)
-    {
-        // Single column header: click toggles between the default rank order and "disabled sink to
-        // the bottom"; the header text follows the mode.
-        if (DataContext is ViewModels.Settings.Plugins.PluginManagementViewModel vm)
-            vm.TogglePluginSort();
-    }
+    private void PluginColumnHeader_Click(object sender, RoutedEventArgs e) => ViewModel?.TogglePluginSort();
 }

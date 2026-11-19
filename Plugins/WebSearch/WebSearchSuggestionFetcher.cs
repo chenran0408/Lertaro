@@ -8,9 +8,17 @@ internal static class WebSearchSuggestionFetcher
     private static readonly TimeSpan SuggestionDebounce = TimeSpan.FromMilliseconds(200);
 
     private static readonly HttpClient SuggestionHttpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(4) };
-    private static readonly HashSet<string> PendingSuggestionRequests = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    private static readonly Dictionary<string, List<string>> SuggestionCache = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-    private static string? _latestSuggestionRequestKey;
+    internal sealed record Request(string Keyword, string Endpoint, string Term, string Culture)
+    {
+        internal bool Matches(string query) => TriggerWord.TryMatchInvoked(query, Keyword, out var term)
+            && string.Equals(term, Term, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private const int CacheCapacity = 128;
+    private static readonly HashSet<Request> Pending = [];
+    private static readonly Dictionary<Request, List<string>> Cache = [];
+    private static readonly Queue<Request> CacheOrder = new();
+    private static Request? _latest;
 
     static WebSearchSuggestionFetcher()
     {
@@ -22,81 +30,54 @@ internal static class WebSearchSuggestionFetcher
         catch { }
     }
 
-    public static List<string>? GetCached(string suggestionKey)
+    public static IReadOnlyList<string> GetOrFetch(Request key)
     {
-        _latestSuggestionRequestKey = suggestionKey;
-        lock (SuggestionCache)
+        lock (Cache)
         {
-            SuggestionCache.TryGetValue(suggestionKey, out var suggestions);
-            return suggestions;
+            _latest = key;
+            if (Cache.TryGetValue(key, out var suggestions)) return suggestions;
+            if (Pending.Add(key)) _ = FetchAndRefreshAsync(key);
         }
+        return [];
     }
 
-    public static void EnsureFetchStarted(WebSearchInstantProvider.SearchSourceItem source, string searchTerm, string suggestionKey, string prefix)
+    private static async Task FetchAndRefreshAsync(Request key)
     {
-        var shouldTrigger = false;
-        lock (PendingSuggestionRequests)
+        try
         {
-            if (!PendingSuggestionRequests.Contains(suggestionKey))
+            await Task.Delay(SuggestionDebounce).ConfigureAwait(false);
+            lock (Cache)
             {
-                PendingSuggestionRequests.Add(suggestionKey);
-                shouldTrigger = true;
+                if (_latest != key) return;
+            }
+
+            var suggestions = await FetchSuggestionsAsync(key).ConfigureAwait(false);
+            lock (Cache)
+            {
+                if (Cache.Count == CacheCapacity) Cache.Remove(CacheOrder.Dequeue());
+                Cache.Add(key, suggestions);
+                CacheOrder.Enqueue(key);
             }
         }
-
-        if (shouldTrigger)
+        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or JsonException
+            or FormatException or InvalidOperationException or NotSupportedException)
         {
-            TriggerSuggestionFetch(source, searchTerm, suggestionKey, prefix);
+            // The main search result still works. The next user query can retry this endpoint.
+            return;
         }
+        finally
+        {
+            lock (Cache) Pending.Remove(key);
+        }
+        SearchRefreshService.RefreshIfMatches(key.Matches);
     }
 
-    private static void TriggerSuggestionFetch(WebSearchInstantProvider.SearchSourceItem source, string searchTerm, string suggestionKey, string prefix) => Task.Run(async () =>
-                                                                                                                                    {
-                                                                                                                                        var fetched = false;
-                                                                                                                                        try
-                                                                                                                                        {
-                                                                                                                                            await Task.Delay(SuggestionDebounce);
-                                                                                                                                            if (_latestSuggestionRequestKey != suggestionKey)
-                                                                                                                                            {
-                                                                                                                                                // The user has already moved on to a different query; skip the network call.
-                                                                                                                                                return;
-                                                                                                                                            }
-
-                                                                                                                                            var suggestions = await FetchSuggestionsAsync(source.SuggestUrl, searchTerm);
-                                                                                                                                            lock (SuggestionCache)
-                                                                                                                                            {
-                                                                                                                                                SuggestionCache[suggestionKey] = suggestions;
-                                                                                                                                            }
-                                                                                                                                            fetched = true;
-                                                                                                                                        }
-                                                                                                                                        catch
-                                                                                                                                        {
-                                                                                                                                            lock (SuggestionCache)
-                                                                                                                                            {
-                                                                                                                                                SuggestionCache[suggestionKey] = new List<string>();
-                                                                                                                                            }
-                                                                                                                                            fetched = true;
-                                                                                                                                        }
-                                                                                                                                        finally
-                                                                                                                                        {
-                                                                                                                                            lock (PendingSuggestionRequests)
-                                                                                                                                            {
-                                                                                                                                                PendingSuggestionRequests.Remove(suggestionKey);
-                                                                                                                                            }
-                                                                                                                                        }
-
-                                                                                                                                        if (fetched)
-                                                                                                                                        {
-                                                                                                                                            RefreshActiveSearches(prefix, searchTerm);
-                                                                                                                                        }
-                                                                                                                                    });
-
-    private static async Task<List<string>> FetchSuggestionsAsync(string suggestUrlTemplate, string searchTerm)
+    private static async Task<List<string>> FetchSuggestionsAsync(Request key)
     {
-        var url = WebSearchInstantProvider.BuildUrl(suggestUrlTemplate, searchTerm);
+        var url = WebSearchInstantProvider.BuildUrl(key.Endpoint, key.Term);
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
 
-        var cultureName = TranslationService.GetCurrentCulture();
+        var cultureName = key.Culture;
         if (!string.IsNullOrWhiteSpace(cultureName))
         {
             try
@@ -109,10 +90,10 @@ internal static class WebSearchSuggestionFetcher
         using var response = await SuggestionHttpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadAsStringAsync();
-        return ParseOpenSearchSuggestions(json);
+        return ParseOpenSearchSuggestions(json, key.Term);
     }
 
-    private static List<string> ParseOpenSearchSuggestions(string json)
+    internal static List<string> ParseOpenSearchSuggestions(string json, string term)
     {
         var result = new List<string>();
         using var doc = JsonDocument.Parse(json);
@@ -130,15 +111,11 @@ internal static class WebSearchSuggestionFetcher
                 continue;
 
             var text = item.GetString();
-            if (!string.IsNullOrWhiteSpace(text))
-                result.Add(text);
+            if (string.IsNullOrWhiteSpace(text) || string.Equals(term, text, StringComparison.OrdinalIgnoreCase)
+                || result.Contains(text, StringComparer.OrdinalIgnoreCase)) continue;
+            result.Add(text);
+            if (result.Count == 5) break;
         }
         return result;
     }
-
-    // Re-triggers active searches so they pick up newly-cached suggestions, via the host-provided
-    // SearchRefreshService rather than reflecting into concrete App-side view model types.
-    private static void RefreshActiveSearches(string prefix, string searchTerm) => SearchRefreshService.RefreshIfMatches(currentQueryText =>
-                                                                                            currentQueryText.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) &&
-                                                                                            string.Equals(currentQueryText.Substring(prefix.Length).Trim(), searchTerm, StringComparison.OrdinalIgnoreCase));
 }

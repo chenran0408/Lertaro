@@ -63,7 +63,7 @@ internal sealed class SearchExecutionEngine : IDisposable
         // debounces. Otherwise its rows keep repainting ahead of the next keystroke.
         CancelPendingSearch();
 
-        var delay = string.IsNullOrEmpty(query) || query.Length <= 1 ? 0 : (fileLimit > 100 ? 150 : 30);
+        var delay = string.IsNullOrEmpty(query) || query.Length <= 1 ? 0 : (fileLimit > 100 ? 150 : 15);
         if (delay == 0)
         {
             PerformSearch(query, searchScope, isInlineSearchContext, fileLimit, appLimit, resultMapper, onSearchStateChanged, onResultsUpdated, onLocalServiceUnavailable, shouldEmitInstantResults, bypassExclusions, resultMapperConsumesBatches, onReceivedCountUpdated, scopeDirective, instantQuery, emitInstantResults, beforeSearch, collectInstantResults, additionalResultsReady);

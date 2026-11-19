@@ -25,8 +25,9 @@ internal sealed class ClipboardTextReader
     // failing, and reading then could attribute another app's text (possibly an
     // excluded password manager) to the snapshotted owner. On mismatch we skip;
     // the next WM_CLIPBOARDUPDATE covers the new content.
-    public string? Read(int maxTextLength, uint expectedSequence, nint expectedOwner)
+    public string? Read(int maxTextLength, uint expectedSequence, nint expectedOwner, out bool complete)
     {
+        complete = false;
         for (var attempt = 0; attempt <= MaxRetries; attempt++)
         {
             if (attempt > 0) Thread.Sleep(RetryIntervalMs);
@@ -36,7 +37,7 @@ internal sealed class ClipboardTextReader
                 if (_native.GetClipboardSequenceNumber() != expectedSequence ||
                     _native.GetClipboardOwner() != expectedOwner) return null;
                 if (!_native.IsClipboardFormatAvailable(IClipboardNative.CfUnicodeText)) return null;
-                return ReadText(maxTextLength);
+                return ReadText(maxTextLength, out complete);
             }
             finally
             {
@@ -46,8 +47,9 @@ internal sealed class ClipboardTextReader
         return null;
     }
 
-    private string? ReadText(int maxTextLength)
+    private string? ReadText(int maxTextLength, out bool complete)
     {
+        complete = false;
         if (maxTextLength <= 0) return null;
         var handle = _native.GetClipboardData(IClipboardNative.CfUnicodeText);
         if (handle == nint.Zero) return null;
@@ -64,9 +66,15 @@ internal sealed class ClipboardTextReader
             Marshal.Copy(ptr, buffer, 0, charCap);
             var terminator = Array.IndexOf(buffer, '\0');
             if (terminator == 0) return null; // empty text
-            if (terminator >= 0) return new string(buffer, 0, terminator);
+            if (terminator >= 0)
+            {
+                complete = true;
+                return new string(buffer, 0, terminator);
+            }
             // Truncated without reaching the terminator: never end on a dangling
             // high surrogate, the store would receive a broken trailing pair.
+            complete = (nuint)charCap < sizeBytes / 2 && Marshal.ReadInt16(ptr, charCap * 2) == 0
+                && !char.IsHighSurrogate(buffer[^1]);
             var text = new string(buffer);
             return text.Length > 0 && char.IsHighSurrogate(text[^1]) ? text[..^1] : text;
         }

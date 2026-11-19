@@ -26,15 +26,37 @@ public sealed class GlobalHotkeyDetectorTests
     }
 
     [TestMethod]
-    public void ClipboardPanelHotkey_MatchesWinVAndConsumesTheKey()
+    public void ClipboardPanelHotkey_DefaultConsumesAltVAndLeavesWinVToWindows()
     {
         var settings = new UserSettings();
-        settings.Hotkeys.ClipboardPanelHotkey = "Win+V";
         var detector = new GlobalHotkeyDetector(settings, new ExplorerTracker());
 
-        detector.OnKeyDown(0x5B);
+        detector.OnKeyDown(0xA4);
         Assert.IsTrue(detector.CheckClipboardPanelHotkey(0x56, out var consumeKey));
         Assert.IsTrue(consumeKey);
+        detector.OnKeyUp(0xA4);
+
+        detector.OnKeyDown(0x5B);
+        Assert.IsFalse(detector.CheckClipboardPanelHotkey(0x56, out consumeKey));
+        Assert.IsFalse(consumeKey);
+    }
+
+    [TestMethod]
+    public void DisabledClipboardPluginLeavesWindowsShortcutsAvailable()
+    {
+        var settings = new UserSettings { DisabledPluginAssemblies = ["LERTARO.PLUGINS.CLIPBOARDHISTORY.DLL"] };
+        var detector = new GlobalHotkeyDetector(settings, new ExplorerTracker());
+
+        detector.OnKeyDown(0xA4);
+        Assert.IsFalse(detector.CheckClipboardPanelHotkey(0x56, out var consumePanel));
+        Assert.IsFalse(consumePanel);
+
+        detector.OnKeyUp(0xA4);
+        detector.OnKeyDown(0x5B);
+        detector.OnKeyDown(0xA2);
+        Assert.IsFalse(detector.CheckClipboardQuickPasteSlot(0x33, out var slot, out var consumeSlot));
+        Assert.AreEqual(0, slot);
+        Assert.IsFalse(consumeSlot);
     }
 
     [TestMethod]

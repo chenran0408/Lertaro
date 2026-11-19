@@ -17,8 +17,8 @@
             <Setter.Value>
                 <ControlTemplate>
                     <Grid Margin="-3">
-                        <Rectangle StrokeThickness="2" Stroke="{DynamicResource AccentColor}" RadiusX="6" RadiusY="6"/>
-                        <Rectangle Margin="1.5" StrokeThickness="1" Stroke="{DynamicResource ContentBg}" RadiusX="5" RadiusY="5"/>
+                        <Rectangle StrokeThickness="2" Stroke="{DynamicResource AccentColor}" RadiusX="8" RadiusY="8"/>
+                        <Rectangle Margin="1.5" StrokeThickness="1" Stroke="{DynamicResource ContentBg}" RadiusX="7" RadiusY="7"/>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

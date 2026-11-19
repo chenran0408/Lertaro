@@ -1,61 +1,124 @@
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using Lertaro.Core.Services.Update;
 
 namespace Lertaro.App.Services.Update;
 
-/// <summary>
-/// Downloads the release's setup executable to the user's Downloads folder. This is the whole update
-/// path now: no service handoff, no updater script, no file replacement while the app runs. The user
-/// runs the setup themselves when the app tells them it is ready, which sidesteps every failure class
-/// the silent path collected (antivirus locking freshly written binaries, service stops, rollback
-/// debris) at the cost of one click the user owns end to end.
-/// </summary>
+/// <summary>Downloads a release asset to the user's Downloads folder.</summary>
 public class UpdateSetupDownloader
 {
-    private static readonly Lazy<UpdateSetupDownloader> _instance = new(() => new UpdateSetupDownloader());
+    private static readonly Lazy<UpdateSetupDownloader> _instance =
+        new(() => new UpdateSetupDownloader(CreateClient(), TimeSpan.FromSeconds(30)));
     public static UpdateSetupDownloader Instance => _instance.Value;
 
     private readonly HttpClient _httpClient;
+    private readonly TimeSpan _idleTimeout;
 
-    private UpdateSetupDownloader()
+    internal UpdateSetupDownloader(HttpClient httpClient, TimeSpan idleTimeout)
     {
-        // No timeout: a 100 MB installer on a slow link legitimately takes minutes. The caller owns
-        // cancellation, and progress reporting keeps a long download from looking stuck.
-        _httpClient = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
-        _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Lertaro", "1.0.0"));
+        _httpClient = httpClient;
+        _idleTimeout = idleTimeout;
     }
 
-    /// <summary>Downloads the setup to the user's Downloads folder (fallback: temp) and returns its
-    /// full path. Throws on network/IO failure; the caller turns that into the failure message.</summary>
-    public async Task<string> DownloadAsync(string setupUrl, string fileName, Action<double>? progressCallback = null)
+    private static HttpClient CreateClient()
     {
-        var target = ResolveTargetPath(fileName);
-        using var response = await _httpClient.GetAsync(setupUrl, HttpCompletionOption.ResponseHeadersRead)
-            .ConfigureAwait(false);
+        var client = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
+        client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Lertaro", "1.0.0"));
+        return client;
+    }
+
+    public Task<string> DownloadAsync(string url, string fileName, string? signatureUrl, Action<int> reportProgress, CancellationToken cancellationToken) =>
+        DownloadToAsync(url, ResolveTargetPath(fileName), reportProgress, cancellationToken, signatureUrl);
+
+    internal async Task<string> DownloadToAsync(
+        string url, string target, Action<int> reportProgress, CancellationToken cancellationToken, string? signatureUrl = null)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(_idleTimeout);
+        var temporary = $"{target}.{Guid.NewGuid():N}.partial";
+        try
+        {
+            var signature = Path.GetExtension(target).Equals(".zip", StringComparison.OrdinalIgnoreCase)
+                ? await DownloadSignatureAsync(signatureUrl, timeout.Token).ConfigureAwait(false)
+                : null;
+            timeout.CancelAfter(_idleTimeout);
+
+            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, timeout.Token)
+                .ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+
+            var contentLength = response.Content.Headers.ContentLength;
+            await using var content = await response.Content.ReadAsStreamAsync(timeout.Token).ConfigureAwait(false);
+            await using (var output = new FileStream(temporary, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 8192, useAsync: true))
+            {
+                var buffer = new byte[8192];
+                long totalRead = 0;
+                var reportedPercent = -1;
+                int read;
+                while ((read = await content.ReadAsync(buffer, timeout.Token).ConfigureAwait(false)) > 0)
+                {
+                    timeout.CancelAfter(_idleTimeout);
+                    await output.WriteAsync(buffer.AsMemory(0, read), timeout.Token).ConfigureAwait(false);
+                    totalRead += read;
+                    if (contentLength is > 0)
+                    {
+                        var percent = Math.Min(100, (int)(100.0 * totalRead / contentLength.Value));
+                        if (percent != reportedPercent)
+                        {
+                            reportedPercent = percent;
+                            reportProgress(percent);
+                        }
+                    }
+                }
+
+                if (totalRead == 0 || (contentLength.HasValue && totalRead != contentLength.Value))
+                    throw new IOException("The update download ended before the complete file was received.");
+
+                timeout.Token.ThrowIfCancellationRequested();
+                timeout.CancelAfter(Timeout.InfiniteTimeSpan);
+                if (signature != null)
+                {
+                    output.Position = 0;
+                    if (!UpdatePackage.Verify(output, signature))
+                        throw new CryptographicException("The portable update failed signature verification.");
+                }
+            }
+
+            timeout.Token.ThrowIfCancellationRequested();
+            File.Move(temporary, target, overwrite: true);
+            return target;
+        }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested && timeout.IsCancellationRequested)
+        {
+            throw new TimeoutException("The update download stopped making progress.", ex);
+        }
+        finally
+        {
+            File.Delete(temporary);
+        }
+    }
+
+    private async Task<byte[]> DownloadSignatureAsync(string? url, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new CryptographicException("The portable update has no matching signature.");
+
+        using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token).ConfigureAwait(false);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            throw new CryptographicException("The portable update signature could not be found.");
         response.EnsureSuccessStatusCode();
 
-        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-        await using var contentStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-        await using var fileStream = new FileStream(target, FileMode.Create, FileAccess.Write, FileShare.None, 8192, useAsync: true);
-
-        var buffer = new byte[8192];
-        long totalRead = 0;
-        int read;
-        while ((read = await contentStream.ReadAsync(buffer).ConfigureAwait(false)) > 0)
-        {
-            await fileStream.WriteAsync(buffer.AsMemory(0, read)).ConfigureAwait(false);
-            totalRead += read;
-            if (totalBytes > 0)
-                progressCallback?.Invoke((double)totalRead / totalBytes);
-        }
-
-        return target;
+        await using var content = await response.Content.ReadAsStreamAsync(token).ConfigureAwait(false);
+        var bytes = new byte[UpdatePackage.MaxSignatureBytes + 1];
+        var length = await content.ReadAtLeastAsync(bytes, bytes.Length, throwOnEndOfStream: false, cancellationToken: token).ConfigureAwait(false);
+        if (length == 0 || length > UpdatePackage.MaxSignatureBytes)
+            throw new CryptographicException("The portable update signature has an invalid size.");
+        return bytes[..length];
     }
 
-    /// <summary>Downloads folder, or temp when the known-folders API has nothing (some stripped-down
-    /// or redirected profiles). A fixed name per version means a re-download of the same release
-    /// overwrites its own leftover instead of accumulating copies.</summary>
+    /// <summary>Uses the profile's Downloads folder when it exists, otherwise the temporary directory.</summary>
     private static string ResolveTargetPath(string fileName)
     {
         string? directory = null;

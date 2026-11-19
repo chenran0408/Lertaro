@@ -29,9 +29,9 @@
                              AccentBar: its Fill stays permanently AccentBarColor and only its own
                              Opacity toggles. -->
                         <Border x:Name="SelectionOverlay" CornerRadius="{StaticResource CornerRadiusControl}"
-                                Background="{DynamicResource HoverBackground}" Margin="6,2,6,2" Opacity="0"/>
+                                Background="{DynamicResource ItemSelected}" Margin="6,2,6,2" Opacity="0"/>
                         <Rectangle x:Name="AccentBar" Width="3" HorizontalAlignment="Left"
-                                   RadiusX="1.5" RadiusY="1.5" Fill="{DynamicResource AccentBarColor}" Opacity="0" Margin="0,2"/>
+                                   RadiusX="1.5" RadiusY="1.5" Fill="{DynamicResource AccentBarColor}" Opacity="0" Margin="8,7,0,7"/>
                         <Border x:Name="ItemBorder"
                                 Background="Transparent"
                                 CornerRadius="{StaticResource CornerRadiusControl}"

@@ -102,8 +102,8 @@ public static class InlineSearchNavigator
 
         // A real file/folder/app open goes into search history (same rule as the quick and full
         // windows), so inline-launched paths also accumulate their open count.
-        if (!result.IsInstantResult && !string.IsNullOrEmpty(result.FullPath))
-            if (!QueryFilterSupport.IsStealth) SearchHistoryStore.Record(SearchResultHelper.HistoryKeywordOf(result, window.SearchText), result.FullPath, SearchResultHelper.HistoryKindOf(result));
+        if (!result.IsInstantResult && !string.IsNullOrEmpty(result.FullPath) && !QueryFilterSupport.IsStealthQuery(window.SearchText))
+            SearchHistoryStore.Record(SearchResultHelper.HistoryKeywordOf(result, window.SearchText), result.FullPath, SearchResultHelper.HistoryKindOf(result));
 
         // Trust result.IsDir for *which kind* it is (that's already known from the index), but still
         // confirm the path actually still exists right now -- a search result can go stale between when it

@@ -1,3 +1,4 @@
+using Lertaro.PluginSdk.Abstractions;
 using Lertaro.PluginSdk.Abstractions.Plugins;
 using Lertaro.PluginSdk.Services;
 using Lertaro.Plugins.ContentSearch.Storage;
@@ -9,6 +10,15 @@ namespace Lertaro.Plugins.ContentSearch.Providers;
 /// </summary>
 public static class ContentSearchResultBuilder
 {
+    private sealed class DocumentResult(SearchHitItem hit) : InstantResultItem, ISearchResult
+    {
+        public string FullPath => hit.FilePath;
+        public string Name => hit.FileName;
+        public string ContextDirectory => hit.DirectoryPath;
+        public bool IsDir => false;
+        public bool IsApplication => false;
+        public FileMetadata Metadata => hit.Metadata;
+    }
     private const string DocumentSearchIcon = "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z";
 
     public static IEnumerable<InstantResultItem> BuildResultItems(IReadOnlyList<SearchHitItem> hits)
@@ -27,7 +37,7 @@ public static class ContentSearchResultBuilder
             ? hit.Snippet
             : $"{hit.Snippet}  ·  {hit.DirectoryPath}";
 
-        return new InstantResultItem
+        return new DocumentResult(hit)
         {
             Title = hit.FileName,
             Description = desc,

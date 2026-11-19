@@ -12,6 +12,7 @@ internal sealed class ClipboardRuntime : IDisposable
     private static readonly Lazy<ClipboardRuntime> Shared = new(() => new());
     internal static ClipboardRuntime Instance => Shared.Value;
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly SemaphoreSlim _clipboardGate = new(1, 1);
     private readonly object _writeGate = new();
     private Task _pendingWrites = Task.CompletedTask;
     private readonly ConcurrentDictionary<long, SourceWindow> _sources = new();
@@ -23,19 +24,31 @@ internal sealed class ClipboardRuntime : IDisposable
     private ClipboardMonitorService? _monitor;
     private PasteTargetTracker? _targets;
     private Task _ready = Task.CompletedTask;
+    private readonly CancellationTokenSource _retentionStop = new();
+    private Task _retentionTask = Task.CompletedTask;
+    private bool _disposed;
     private bool _started;
     private volatile bool _stopping;
+    private volatile bool _storageFailed;
     private static long _pausedUntilMs;
 
     /// <summary>One-click capture pause from the panel: the monitor's options read this, so a
     /// paused recorder behaves exactly like a disabled one except no setting changes.</summary>
-    internal static bool IsCapturePaused() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < Volatile.Read(ref _pausedUntilMs);
+    internal static bool IsCapturePaused() => CapturePausedUntil() != null;
+
+    internal static DateTimeOffset? CapturePausedUntil()
+    {
+        var end = Volatile.Read(ref _pausedUntilMs);
+        return end > DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() ? DateTimeOffset.FromUnixTimeMilliseconds(end) : null;
+    }
 
     internal static void PauseCaptureFor(TimeSpan duration) =>
         Volatile.Write(ref _pausedUntilMs,
             DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (long)duration.TotalMilliseconds);
 
     internal IReadOnlyList<ClipboardEntry> Entries => Volatile.Read(ref _entries);
+    internal bool StorageFailed => _storageFailed;
+    internal event Action? EntriesChanged;
 
     internal void Start()
     {
@@ -51,6 +64,7 @@ internal sealed class ClipboardRuntime : IDisposable
         var directory = UserDataService.GetUserDataDirectory();
         if (string.IsNullOrEmpty(directory))
         {
+            _storageFailed = true;
             Logger.Log("[ClipboardHistory] User data directory is unavailable.", LogLevel.Error);
             return;
         }
@@ -67,6 +81,7 @@ internal sealed class ClipboardRuntime : IDisposable
         PluginSettingsService.SettingChanged += SettingChanged;
         app.Exit += OnAppExit;
         _ready = InitializeAsync();
+        _retentionTask = MaintainRetentionAsync(_retentionStop.Token);
     }
 
     private async Task InitializeAsync()
@@ -76,11 +91,46 @@ internal sealed class ClipboardRuntime : IDisposable
             Directory.CreateDirectory(_imagesDirectory!);
             await _store!.InitializeAsync().ConfigureAwait(false);
             await _store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays, ClipboardSettings.ImageRetentionDays).ConfigureAwait(false);
-            Publish(await _store.GetEntriesAsync().ConfigureAwait(false));
+            Publish(await _store.GetEntriesAsync(includeHtml: false).ConfigureAwait(false));
             if (!_stopping && ClipboardSettings.Enabled) _monitor!.Start();
         }
-        catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_StorageFailed"); }
+        catch (Exception ex)
+        {
+            _storageFailed = true;
+            EntriesChanged?.Invoke();
+            LogFailure(ex);
+            PasteBackHelper.Notify("ClipboardHistory_StorageFailed");
+        }
     }
+
+    private async Task MaintainRetentionAsync(CancellationToken token)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(30));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(token).ConfigureAwait(false))
+            {
+                var retentionDays = ClipboardSettings.RetentionDays;
+                var imageDays = ClipboardSettings.ImageRetentionDays;
+                if (!HasExpiredEntries(Entries, DateTimeOffset.UtcNow, retentionDays, imageDays)) continue;
+
+                await MutateAsync(async store =>
+                {
+                    await store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays,
+                        ClipboardSettings.ImageRetentionDays).ConfigureAwait(false);
+                    Publish(await store.GetEntriesAsync(includeHtml: false).ConfigureAwait(false));
+                }).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+    }
+
+    internal static bool HasExpiredEntries(IReadOnlyList<ClipboardEntry> entries, DateTimeOffset now, int retentionDays, int imageRetentionDays) =>
+        entries.Any(entry =>
+        {
+            var days = entry.Kind == ClipboardEntryKind.Image ? imageRetentionDays : retentionDays;
+            return !entry.Pinned && days > 0 && entry.LastSeenAtMs < now.AddDays(-days).ToUnixTimeMilliseconds();
+        });
 
     private void SettingChanged(string pluginId, string key)
     {
@@ -93,7 +143,7 @@ internal sealed class ClipboardRuntime : IDisposable
         if (key is "MaxEntries" or "RetentionDays" or "ImageRetentionDays") _ = MutateAsync(async store =>
         {
             await store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays, ClipboardSettings.ImageRetentionDays).ConfigureAwait(false);
-            Publish(await store.GetEntriesAsync().ConfigureAwait(false));
+            Publish(await store.GetEntriesAsync(includeHtml: false).ConfigureAwait(false));
         });
     }
 
@@ -109,7 +159,7 @@ internal sealed class ClipboardRuntime : IDisposable
                 ClipboardSettings.MaxEntries, ClipboardSettings.MaxTextLength).ConfigureAwait(false);
             if (entry == null) return;
             _sources[entry.Id] = new SourceWindow(capture.SourceWindow, capture.SourceProcessId, capture.SourceProcessStartedAtTicks);
-            Publish(ClipEntries(Entries.Where(item => item.Id != entry.Id).Append(entry), ClipboardSettings.MaxEntries));
+            Publish(ClipEntries(Entries.Where(item => item.Id != entry.Id).Append(entry with { Html = string.Empty }), ClipboardSettings.MaxEntries));
         });
     }
 
@@ -125,15 +175,7 @@ internal sealed class ClipboardRuntime : IDisposable
     internal async Task<IReadOnlyList<ClipboardEntry>> GetEntriesAsync(CancellationToken token)
     {
         await _ready.WaitAsync(token).ConfigureAwait(false);
-        if (_store == null || _stopping) return [];
-        await _gate.WaitAsync(token).ConfigureAwait(false);
-        try
-        {
-            var entries = await _store.GetEntriesAsync(token).ConfigureAwait(false);
-            Publish(entries);
-            return entries;
-        }
-        finally { _gate.Release(); }
+        return _stopping ? [] : Entries;
     }
 
     /// <summary>Filters the published snapshot in memory with the host's fuzzy matcher. The old
@@ -152,16 +194,15 @@ internal sealed class ClipboardRuntime : IDisposable
         var ids = entries.Select(entry => entry.Id).ToHashSet();
         foreach (var id in _sources.Keys)
             if (!ids.Contains(id)) _sources.TryRemove(id, out _);
+        EntriesChanged?.Invoke();
         SearchRefreshService.RefreshIfMatches(query => TriggerWord.TryMatch(query, ClipboardSettings.TriggerKeyword, out _));
     }
 
-    internal bool Paste(long id) =>
-        PasteEntries(Entries.Where(entry => entry.Id == id).Take(1).ToArray());
+    internal SourceWindow? CapturePasteTarget() => PasteTargetTracker.ReadExternalForeground(_targets?.Target);
 
-    /// <summary>Pastes one entry, or a merged payload built from several selected entries (the
-    /// panel's multi-select). Returns false when there is nothing pasteable or the target refuses.
-    /// Accepted pastes count toward the entry's paste tally -- the frequency sort means "used",
-    /// and a capture-only tally never told the truth about that.</summary>
+    internal bool Paste(long id) =>
+        StartPaste(Entries.Where(entry => entry.Id == id).Take(1).ToArray(), true, CapturePasteTarget()) != null;
+
     /// <summary>Global quick paste (Ctrl+Win+N): the Nth entry of the panel's canonical order
     /// (recency or the frequency toggle, matching what the panel shows) pasted straight into the
     /// active window. Out of range is a silent no-op -- a hotkey must never surface an error.</summary>
@@ -169,85 +210,68 @@ internal sealed class ClipboardRuntime : IDisposable
     {
         var ordered = View.ClipboardPanelRows.Sort(Entries, View.ClipboardPanelViewSettings.SortByFrequency());
         if (oneBased < 1 || oneBased > ordered.Count) return false;
-        return PasteEntries([ordered[oneBased - 1]], keepFormat: true, pasteIntoCurrentForeground: true);
+        return StartPaste([ordered[oneBased - 1]], true, PasteTargetTracker.ReadExternalForeground()) != null;
     }
 
-    internal bool PasteEntries(IReadOnlyList<ClipboardEntry> entries, bool keepFormat = true,
-        bool pasteIntoCurrentForeground = false)
+    internal Task<bool>? StartPaste(IReadOnlyList<ClipboardEntry> entries, bool keepFormat, SourceWindow? target)
     {
         var merged = entries.Count == 1 ? entries[0] : ClipboardMergeSupport.MergeForPaste(entries);
-        // The hotkey path has no summon, so the tracker's "window the panel would target" is
-        // stale by definition -- the active window IS the target, read fresh.
-        var target = pasteIntoCurrentForeground
-            ? PasteTargetTracker.ReadExternalForeground()
-            : (_targets?.Target ?? PasteTargetTracker.ReadExternalForeground());
         try
         {
-            if (merged == null || _monitor == null || !PasteBackHelper.CanPaste(target)) return false;
-            CountPastes(entries);
-            _ = PasteAsync(merged, target!, keepFormat);
-            return true;
+            if (_stopping || merged == null || _monitor == null || !PasteBackHelper.CanPaste(target)) return null;
+            var pastedIds = entries.Where(entry => entries.Count == 1 || entry.Kind != ClipboardEntryKind.Image)
+                .Select(entry => entry.Id).ToArray();
+            return PasteAndCountAsync(target!, merged, keepFormat, pastedIds);
         }
-        catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); return false; }
+        catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); return null; }
     }
 
-    private void CountPastes(IReadOnlyList<ClipboardEntry> entries)
+    private async Task<bool> PasteAndCountAsync(SourceWindow target, ClipboardEntry entry, bool keepFormat, long[] ids)
     {
-        if (entries.Count == 0) return;
+        var sent = false;
+        await RunClipboardActionAsync(async () =>
+        {
+            sent = await PasteBackHelper.PasteAsync(target, () => WriteEntryAsync(entry, keepFormat)).ConfigureAwait(false);
+            if (sent) CountPastes(ids);
+        }).ConfigureAwait(false);
+        return sent;
+    }
+
+    private void CountPastes(long[] ids)
+    {
         _ = MutateAsync(async store =>
         {
-            foreach (var entry in entries)
-                await store.IncrementPasteCountAsync(entry.Id).ConfigureAwait(false);
-            var ids = entries.Select(entry => entry.Id).ToHashSet();
-            Publish(Entries.Select(item => ids.Contains(item.Id)
+            await store.IncrementPasteCountsAsync(ids).ConfigureAwait(false);
+            var pastedIds = ids.ToHashSet();
+            Publish(Entries.Select(item => pastedIds.Contains(item.Id)
                 ? item with { PasteCount = item.PasteCount + 1 }
                 : item).ToArray());
         });
     }
 
-    /// <summary>Writes an arbitrary text to the clipboard (path-format copies for file entries).</summary>
-    internal async Task CopyTextAsync(string text)
-    {
-        if (_monitor == null) return;
-        try { await _monitor.WriteTextAsync(text).ConfigureAwait(false); }
-        catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); }
-    }
+    internal Task CopyTextAsync(string text) =>
+        _monitor == null ? Task.CompletedTask : RunClipboardActionAsync(() => _monitor.WriteTextAsync(text));
 
-    internal async Task CopyAsync(long id)
+    internal Task CopyAsync(long id)
     {
         var entry = Entries.FirstOrDefault(entry => entry.Id == id);
-        if (entry == null || _monitor == null) return;
+        return entry == null || _monitor == null
+            ? Task.CompletedTask
+            : RunClipboardActionAsync(() => WriteEntryAsync(entry, keepFormat: true));
+    }
+
+    private async Task RunClipboardActionAsync(Func<Task> action)
+    {
+        await _clipboardGate.WaitAsync().ConfigureAwait(false);
         try
         {
-            await WriteEntryAsync(entry, keepFormat: true).ConfigureAwait(false);
+            if (!_stopping) await action().ConfigureAwait(false);
         }
         catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); }
+        finally { _clipboardGate.Release(); }
     }
 
     private string ImageFilePath(ClipboardEntry entry) => Path.Combine(_imagesDirectory!, entry.ImagePath);
-
-    /// <summary>Pastes into the tracked source window and reports whether the panel should close.
-    /// The panel closes after pasting so the injected Ctrl+V lands in the window the user was
-    /// typing in -- except for pinned entries: a pin is the user saying "keep this handy", so the
-    /// panel stays up and the same entry can be pasted repeatedly (Win+V, click, Win+V, click)
-    /// without resummoning it every time.</summary>
-    internal bool PasteAndClose(long id)
-    {
-        var pasted = Paste(id);
-        if (!pasted) return false;
-        // Read the pin state after the paste: Publish() may have run during it, and the decision
-        // belongs to the entry as it stands now, not as it stood when the row was clicked.
-        return !Entries.FirstOrDefault(entry => entry.Id == id)?.Pinned ?? true;
-    }
-
-    private async Task PasteAsync(ClipboardEntry entry, SourceWindow target, bool keepFormat)
-    {
-        try
-        {
-            await PasteBackHelper.PasteAsync(target, () => WriteEntryAsync(entry, keepFormat)).ConfigureAwait(false);
-        }
-        catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_PasteFailed"); }
-    }
 
     /// <summary>Writes one entry back to the clipboard. keepFormat sends the captured HTML flavor
     /// along with the text so rich targets keep their formatting; plain text strips it.</summary>
@@ -255,10 +279,23 @@ internal sealed class ClipboardRuntime : IDisposable
     {
         ClipboardEntryKind.Image => _monitor!.WriteImageAsync(ImageFilePath(entry)),
         ClipboardEntryKind.FilePaths => _monitor!.WriteFilesAsync(entry.PathList),
-        _ => keepFormat && entry.Html.Length > 0
-            ? _monitor!.WriteTextWithHtmlAsync(entry.Content, entry.Html)
-            : _monitor!.WriteTextAsync(entry.Content),
+        _ => WriteTextEntryAsync(entry, keepFormat),
     };
+
+    private async Task WriteTextEntryAsync(ClipboardEntry entry, bool keepFormat)
+    {
+        var html = string.Empty;
+        if (keepFormat && entry.Id > 0 && _store != null)
+        {
+            await _gate.WaitAsync().ConfigureAwait(false);
+            try { html = await _store.GetHtmlAsync(entry).ConfigureAwait(false); }
+            finally { _gate.Release(); }
+        }
+        if (html.Length > 0)
+            await _monitor!.WriteTextWithHtmlAsync(entry.Content, html).ConfigureAwait(false);
+        else
+            await _monitor!.WriteTextAsync(entry.Content).ConfigureAwait(false);
+    }
 
     internal void Copy(long id) => _ = CopyAsync(id);
 
@@ -267,7 +304,7 @@ internal sealed class ClipboardRuntime : IDisposable
         if (Entries.FirstOrDefault(entry => entry.Id == id) is not { } entry) return;
         await store.SetPinnedAsync(id, !entry.Pinned).ConfigureAwait(false);
         await store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays, ClipboardSettings.ImageRetentionDays).ConfigureAwait(false);
-        Publish(await store.GetEntriesAsync().ConfigureAwait(false));
+        Publish(await store.GetEntriesAsync(includeHtml: false).ConfigureAwait(false));
     });
 
     /// <summary>Saves the user's note on an entry (CopyQ-style annotation). A targeted store update
@@ -297,67 +334,36 @@ internal sealed class ClipboardRuntime : IDisposable
     /// <summary>Exports the whole history (database snapshot + images) into one zip file.</summary>
     internal async Task<bool> ExportAsync(string destinationZip)
     {
-        if (_store == null) return false;
-        try
-        {
-            await _store.ExportAsync(destinationZip).ConfigureAwait(false);
-            return true;
-        }
-        catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_StorageFailed"); return false; }
+        return await MutateAsync(store => store.ExportAsync(destinationZip)).ConfigureAwait(false);
     }
 
-    /// <summary>PasteBar-style import: replaces the whole history with a backup zip's contents.
-    /// The swap happens under the mutation gate; current files are moved aside first, so a
-    /// failure mid-surgery leaves the old history recoverable exactly like corruption recovery.
-    /// An older backup's schema is migrated in place by the fresh store's EnsureSchema.</summary>
+    /// <summary>Validates and prepares a backup before replacing any live history.</summary>
     internal async Task<bool> ImportFromAsync(string zipPath)
     {
         if (_store == null || _root == null) return false;
+        var staging = Path.Combine(_root, $".import-{Guid.NewGuid():N}");
         try
         {
-            var staging = Path.Combine(Path.GetTempPath(), $"lertaro-clip-import-{Guid.NewGuid():N}");
-            var (stagedDatabase, stagedImages) = ClipboardBackupSupport.Extract(zipPath, staging);
-            try
-            {
-                await MutateAsync(async _ =>
-                {
-                    MoveCurrentAside();
-                    Directory.CreateDirectory(_imagesDirectory!);
-                    File.Copy(stagedDatabase, _databasePath!, overwrite: true);
-                    foreach (var file in Directory.GetFiles(stagedImages))
-                        File.Copy(file, Path.Combine(_imagesDirectory!, Path.GetFileName(file)), overwrite: true);
+            var (database, images) = await Task.Run(() => ClipboardBackupSupport.Extract(zipPath, staging)).ConfigureAwait(false);
+            var candidate = new ClipboardStore(database, images);
+            await candidate.InitializeImportAsync().ConfigureAwait(false);
+            var entries = await candidate.GetEntriesAsync(includeHtml: false).ConfigureAwait(false);
+            if (entries.Any(entry => entry.Kind == ClipboardEntryKind.Image
+                && (!ClipboardStoreSupport.IsImageFileName(entry.ImagePath) || !File.Exists(Path.Combine(images, entry.ImagePath)))))
+                throw new InvalidDataException("Backup has invalid or missing image files.");
 
-                    _store = new ClipboardStore(_databasePath!, _imagesDirectory!);
-                    await _store.InitializeAsync().ConfigureAwait(false);
-                    await _store.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays, ClipboardSettings.ImageRetentionDays).ConfigureAwait(false);
-                    _sources.Clear();
-                    Publish(await _store.GetEntriesAsync().ConfigureAwait(false));
-                }).ConfigureAwait(false);
-                return true;
-            }
-            finally
+            return await MutateAsync(async _ =>
             {
-                try { Directory.Delete(staging, recursive: true); } catch (IOException) { }
-            }
+                await candidate.TrimAsync(ClipboardSettings.MaxEntries, ClipboardSettings.RetentionDays,
+                    ClipboardSettings.ImageRetentionDays).ConfigureAwait(false);
+                var retained = await candidate.GetEntriesAsync(includeHtml: false).ConfigureAwait(false);
+                ClipboardBackupSupport.ReplaceLiveFiles(_databasePath!, _imagesDirectory!, database, images);
+                _sources.Clear();
+                Publish(retained);
+            }).ConfigureAwait(false);
         }
         catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_StorageFailed"); return false; }
-    }
-
-    // Same rename-aside pattern as corruption recovery: the old database, its sidecars and the
-    // image folder survive under a suffix until the import commits over them.
-    private void MoveCurrentAside()
-    {
-        var suffix = $".old-{DateTime.UtcNow:yyyyMMddHHmmssfff}";
-        var imagesDirectory = _imagesDirectory!;
-        foreach (var file in new[] { _databasePath, _databasePath + "-journal", _databasePath + "-wal", _databasePath + "-shm" })
-            if (file != null && File.Exists(file))
-                File.Move(file, file + suffix);
-        if (Directory.Exists(imagesDirectory))
-        {
-            var aside = imagesDirectory + suffix;
-            if (Directory.Exists(aside)) Directory.Delete(aside, recursive: true);
-            Directory.Move(imagesDirectory, aside);
-        }
+        finally { ClipboardBackupSupport.DeleteStagingDirectory(staging); }
     }
 
     internal bool CanOpenSource(long id) => _sources.TryGetValue(id, out var source) && source.IsAlive;
@@ -366,43 +372,68 @@ internal sealed class ClipboardRuntime : IDisposable
         if (_sources.TryGetValue(id, out var source) && source.IsAlive) SourceWindowFocus.Focus(source.Handle);
     }
 
-    private Task MutateAsync(Func<ClipboardStore, Task> action)
+    private Task<bool> MutateAsync(Func<ClipboardStore, Task> action)
     {
         lock (_writeGate)
         {
-            if (_stopping) return Task.CompletedTask;
-            return _pendingWrites = RunMutationAsync(_pendingWrites, action);
+            if (_stopping) return Task.FromResult(false);
+            var mutation = RunMutationAsync(_pendingWrites, action);
+            _pendingWrites = mutation;
+            return mutation;
         }
     }
 
-    private async Task RunMutationAsync(Task previous, Func<ClipboardStore, Task> action)
+    private async Task<bool> RunMutationAsync(Task previous, Func<ClipboardStore, Task> action)
     {
         try
         {
             await previous.ConfigureAwait(false);
             await _ready.ConfigureAwait(false);
-            if (_store == null) return;
+            if (_store == null) return false;
             await _gate.WaitAsync().ConfigureAwait(false);
-            try { await action(_store).ConfigureAwait(false); }
+            try
+            {
+                await action(_store).ConfigureAwait(false);
+                return true;
+            }
             finally { _gate.Release(); }
         }
-        catch (Exception ex) { LogFailure(ex); PasteBackHelper.Notify("ClipboardHistory_StorageFailed"); }
+        catch (Exception ex)
+        {
+            LogFailure(ex);
+            PasteBackHelper.Notify("ClipboardHistory_StorageFailed");
+            return false;
+        }
     }
 
     internal async Task StopAsync()
     {
         Task pending;
-        lock (_writeGate) { _stopping = true; pending = _pendingWrites; }
+        lock (_writeGate)
+        {
+            if (!_stopping)
+            {
+                _stopping = true;
+                _retentionStop.Cancel();
+            }
+            pending = _pendingWrites;
+        }
         _monitor?.Stop();
+        await _retentionTask.ConfigureAwait(false);
         await _ready.ConfigureAwait(false);
         await pending.ConfigureAwait(false);
+        await _clipboardGate.WaitAsync().ConfigureAwait(false);
+        _clipboardGate.Release();
     }
 
     private void OnAppExit(object sender, ExitEventArgs e) => Dispose();
 
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
         StopAsync().GetAwaiter().GetResult();
+        _retentionStop.Dispose();
         PluginSettingsService.SettingChanged -= SettingChanged;
         if (Application.Current is { } app) app.Exit -= OnAppExit;
         _monitor?.Dispose();

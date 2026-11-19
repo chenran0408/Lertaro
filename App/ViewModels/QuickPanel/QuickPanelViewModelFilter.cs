@@ -22,9 +22,12 @@ public partial class QuickPanelViewModel
         set
         {
             if (!SetProperty(ref _searchQuery, value)) return;
+            OnPropertyChanged(nameof(HasSearchFilter));
             ApplyFilter();
         }
     }
+
+    public bool HasSearchFilter => !string.IsNullOrWhiteSpace(SearchQuery);
 
     /// <summary>Empties the box, which is also what Escape does while there is anything in it.</summary>
     public System.Windows.Input.ICommand ClearSearchCommand

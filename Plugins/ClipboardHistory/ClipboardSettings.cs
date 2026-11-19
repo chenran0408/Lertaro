@@ -145,9 +145,6 @@ internal static class ClipboardSettings
                 FieldType = ConfigFieldType.Text,
                 DefaultValue = DefaultExcludedProcesses
             },
-            // Win+V is owned by Windows' own clipboard history while that feature is on, so the
-            // wake hotkey can dead-fire. This button sends the user to the one switch that frees
-            // the combination; the plugin panel replaces everything the system panel did.
             new PluginConfigField
             {
                 Key = "OpenSystemClipboardSettings",

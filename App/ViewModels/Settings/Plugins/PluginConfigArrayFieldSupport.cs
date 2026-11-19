@@ -58,7 +58,7 @@ internal sealed class PluginConfigArrayFieldSupport
                 }
             }
 
-            if (!hasAnyVal && rawSetting != null)
+            if (!hasAnyVal && rawSetting != null && !_field.HasEntryPresets)
                 list = _field.SchemaField.DefaultValue as System.Collections.IEnumerable;
 
             if (list != null)
@@ -87,6 +87,33 @@ internal sealed class PluginConfigArrayFieldSupport
         }
 
         AddArrayItemViewModel(newItem);
+        _field.SelectedArrayItem = _field.ArrayItems[^1];
+        SaveArrayFromChildren();
+    }
+
+    internal void SelectOrAddPreset(Dictionary<string, object> preset)
+    {
+        var identity = _field.SchemaField.PresetIdentityKey!;
+        var existing = _field.ArrayItems.FirstOrDefault(row => row.Children.Any(child =>
+            child.SchemaField.Key == identity && Equals(child.Value, preset[identity])));
+        if (existing != null)
+        {
+            _field.SelectedArrayItem = existing;
+            return;
+        }
+
+        var values = new Dictionary<string, object>(preset, StringComparer.OrdinalIgnoreCase);
+        var trigger = _field.SchemaField.SubFields?.FirstOrDefault(f => f.IsTriggerWord);
+        if (trigger != null && values.TryGetValue(trigger.Key, out var word))
+        {
+            var used = _field.ArrayItems.SelectMany(row => row.Children).Where(f => f.SchemaField.IsTriggerWord)
+                .Select(f => f.Value?.ToString()?.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var keyword = word.ToString()!;
+            for (var suffix = 2; used.Contains(keyword); suffix++)
+                keyword = $"{word}{suffix}";
+            values[trigger.Key] = keyword;
+        }
+        AddArrayItemViewModel(values);
         _field.SelectedArrayItem = _field.ArrayItems[^1];
         SaveArrayFromChildren();
     }

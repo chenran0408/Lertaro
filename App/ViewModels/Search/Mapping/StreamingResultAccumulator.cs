@@ -24,12 +24,11 @@ namespace Lertaro.App.ViewModels.Search.Mapping;
 /// </remarks>
 internal sealed class StreamingResultAccumulator
 {
-    private readonly record struct Entry(SearchResult Raw, AppSearchResult Row);
+    private readonly record struct Entry(SearchResult Raw, AppSearchResult Row, (int Priority, int Opens) History);
 
     private readonly string _query;
     private readonly Lazy<string?> _queriedDirectory;
-    private IComparer<SearchResult> _rankComparer;
-    private readonly IReadOnlyDictionary<string, int>? _usageCounts;
+    private SearchResultRankComparer _rankComparer;
 
     private int _consumed;
     private List<Entry> _ranked = new();
@@ -82,7 +81,7 @@ internal sealed class StreamingResultAccumulator
                 IsDir = candidate.Result.IsDir,
                 Drive = candidate.Result.Drive
             };
-            _ranked.Add(new Entry(raw, candidate.Result));
+            _ranked.Add(new Entry(raw, candidate.Result, _rankComparer.GetHistoryRank(raw)));
         }
         _ranked.Sort(CompareEntries);
         for (var index = 0; index < _ranked.Count; index++)
@@ -151,7 +150,7 @@ internal sealed class StreamingResultAccumulator
         _ranked = new List<Entry>();
         _lastBatchRows = new List<AppSearchResult>();
         _seedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        _rankComparer = new SearchResultRankComparer(new Dictionary<string, int>(), _usageCounts);
+        _rankComparer = new SearchResultRankComparer(new Dictionary<string, int>());
         if (!keepRows)
         {
             _rows = new List<AppSearchResult>();
@@ -255,7 +254,7 @@ internal sealed class StreamingResultAccumulator
                     continue;
                 var row = SearchResultMapper.CreateUiResult(raw, _query, 0, isApplication: false, scope: null);
                 _lastBatchRows.Add(row);
-                chunk.Add(new Entry(raw, row));
+                chunk.Add(new Entry(raw, row, _rankComparer.GetHistoryRank(raw)));
             }
 
             _consumed += count;
@@ -290,7 +289,8 @@ internal sealed class StreamingResultAccumulator
         }
     }
 
-    private int CompareEntries(Entry left, Entry right) => _rankComparer.Compare(left.Raw, right.Raw);
+    private static int CompareEntries(Entry left, Entry right) =>
+        SearchResultRankComparer.CompareRanked(left.Raw, left.History, right.Raw, right.History);
 
     private static string NormalizePath(string path) =>
         path.Length > 3 && path[^1] == '\\' ? path.TrimEnd('\\') : path;

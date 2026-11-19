@@ -19,7 +19,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -46,6 +45,7 @@
                                  Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                  CaretBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                  Padding="0,0,8,0" VerticalContentAlignment="Center"
+                                 AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_RuntimeStatusSearchPlaceholder]}"
                                  Text="{Binding RuntimeStatusSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         <TextBlock Margin="3,0,0,0" IsHitTestVisible="False" FontSize="14" VerticalAlignment="Center"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
@@ -65,14 +65,17 @@
                 </Grid>
             </Border>
         </Grid>
-        <TextBlock Grid.Row="1" Style="{StaticResource SettingsHintText}"
-                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_RuntimeStatusHint]}"/>
-        <Border Grid.Row="2" Style="{StaticResource SettingsCard}" Padding="12" Margin="0,12,0,0">
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_RuntimeStatusScopeNote]}"
-                       Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap"/>
-        </Border>
+        <Expander Grid.Row="1" Margin="0,2,0,4"
+                  Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_InlineHelp]}">
+            <StackPanel Margin="0,6,0,4">
+                <TextBlock Style="{StaticResource SettingsHintText}"
+                           Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_RuntimeStatusHint]}"/>
+                <TextBlock Style="{StaticResource SettingsHintText}"
+                           Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_RuntimeStatusScopeNote]}"/>
+            </StackPanel>
+        </Expander>
 
-        <ListView x:Name="RuntimeStatusList" Grid.Row="3" Margin="0,12,0,0" ItemsSource="{Binding RuntimeStatuses}"
+        <ListView x:Name="RuntimeStatusList" Grid.Row="2" Margin="0,6,0,0" ItemsSource="{Binding RuntimeStatuses}"
                   Background="Transparent" BorderThickness="0"
                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                   ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -87,7 +90,7 @@
                   GridViewColumnHeader.Click="RuntimeStatusHeader_Click">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Width="280" DisplayMemberBinding="{Binding Name}">
+                    <GridViewColumn Width="208" DisplayMemberBinding="{Binding Name}">
                         <GridViewColumn.Header><GridViewColumnHeader Tag="Name" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_RuntimeStatusPlugin]}"/></GridViewColumn.Header>
                     </GridViewColumn>
                     <GridViewColumn Width="100" DisplayMemberBinding="{Binding InvocationCount, StringFormat={}{0:N0}}">

@@ -70,6 +70,8 @@ public static class SearchResultMapper
                 PluginSearchResultMapper.AddInstantResults(pass.Rows, rawQuery, query, isInlineWindow, contextDirectory,
                     providers ?? PluginManager.Instance.InstantResultProviders);
                 pass.HasPluginSearchActions = PluginSearchResultMapper.AddPluginSearchActionResults(pass.Rows, rawQuery, contextDirectory, isInlineWindow);
+                if (QueryFilterSupport.ActiveFilters is { } filters)
+                    pass.Rows.RemoveAll(row => !System.IO.Path.IsPathFullyQualified(row.FullPath) || !filters.Matches(row));
                 return pass.Rows;
             }
             finally
@@ -220,13 +222,11 @@ public static class SearchResultMapper
         // routing hid these too (its "Case B").
         if (fileFilterScope == null)
         {
-            foreach (var (result, match, exactAlias) in SearchableItemMapper.CollectSearchableItemResults(query, isInlineWindow))
+            foreach (var (result, match, exactAlias) in SearchableItemMapper.CollectSearchableItemResults(query, isInlineWindow, triggeredTypeId))
             {
                 var typeId = result.SourceProvider is ISearchableItemProvider provider
                     ? SearchResultTypePriority.GetProviderTypeId(provider)
                     : SearchResultTypePriority.FilesTypeId;
-                if (triggeredTypeId != null && typeId != triggeredTypeId)
-                    continue;
 
                 // An application's FullPath can be a virtual shell:AppsFolder\{AUMID} id (packaged apps) --
                 // Path.GetFullPath (inside NormalizePath) would mangle that, and SearchHistoryStore itself
@@ -274,9 +274,11 @@ public static class SearchResultMapper
         // file cannot take a row the folders would have used.
         if (folderScope)
             candidates.RemoveAll(c => !c.Result.IsDir);
+        if (QueryFilterSupport.ActiveFilters is { } activeFilters)
+            candidates.RemoveAll(c => !activeFilters.Matches(c.Result));
 
         var ranked = preferLaunches && !string.IsNullOrWhiteSpace(query) && LaunchCandidateOrdering.Applies(isInlineWindow, scope, fileFilterScope != null, folderScope, triggeredTypeId) && !System.IO.Path.IsPathFullyQualified(query)
-            ? LaunchCandidateOrdering.Order(candidates, query, LaunchShortcutCache.Read).Select(candidate => candidate.Result).ToList()
+            ? LaunchCandidateOrdering.Order(candidates, query, LaunchShortcutCache.Read, SearchHistoryStore.GetFrequencies()).Select(candidate => candidate.Result).ToList()
             : RankAndDedupe(candidates);
         // Capped here (not deferred to the caller) because this display cap has to respect whatever
         // header/grouping layout the caller (or InlineListSearchHelper.MergeLocalMatches, downstream)

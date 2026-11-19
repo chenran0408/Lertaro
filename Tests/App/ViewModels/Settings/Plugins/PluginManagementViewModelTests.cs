@@ -6,6 +6,117 @@ namespace Lertaro.App.Tests.ViewModels.Settings.Plugins;
 [TestClass]
 public sealed class PluginManagementViewModelTests
 {
+    [STATestMethod]
+    public void InstalledFilters_CombineSearchWithEnablementAndRevealSelectedDetails()
+    {
+        var model = new PluginManagementViewModel(new UserSettings());
+        try
+        {
+            model.Plugins.Clear();
+            var calendar = new PluginInfoViewModel("Calendar", "1", "calendar.dll", "1", [], [], "Date and time");
+            var preview = new PluginInfoViewModel("Preview", "1", "preview.dll", "1", [], [], "File previews", isPluginEnabled: false);
+            model.Plugins.Add(calendar);
+            model.Plugins.Add(preview);
+
+            model.InstalledPluginSearchText = " DATE ";
+            CollectionAssert.AreEqual(new[] { calendar }, model.VisiblePlugins.Cast<PluginInfoViewModel>().ToArray());
+            model.InstalledPluginFilter = "Disabled";
+            Assert.AreEqual(0, model.VisiblePlugins.Count);
+            model.InstalledPluginSearchText = "PREVIEW.DLL";
+            CollectionAssert.AreEqual(new[] { preview }, model.VisiblePlugins.Cast<PluginInfoViewModel>().ToArray());
+
+            model.RevealPluginDetails(calendar);
+            Assert.AreSame(calendar, model.SelectedPlugin);
+            Assert.AreEqual(2, model.VisiblePlugins.Count);
+            Assert.IsTrue(model.IsPluginDetailsOpen);
+        }
+        finally
+        {
+            model.Cleanup();
+        }
+    }
+
+    [STATestMethod]
+    public void ConfigurationDirectory_ShowsOnlyConfigurablePluginsAndKeepsEachSearch()
+    {
+        var settings = new UserSettings();
+        var model = new PluginManagementViewModel(settings);
+        try
+        {
+            model.Plugins.Clear();
+            var config = new PluginConfigFieldViewModel("Web", new() { Key = "keyword" }, settings);
+            var web = new PluginInfoViewModel("Web", "1", "web.dll", "1", [], [config]);
+            model.Plugins.Add(web);
+            model.Plugins.Add(new PluginInfoViewModel("Preview", "1", "preview.dll", "1", [], [], isPluginEnabled: false));
+            model.InstalledPluginFilter = "Disabled";
+            model.InstalledPluginSearchText = "preview";
+            model.IsConfigurationDirectory = true;
+            CollectionAssert.AreEqual(new[] { web }, model.VisiblePlugins.Cast<PluginInfoViewModel>().ToArray());
+            model.RevealPluginDetails(web);
+            model.InstalledPluginSearchText = "web";
+            model.IsConfigurationDirectory = false;
+            Assert.IsFalse(model.IsPluginDetailsOpen);
+            Assert.AreEqual("Disabled", model.InstalledPluginFilter);
+            Assert.AreEqual("preview", model.InstalledPluginSearchText);
+            model.IsConfigurationDirectory = true;
+            Assert.AreEqual("web", model.InstalledPluginSearchText);
+        }
+        finally
+        {
+            model.Cleanup();
+        }
+    }
+
+    [STATestMethod]
+    public void DirectoryGroupsByFunctionAndFiltersByLocalizedCategory()
+    {
+        var settings = new UserSettings();
+        var model = new PluginManagementViewModel(settings);
+        try
+        {
+            model.Plugins.Clear();
+            PluginInfoViewModel Plugin(string dll) => new("Fixture", "1", dll, "1", [],
+                [new PluginConfigFieldViewModel("fixture", new() { Key = "v" }, settings)]);
+            var files = Plugin("Lertaro.Plugins.Files.dll");
+            var one = Plugin("Lertaro.Plugins.OneCommander.dll");
+            var other = Plugin("ThirdParty.dll");
+            foreach (var item in new[] { files, one, other }) model.Plugins.Add(item);
+            model.IsConfigurationDirectory = true;
+            Assert.HasCount(2, model.VisiblePlugins.Groups!);
+            model.SelectedCategory = "FileManagers";
+            Assert.HasCount(2, model.VisiblePlugins);
+            model.SelectedCategory = "Other";
+            Assert.AreSame(other, model.SelectedPlugin);
+            model.RevealPluginDetails(files);
+            Assert.AreEqual("All", model.SelectedCategory);
+            model.InstalledPluginSearchText = files.ConfigurationCategory;
+            CollectionAssert.AreEquivalent(new[] { files, one }, model.VisiblePlugins.Cast<PluginInfoViewModel>().ToArray());
+            Assert.HasCount(1, model.VisiblePlugins.Groups!);
+            model.IsConfigurationDirectory = false;
+            Assert.IsNull(model.VisiblePlugins.Groups);
+            Assert.AreEqual(3, model.VisiblePlugins.Count);
+        }
+        finally { model.Cleanup(); }
+    }
+
+    [TestMethod]
+    public void LanguageRefresh_KeepsDraftUntilApplyOrCancel()
+    {
+        var settings = new UserSettings();
+        PluginInfoViewModel Create() => new("P", "1", "P.dll", "1", [],
+            [new PluginConfigFieldViewModel("P", new() { Key = "word", FieldType = PluginSdk.Abstractions.ConfigFieldType.Text, DefaultValue = "old" }, settings)]);
+        var previous = Create();
+        previous.IsConfigTab = true;
+        previous.ConfigFields[0].Value = "new";
+        var replacement = Create();
+        PluginManagementViewModel.RestoreEnablementEdits([previous], [replacement]);
+        Assert.IsTrue(replacement.IsConfigTab);
+        Assert.AreEqual("new", replacement.ConfigFields[0].Value);
+        Assert.IsTrue(replacement.HasPendingConfigEdits);
+        replacement.RollbackConfig();
+        Assert.AreEqual("old", replacement.ConfigFields[0].Value);
+    }
+
     [TestMethod]
     public void LanguageRefresh_PreservesIndividualFeatureChoices()
     {

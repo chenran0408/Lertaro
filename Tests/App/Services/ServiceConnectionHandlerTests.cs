@@ -1,6 +1,7 @@
 using System.Reflection;
 using Lertaro.Core.Services.Search;
 using Lertaro.App.Services;
+using Lertaro.Core.Indexer.Usn;
 
 namespace Lertaro.App.Tests.Services;
 
@@ -13,6 +14,17 @@ namespace Lertaro.App.Tests.Services;
 [DoNotParallelize]
 public sealed class ServiceConnectionHandlerTests
 {
+    [TestMethod]
+    public void ConnectsToAnIndexerThatReportsItsOwnFailureWithoutTreatingTheServiceAsOffline()
+    {
+        var status = new UsnIndexer.IndexerStatus { State = "error" };
+        Assert.AreEqual(SearchIndexBootstrapHelper.IndexError,
+            SearchIndexBootstrapHelper.ResolveConnectionStatus(true, status).State);
+        Assert.AreEqual("error", SearchIndexBootstrapHelper.ResolveConnectionStatus(false, null).State);
+        status.State = "idle";
+        Assert.AreSame(status, SearchIndexBootstrapHelper.ResolveConnectionStatus(true, status));
+    }
+
     private static ServiceConnectionHandler MakeHandler() => new(
         new SearchService(),
         onStatusUpdated: _ => { },

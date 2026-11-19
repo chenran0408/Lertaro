@@ -1,5 +1,3 @@
-using System.Windows.Input;
-using Lertaro.App.Helpers;
 using Lertaro.App.Services;
 using Lertaro.Core;
 namespace Lertaro.App.ViewModels.Settings.General;
@@ -32,16 +30,12 @@ public class GeneralSettingsViewModel : ViewModelBase
     private bool _openFoldersInNewExplorerTabs;
     private string _globalTokenPrefix;
 
-    // Tab navigation for the System/Layout/Preview Window split of this page.
     private string _selectedTab = "System";
     public string SelectedTab
     {
         get => _selectedTab;
         set => SetProperty(ref _selectedTab, value);
     }
-
-    private ICommand? _selectTabCommand;
-    public ICommand SelectTabCommand => _selectTabCommand ??= new RelayCommand<string>(tab => SelectedTab = tab);
 
     public GeneralSettingsViewModel(UserSettings userSettings)
     {

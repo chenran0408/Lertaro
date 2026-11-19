@@ -16,6 +16,9 @@ public static class AppWindowManager
     private static SettingsWindow? _settingsWindow;
     private static SearchWindow? _searchWindow;
 
+    internal static bool? ShowSettingsFileDialog(Microsoft.Win32.CommonDialog dialog) =>
+        _settingsWindow is { IsVisible: true } settings ? dialog.ShowDialog(settings) : dialog.ShowDialog();
+
     public static void ShowSettingsWindow(string? targetSection = null)
     {
         // Application.Current goes null once the app has started (or finished) shutting down --

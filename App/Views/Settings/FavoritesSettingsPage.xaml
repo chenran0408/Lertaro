@@ -17,90 +17,88 @@
                 <ResourceDictionary Source="../../Resources/Styles/Windows/SettingsWindow.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <Style x:Key="FavIconButton" TargetType="Button">
-                <Setter Property="Width" Value="32"/>
-                <Setter Property="Height" Value="32"/>
-                <Setter Property="Margin" Value="6,0,0,0"/>
-                <Setter Property="Padding" Value="0"/>
-                <Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
-                <Setter Property="Foreground"><Setter.Value><Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextSecondary}"/></Setter.Value></Setter>
-                <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="FontFamily" Value="{DynamicResource AppIconFontFamily}"/>
-                <Setter Property="FontSize" Value="14"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="Bd" CornerRadius="6" Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
-                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-                                    <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
+            <Style x:Key="PathListIconButton" TargetType="Button" BasedOn="{StaticResource RuleIconButton}">
+                <Setter Property="Width" Value="31"/>
+                <Setter Property="Height" Value="31"/>
+                <Setter Property="Margin" Value="5,0,0,0"/>
             </Style>
-
-            <DataTemplate x:Key="FavItemTemplate">
-                <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1" Padding="0,9">
+            <DataTemplate x:Key="PathListItemTemplate">
+                <Border Style="{StaticResource SettingsRow}" Padding="0,9">
                     <Grid>
-                        <!-- Row 1 is the hotkey feedback; row 0 keeps its own 7-column grid so the edit
-                             row below can still span every column. Column 4 is the recorder, which is
-                             what makes a per-favorite global hotkey configurable next to its own row. -->
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Grid Grid.Row="0" Grid.ColumnSpan="7">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/><ColumnDefinition Width="24"/><ColumnDefinition Width="2*"/><ColumnDefinition Width="3*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="10"/><ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.Style><Style TargetType="Grid"><Style.Triggers><DataTrigger Binding="{Binding IsEditing}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Grid.Style>
-                            <Grid Grid.Column="0" Width="18" Height="24" Margin="0,0,10,0" Background="Transparent" VerticalAlignment="Center" Cursor="SizeAll" helpers:DragReorder.IsHandle="True">
-                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
-                                <Ellipse Grid.Row="0" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="0" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
-                                <Ellipse Grid.Row="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="1" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
-                                <Ellipse Grid.Row="2" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/><Ellipse Grid.Row="2" Grid.Column="1" Width="2.5" Height="2.5" Fill="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="1"/>
-                            </Grid>
-                            <TextBlock Grid.Column="1" Text="&#xE71B;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="14" Foreground="{DynamicResource AccentColor}" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="2" Text="{Binding DisplayName}" FontSize="14" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="4,0,8,0"/>
-                            <TextBlock Grid.Column="3" Text="{Binding Path}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
-                            <ctrl:HotkeyRecorderControl Grid.Column="4" Value="{Binding Hotkey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" RequireModifier="True" HorizontalAlignment="Right"/>
-                            <StackPanel Grid.Column="6" Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="&#xE74A;" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_MoveUpTooltip]}" Style="{StaticResource FavIconButton}" Command="{Binding DataContext.MoveUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                <Button Content="&#xE74B;" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_MoveDownTooltip]}" Style="{StaticResource FavIconButton}" Command="{Binding DataContext.MoveDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                <Button Content="&#xE70F;" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_EditTooltip]}" Style="{StaticResource FavIconButton}" Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                <Button Content="&#xE74D;" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_RemoveTooltip]}" Style="{StaticResource FavIconButton}" Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                        <StackPanel>
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="6,0,0,0">
+                                <Button Content="&#xE74A;" Style="{StaticResource PathListIconButton}"
+                                        ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_MoveUpTooltip]}"
+                                        AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
+                                        Command="{Binding DataContext.MoveUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                <Button Content="&#xE74B;" Style="{StaticResource PathListIconButton}"
+                                        ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_MoveDownTooltip]}"
+                                        AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
+                                        Command="{Binding DataContext.MoveDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                <Button Content="&#xE70F;" Style="{StaticResource PathListIconButton}"
+                                        ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_EditTooltip]}"
+                                        AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
+                                        Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                <Button Content="&#xE74D;" Style="{StaticResource PathListIconButton}"
+                                        ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_RemoveTooltip]}"
+                                        AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
+                                        Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                </StackPanel>
+                                <Border Width="22" Height="30" Background="Transparent" Cursor="SizeNS" VerticalAlignment="Center"
+        helpers:DragReorder.IsHandle="True"
+        Visibility="{Binding DataContext.CanReorder, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
+    <TextBlock Text="&#xE76F;" FontFamily="{DynamicResource AppIconFontFamily}"
+               HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
+</Border>
+                                <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="15"
+                                           ToolTip="{Binding DisplayName}" TextTrimming="CharacterEllipsis"
+                                           Margin="6,0,0,0" VerticalAlignment="Center"/>
+                            </DockPanel>
+                            <DockPanel Margin="28,3,0,0">
+                                <ctrl:HotkeyRecorderControl DockPanel.Dock="Right" Width="155" Height="28" Margin="10,0,0,0"
+                                    Value="{Binding Hotkey, UpdateSourceTrigger=PropertyChanged}" RequireModifier="True"
+                                    ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_HotkeyTooltip]}"
+                                    AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_FieldHotkey]}"/>
+                                <TextBlock Text="{Binding Path}" ToolTip="{Binding Path}" TextTrimming="CharacterEllipsis"
+                                           Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" FontSize="13"/>
+                            </DockPanel>
+                            <TextBlock Text="{Binding HotkeyHint}" Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap"
+                                       Margin="28,4,0,0" Visibility="{Binding HotkeyHint, Converter={StaticResource StringToVis}}"/>
+                        </StackPanel>
+                        <Border Background="{DynamicResource ControlBackground}" CornerRadius="{DynamicResource CornerRadiusControl}" Padding="12">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel>
+                                <settings:PathEntryEditor EntryName="{Binding EditName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    EntryPath="{Binding EditPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    BrowseFolderCommand="{Binding DataContext.BrowseEditFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    BrowseFileCommand="{Binding DataContext.BrowseEditFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                <WrapPanel HorizontalAlignment="Right" Margin="0,10,0,0">
+                                    <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Cancel]}" Style="{StaticResource SettingsButton}" MinWidth="0"
+        Command="{Binding DataContext.CancelEditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                    <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[PathEntry_Save]}" Style="{StaticResource PrimarySettingsButton}" MinWidth="0"
+        Command="{Binding DataContext.SaveEditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                </WrapPanel>
                             </StackPanel>
-                        </Grid>
-                        <Grid Grid.Row="1" Grid.ColumnSpan="7">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/><ColumnDefinition Width="24"/><ColumnDefinition Width="2*"/><ColumnDefinition Width="3*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="10"/><ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.Style><Style TargetType="Grid"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding IsEditing}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Grid.Style>
-                            <TextBlock Grid.Column="4" Grid.ColumnSpan="2" Text="{Binding HotkeyHint}" FontSize="11" Foreground="{DynamicResource ErrorBrush}"
-                                       TextWrapping="Wrap" HorizontalAlignment="Right" Margin="6,3,0,0"
-                                       Visibility="{Binding HotkeyHint, Converter={StaticResource StringToVis}}"/>
-                        </Grid>
-                        <Grid Grid.Row="0" Grid.RowSpan="2" Grid.ColumnSpan="7">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/><ColumnDefinition Width="24"/><ColumnDefinition Width="2*"/><ColumnDefinition Width="3*"/><ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.Style><Style TargetType="Grid"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsEditing}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Grid.Style>
-                            <settings:PathEntryEditor Grid.Column="2" Grid.ColumnSpan="2" EntryName="{Binding EditName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" EntryPath="{Binding EditPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" BrowseFolderCommand="{Binding DataContext.BrowseEditFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" BrowseFileCommand="{Binding DataContext.BrowseEditFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                            <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="&#xE73E;" Style="{StaticResource PrimarySettingsButton}" Width="30" MinWidth="30" Height="30" Padding="0" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="14" Command="{Binding DataContext.SaveEditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                <Button Content="&#xE711;" Style="{StaticResource FavIconButton}" Command="{Binding DataContext.CancelEditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                            </StackPanel>
-                        </Grid>
+                        </Border>
                     </Grid>
                 </Border>
             </DataTemplate>
@@ -111,72 +109,68 @@
         <StackPanel Margin="0,0,0,24">
             <TextBlock Style="{StaticResource SettingsSectionTitle}" 
                        Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_Title]}"/>
-            <TextBlock Style="{StaticResource SettingsHintText}" 
-                       Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_Hint]}"/>
 
             <Border Style="{StaticResource SettingsCard}">
-                <StackPanel>
-                    <TextBlock x:Name="RowAddCardTitle" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_AddCardTitle]}"
-                               FontWeight="SemiBold" FontSize="14" />
-                    <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_AddCardDesc]}"
-                               Style="{StaticResource SettingsHintText}" Margin="0,4,0,12"/>
-                    
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="1.5*"/>
-                            <ColumnDefinition Width="3.5*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <!-- Headers -->
-                        <TextBlock x:Name="RowFieldName" Grid.Row="0" Grid.Column="0" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_FieldName]}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,0,0,4"/>
-                        <TextBlock x:Name="RowFieldPath" Grid.Row="0" Grid.Column="1" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_FieldPath]}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="8,0,0,4"/>
-                        <!-- The hotkey itself is assigned per row, next to that favorite, rather than
-                             here: a new favorite does not exist yet, so there is nothing to bind it to. -->
-                        <TextBlock x:Name="RowFieldHotkey" Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_FieldHotkey]}"
-                                   FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" HorizontalAlignment="Right" Margin="8,0,0,4"/>
-
-                        <settings:PathEntryEditor Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" EntryName="{Binding NewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" EntryPath="{Binding NewPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" BrowseFolderCommand="{Binding BrowseFolderCommand}" BrowseFileCommand="{Binding BrowseFileCommand}"/>
-
-                        <StackPanel Grid.Row="1" Grid.Column="3" Orientation="Horizontal" Margin="4,0,0,0">
-                            <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_AddBtn]}"
-                                    Style="{StaticResource PrimarySettingsButton}"
-                                    Command="{Binding AddCommand}" Height="34" MinWidth="56" Padding="12,0"/>
-
-                            <Button Content="&#xE70D;" Style="{StaticResource FavIconButton}" Height="34" Margin="4,0,0,0"
-                                    ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_AddPresetTooltip]}"
-                                    Click="OpenPresetMenu_Click">
-                                <Button.ContextMenu>
-                                    <ContextMenu/>
-                                </Button.ContextMenu>
-                            </Button>
-                        </StackPanel>
-                    </Grid>
-
-                    <Separator Background="{DynamicResource ControlBorderBrush}" Height="1" Margin="0,0,0,12"/>
-
-                    <Grid Margin="0,0,0,8">
-                        <TextBlock x:Name="RowListTitle" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_ListTitle]}"
-                                   FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
-                        <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_ClearList]}"
-                                Style="{StaticResource SettingsButton}" HorizontalAlignment="Right"
-                                Visibility="{Binding HasItems, Converter={StaticResource BoolToVis}}"
+                    <StackPanel>
+                        <TextBlock x:Name="RowListTitle" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_ListTitle]}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8"/>
+                        <Grid Margin="0,0,0,9">
+                            <TextBox x:Name="PathFilterBox" MinHeight="34" Padding="10,0"
+                                     Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                                     AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[PathList_Filter]}"/>
+                            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[PathList_Filter]}" Margin="10,0,5,0" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextSecondary}" IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding FilterText}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                        <Expander x:Name="AddEntryForm" IsExpanded="{Binding IsAddFormOpen, Mode=TwoWay}"
+                                  Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,8">
+                            <Expander.Header>
+                                <TextBlock x:Name="RowAddCardTitle" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_AddCardTitle]}" FontWeight="SemiBold"/>
+                            </Expander.Header>
+                            <StackPanel Margin="0,10,0,4">
+                                <settings:PathEntryEditor x:Name="AddFavoriteEditor" EntryName="{Binding NewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    EntryPath="{Binding NewPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    BrowseFolderCommand="{Binding BrowseFolderCommand}" BrowseFileCommand="{Binding BrowseFileCommand}"/>
+                                <WrapPanel HorizontalAlignment="Right" Margin="0,10,0,0">
+                                <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_AddPresetTooltip]}"
+                                        Style="{StaticResource SettingsButton}" Click="OpenPresetMenu_Click" MinWidth="0">
+                                    <Button.ContextMenu><ContextMenu/></Button.ContextMenu>
+                                </Button>
+                                    <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_AddBtn]}" Style="{StaticResource PrimarySettingsButton}"
+                                            Command="{Binding AddCommand}" MinWidth="0"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Expander>
+                        <TextBlock x:Name="RowFieldHotkey" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_HotkeyTooltip]}"
+                                   Style="{StaticResource SettingsHintText}" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                        <ItemsControl x:Name="PathItemsList" ItemsSource="{Binding Items}" ItemTemplate="{StaticResource PathListItemTemplate}"
+                                      helpers:DragReorder.IsEnabled="True"/>
+                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[PathList_Empty]}" Margin="0,12" HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasItems, ElementName=PathItemsList}" Value="False">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Favorites_ClearList]}" Style="{StaticResource SettingsButton}"
+                                HorizontalAlignment="Right" Margin="0,10,0,0" Visibility="{Binding HasItems, Converter={StaticResource BoolToVis}}"
                                 Command="{Binding ClearCommand}"/>
-                    </Grid>
-
-                    <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource FavItemTemplate}" helpers:DragReorder.IsEnabled="True">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <VirtualizingStackPanel />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
-                </StackPanel>
+                    </StackPanel>
             </Border>
         </StackPanel>
     </ScrollViewer>

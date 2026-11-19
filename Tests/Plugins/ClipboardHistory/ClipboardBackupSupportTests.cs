@@ -82,6 +82,43 @@ public sealed class ClipboardBackupSupportTests
     }
 
     [TestMethod]
+    public async Task InvalidClipboardBackupFailsValidationWithoutTouchingLiveHistory()
+    {
+        var live = CreateStore();
+        await live.InitializeAsync();
+        await live.AddAsync(new ClipboardEntryDraft(ClipboardEntryKind.Text, "keep me"), "", "", 10, 500);
+        Directory.CreateDirectory(_restoreRoot);
+        var bogus = Path.Combine(_restoreRoot, "clipboard-history.db");
+        await File.WriteAllTextAsync(bogus, "not a database");
+
+        await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
+            new ClipboardStore(bogus, Path.Combine(_restoreRoot, "images")).InitializeImportAsync());
+
+        Assert.AreEqual("keep me", (await live.GetEntriesAsync()).Single().Content);
+    }
+
+    [TestMethod]
+    public async Task ReplacingHistory_RestoresLiveDatabaseWhenTheSecondMoveFails()
+    {
+        var live = CreateStore();
+        await live.InitializeAsync();
+        await live.AddAsync(new ClipboardEntryDraft(ClipboardEntryKind.Text, "original"), "", "", 10, 500);
+        Directory.CreateDirectory(_restoreRoot);
+        var stagedDb = Path.Combine(_restoreRoot, "clipboard-history.db");
+        var missingImages = Path.Combine(_restoreRoot, "missing-images");
+        var staged = new ClipboardStore(stagedDb, missingImages);
+        await staged.InitializeAsync();
+        await staged.AddAsync(new ClipboardEntryDraft(ClipboardEntryKind.Text, "replacement"), "", "", 10, 500);
+
+        Assert.Throws<IOException>(() =>
+            ClipboardBackupSupport.ReplaceLiveFiles(_databasePath, _imagesDirectory, stagedDb, missingImages));
+
+        Assert.AreEqual("original", (await live.GetEntriesAsync()).Single().Content);
+        Assert.IsTrue(Directory.Exists(_imagesDirectory));
+        Assert.AreEqual("replacement", (await staged.GetEntriesAsync()).Single().Content);
+    }
+
+    [TestMethod]
     public void Extract_RejectsAZipWithoutADatabase()
     {
         using (var archive = ZipFile.Open(_zipPath, ZipArchiveMode.Create))

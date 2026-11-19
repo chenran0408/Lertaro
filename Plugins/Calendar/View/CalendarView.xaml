@@ -39,7 +39,8 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock x:Name="MonthTitleText" FontSize="16" FontWeight="SemiBold"
-                           VerticalAlignment="Center" Foreground="{DynamicResource TextPrimary}"/>
+                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Foreground="{DynamicResource TextPrimary}"/>
 
                 <!-- Star sizing needs a container whose width is already known, which a StackPanel never
                      gives it: a horizontal StackPanel measures its children at infinite width, so a
@@ -59,12 +60,14 @@
                             Content="&#xE718;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="20"
                             Style="{DynamicResource SettingsButton}" Padding="8,2" Click="Pin_Click"/>
                     <Button x:Name="PrevMonthButton" Grid.Column="1" MinWidth="0" Margin="6,0,0,0"
+                            AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                             Content="&#xE76B;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="16"
                             Style="{DynamicResource SettingsButton}" Padding="8,2" Click="PrevMonth_Click"/>
                     <Button x:Name="TodayButton" Grid.Column="2" MinWidth="0" Margin="6,0,0,0"
                             FontSize="16" Style="{DynamicResource SettingsButton}"
                             Padding="10,2" Click="Today_Click"/>
                     <Button x:Name="NextMonthButton" Grid.Column="3" MinWidth="0" Margin="6,0,0,0"
+                            AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                             Content="&#xE76C;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="16"
                             Style="{DynamicResource SettingsButton}" Padding="8,2" Click="NextMonth_Click"/>
                 </Grid>
@@ -82,8 +85,15 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border x:Name="Cell" Background="Transparent" Cursor="Hand"
-                                    MouseLeftButtonUp="DayCell_Click">
+                            <Button x:Name="Cell" Background="Transparent" Cursor="Hand" Click="DayCell_Click"
+                                    PreviewKeyDown="DayCell_PreviewKeyDown" IsTabStop="{Binding IsSelected}"
+                                    FocusVisualStyle="{DynamicResource FluentFocusRing}"
+                                    AutomationProperties.Name="{Binding Date, StringFormat={}{0:D}}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <ContentPresenter/>
+                                    </ControlTemplate>
+                                </Button.Template>
                                 <Border x:Name="CellFill" Background="Transparent" CornerRadius="5"
                                         MinHeight="52" Margin="2" Padding="2,4,2,4" BorderThickness="1"
                                         BorderBrush="Transparent">
@@ -142,7 +152,7 @@
                                                    Foreground="{DynamicResource TextSecondary}"/>
                                     </Grid>
                                 </Border>
-                            </Border>
+                            </Button>
 
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding HasReminder}" Value="True">
@@ -293,8 +303,23 @@
                                      PreviewMouseWheel="TimeField_PreviewMouseWheel"/>
                         </StackPanel>
                     </Border>
-                    <TextBox x:Name="ReminderText" Grid.Column="2" Margin="6,0"
-                             VerticalContentAlignment="Center" KeyDown="ReminderText_KeyDown"/>
+                    <Grid Grid.Column="2" Margin="6,0">
+                        <TextBox x:Name="ReminderText" VerticalContentAlignment="Center" KeyDown="ReminderText_KeyDown"/>
+                        <TextBlock x:Name="ReminderPlaceholder" Margin="7,0" VerticalAlignment="Center"
+                                   IsHitTestVisible="False" TextTrimming="CharacterEllipsis"
+                                   Foreground="{DynamicResource TextSecondary}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=ReminderText}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
                     <Button x:Name="AddReminderButton" Grid.Column="3" IsDefault="True"
                             Style="{DynamicResource PrimarySettingsButton}" FontSize="12" Padding="12,4"
                             Click="AddReminder_Click"/>

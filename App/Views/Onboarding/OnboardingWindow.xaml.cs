@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using Lertaro.App.Helpers.Visuals;
 using Lertaro.App.Services;
@@ -67,10 +66,11 @@ public partial class OnboardingWindow : AppWindow
         ThemedWindowIconHelper.Apply(this);
         PreviewKeyDown += (_, e) =>
         {
-            if (e.Key == Key.Escape) Close();
+            if (e.Key != Key.Escape) return;
+            e.Handled = true;
+            SkipAndClose();
         };
         _lingerTimer.Tick += (_, _) => Close();
-        RebuildDots();
         HookMainWindow();
         HookPracticeSurfaces();
         Render();
@@ -238,7 +238,6 @@ public partial class OnboardingWindow : AppWindow
         StepBody.Text = T(_indexingVariant ? "Tour2_IndexingBody" : step.BodyKey);
         PracticeHint.Text = T(_indexingVariant ? "Tour2_IndexingHint" : step.HintKey);
         BuildKeycaps(_indexingVariant ? null : step.Keycaps);
-        UpdateDots(_machine.StepIndex);
 
         if (_machine.StepIndex == 0 && _teachTrayPath)
         {
@@ -258,12 +257,13 @@ public partial class OnboardingWindow : AppWindow
         StepBody.Text = string.Format(T("Tour_DoneBody"), _machine.CompletedSteps);
         PracticeHint.Text = string.Empty;
         KeycapPanel.Children.Clear();
-        UpdateDots(-1);
         _lingerTimer.Stop();
         _lingerTimer.Start();
     }
 
-    private void Skip_Click(object sender, RoutedEventArgs e)
+    private void Skip_Click(object sender, RoutedEventArgs e) => SkipAndClose();
+
+    private void SkipAndClose()
     {
         _machine.Handle(TourEvent.SkipRequested);
         Close();
@@ -290,13 +290,13 @@ public partial class OnboardingWindow : AppWindow
         {
             var chip = new Border
             {
-                CornerRadius = new CornerRadius(4),
+                CornerRadius = (CornerRadius)FindResource("CornerRadiusControl"),
                 Padding = new Thickness(8, 3, 8, 3),
                 Margin = new Thickness(0, 0, 6, 0),
                 Opacity = 0.25,
                 RenderTransform = new TranslateTransform(0, -4),
                 Background = (Brush)FindResource("ControlBackground"),
-                BorderBrush = (Brush)FindResource("ControlBorderBrush"),
+                BorderBrush = (Brush)FindResource("BorderColor"),
                 BorderThickness = new Thickness(1),
                 Child = new TextBlock
                 {
@@ -328,27 +328,6 @@ public partial class OnboardingWindow : AppWindow
         storyboard.Begin(KeycapPanel);
     }
 
-    private void RebuildDots()
-    {
-        for (var index = 0; index < _machine.StepCount; index++)
-            Dots.Children.Add(new Ellipse
-            {
-                Width = 8,
-                Height = 8,
-                Margin = new Thickness(4, 0, 4, 0),
-                Opacity = 0.35,
-            });
-    }
-
-    private void UpdateDots(int active)
-    {
-        for (var index = 0; index < Dots.Children.Count; index++)
-        {
-            var dot = (Ellipse)Dots.Children[index];
-            dot.Fill = (Brush)FindResource(index == active ? "AccentBlue" : "TextSecondary");
-            dot.Opacity = index == active ? 1 : 0.35;
-        }
-    }
 
     protected override void OnClosed(EventArgs e)
     {

@@ -102,7 +102,16 @@ internal static class UpdateAssetSelector
         if (assets == null || suffix == null)
             return null;
 
-        var expected = "Lertaro-Setup" + suffix + ".exe";
+        return SelectByName(assets, nameOf, "Lertaro-Setup" + suffix + ".exe");
+    }
+
+    internal static TAsset? SelectPortableSignature<TAsset>(IEnumerable<TAsset> assets, Func<TAsset, string> nameOf, string zipName)
+        where TAsset : class
+        => SelectByName(assets, nameOf, zipName + ".sig");
+
+    private static TAsset? SelectByName<TAsset>(IEnumerable<TAsset> assets, Func<TAsset, string> nameOf, string expected)
+        where TAsset : class
+    {
         TAsset? match = null;
         foreach (var asset in assets)
         {

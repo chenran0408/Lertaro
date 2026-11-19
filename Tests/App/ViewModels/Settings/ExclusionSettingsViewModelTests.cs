@@ -163,6 +163,25 @@ public sealed class ExclusionSettingsViewModelTests
     }
 
     [TestMethod]
+    public void EditInOneTabAndSavePreserveBulkDraftsInOtherTabs()
+    {
+        var settings = EmptySettings();
+        var vm = new ExclusionSettingsViewModel(settings)
+        {
+            IgnoredGlobsText = "*.tmp",
+            IgnoredRegexesText = "^cache",
+            NewExcludedPath = @"C:\temp",
+        };
+
+        vm.AddPathCommand.Execute(null);
+        vm.Save();
+
+        CollectionAssert.AreEqual(new[] { @"C:\temp" }, settings.ExcludedPaths);
+        CollectionAssert.AreEqual(new[] { "*.tmp" }, settings.IgnoredPathGlobs);
+        CollectionAssert.AreEqual(new[] { "^cache" }, settings.IgnoredPathRegexes);
+    }
+
+    [TestMethod]
     public void Save_WritesNormalizedListsBackToUserSettingsIndependently()
     {
         // Populated via the Add commands (which keep the ObservableCollections and their bulk-text

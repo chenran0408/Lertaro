@@ -9,7 +9,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToggleButton">
-                    <Border x:Name="Bar" Background="Transparent" CornerRadius="6" Padding="8,3,8,3">
+                    <Border x:Name="Bar" Background="Transparent" CornerRadius="{DynamicResource CornerRadiusControl}" Padding="8,4">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <TextBlock x:Name="Chevron" Grid.Column="0" Text="&#xE70D;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="9"
@@ -47,18 +47,18 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" Orientation="Horizontal">
-                        <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource AccentBlue}"
+                        <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"
                                    VerticalAlignment="Center" Text="{Binding Title}"
                                    Visibility="{Binding ShowsHeading, Converter={StaticResource BoolToVis}}"/>
-                        <TextBlock FontSize="14" Margin="6,0,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
+                        <TextBlock FontSize="12" Margin="6,0,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                    VerticalAlignment="Center" Text="{Binding Count, StringFormat=({0})}"
                                    Visibility="{Binding ShowsHeading, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
-                    <TextBlock Grid.Column="1" FontSize="14" Margin="10,0,0,0"
+                    <TextBlock Grid.Column="1" FontSize="12" Margin="10,0,0,0"
                                Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" VerticalAlignment="Center"
                                TextTrimming="CharacterEllipsis" Text="{Binding FolderPath}"/>
                     <Border Grid.Column="2" Height="1" Margin="10,0,10,0" VerticalAlignment="Center"
-                            Background="{DynamicResource ControlBorderBrush}"/>
+                            Background="{DynamicResource BorderColor}"/>
                 </Grid>
             </ToggleButton>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">

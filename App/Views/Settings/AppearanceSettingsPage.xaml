@@ -86,150 +86,162 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <ScrollViewer x:Name="PageScroll" VerticalScrollBarVisibility="Auto" CanContentScroll="False"
-                  PreviewMouseWheel="PageScroll_PreviewMouseWheel" PreviewMouseDown="PageScroll_StopAnimation"
-                  PreviewKeyDown="PageScroll_StopAnimation">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
         <StackPanel>
             <TextBlock Style="{StaticResource SettingsSectionTitle}"
                         Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_Title]}"/>
-            <TextBlock Style="{StaticResource SettingsHintText}"
-                        Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_Hint]}"/>
 
-            <TextBlock Style="{StaticResource SettingsGroupTitle}"
-                        Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeGroupTitle]}"/>
-            <Border x:Name="RowThemeModeCards" Style="{StaticResource SettingsCard}">
-                <StackPanel Orientation="Horizontal">
-                    <!-- Light -->
-                    <StackPanel Margin="0,0,12,0" Cursor="Hand">
-                        <StackPanel.InputBindings>
-                            <MouseBinding MouseAction="LeftClick" Command="{Binding Appearance.SelectThemeModeCommand}" CommandParameter="Light"/>
-                        </StackPanel.InputBindings>
-                        <Border Width="108" Height="64" Style="{StaticResource PreviewCardShadowWrapperStyle}">
-                            <Border x:Name="ModeLightBorder" CornerRadius="10"
-                                    Background="#FFFFFF" BorderThickness="2" ClipToBounds="True"><!-- hex exempt: this card PREVIEWS the fixed light palette; it must stay white in dark mode. -->
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Appearance.ThemeModeTag}" Value="Light">
-                                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <TextBlock Text="&#xE706;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="20"
-                                           Foreground="{DynamicResource AccentBlue}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                        </Border>
-                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeLight]}"
-                                   FontSize="12" Margin="2,6,0,0" Foreground="{DynamicResource TextSecondary}"/>
-                    </StackPanel>
-
-                    <!-- Dark -->
-                    <StackPanel Margin="0,0,12,0" Cursor="Hand">
-                        <StackPanel.InputBindings>
-                            <MouseBinding MouseAction="LeftClick" Command="{Binding Appearance.SelectThemeModeCommand}" CommandParameter="Dark"/>
-                        </StackPanel.InputBindings>
-                        <Border Width="108" Height="64" Style="{StaticResource PreviewCardShadowWrapperStyle}">
-                            <Border x:Name="ModeDarkBorder" CornerRadius="10"
-                                    Background="#1E1E1E" BorderThickness="2" ClipToBounds="True"><!-- hex exempt: previews the fixed dark palette. -->
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Appearance.ThemeModeTag}" Value="Dark">
-                                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <TextBlock Text="&#xE708;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="20"
-                                           Foreground="{DynamicResource AccentBlue}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                        </Border>
-                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeDark]}"
-                                   FontSize="12" Margin="2,6,0,0" Foreground="{DynamicResource TextSecondary}"/>
-                    </StackPanel>
-
-                    <!-- Follow System: half-light, half-dark, so the split itself explains the mode. -->
-                    <StackPanel Cursor="Hand">
-                        <StackPanel.InputBindings>
-                            <MouseBinding MouseAction="LeftClick" Command="{Binding Appearance.SelectThemeModeCommand}" CommandParameter="FollowSystem"/>
-                        </StackPanel.InputBindings>
-                        <Border Width="108" Height="64" Style="{StaticResource PreviewCardShadowWrapperStyle}">
-                            <Border x:Name="ModeFollowSystemBorder" CornerRadius="10"
-                                    BorderThickness="2" ClipToBounds="True">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Appearance.ThemeModeTag}" Value="FollowSystem">
-                                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <!-- ClipToBounds on the outer Border only clips to its plain rectangular
-                                     bounds, not the rounded CornerRadius shape: it doesn't round child
-                                     content the way it looks like it should. A diagonal split can't be
-                                     rounded per-corner the way the earlier vertical split was (each
-                                     triangle touches three of the four corners, not just two), so this
-                                     clips the whole Grid to an explicit rounded-rect geometry instead:
-                                     sized to the Border's own content area (108x64 outer, minus the 2px
-                                     BorderThickness on each side, minus ~2px CornerRadius shrink). -->
-                                <Grid>
-                                    <Grid.Clip>
-                                        <RectangleGeometry Rect="0,0,104,60" RadiusX="8" RadiusY="8"/>
-                                    </Grid.Clip>
-                                    <Polygon Points="0,0 104,0 0,60" Fill="#FFFFFF"/><!-- hex exempt: fixed light/dark preview swatch -->
-                                    <Polygon Points="104,0 104,60 0,60" Fill="#1E1E1E"/><!-- hex exempt: fixed dark preview swatch -->
-                                    <Border Width="26" Height="26" CornerRadius="13"
-                                            Background="{DynamicResource AccentBlue}" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock Text="&#xE895;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="12"
-                                                   Foreground="{DynamicResource PrimaryButtonText}"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                </Grid>
-                            </Border>
-                        </Border>
-                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeFollowSystem]}"
-                                   FontSize="12" Margin="2,6,0,0" Foreground="{DynamicResource TextSecondary}"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-
-            <local:BackgroundSettingsSection x:Name="BackgroundSection" DataContext="{Binding Appearance.Background}"/>
-            <local:TaskbarSettingsSection x:Name="RowTaskbarSettings"/>
-
-            <!-- Manual mode: one grid, filtered to whichever flavor (light/dark) is currently active. -->
-            <StackPanel x:Name="GroupManualTheme" Visibility="{Binding Appearance.IsManualThemeEnabled, Converter={StaticResource BoolToVis}}">
-                <TextBlock Style="{StaticResource SettingsGroupTitle}"
-                            Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ThemeSelect]}"/>
-                <Border Style="{StaticResource SettingsCard}">
-                    <ListBox x:Name="RowThemeCards" Style="{StaticResource ThemeCardListBox}"
-                             ItemsSource="{Binding Appearance.ManualThemeCards}"
-                             SelectedValue="{Binding Appearance.SelectedThemeId, Mode=TwoWay}"/>
-                </Border>
-            </StackPanel>
-
-            <!-- Follow-system mode: separate light/dark grids, each filtered to its own flavor. -->
-            <StackPanel x:Name="GroupFollowSystemTheme" Visibility="{Binding Appearance.FollowSystem, Converter={StaticResource BoolToVis}}">
-                <TextBlock Style="{StaticResource SettingsGroupTitle}"
-                            Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ThemeLightSelect]}"/>
-                <Border Style="{StaticResource SettingsCard}">
-                    <ListBox x:Name="RowThemeLightCards" Style="{StaticResource ThemeCardListBox}"
-                             ItemsSource="{Binding Appearance.LightThemeCards}"
-                             SelectedValue="{Binding Appearance.SelectedLightThemeId, Mode=TwoWay}"/>
-                </Border>
-
-                <TextBlock Style="{StaticResource SettingsGroupTitle}"
-                            Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ThemeDarkSelect]}"/>
-                <Border Style="{StaticResource SettingsCard}">
-                    <ListBox x:Name="RowThemeDarkCards" Style="{StaticResource ThemeCardListBox}"
-                             ItemsSource="{Binding Appearance.DarkThemeCards}"
-                             SelectedValue="{Binding Appearance.SelectedDarkThemeId, Mode=TwoWay}"/>
-                </Border>
-            </StackPanel>
+            <ListBox Style="{StaticResource SettingsCategoryNavigation}"
+                     AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_Title]}"
+                     SelectedValue="{Binding Appearance.SelectedSection, Mode=TwoWay}" SelectionChanged="OnCategoryChanged">
+                <ListBoxItem Tag="Theme" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ThemeSelect]}"/>
+                <ListBoxItem Tag="Background" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Title]}"/>
+                <ListBoxItem Tag="Taskbar" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_TaskbarTitle]}"/>
+            </ListBox>
+            <Border Height="1" Background="{DynamicResource SettingsRowBorderBrush}"/>
         </StackPanel>
-    </ScrollViewer>
+
+        <ScrollViewer Grid.Row="1" x:Name="PageScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                      CanContentScroll="False" PreviewMouseWheel="PageScroll_PreviewMouseWheel"
+                      PreviewMouseDown="PageScroll_StopAnimation" PreviewKeyDown="PageScroll_StopAnimation">
+            <Grid Margin="0,0,6,12">
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Appearance.SelectedSection}" Value="Theme">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <Border Style="{StaticResource SettingsCard}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SettingsSubHeading}" Margin="0,0,0,8"
+                                       Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeGroupTitle]}"/>
+                            <ListBox x:Name="RowThemeModeCards" Style="{StaticResource SettingsCategoryNavigation}"
+                                     Margin="0" SelectedValue="{Binding Appearance.ThemeModeTag, Mode=TwoWay}"
+                                     AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeGroupTitle]}">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBoxItem Tag="Light" AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeLight]}">
+                                    <StackPanel>
+                                        <Border CornerRadius="6" Height="52" BorderThickness="1" BorderBrush="{DynamicResource ControlBorderBrush}" Background="#FFFFFF">
+                                            <Border CornerRadius="14" Width="28" Height="28" HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center" Background="#FFFFFF">
+                                                <TextBlock Text="&#xE706;" FontFamily="{DynamicResource AppIconFontFamily}"
+                                                           FontSize="18" Foreground="#24354B" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </Border>
+                                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeLight]}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,7,0,0"/>
+                                    </StackPanel>
+                                </ListBoxItem>
+                                <ListBoxItem Tag="Dark" AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeDark]}">
+                                    <StackPanel>
+                                        <Border CornerRadius="6" Height="52" BorderThickness="1" BorderBrush="{DynamicResource ControlBorderBrush}" Background="#1E1E1E">
+                                            <Border CornerRadius="14" Width="28" Height="28" HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center" Background="#1E1E1E">
+                                                <TextBlock Text="&#xE708;" FontFamily="{DynamicResource AppIconFontFamily}"
+                                                           FontSize="18" Foreground="#D1E1FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </Border>
+                                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeDark]}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,7,0,0"/>
+                                    </StackPanel>
+                                </ListBoxItem>
+                                <ListBoxItem Tag="FollowSystem" AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeFollowSystem]}">
+                                    <StackPanel>
+                                        <Border CornerRadius="6" Height="52" BorderThickness="1" BorderBrush="{DynamicResource ControlBorderBrush}">
+                                            <Border.Background>
+                                                <!-- Fixed light and dark samples used in every active theme. -->
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                    <GradientStop Color="#FFFFFF" Offset="0.49"/>
+                                                    <GradientStop Color="#1E1E1E" Offset="0.50"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <Border CornerRadius="14" Width="28" Height="28" HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center" Background="#1E1E1E">
+                                                <TextBlock Text="&#xE895;" FontFamily="{DynamicResource AppIconFontFamily}"
+                                                           FontSize="18" Foreground="#D1E1FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </Border>
+                                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_ModeFollowSystem]}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,7,0,0"/>
+                                    </StackPanel>
+                                </ListBoxItem>
+                            </ListBox>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Manual mode: one grid, filtered to whichever flavor (light/dark) is currently active. -->
+                    <StackPanel x:Name="GroupManualTheme" Visibility="{Binding Appearance.IsManualThemeEnabled, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Style="{StaticResource SettingsGroupTitle}"
+                                    Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ThemeSelect]}"/>
+                        <Border Style="{StaticResource SettingsCard}">
+                            <ListBox x:Name="RowThemeCards" Style="{StaticResource ThemeCardListBox}"
+                                     ItemsSource="{Binding Appearance.ManualThemeCards}"
+                                     SelectedValue="{Binding Appearance.SelectedThemeId, Mode=TwoWay}"/>
+                        </Border>
+                    </StackPanel>
+
+                    <Grid x:Name="GroupFollowSystemTheme" Visibility="{Binding Appearance.FollowSystem, Converter={StaticResource BoolToVis}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource SettingsCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource SettingsSubHeading}" Margin="0,0,0,8"
+                                           Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ThemeLightSelect]}"/>
+                                <ListBox x:Name="RowThemeLightCards" Style="{StaticResource ThemeCardListBox}"
+                                         ItemsSource="{Binding Appearance.LightThemeCards}"
+                                         SelectedValue="{Binding Appearance.SelectedLightThemeId, Mode=TwoWay}"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Style="{StaticResource SettingsCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource SettingsSubHeading}" Margin="0,0,0,8"
+                                           Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ThemeDarkSelect]}"/>
+                                <ListBox x:Name="RowThemeDarkCards" Style="{StaticResource ThemeCardListBox}"
+                                         ItemsSource="{Binding Appearance.DarkThemeCards}"
+                                         SelectedValue="{Binding Appearance.SelectedDarkThemeId, Mode=TwoWay}"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+
+                <local:BackgroundSettingsSection x:Name="BackgroundSection" DataContext="{Binding Appearance.Background}">
+                    <local:BackgroundSettingsSection.Style>
+                        <Style TargetType="local:BackgroundSettingsSection">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DataContext.Appearance.SelectedSection, RelativeSource={RelativeSource AncestorType=local:AppearanceSettingsPage}}" Value="Background">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </local:BackgroundSettingsSection.Style>
+                </local:BackgroundSettingsSection>
+
+                <local:TaskbarSettingsSection x:Name="RowTaskbarSettings">
+                    <local:TaskbarSettingsSection.Style>
+                        <Style TargetType="local:TaskbarSettingsSection">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Appearance.SelectedSection}" Value="Taskbar">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </local:TaskbarSettingsSection.Style>
+                </local:TaskbarSettingsSection>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

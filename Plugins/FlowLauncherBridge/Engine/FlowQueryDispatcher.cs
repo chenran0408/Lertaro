@@ -36,19 +36,19 @@ public class FlowQueryDispatcher
             };
         }
 
-        var firstSpace = trimmed.IndexOf(' ');
-        var firstWord = firstSpace > 0 ? trimmed[..firstSpace] : trimmed;
+        var parts = trimmed.Split((char[]?)null, 2, StringSplitOptions.None);
+        var firstWord = parts[0];
 
         if (_host.KeywordPlugins.TryGetValue(firstWord, out _))
         {
-            var search = firstSpace > 0 ? trimmed[(firstSpace + 1)..].TrimStart() : string.Empty;
+            var search = parts.Length == 2 ? parts[1].TrimStart() : string.Empty;
             return new Query
             {
                 OriginalQuery = rawInput ?? string.Empty,
                 TrimmedQuery = trimmed,
                 ActionKeyword = firstWord,
                 Search = search,
-                SearchTerms = search.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                SearchTerms = search.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
             };
         }
 
@@ -58,7 +58,7 @@ public class FlowQueryDispatcher
             TrimmedQuery = trimmed,
             ActionKeyword = string.Empty,
             Search = trimmed,
-            SearchTerms = trimmed.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            SearchTerms = trimmed.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
         };
     }
 

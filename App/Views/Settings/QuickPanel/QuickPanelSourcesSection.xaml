@@ -23,7 +23,8 @@
             <conv:BoolToVisibilityConverter x:Key="InvertBoolToVis" Invert="True"/>
 
             <Style x:Key="SourceFieldLabel" TargetType="TextBlock">
-                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="VerticalAlignment" Value="Top"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
                 <Setter Property="HorizontalAlignment" Value="Right"/>
                 <Setter Property="Margin" Value="0,0,10,0"/>
                 <Setter Property="Foreground"><Setter.Value><Binding Path="SecondaryForegroundBrush" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" FallbackValue="{StaticResource TextSecondary}"/></Setter.Value></Setter>
@@ -39,10 +40,14 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="210"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
+
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
                             <!-- Drag handle: the mouse-drag shortcut for the same reorder the two arrow
                                  buttons do (see DragReorder on the list itself), same six-dot grip every
@@ -95,13 +100,15 @@
                                 </TextBlock>
                             </Grid>
 
-                            <TextBlock Grid.Column="3" Text="{Binding Path}" Margin="10,0,8,0"
-                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                                       ToolTip="{Binding Path}"
-                                       Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
-/>
+                            <TextBlock Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Text="{Binding Path}"
+                                       Margin="0,4,0,0" Style="{StaticResource SettingsHintText}"
+                                       ToolTip="{Binding Path}">
+                                <TextBlock.Visibility>
+                                    <Binding Path="IsFolderSource" Converter="{StaticResource BoolToVis}"/>
+                                </TextBlock.Visibility>
+                            </TextBlock>
 
-                            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0">
                                 <Button Content="&#xE70E;"
                                         ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_MoveUpTooltip]}"
                                         Style="{StaticResource RuleIconButton}"
@@ -146,12 +153,10 @@
                              above it, so the block reads as belonging to the row rather than to the list.
                              A plugin source keeps only the display switch: what it shows is its own
                              decision, so it has no folder, no kind, no filter and no cap to offer. -->
-                        <ScrollViewer Margin="54,8,0,6" Focusable="False"
-                                      HorizontalScrollBarVisibility="Auto"
-                                      VerticalScrollBarVisibility="Disabled"
-                                      conv:ScrollViewerHelper.ShiftWheelScrollsHorizontally="True">
-                            <ScrollViewer.Style>
-                                <Style TargetType="ScrollViewer" BasedOn="{StaticResource SleekScrollViewerStyle}">
+                        <Border Margin="18,8,0,6" Padding="10" CornerRadius="8"
+                                Background="{DynamicResource ControlBackground}">
+                            <Border.Style>
+                                <Style TargetType="Border">
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsExpanded}" Value="True">
@@ -159,11 +164,10 @@
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
-                            </ScrollViewer.Style>
-
+                            </Border.Style>
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto" MaxWidth="116"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
@@ -180,8 +184,8 @@
                                      declared items whose Content was a translation binding left the box
                                      blank (the selection matched on identity, not on the value) and would
                                      have had to be rebuilt on a language switch anyway. -->
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,6">
-                                    <ComboBox HorizontalAlignment="Left" MinWidth="200"
+                                <WrapPanel Grid.Column="1">
+                                    <ComboBox HorizontalAlignment="Left" MinWidth="160" Margin="0,0,8,6"
                                               Visibility="{Binding IsFolderSource, Converter={StaticResource BoolToVis}}"
                                               Style="{StaticResource SettingsComboBox}"
                                               ItemsSource="{Binding KindOptions}"
@@ -192,21 +196,21 @@
                                          question. The panel's own header toggle still overrides it, for the
                                          session it is pressed in; this is what the group opens as. Shares the
                                          panel's own wording by sharing its key. -->
-                                    <CheckBox Margin="14,0,0,0" VerticalAlignment="Center"
+                                    <CheckBox Margin="0,0,8,6" VerticalAlignment="Center"
                                               IsChecked="{Binding ShowAsList, Mode=TwoWay}"
                                               Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_ViewList]}"/>
-                                    <ComboBox Margin="14,0,0,0" MinWidth="160" VerticalAlignment="Center"
+                                    <ComboBox Margin="0,0,8,6" MinWidth="144" VerticalAlignment="Center"
                                               Style="{StaticResource SettingsComboBox}" ItemsSource="{Binding SortOptions}"
                                               DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding SortMode, Mode=TwoWay}"
                                               ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_FileOrder]}"/>
                                     <!-- Beside the display options rather than under the folder field: it is
                                          a thing this group does, not a property of the path. -->
-                                    <CheckBox Margin="14,0,0,0" VerticalAlignment="Center"
+                                    <CheckBox Margin="0,0,8,6" VerticalAlignment="Center"
                                               Visibility="{Binding IsFolderSource, Converter={StaticResource BoolToVis}}"
                                               IsChecked="{Binding AcceptsDrops, Mode=TwoWay}"
                                               ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_AcceptsDropsTooltip]}"
                                               Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_AcceptsDrops]}"/>
-                                </StackPanel>
+                                </WrapPanel>
 
                                 <TextBlock Grid.Row="1" Visibility="{Binding IsFolderSource, Converter={StaticResource BoolToVis}}" Style="{StaticResource SourceFieldLabel}"
                                            Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_SourcePath]}"/>
@@ -223,35 +227,35 @@
 
                                 <TextBlock Grid.Row="2" Visibility="{Binding IsFolderSource, Converter={StaticResource BoolToVis}}" Style="{StaticResource SourceFieldLabel}"
                                            Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_FilterPattern]}"/>
-                                <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,6" Visibility="{Binding IsFolderSource, Converter={StaticResource BoolToVis}}">
-                                    <TextBox Width="150" Style="{StaticResource RuleTextBox}"
+                                <WrapPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,6" Visibility="{Binding IsFolderSource, Converter={StaticResource BoolToVis}}">
+                                    <TextBox Width="136" Margin="0,0,8,4" Style="{StaticResource RuleTextBox}"
                                              Text="{Binding FilterPattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                                         <ToolTipService.ToolTip>
                                             <TextBlock MaxWidth="420" TextWrapping="Wrap"
                                                        Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_FilterPatternTooltip]}"/>
                                         </ToolTipService.ToolTip>
                                     </TextBox>
-                                    <CheckBox Margin="14,0,0,0" VerticalAlignment="Center"
+                                    <CheckBox Margin="0,0,0,4" VerticalAlignment="Center"
                                               Visibility="{Binding IsRecentFiles, Converter={StaticResource InvertBoolToVis}}"
                                               IsChecked="{Binding Recursive, Mode=TwoWay}"
                                               Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_Recursive]}"/>
-                                </StackPanel>
+                                </WrapPanel>
 
                                 <TextBlock Grid.Row="3" Visibility="{Binding IsFolderSource, Converter={StaticResource BoolToVis}}" Style="{StaticResource SourceFieldLabel}"
                                            Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_MaxItems]}"/>
-                                <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Visibility="{Binding IsFolderSource, Converter={StaticResource BoolToVis}}">
+                                <WrapPanel Grid.Row="3" Grid.Column="1" Visibility="{Binding IsFolderSource, Converter={StaticResource BoolToVis}}">
                                     <TextBox Width="64" Style="{StaticResource RuleTextBox}"
                                              Text="{Binding MaxItems, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=True, ValidatesOnExceptions=True}"/>
-                                    <TextBlock Margin="14,0,10,0" VerticalAlignment="Center"
+                                    <TextBlock Margin="8,0,6,0" VerticalAlignment="Center"
                                                Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                                Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_MaxAge]}"
                                                Visibility="{Binding IsRecentFiles, Converter={StaticResource BoolToVis}}"/>
                                     <TextBox Width="64" Style="{StaticResource RuleTextBox}"
                                              Visibility="{Binding IsRecentFiles, Converter={StaticResource BoolToVis}}"
                                              Text="{Binding MaxAgeMinutes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=True, ValidatesOnExceptions=True}"/>
-                                </StackPanel>
+                                </WrapPanel>
                             </Grid>
-                        </ScrollViewer>
+                        </Border>
                     </StackPanel>
                 </Border>
             </DataTemplate>
@@ -259,13 +263,11 @@
     </UserControl.Resources>
 
     <StackPanel>
-        <DockPanel Margin="0,0,0,4">
+        <DockPanel Margin="0,0,0,8" LastChildFill="False">
             <Button DockPanel.Dock="Right"
                     Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_AddFolder]}"
                     Style="{StaticResource PrimarySettingsButton}"
                     Command="{Binding AddFolderCommand}"/>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_SourcesDesc]}"
-                       Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,10,0"/>
         </DockPanel>
 
         <!-- No scroll viewer of its own: the page already scrolls, and bounding this one meant an

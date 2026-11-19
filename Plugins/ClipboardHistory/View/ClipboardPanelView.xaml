@@ -4,7 +4,7 @@
              xmlns:local="clr-namespace:Lertaro.Plugins.ClipboardHistory.View"
              TextOptions.TextFormattingMode="Display"
              UseLayoutRounding="True"
-             MinWidth="380" MinHeight="420"
+             MinWidth="0" MinHeight="0"
              PreviewKeyDown="View_PreviewKeyDown">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -13,14 +13,23 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="10,3"/>
-            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="ChipBorder" CornerRadius="9" Background="{TemplateBinding Background}"
+                        <Border x:Name="ChipBorder" CornerRadius="8" Background="{TemplateBinding Background}"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter VerticalAlignment="Center"/>
                         </Border>
@@ -31,8 +40,44 @@
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="ChipBorder" Property="Background"
-                                        Value="{DynamicResource AccentBlue}"/>
-                                <Setter Property="Foreground" Value="White"/>
+                                        Value="{DynamicResource ItemSelected}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource SidebarTextActive}"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="PanelToolbarToggle" TargetType="ToggleButton">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="7,3"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}"/>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="ButtonSurface" Background="Transparent" CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonSurface" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="ButtonSurface" Property="Background" Value="{DynamicResource ItemSelected}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource SidebarTextActive}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -51,21 +96,23 @@
         <!-- This grid is the inner content; the outer content grid below splits list|preview. -->
 
         <!-- Search: every keystroke re-filters the loaded history. -->
-        <Border Grid.Row="0" CornerRadius="8" Margin="10,10,10,6"
-                Background="{DynamicResource ControlBackground}"
-                BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1">
+        <Border Grid.Row="0" Style="{DynamicResource SearchFieldChrome}" Margin="12,12,12,8" MinHeight="36">
             <Grid>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBox x:Name="SearchBox" Grid.Column="0" Margin="10,6" BorderThickness="0"
+                <TextBlock Text="&#xE721;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="14"
+                           Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"
+                           IsHitTestVisible="False" Margin="12,0,8,0"/>
+                <TextBox x:Name="SearchBox" Grid.Column="1" Margin="0,6,8,6" BorderThickness="0"
                          Background="Transparent" VerticalContentAlignment="Center" FontSize="14"
                          TextChanged="SearchBox_TextChanged"/>
-                <TextBlock x:Name="SearchWatermark" Grid.Column="0" Margin="14,10,0,0" IsHitTestVisible="False"
+                <TextBlock x:Name="SearchWatermark" Grid.Column="1" VerticalAlignment="Center" IsHitTestVisible="False"
                            Foreground="{DynamicResource TextSecondary}" FontSize="13"/>
-                <Button x:Name="ClearSearchButton" Grid.Column="1" Content="✕" Margin="0,0,8,0"
-                        BorderThickness="0" Background="Transparent" Cursor="Hand" FontSize="11"
+                <Button x:Name="ClearSearchButton" Grid.Column="2" Content="✕" Width="28" Margin="0,0,3,0"
+                        Style="{DynamicResource QuietActionButton}" Padding="0" FontSize="11"
                         Foreground="{DynamicResource TextSecondary}"
                         Visibility="Collapsed" Click="ClearSearch_Click"/>
             </Grid>
@@ -73,77 +120,101 @@
 
         <!-- Filter chips: scope the list to one entry kind or the pinned set; the sort toggle
              flips between newest-first and most-copied-first. -->
-        <DockPanel Grid.Row="1" Margin="12,2,10,6">
-            <ToggleButton x:Name="PreviewToggle" DockPanel.Dock="Right" FontSize="12" Padding="7,3"
-                          BorderThickness="0" Background="Transparent" Cursor="Hand"
-                          Click="PreviewToggle_Click"/>
-            <ToggleButton x:Name="SortToggle" DockPanel.Dock="Right" Content="⇅" FontSize="12" Padding="7,3"
-                          BorderThickness="0" Background="Transparent" Cursor="Hand" ToolTipService.ShowOnDisabled="True"
-                          Click="SortToggle_Click"/>
-            <StackPanel Orientation="Horizontal">
+        <StackPanel Grid.Row="1">
+        <Grid Margin="12,0,12,8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <WrapPanel x:Name="TypeFilters">
                 <RadioButton x:Name="TabAll" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs"
                              IsChecked="True" Checked="Tab_Checked"/>
                 <RadioButton x:Name="TabText" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs" Checked="Tab_Checked"/>
                 <RadioButton x:Name="TabImage" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs" Checked="Tab_Checked"/>
                 <RadioButton x:Name="TabFiles" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs" Checked="Tab_Checked"/>
                 <RadioButton x:Name="TabFavorites" Style="{StaticResource PanelTabChip}" GroupName="PanelTabs" Checked="Tab_Checked"/>
-            </StackPanel>
-        </DockPanel>
+            </WrapPanel>
+            <WrapPanel x:Name="ToolbarActions" Grid.Column="1" HorizontalAlignment="Right">
+                <ToggleButton x:Name="SortToggle" Style="{StaticResource PanelToolbarToggle}"
+                              Click="SortToggle_Click"/>
+                <ToggleButton x:Name="PreviewToggle" Style="{StaticResource PanelToolbarToggle}"
+                              Click="PreviewToggle_Click"/>
+                <Button x:Name="HistoryMenuButton" FontSize="12" Padding="7,0"
+                        Style="{DynamicResource QuietActionButton}" Height="28" VerticalAlignment="Center" Click="HistoryMenu_Click"/>
+            </WrapPanel>
+        </Grid>
+        <TextBlock x:Name="CaptureNotice" Margin="12,0,12,8" FontSize="12" TextWrapping="Wrap"
+                   Foreground="{DynamicResource TextSecondary}" Visibility="Collapsed"/>
+        </StackPanel>
 
-        <!-- Row 2: list on the left, a preview pane on the right showing the selected entry's
-             full text, large image or path list. -->
-        <Grid Grid.Row="2">
+        <!-- The details pane is beside the list on wide windows and replaces the list on narrow ones. -->
+        <Grid x:Name="PaneGrid" Grid.Row="2" SizeChanged="PaneGrid_SizeChanged">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="300"/>
+                <ColumnDefinition x:Name="HistoryColumn" Width="*"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition x:Name="PreviewColumn" Width="300"/>
             </Grid.ColumnDefinitions>
-            <Grid Grid.Column="0">
+            <Grid x:Name="HistoryHost" Grid.Column="0">
         <!-- The list: group headers are non-selectable rows in the same list, so keyboard
              navigation and the 1~9 quick paste walk one flat sequence. -->
-        <ListBox x:Name="Lst" Margin="6,0,6,6" BorderThickness="0" Background="Transparent"
+        <ListBox x:Name="Lst" Margin="10,0,8,8" BorderThickness="0" Background="Transparent"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  VirtualizingPanel.IsVirtualizing="True"
                  VirtualizingPanel.VirtualizationMode="Recycling"
                  SelectionMode="Extended"
                  SelectionChanged="Lst_SelectionChanged"
-                 MouseDoubleClick="Lst_MouseDoubleClick"
                  ContextMenuOpening="Lst_ContextMenuOpening"
                  PreviewMouseLeftButtonDown="Lst_PreviewMouseLeftButtonDown"
+                 PreviewMouseLeftButtonUp="Lst_PreviewMouseLeftButtonUp"
                  PreviewMouseMove="Lst_PreviewMouseMove"
+                 PreviewMouseWheel="Lst_PreviewMouseWheel"
                  PreviewTextInput="Lst_PreviewTextInput">
+            <ListBox.ContextMenu>
+                <ContextMenu/>
+            </ListBox.ContextMenu>
             <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                     <Setter Property="Padding" Value="0"/>
                     <Setter Property="Focusable" Value="False"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <ContentPresenter HorizontalAlignment="Stretch"/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
                 </Style>
             </ListBox.ItemContainerStyle>
             <ListBox.Resources>
                 <DataTemplate DataType="{x:Type local:ClipboardPanelItem}">
                     <Grid>
                         <!-- Group header: a small non-interactive label row. -->
-                        <TextBlock Text="{Binding HeaderText}" FontSize="11" FontWeight="SemiBold"
-                                   Margin="8,8,0,2" Opacity="0.65"
+                        <TextBlock Text="{Binding HeaderText}" FontSize="12" FontWeight="SemiBold"
+                                   Margin="10,10,0,4" Foreground="{DynamicResource TextSecondary}"
                                    Visibility="{Binding IsHeader, Converter={StaticResource BoolToVis}}"/>
                         <!-- Entry row, content-first: a fixed left rail (kind glyph, or the image
                              thumbnail) keeps every row aligned; the preview wraps to two lines so
                              scanning a long clip does not need the preview pane; the tooltip
                              surfaces the full content Maccy-style. -->
-                        <Border x:Name="RowBorder" CornerRadius="6" Padding="10,8" Margin="2,1"
+                        <Border x:Name="RowBorder" CornerRadius="8" Padding="12,8" Margin="2,2"
                                 Visibility="{Binding IsRow, Converter={StaticResource BoolToVis}}"
                                 Background="Transparent"
                                 ToolTip="{Binding Tooltip}" ToolTipService.InitialShowDelay="400">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="56"/>
+                                    <ColumnDefinition Width="52"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <Grid Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0">
-                                    <Border x:Name="ThumbBox" Width="56" Height="44" CornerRadius="4"
-                                            Background="#22808080">
-                                        <Image Stretch="Uniform" MaxWidth="54" MaxHeight="42"
+                                    <Border x:Name="ThumbBox" Width="44" Height="36" CornerRadius="6"
+                                            Background="{DynamicResource EmptyPlaceholderBackground}">
+                                        <Image Stretch="Uniform" MaxWidth="42" MaxHeight="34"
                                                Source="{Binding ImagePath, Converter={StaticResource ThumbnailSource}}"/>
                                     </Border>
                                     <TextBlock x:Name="KindGlyph" FontFamily="{DynamicResource AppIconFontFamily}"
@@ -152,9 +223,9 @@
                                 </Grid>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <local:HighlightTextBlock Text="{Binding Title}" Query="{Binding Query}"
-                                               FontSize="13" Foreground="{DynamicResource TextPrimary}"
+                                               FontSize="14" Foreground="{DynamicResource TextPrimary}"
                                                TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="37"/>
-                                    <TextBlock Text="{Binding Subtitle}" FontSize="11" Opacity="0.65"
+                                    <TextBlock Text="{Binding Subtitle}" FontSize="11"
                                                Foreground="{DynamicResource TextSecondary}"
                                                TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
                                 </StackPanel>
@@ -186,13 +257,13 @@
                         <DataTrigger Binding="{Binding SlotText}" Value="">
                             <Setter TargetName="SlotBadge" Property="Visibility" Value="Collapsed"/>
                         </DataTrigger>
-                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
-                            <Setter TargetName="RowBorder" Property="Background"
-                                    Value="{DynamicResource ControlHoverBackground}"/>
-                        </DataTrigger>
                         <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
                             <Setter TargetName="RowBorder" Property="Background"
                                     Value="{DynamicResource ItemHover}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                            <Setter TargetName="RowBorder" Property="Background"
+                                    Value="{DynamicResource ItemSelected}"/>
                         </DataTrigger>
                     </DataTemplate.Triggers>
                 </DataTemplate>
@@ -200,23 +271,38 @@
         </ListBox>
 
             <!-- Empty state shown when no row survives the tab and the query. -->
-            <TextBlock x:Name="EmptyText" TextAlignment="Center" VerticalAlignment="Center"
-                       Margin="20" Opacity="0.6" FontSize="13" Foreground="{DynamicResource TextSecondary}"
+            <TextBlock x:Name="EmptyText" TextAlignment="Center" TextWrapping="Wrap" VerticalAlignment="Center"
+                       Margin="20" FontSize="13" Foreground="{DynamicResource TextSecondary}"
                        Visibility="Collapsed"/>
             </Grid>
 
-            <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Center" VerticalAlignment="Stretch"
-                          Background="Transparent" ResizeBehavior="CurrentAndNext" ResizeDirection="Columns"/>
-            <Border x:Name="PreviewHost" Grid.Column="2" Margin="0,0,6,6" CornerRadius="6" Padding="8"
-                    Background="{DynamicResource ControlBackground}"
-                    BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1">
+            <GridSplitter x:Name="PreviewSplitter" Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                          Background="Transparent" ResizeBehavior="PreviousAndNext" ResizeDirection="Columns"
+                          DragCompleted="PreviewSplitter_DragCompleted"/>
+            <Border x:Name="PreviewHost" Grid.Column="2" Margin="4,0,12,8" CornerRadius="10" Padding="12"
+                    Background="{DynamicResource CardBackground}"
+                    BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <TextBlock x:Name="PreviewTitle" Grid.Row="0" FontSize="11" Opacity="0.65"
-                               Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/>
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock x:Name="PreviewTitle" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimary}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="PreviewContext" FontSize="12" Margin="0,3,0,0"
+                                   Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <Trigger Property="Text" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
                         <Grid x:Name="PreviewContent"/>
@@ -225,10 +311,19 @@
             </Border>
         </Grid>
 
-        <Border Grid.Row="3" Padding="10,5" BorderThickness="0,1,0,0"
-                BorderBrush="{DynamicResource ControlBorderBrush}">
-            <TextBlock x:Name="HintBar" FontSize="11" Opacity="0.6"
-                       Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis"/>
+        <Border Grid.Row="3" Padding="12,8" BorderThickness="0,1,0,0"
+                Background="{DynamicResource StatusBarBg}" BorderBrush="{DynamicResource BorderColor}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="12,0,0,0">
+                    <Button x:Name="CopyButton" Style="{DynamicResource SettingsButton}" Padding="10,4" MinWidth="64" Margin="0,0,6,0"
+                            IsEnabled="False" Click="CopyButton_Click"/>
+                    <Button x:Name="PasteButton" Style="{DynamicResource PrimarySettingsButton}" Padding="12,4" MinWidth="68" Margin="0"
+                            IsEnabled="False" Click="PasteButton_Click"/>
+                </StackPanel>
+                <TextBlock x:Name="HintBar" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"
+                           Foreground="{DynamicResource TextSecondary}"/>
+            </DockPanel>
         </Border>
     </Grid>
 </UserControl>

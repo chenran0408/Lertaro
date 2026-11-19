@@ -1,4 +1,7 @@
+using Lertaro.App.ViewModels.Search;
 using Lertaro.App.ViewModels.Search.Mapping;
+using Lertaro.Core.SearchIndex;
+using Lertaro.PluginSdk.Abstractions.Plugins;
 
 namespace Lertaro.App.Tests.ViewModels.Search.Mapping;
 
@@ -9,11 +12,21 @@ public sealed class ApplicationSearchAliasesTests
     [DataRow("Visual Studio Code")]
     [DataRow("VisualStudioCode")]
     [DataRow("Microsoft Visual Studio Code")]
+    [DataRow("Visual Studio Code (D drive)")]
+    [DataRow("Visual Studio Code（便携版）")]
+    [DataRow("Visual Studio Code [x64] (Portable)")]
     public void EnglishWordAbbreviationsIncludeVscode(string title)
     {
         var aliases = ApplicationSearchAliases.Collect(title, @"C:\Apps\Code.exe", _ => null);
         Assert.IsTrue(aliases.Any(alias => alias.Equals("vscode", StringComparison.OrdinalIgnoreCase)));
         Assert.IsTrue(aliases.Any(alias => alias.Equals("Code", StringComparison.OrdinalIgnoreCase)));
+    }
+
+    [TestMethod]
+    public void InitialsCanOmitTheEditionOrYear()
+    {
+        var aliases = ApplicationSearchAliases.Collect("Copper Finch Studio 2026", @"C:\Apps\CopperFinch.exe", _ => null);
+        Assert.Contains("CFS", aliases);
     }
 
     [TestMethod]
@@ -36,13 +49,25 @@ public sealed class ApplicationSearchAliasesTests
     }
 
     [TestMethod]
+    public void CatalogApplicationCanBeFoundByItsCompleteShortcutFilename()
+    {
+        var item = new SearchableItem { Title = "Paint", ResultKind = "Application", ActionArgument = @"C:\Menu\Drawing 2026.lnk" };
+        var entry = new SearchableItemCache.CacheEntry(item, [], null);
+        MatchRank Match(string query) => SearchableItemMapper.MatchCatalogEntry(FuzzyQuery.Parse(query), query.Split(' '), entry);
+        Assert.AreEqual(new MatchRank(MatchRank.TierName, 0, 1), Match("Drawing 2026.lnk"));
+        Assert.IsFalse(Match("Other 2026.lnk").IsMatch);
+    }
+
+    [TestMethod]
     public void FullPinyinAndInitialsCanMatchAcrossSyllableAndWordBoundaries()
     {
         var aliases = new[] { "sakurafrp qi\u0002dong\u0002qi", "sakurafrp qdq|sakurafrp zcq" };
-        Assert.IsTrue(ApplicationSearchAliases.IsExactMatch("SakuraFrp qidongqi", aliases, ['\u0002']));
-        Assert.IsTrue(ApplicationSearchAliases.IsExactMatch("sakurafrpqdq", aliases, ['\u0002']));
-        Assert.IsFalse(ApplicationSearchAliases.IsExactMatch("sakurafrpqd", aliases, ['\u0002']));
-        Assert.IsFalse(ApplicationSearchAliases.IsExactMatch("", aliases, ['\u0002']));
+        var exact = ApplicationSearchAliases.BuildExactAliases(aliases, ['\u0002']);
+        bool Matches(string text) => exact.Contains(ApplicationSearchAliases.Normalize(text, ['\u0002']));
+        Assert.IsTrue(Matches("SakuraFrp qidongqi"));
+        Assert.IsTrue(Matches("sakurafrpqdq"));
+        Assert.IsFalse(Matches("sakurafrpqd"));
+        Assert.IsFalse(Matches(""));
     }
     [TestMethod]
     [DataRow("Microsoft Word", "Word")]

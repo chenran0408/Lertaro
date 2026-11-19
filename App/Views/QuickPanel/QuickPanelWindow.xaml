@@ -48,23 +48,8 @@
                 </Grid.RowDefinitions>
                 <surface:BackgroundSurface Grid.RowSpan="99" Grid.ColumnSpan="99" UseTransparentBase="True" />
 
-                <Border Grid.Row="0" Background="Transparent"
-                        BorderThickness="0"
+                <Border Grid.Row="0" Background="Transparent" Height="14"
                         VerticalAlignment="Top" Panel.ZIndex="1">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="Opacity" Value="0"/>
-                            <Setter Property="Height" Value="14"/>
-                            <Setter Property="BorderThickness" Value="0"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Opacity" Value="1"/>
-                                    <Setter Property="Height" Value="20"/>
-                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
                     <Grid x:Name="DragArea" Height="14" Background="Transparent"
                           MouseLeftButtonDown="DragArea_MouseLeftButtonDown">
                         <Grid VerticalAlignment="Center">
@@ -73,36 +58,32 @@
                                 <ColumnDefinition Width="30*"/>
                                 <ColumnDefinition Width="35*"/>
                             </Grid.ColumnDefinitions>
-                            <Border Grid.Column="1" Height="6" CornerRadius="3"
-                                    Background="{DynamicResource TextSecondary}" Opacity="0.45"/>
+                            <Border Grid.Column="1" Height="4" MaxWidth="38" CornerRadius="2"
+                                    Background="{DynamicResource ControlBorderBrush}"/>
                         </Grid>
 
                     </Grid>
                 </Border>
 
-                <Grid Grid.Row="0" Margin="12,16,12,4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <local:QuickPanelTabStrip Grid.Column="0" VerticalAlignment="Bottom"/>
-                    <local:QuickPanelSearchBox x:Name="FilterBox" Grid.Column="1" Width="150"
-                                               Margin="8,0,0,4" VerticalAlignment="Bottom"/>
-
-                    <!-- Keeps this summon up when it loses the foreground. A pin, lit while it is on:
-                         the panel dismissing itself is its normal behaviour, so the state worth showing
-                         is the one that suspends it. Clickable as well as bound to the hotkey, since a
-                         pin that only reports is a pin you cannot press. -->
-                    <local:QuickPanelSizeButton x:Name="SizeButton" Grid.Column="2" Margin="2,-4,0,0" VerticalAlignment="Bottom"/>
-                    <ToggleButton Grid.Column="3" Margin="2,-4,0,0" VerticalAlignment="Bottom"
-                                  Width="32" Height="32"
-                                  IsChecked="{Binding IsStayOpen, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}"
-                                  ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_StayOpenTooltip]}"
-                                  Style="{StaticResource QuickPanelStayOpenStyle}"/>
-                </Grid>
+                <StackPanel Grid.Row="0" Margin="12,16,12,4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <local:QuickPanelSearchBox x:Name="FilterBox" Grid.Column="0" Margin="0,0,8,0"
+                                                   VerticalAlignment="Center"/>
+                        <local:QuickPanelSizeButton x:Name="SizeButton" Grid.Column="1" VerticalAlignment="Center"/>
+                        <ToggleButton Grid.Column="2" Margin="2,0,0,0" VerticalAlignment="Center"
+                                      Width="32" Height="32"
+                                      IsChecked="{Binding IsStayOpen, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}"
+                                      ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_StayOpenTooltip]}"
+                                      AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
+                                      Style="{StaticResource QuickPanelStayOpenStyle}"/>
+                    </Grid>
+                    <local:QuickPanelTabStrip/>
+                </StackPanel>
                 <!-- The whole content area listens for the click, not each group's list: the blank space
                      that should drop the selection is as much the gap between two groups and the run
                      below the last one as it is the end of a row of tiles. -->
@@ -229,13 +210,17 @@
                         <!-- Shown when the tab on screen has nothing in it. The panel not opening at all
                              covers the case where nothing anywhere has anything; this covers the one
                              where it opened for another tab's sake and this one is bare. -->
-                        <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_Empty]}"
+                        <TextBlock x:Name="EmptyPanelMessage"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" FontSize="14"
                                    HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_NoMatches]}"/>
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                     <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasSearchFilter}" Value="False">
+                                            <Setter Property="Text" Value="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickPanel_Empty]}"/>
+                                        </DataTrigger>
                                         <DataTrigger Binding="{Binding IsEmpty}" Value="True">
                                             <Setter Property="Visibility" Value="Visible"/>
                                         </DataTrigger>

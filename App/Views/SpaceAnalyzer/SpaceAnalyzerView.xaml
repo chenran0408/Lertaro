@@ -2,7 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:services="clr-namespace:Lertaro.App.Services"
-             xmlns:helpers="clr-namespace:Lertaro.App.Helpers.Visuals">
+             SizeChanged="View_SizeChanged">
     <UserControl.Resources>
         <Style x:Key="SpaceListItem" TargetType="ListBoxItem">
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -11,6 +11,7 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
@@ -75,42 +76,69 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Margin="20,16,20,12">
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_Subtitle]}"
-                       FontSize="20" FontWeight="SemiBold" Style="{StaticResource SurfaceTextPrimary}"/>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_IndexedOnly]}"
-                       Margin="0,5,0,0" FontSize="14" Style="{StaticResource SurfaceTextSecondary}"/>
-        </StackPanel>
+        <Grid Margin="16,12,16,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_Title]}"
+                           FontSize="20" FontWeight="SemiBold" Style="{StaticResource SurfaceTextPrimary}"/>
+                <TextBlock x:Name="SummaryText" Margin="0,3,0,0" FontSize="13" TextWrapping="Wrap"
+                           Style="{StaticResource SurfaceTextSecondary}"/>
+            </StackPanel>
+            <CheckBox x:Name="TreemapToggle" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0"
+                      Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_Treemap]}"
+                      Click="TreemapToggle_Click"/>
+        </Grid>
 
         <Border Grid.Row="1" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}"
-                BorderThickness="1" CornerRadius="{StaticResource CornerRadiusPopover}" Padding="6,3" Margin="20,0,20,10">
+                BorderThickness="1" CornerRadius="{StaticResource CornerRadiusPopover}" Padding="6,3" Margin="16,0,16,8">
             <DockPanel>
                 <Button x:Name="BackButton" DockPanel.Dock="Left" Style="{StaticResource SpaceBreadcrumbButton}"
                         Width="28" Padding="0" Margin="0,0,2,0" ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_Back]}"
+                        AutomationProperties.Name="{Binding ToolTip, RelativeSource={RelativeSource Self}}"
                         Content="&#xE74A;" FontSize="11" FontFamily="{DynamicResource AppIconFontFamily}" Click="Back_Click"/>
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="7,0,0,0">
+                <ScrollViewer x:Name="BreadcrumbScroller" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="7,0,0,0">
                     <StackPanel x:Name="BreadcrumbPanel" Orientation="Horizontal" VerticalAlignment="Center"/>
                 </ScrollViewer>
             </DockPanel>
         </Border>
 
-        <Grid Grid.Row="2" Margin="20,0,20,14">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="330"/></Grid.ColumnDefinitions>
-            <Border Grid.Column="0" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}"
-                    BorderThickness="1" CornerRadius="{StaticResource CornerRadiusWindow}" Padding="8" Margin="0,0,12,0">
-                <Grid>
-                    <Canvas x:Name="TreemapCanvas" SizeChanged="TreemapCanvas_SizeChanged"
-                            MouseLeftButtonUp="TreemapCanvas_MouseLeftButtonUp" ClipToBounds="True"/>
-                    <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock Text="&#xE9D5;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="34"
-                                   Style="{StaticResource SurfaceTextSecondary}" HorizontalAlignment="Center"/>
-                        <TextBlock x:Name="EmptyText" Margin="0,10,0,0" FontSize="14"
-                                   Style="{StaticResource SurfaceTextSecondary}" TextAlignment="Center"/>
-                    </StackPanel>
-                </Grid>
+        <Grid Grid.Row="2" Margin="16,0,16,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="ListColumn" Width="*"/>
+                <ColumnDefinition x:Name="MapColumn" Width="0"/>
+            </Grid.ColumnDefinitions>
+            <Grid Grid.ColumnSpan="2" Margin="0,0,0,8">
+                <TextBox x:Name="LocationFilter" TextChanged="LocationFilter_TextChanged" MinHeight="32"
+                         AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_Filter]}"/>
+                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_Filter]}"
+                           Margin="10,0,6,0" VerticalAlignment="Center" IsHitTestVisible="False">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource SurfaceTextSecondary}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=LocationFilter}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
+            <Border x:Name="MapPane" Grid.Row="1" Grid.Column="1" Visibility="Collapsed"
+                    Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}"
+                    BorderThickness="1" CornerRadius="{StaticResource CornerRadiusWindow}" Padding="8">
+                <Canvas x:Name="TreemapCanvas" SizeChanged="TreemapCanvas_SizeChanged"
+                        MouseLeftButtonUp="TreemapCanvas_MouseLeftButtonUp" ClipToBounds="True"/>
             </Border>
 
-            <Border Grid.Column="1" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}"
+            <Border x:Name="ListPane" Grid.Row="1" Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}"
                     BorderThickness="1" CornerRadius="{StaticResource CornerRadiusWindow}" Padding="8">
                 <Grid>
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
@@ -133,7 +161,7 @@
                     <ListBox x:Name="ItemsList" Grid.Row="2" Background="Transparent" BorderThickness="0"
                              ItemContainerStyle="{StaticResource SpaceListItem}"
                              SelectionChanged="ItemsList_SelectionChanged" MouseDoubleClick="ItemsList_MouseDoubleClick"
-                             PreviewMouseRightButtonUp="ItemsList_PreviewMouseRightButtonUp"
+                             PreviewMouseRightButtonUp="ItemsList_PreviewMouseRightButtonUp" PreviewKeyDown="ItemsList_PreviewKeyDown"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
@@ -153,12 +181,8 @@
                                             </Style>
                                         </TextBlock.Style>
                                     </TextBlock>
-                                    <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
-                                                  Focusable="False" Background="Transparent">
-                                        <TextBlock Text="{Binding Name}" FontSize="14" VerticalAlignment="Center"
-                                                   Style="{StaticResource SurfaceTextPrimary}"
-                                                   helpers:MarqueeBehavior.EnableMarquee="True"/>
-                                    </ScrollViewer>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="14" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" Style="{StaticResource SurfaceTextPrimary}"/>
                                     <TextBlock Grid.Column="2" Text="{Binding DisplaySize}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                                Style="{StaticResource SurfaceTextSecondary}" FontSize="12" Margin="10,0,0,0"/>
                                     <ProgressBar Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Value="{Binding RelativePercentage}"
@@ -183,15 +207,23 @@
                     </ListBox>
                 </Grid>
             </Border>
+            <Border x:Name="EmptyState" Grid.Row="1" Grid.ColumnSpan="2" Background="{DynamicResource ControlBackground}"
+                    BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1"
+                    CornerRadius="{StaticResource CornerRadiusWindow}" Padding="16" Visibility="Collapsed">
+                <TextBlock x:Name="EmptyText" FontSize="14" Style="{StaticResource SurfaceTextSecondary}"
+                           TextAlignment="Center" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
         </Grid>
 
         <Border Grid.Row="3" Background="Transparent" BorderBrush="{DynamicResource ControlBorderBrush}"
-                BorderThickness="0,1,0,0" Padding="20,9">
+                BorderThickness="0,1,0,0" Padding="16,8">
             <Grid>
-                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                <TextBlock x:Name="SummaryText" Style="{StaticResource SurfaceTextSecondary}" FontSize="14"/>
-                <TextBlock Grid.Column="1" Margin="12,0,0,0" TextTrimming="CharacterEllipsis" x:Name="LogicalSizeHint" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_LogicalSize]}"
-                           HorizontalAlignment="Right" Style="{StaticResource SurfaceTextSecondary}" FontSize="14"/>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <TextBlock x:Name="LogicalSizeHint" Margin="0,0,10,0" TextWrapping="Wrap"
+                           Style="{StaticResource SurfaceTextSecondary}" FontSize="12" VerticalAlignment="Center"/>
+                <Button x:Name="OpenSelectionButton" Grid.Column="1" IsEnabled="False" Click="OpenSelection_Click"
+                        Style="{StaticResource SettingsButton}" MinWidth="0" Height="30"
+                        Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Space_OpenSelection]}"/>
             </Grid>
         </Border>
     </Grid>

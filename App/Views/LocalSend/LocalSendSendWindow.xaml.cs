@@ -57,7 +57,11 @@ public partial class LocalSendSendWindow : Controls.AppWindow
         if (_vm.CollectedItems.Count > 0) _vm.ProceedToStep1();
     }
 
-    private void OnLanguageChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => UpdateStep2UiState();
+    private void OnLanguageChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        DevicePanel.UpdateButtons();
+        UpdateStepVisibility();
+    }
     private void Vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(_vm.CurrentStep)) UpdateStepVisibility();
@@ -69,7 +73,15 @@ public partial class LocalSendSendWindow : Controls.AppWindow
         CollectPanel.Visibility = _vm.CurrentStep == 0 ? Visibility.Visible : Visibility.Collapsed;
         DevicePanel.Visibility = _vm.CurrentStep == 1 ? Visibility.Visible : Visibility.Collapsed;
         ProgressPanel.Visibility = _vm.CurrentStep == 2 ? Visibility.Visible : Visibility.Collapsed;
-        UpdateStep2UiState();
+        if (_vm.CurrentStep == 2)
+        {
+            UpdateStep2UiState();
+        }
+        else
+        {
+            TxtWindowTitle.Text = TranslationManager.Instance[_vm.CurrentStep == 0
+                ? "Settings_LocalSend_SendTitle" : "Settings_LocalSend_ChooseDevice"];
+        }
     }
 
     private void UpdateStep2UiState()
@@ -103,7 +115,7 @@ public partial class LocalSendSendWindow : Controls.AppWindow
         if (!_vm.IsSending) Close();
     }
 
-    private void Panel_NextRequested(object? sender, EventArgs e) => UpdateStepVisibility();
+    private void DevicePanel_BackRequested(object? sender, EventArgs e) => _vm.ReturnToStep0();
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
@@ -152,7 +164,9 @@ public partial class LocalSendSendWindow : Controls.AppWindow
     protected override void OnPreviewKeyDown(WpfKeyEventArgs e)
     {
         base.OnPreviewKeyDown(e);
-        if (e.Key == Key.Escape || e.SystemKey == Key.Escape) e.Handled = true;
+        if (e.Key != Key.Escape && e.SystemKey != Key.Escape) return;
+        e.Handled = true;
+        if (_vm.CurrentStep == 1) _vm.ReturnToStep0();
     }
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)

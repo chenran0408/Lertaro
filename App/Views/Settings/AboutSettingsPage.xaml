@@ -22,8 +22,6 @@
         <StackPanel>
             <TextBlock Style="{StaticResource SettingsSectionTitle}"
                        Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_Title]}"/>
-            <TextBlock Style="{StaticResource SettingsHintText}"
-                       Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_Hint]}"/>
 
             <Border Style="{StaticResource SettingsCard}">
                 <StackPanel>
@@ -43,18 +41,6 @@
                                    FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
                                    VerticalAlignment="Bottom" Margin="12,0,0,3"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_Desc2]}"
-                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
-                               TextWrapping="Wrap"
-                               Margin="0,6,0,0"/>
-                    <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_Desc3]}"
-                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
-                               TextWrapping="Wrap"
-                               Margin="0,14,0,0"/>
-                    <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_Desc4]}"
-                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"
-                               TextWrapping="Wrap"
-                               Margin="0,8,0,0"/>
                     <WrapPanel x:Name="RowHomepage" Margin="0,14,0,0">
                         <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_Homepage]}" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
                         <TextBlock>
@@ -150,14 +136,17 @@
                     <ProgressBar x:Name="PbUpdate" Margin="0,12,0,0" Visibility="Collapsed"/>
 
                     <!-- Actions when new version found -->
-                    <StackPanel x:Name="SpUpdateActions" Orientation="Horizontal" Margin="0,12,0,0" Visibility="Collapsed">
+                    <WrapPanel x:Name="SpUpdateActions" Margin="0,8,0,0" Visibility="Collapsed">
                         <Button x:Name="BtnDownloadUpdate" Style="{StaticResource PrimarySettingsButton}"
                                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_ActionDownload]}"
-                                 Click="BtnDownloadUpdate_Click" Margin="0,0,12,0" MinWidth="130"/>
+                                 Click="BtnDownloadUpdate_Click" Margin="0,4,12,0" MinWidth="130"/>
+                        <Button x:Name="BtnCancelUpdate" Style="{StaticResource SettingsButton}"
+                                 Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Cancel]}"
+                                 Click="BtnCancelUpdate_Click" Margin="0,4,12,0" MinWidth="130" Visibility="Collapsed"/>
                         <Button x:Name="BtnGoToPage" Style="{StaticResource SettingsButton}"
                                  Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[About_ActionPage]}"
-                                 Click="BtnGoToPage_Click" MinWidth="130"/>
-                    </StackPanel>
+                                 Click="BtnGoToPage_Click" Margin="0,4,0,0" MinWidth="130"/>
+                    </WrapPanel>
 
                     <!-- What's new in the found version: the release body, markdown cleaned -->
                     <StackPanel x:Name="SpUpdateNotes" Margin="0,14,0,0" Visibility="Collapsed">

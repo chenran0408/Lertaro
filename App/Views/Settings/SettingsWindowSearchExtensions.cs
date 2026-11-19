@@ -46,13 +46,12 @@ internal static class SettingsWindowSearchExtensions
             var capturedPlugin = plugin;
             void RevealPlugin(SettingsViewModel settings)
             {
-                settings.Plugins.IsRuntimeStatusTab = false;
-                settings.Plugins.SelectedPlugin = capturedPlugin;
+                settings.Plugins.RevealPluginDetails(capturedPlugin);
                 capturedPlugin.IsConfigTab = false;
             }
 
             results.Add(new SettingsSearchResultItem(plugin.Name, pluginsSectionLabel, "Plugins", RevealPlugin,
-                Reveal: new SettingsSearchDynamicReveal("PluginsList", capturedPlugin)));
+                Reveal: new SettingsSearchDynamicReveal(string.Empty, capturedPlugin)));
 
             foreach (var component in plugin.RawComponents)
             {
@@ -60,7 +59,7 @@ internal static class SettingsWindowSearchExtensions
                     Reveal: new SettingsSearchDynamicReveal(string.Empty, component)));
             }
 
-            var configTabLabel = TranslationManager.Instance["Common_Configure"];
+            var configTabLabel = TranslationManager.Instance["Settings_PluginSettings"];
 
             void AddConfigFields(IEnumerable<PluginConfigFieldViewModel> fields, string parentBreadcrumb, PluginConfigFieldViewModel? ownerGroup = null)
             {
@@ -81,8 +80,7 @@ internal static class SettingsWindowSearchExtensions
                         var capturedGroup = currentGroup;
                         void RevealPluginConfig(SettingsViewModel settings)
                         {
-                            settings.Plugins.IsRuntimeStatusTab = false;
-                            settings.Plugins.SelectedPlugin = capturedPlugin;
+                            settings.Plugins.RevealPluginDetails(capturedPlugin);
                             capturedPlugin.IsConfigTab = true;
                             if (capturedGroup != null && capturedPlugin.ConfigGroups.Contains(capturedGroup))
                             {
@@ -90,7 +88,7 @@ internal static class SettingsWindowSearchExtensions
                             }
                         }
 
-                        results.Add(new SettingsSearchResultItem(label, breadcrumb, "Plugins", RevealPluginConfig,
+                        results.Add(new SettingsSearchResultItem(label, breadcrumb, "PluginSettings", RevealPluginConfig,
                             Reveal: new SettingsSearchDynamicReveal(string.Empty, field)));
                     }
 
@@ -103,7 +101,7 @@ internal static class SettingsWindowSearchExtensions
 
             if (plugin.ConfigFields is { Count: > 0 })
             {
-                AddConfigFields(plugin.ConfigFields, $"{pluginsSectionLabel} › {plugin.Name} › {configTabLabel}");
+                AddConfigFields(plugin.ConfigFields, $"{configTabLabel} › {plugin.Name}");
             }
         }
 

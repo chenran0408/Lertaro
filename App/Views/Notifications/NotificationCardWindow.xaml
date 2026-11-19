@@ -24,15 +24,14 @@
                 <ResourceDictionary Source="pack://application:,,,/Lertaro.App;component/Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- The two title-bar buttons: a 24x24 hit area around a glyph, with no chrome of their own
-                 until the pointer is on them. -->
             <Style x:Key="TitleBarButton" TargetType="Button">
-                <Setter Property="Width" Value="24"/>
-                <Setter Property="Height" Value="24"/>
+                <Setter Property="Width" Value="30"/>
+                <Setter Property="Height" Value="30"/>
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="FontFamily" Value="{DynamicResource AppIconFontFamily}"/>
-                <Setter Property="FontSize" Value="10"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
                 <Setter Property="Foreground">
                     <Setter.Value>
                         <Binding RelativeSource="{RelativeSource AncestorType={x:Type appWindow:AppWindow}}" Path="SecondaryForegroundBrush"/>
@@ -42,12 +41,12 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Border x:Name="Plate" Background="{TemplateBinding Background}">
+                            <Border x:Name="Plate" Background="{TemplateBinding Background}" CornerRadius="{DynamicResource CornerRadiusControl}">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Plate" Property="Background" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelBorderBrush}"/>
+                                    <Setter TargetName="Plate" Property="Background" Value="{DynamicResource ControlHoverBackground}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -73,29 +72,33 @@
 
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="32"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
                 <!-- Title bar. Dragging moves this card for as long as it lives and nothing longer. -->
-                <Border Grid.Row="0" Background="Transparent"
-                        BorderBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=PanelBorderBrush}" BorderThickness="0,0,0,1"
-                        MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-                    <Grid Margin="10,0,6,0">
+                <Border Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                    <Grid Margin="12,10,8,6">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
-                            <!-- The star column is what gives the title a width to ellipsize against; an
-                                 Auto-sized title would simply push the buttons off the edge. -->
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" x:Name="LevelIcon" Width="16" FontFamily="{DynamicResource AppIconFontFamily}"
-                                   FontSize="14" Text="&#xE946;" VerticalAlignment="Center" Margin="0,0,8,0"
+                        <TextBlock Grid.Column="0" x:Name="LevelIcon" Width="18" FontFamily="{DynamicResource AppIconFontFamily}"
+                                   FontSize="16" Text="&#xE946;" VerticalAlignment="Center" Margin="0,0,8,0"
                                    Foreground="{DynamicResource AccentBlue}"/>
-                        <TextBlock Grid.Column="1" x:Name="TxtTitle" FontSize="15" FontWeight="SemiBold"
-                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtSource" Grid.Column="1" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=SecondaryForegroundBrush}"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="TxtTitle" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                   FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,2,4,0"
+                                   MaxHeight="40" LineHeight="20" LineStackingStrategy="BlockLineHeight"
+                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                             <Button x:Name="BtnReadAll" Style="{StaticResource TitleBarButton}" Content="&#xE73E;"
                                     Margin="0,0,4,0" Click="BtnReadAll_Click"
                                     ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Notifications_ReadAll]}"
@@ -108,15 +111,11 @@
                     </Grid>
                 </Border>
 
-                <!-- The name of whoever sent this, injected by the host: a plugin cannot choose it. -->
-                <TextBlock x:Name="TxtSource" Grid.Row="1" FontSize="12" Margin="12,8,12,0"
-                           Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type appWindow:AppWindow}}, Path=SecondaryForegroundBrush}" TextTrimming="CharacterEllipsis"/>
-
                 <!-- Scrolls instead of growing the card past its budget, and never sideways. Deferred
                      scrolling is off: dragging the thumb then repainting on release is the smear it buys,
                      and a notification nobody reads for long does not need it. -->
-                <ScrollViewer x:Name="BodyScroll" Grid.Row="2" VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled" Margin="12,6,8,12" Padding="0,0,4,0"
+                <ScrollViewer x:Name="BodyScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled" Margin="38,0,8,12" Padding="0,0,4,0"
                               IsDeferredScrollingEnabled="False" CanContentScroll="False">
                     <TextBlock x:Name="TxtBody" FontSize="14" TextWrapping="Wrap"
                                LineHeight="18.2" LineStackingStrategy="BlockLineHeight"

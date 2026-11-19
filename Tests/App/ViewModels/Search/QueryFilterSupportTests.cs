@@ -104,6 +104,14 @@ public sealed class QueryFilterSupportTests
     }
 
     [TestMethod]
+    public void UnknownAttachedDateRemainsSearchTextAndKeepsAnEarlierValidFilter()
+    {
+        var filter = Parse("report datemodified:today datemodified:typo", out var cleaned);
+        Assert.AreEqual("report datemodified:typo", cleaned);
+        Assert.IsFalse(filter.Matches(Row(@"c:\old.txt", modified: DateTime.Today.AddDays(-1))));
+    }
+
+    [TestMethod]
     public void Matches_Today_IsLocalDayBoundary_NotRolling24h()
     {
         var atMidnight = Parse("x datemodified:today", out _);

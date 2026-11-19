@@ -24,6 +24,13 @@ public partial class AppearanceSettingsPage : System.Windows.Controls.UserContro
         Unloaded += PageScroll_StopAnimation;
     }
 
+    private void OnCategoryChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!ReferenceEquals(e.OriginalSource, sender) || PageScroll == null) return;
+        PageScroll_StopAnimation(null, EventArgs.Empty);
+        PageScroll.ScrollToTop();
+    }
+
     private void PageScroll_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
         if (e.Handled || e.Delta == 0 || SystemParameters.WheelScrollLines == 0) return;

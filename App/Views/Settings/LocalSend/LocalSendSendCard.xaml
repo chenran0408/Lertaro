@@ -8,8 +8,6 @@
         <StackPanel>
             <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_SendCardTitle]}"
                        FontWeight="SemiBold" FontSize="14"/>
-            <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_SendCardHint]}"
-                       Style="{DynamicResource SettingsHintText}" TextWrapping="Wrap" Margin="0,5,0,12"/>
             <WrapPanel IsEnabled="{Binding IsServiceRunning}">
                 <Button x:Name="SendFilesButton" Click="SendFiles_Click" Margin="0,0,8,8"
                         Style="{DynamicResource PrimarySettingsButton}"

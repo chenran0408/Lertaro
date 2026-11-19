@@ -40,12 +40,11 @@ public partial class SearchWindow : Views.Controls.AppWindow, ISearchWindow, IHa
     // replacing is still finishing its own hide -- the tail of that clears its query, which re-fires its
     // selection handler and would close a preview opened any earlier.
     private bool _restorePreviewOnFirstResult;
-    private bool _isFilterPanelVisible = true;
+    private bool? _filterPanelOverride;
     internal readonly string PowerWindowId = "full:" + Guid.NewGuid().ToString("N");
     public SearchWindow(string initialQuery = "", bool restorePreview = false, IReadOnlyList<AppSearchResult>? quickSearchRows = null)
     {
         InitializeComponent();
-        UpdateFilterPanelVisuals();
         _restorePreviewOnFirstResult = restorePreview;
 
         // Menu only, same as the settings window: custom chrome makes the OS system menu a clipped box
@@ -59,6 +58,11 @@ public partial class SearchWindow : Views.Controls.AppWindow, ISearchWindow, IHa
         // QuickLookManager sizes the preview window from settings instead of a hardcoded XAML value.
         this.Width = UiMetrics.MainWindowWidth;
         this.Height = UiMetrics.MainWindowHeight;
+        UpdateFilterPanelVisuals(Width);
+        SizeChanged += (_, args) =>
+        {
+            if (args.WidthChanged) UpdateFilterPanelVisuals(args.NewSize.Width);
+        };
 
         _menuPresenter = new ShellMenuPresenter(this);
         _chromeHandler = new SearchWindowChromeHandler(this);
@@ -207,18 +211,22 @@ public partial class SearchWindow : Views.Controls.AppWindow, ISearchWindow, IHa
 
     internal void ToggleFilterPanel()
     {
-        _isFilterPanelVisible = !_isFilterPanelVisible;
-        UpdateFilterPanelVisuals();
+        var width = ActualWidth > 0 ? ActualWidth : Width;
+        _filterPanelOverride = !ShouldShowFilterPanel(width, _filterPanelOverride);
+        UpdateFilterPanelVisuals(width);
     }
 
-    private void UpdateFilterPanelVisuals()
+    internal static bool ShouldShowFilterPanel(double width, bool? userChoice) => userChoice ?? width >= 1000;
+
+    private void UpdateFilterPanelVisuals(double width)
     {
-        SidebarColumn.Width = new GridLength(_isFilterPanelVisible ? FilterSidebarWidth : 0);
-        SearchSidebar.Visibility = _isFilterPanelVisible ? Visibility.Visible : Visibility.Collapsed;
+        var show = ShouldShowFilterPanel(width, _filterPanelOverride);
+        SidebarColumn.Width = show ? FilterSidebarColumnWidth : new GridLength(0);
+        SearchSidebar.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         BtnToggleFilters.SetResourceReference(BackgroundProperty,
-            _isFilterPanelVisible ? "SidebarSelected" : "Transparent");
+            show ? "SidebarSelected" : "Transparent");
         BtnToggleFilters.ToolTip = TranslationManager.Instance[
-            _isFilterPanelVisible ? "Search_HideFiltersTooltip" : "Search_ShowFiltersTooltip"];
+            show ? "Search_HideFiltersTooltip" : "Search_ShowFiltersTooltip"];
     }
 
     private void BtnToggleFilters_Click(object sender, RoutedEventArgs e) => ToggleFilterPanel();

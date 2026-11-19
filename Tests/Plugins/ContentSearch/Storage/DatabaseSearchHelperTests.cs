@@ -31,6 +31,24 @@ public sealed class DatabaseSearchHelperTests
     }
 
     [TestMethod]
+    [DataRow("quartz")]
+    [DataRow("词")]
+    public void ContentHitsCarryTheMetadataOfEachFile(string term)
+    {
+        var sourceTime = new DateTime(2025, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+        var copyTime = sourceTime.AddDays(4);
+        const string source = @"D:\Docs\source.txt";
+        const string copy = @"D:\Docs\copy.txt";
+        var id = _database.InsertOrUpdateBatch([new FileIndexBatchItem(source, sourceTime, 42, "quartz 词")])[source];
+        _database.InsertOrUpdateBatch([new FileIndexBatchItem(copy, copyTime, 42, string.Empty, ContentRef: id)]);
+
+        var hits = _database.SearchFts(term, 10).ToDictionary(hit => hit.FilePath);
+        Assert.AreEqual(42L, hits[source].Metadata.Size);
+        Assert.AreEqual(sourceTime.ToLocalTime(), hits[source].Metadata.Modified);
+        Assert.AreEqual(copyTime.ToLocalTime(), hits[copy].Metadata.Modified);
+    }
+
+    [TestMethod]
     public void Search_ShortToken_SurfacesSourceAndItsDuplicates()
     {
         // CJK one/two-character terms are the primary short-token case for this app.

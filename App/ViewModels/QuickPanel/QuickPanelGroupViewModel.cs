@@ -301,9 +301,13 @@ public class QuickPanelGroupViewModel : ViewModelBase
         if (resetMaterialization)
             _materializedItemCount = InitialMaterializedItemCount;
 
-        var matching = _filter.Length == 0
-            ? _loaded
-            : _loaded.Where(pair => FuzzyMatcher.IsMatch(_filter, pair.Item.Name) || FuzzyMatcher.IsMatch(_filter, ItemLabels.Name(pair.Item.FullPath, pair.Item.Name, pair.Item.IsDir))).ToList();
+        var query = FuzzyQuery.Parse(_filter);
+        var matching = query.IsEmpty ? _loaded : _loaded.Where(pair =>
+        {
+            if (query.IsMatch(pair.Item.Name)) return true;
+            var label = ItemLabels.Name(pair.Item.FullPath, pair.Item.Name, pair.Item.IsDir);
+            return label != pair.Item.Name && query.IsMatch(label);
+        }).ToList();
 
         // Ordered on the DateTime, not on the string the row shows: that string is formatted and
         // localised, so ordering by it would rank "3 days ago" against "10 minutes ago" alphabetically

@@ -29,8 +29,6 @@
         <StackPanel Grid.Row="0">
             <TextBlock Style="{StaticResource SettingsSectionTitle}"
                        Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Service_Title]}"/>
-            <TextBlock Style="{StaticResource SettingsHintText}"
-                       Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Service_Hint]}"/>
         </StackPanel>
 
             <Border Grid.Row="1" Style="{StaticResource SettingsCard}" Margin="0,16,0,16" Padding="16">
@@ -119,14 +117,14 @@
 
         <!-- Log view: Service/App/Hook, mirroring the Hotkeys page's tab pattern -->
         <Grid Grid.Row="2" Margin="0,4,0,10">
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-                <ctrl:TabStripScrollView Grid.Column="0">
+                <ctrl:TabStripScrollView Grid.ColumnSpan="3" HorizontalAlignment="Left" Margin="0,0,0,8">
                 <StackPanel Orientation="Horizontal">
                     <StackPanel Margin="0,0,28,0">
                         <Button Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Service_LogTab_App]}"
@@ -209,11 +207,11 @@
                 </StackPanel>
                 </ctrl:TabStripScrollView>
 
-                <Border Grid.Column="1" Height="34" CornerRadius="6" Margin="16,0,8,0" VerticalAlignment="Top"
+                <Border Grid.Row="1" Height="34" CornerRadius="6" Margin="0,0,8,0" VerticalAlignment="Top"
                         Background="{DynamicResource ControlBackground}"
                         BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1">
                     <Grid>
-                        <TextBox Background="Transparent" BorderThickness="0" FontSize="14"
+                        <TextBox AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Service_LogSearchPlaceholder]}" Background="Transparent" BorderThickness="0" FontSize="14"
                                  Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                  CaretBrush="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"
                                  Padding="10,0" VerticalContentAlignment="Center"
@@ -235,12 +233,12 @@
                     </Grid>
                 </Border>
 
-                <ComboBox Grid.Column="2" Style="{StaticResource SettingsComboBox}" Width="90" Margin="0,0,8,0" VerticalAlignment="Top"
+                <ComboBox Grid.Row="1" Grid.Column="1" AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Service_LogLevel]}" Style="{StaticResource SettingsComboBox}" Width="90" Margin="0,0,8,0" VerticalAlignment="Top"
                           ItemsSource="{Binding Log.LevelFilterOptions}"
                           DisplayMemberPath="Label"
                           SelectedValuePath="Value"
                           SelectedValue="{Binding Log.LevelFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                <Button x:Name="RowClearLog" Grid.Column="3" Style="{StaticResource SettingsButton}" VerticalAlignment="Top"
+                <Button x:Name="RowClearLog" Grid.Row="1" Grid.Column="2" Style="{StaticResource SettingsButton}" VerticalAlignment="Top"
                         Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Service_ClearLog]}"
                         Command="{Binding Log.ClearCommand}"/>
         </Grid>
@@ -263,9 +261,8 @@
                      so without this override it falls back to the unstyled native OS context menu. -->
                 <RichTextBox.ContextMenu>
                     <ContextMenu Style="{DynamicResource {x:Type ContextMenu}}">
-                        <MenuItem Style="{DynamicResource {x:Type MenuItem}}" Command="ApplicationCommands.Cut"/>
+                        <MenuItem Style="{DynamicResource {x:Type MenuItem}}" Command="ApplicationCommands.SelectAll"/>
                         <MenuItem Style="{DynamicResource {x:Type MenuItem}}" Command="ApplicationCommands.Copy"/>
-                        <MenuItem Style="{DynamicResource {x:Type MenuItem}}" Command="ApplicationCommands.Paste"/>
                     </ContextMenu>
                 </RichTextBox.ContextMenu>
             </RichTextBox>

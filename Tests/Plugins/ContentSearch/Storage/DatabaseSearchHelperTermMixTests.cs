@@ -70,6 +70,8 @@ public sealed class DatabaseSearchHelperTermMixTests
     }
 
     [TestMethod]
+    [DataRow("报告　2026", "2026 年度报告", "年度报告")]
+    [DataRow("quarterly\u00a0report", "report for quarterly earnings", "annual report")]
     [DataRow("report %", "report 50% growth", "report growth")]
     [DataRow("report _", "report a_b", "report ab")]
     [DataRow("😀a", "contains 😀a", "contains ab")]

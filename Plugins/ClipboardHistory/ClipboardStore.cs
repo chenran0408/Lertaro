@@ -22,6 +22,12 @@ internal sealed class ClipboardStore(string databasePath, string imagesDirectory
     public Task InitializeAsync(CancellationToken cancellationToken = default) =>
         RunLockedAsync(InitializeCore, cancellationToken);
 
+    internal Task InitializeImportAsync() => RunLockedAsync(() =>
+    {
+        ClipboardBackupSupport.ValidateDatabase(databasePath);
+        _database.EnsureSchema();
+    }, CancellationToken.None);
+
     public Task<ClipboardEntry?> AddAsync(ClipboardEntryDraft draft, string sourceProcess, string sourceWindowTitle,
         int maxEntries, int maxTextLength, CancellationToken cancellationToken = default) =>
         RunLockedAsync(
@@ -29,9 +35,12 @@ internal sealed class ClipboardStore(string databasePath, string imagesDirectory
                 sourceWindowTitle ?? string.Empty, maxEntries, maxTextLength),
             cancellationToken);
 
-    public Task<IReadOnlyList<ClipboardEntry>> GetEntriesAsync(CancellationToken cancellationToken = default) =>
+    public Task<IReadOnlyList<ClipboardEntry>> GetEntriesAsync(CancellationToken cancellationToken = default, bool includeHtml = true) =>
         RunLockedAsync<IReadOnlyList<ClipboardEntry>>(
-            () => ClipboardStoreReader.GetEntries(_database, cancellationToken), cancellationToken);
+            () => ClipboardStoreReader.GetEntries(_database, cancellationToken, includeHtml), cancellationToken);
+
+    public Task<string> GetHtmlAsync(ClipboardEntry entry) =>
+        RunLockedAsync(() => ClipboardStoreReader.GetHtml(_database, entry), CancellationToken.None);
 
     public Task<IReadOnlyList<ClipboardEntry>> SearchAsync(string query, CancellationToken cancellationToken = default) =>
         RunLockedAsync<IReadOnlyList<ClipboardEntry>>(
@@ -44,7 +53,10 @@ internal sealed class ClipboardStore(string databasePath, string imagesDirectory
         RunLockedAsync(() => SetNoteCore(id, note ?? string.Empty), cancellationToken);
 
     public Task IncrementPasteCountAsync(long id, CancellationToken cancellationToken = default) =>
-        RunLockedAsync(() => IncrementPasteCountCore(id), cancellationToken);
+        IncrementPasteCountsAsync([id], cancellationToken);
+
+    public Task IncrementPasteCountsAsync(IReadOnlyList<long> ids, CancellationToken cancellationToken = default) =>
+        RunLockedAsync(() => IncrementPasteCountsCore(ids), cancellationToken);
 
     public Task DeleteAsync(long id, CancellationToken cancellationToken = default) =>
         RunLockedAsync(() => ClipboardStoreWriter.Delete(_database, id), cancellationToken);
@@ -129,12 +141,19 @@ internal sealed class ClipboardStore(string databasePath, string imagesDirectory
         command.ExecuteNonQuery();
     }
 
-    private void IncrementPasteCountCore(long id)
+    private void IncrementPasteCountsCore(IReadOnlyList<long> ids)
     {
         using var connection = _database.OpenConnection();
+        using var transaction = connection.BeginTransaction();
         using var command = connection.CreateCommand();
+        command.Transaction = transaction;
         command.CommandText = "UPDATE clipboard_history SET paste_count = paste_count + 1 WHERE id = @id";
-        command.Parameters.AddWithValue("@id", id);
-        command.ExecuteNonQuery();
+        var id = command.Parameters.Add("@id", SqliteType.Integer);
+        foreach (var value in ids)
+        {
+            id.Value = value;
+            command.ExecuteNonQuery();
+        }
+        transaction.Commit();
     }
 }

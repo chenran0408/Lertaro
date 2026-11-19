@@ -7,6 +7,20 @@ namespace Lertaro.App.Tests.Views.SearchWindow;
 public sealed class SearchWindowFilterShortcutTests
 {
     [TestMethod]
+    [DataRow(800.0, false)]
+    [DataRow(999.0, false)]
+    [DataRow(1000.0, true)]
+    public void FilterPaneOpensByDefaultWhenTheWindowHasRoom(double width, bool expected) =>
+        Assert.AreEqual(expected, global::Lertaro.App.SearchWindow.ShouldShowFilterPanel(width, null));
+
+    [TestMethod]
+    public void ExplicitFilterChoiceSurvivesResizing()
+    {
+        Assert.IsTrue(global::Lertaro.App.SearchWindow.ShouldShowFilterPanel(800, true));
+        Assert.IsFalse(global::Lertaro.App.SearchWindow.ShouldShowFilterPanel(1200, false));
+    }
+
+    [TestMethod]
     public void CtrlShiftF_TogglesFilters()
     {
         Assert.IsTrue(SearchWindowInputHandler.IsFilterToggleShortcut(

@@ -77,6 +77,7 @@ internal sealed class SearchStreamRenderer
             ? FilterPatternHelper.SplitOrNullIfMatchAll(scopeDirective.FilterPattern)
             : null;
 
+        var activeFilters = QueryFilterSupport.ActiveFilters;
         void Accumulate(SearchResult result)
         {
             token.ThrowIfCancellationRequested();
@@ -90,7 +91,6 @@ internal sealed class SearchStreamRenderer
             // A1 filter keywords (folder:/file:/ext:/datemodified:) drop rows at intake, before the
             // row budget and the counts -- filtered streams stay streaming, and "N results" already
             // describes what the window will actually list.
-            var activeFilters = QueryFilterSupport.ActiveFilters;
             if (activeFilters is { IsEmpty: false } && !activeFilters.Matches(result))
                 return;
 
@@ -135,14 +135,13 @@ internal sealed class SearchStreamRenderer
             // the folder's subfolders come before the rest of the drive. getLocalSnapshot is non-null
             // exactly for the inline window, which is the only one that groups by proximity.
             if (localMatches != null)
+            {
+                if (activeFilters != null) localMatches = localMatches.FindAll(activeFilters.Matches);
                 uiResults = InlineListSearchHelper.MergeLocalMatches(uiResults, localMatches, query, contextDirectory);
+            }
 
-            // D1: first zero-result search teaches the filter keywords -- once, only for a real
-            // query, and never while the tour is on screen.
-            if (final && !string.IsNullOrEmpty(query) && !Views.Onboarding.OnboardingWindow.TourActive)
-                Views.Onboarding.Tips.TipCardWindow.ShowTip(Onboarding.TipRegistry.Filters, IntPtr.Zero);
-
-            if (final && includeAdditionalResults && uiResults.Count == 0)
+            var noResults = final && includeAdditionalResults && uiResults.Count == 0;
+            if (noResults)
                 uiResults.Add(SearchResultMapper.CreateNoResultsResult(query));
 
             var statusText = uiResults.Count > 0
@@ -156,6 +155,8 @@ internal sealed class SearchStreamRenderer
                 if (searchVersion != _getSearchVersion() || token.IsCancellationRequested)
                     return;
                 onResultsUpdated(uiResults, statusText, final);
+                if (noResults && getLocalSnapshot == null && !string.IsNullOrWhiteSpace(query))
+                    Views.Onboarding.Tips.TipCardWindow.ShowTip(Onboarding.TipRegistry.Filters, IntPtr.Zero);
                 if (!final)
                     onReceivedCountUpdated?.Invoke(received);
                 applied = true;
@@ -276,6 +277,10 @@ internal sealed class SearchStreamRenderer
                 {
                 }
             }
+
+            // Both producers are done. Wake the preview timer now and rank the complete snapshot once.
+            // The final paint uses the search token, independently of this progressive pump.
+            pumpCts.Cancel();
         }
         finally
         {

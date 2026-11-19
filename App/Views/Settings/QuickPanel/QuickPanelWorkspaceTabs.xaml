@@ -84,7 +84,7 @@
             </StackPanel>
         </StackPanel>
 
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <Grid>
                 <!-- The wrapper carries the visibility trigger, not the section itself: the section sets its
                      own DataContext to the selected workspace, and SelectedSubTab lives a level up. -->

@@ -6,20 +6,27 @@
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ShowActivated="False" ShowInTaskbar="False" Topmost="True"
         ResizeMode="NoResize" Focusable="False">
-    <Border CornerRadius="8" Background="{DynamicResource ContentBg}"
-            BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" Padding="12,8">
+    <Border CornerRadius="{DynamicResource CornerRadiusWindow}" Background="{DynamicResource ContentBg}"
+            BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" Padding="10,8">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="&#xE8B7;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="16"
-                       Foreground="{DynamicResource AccentBlue}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-            <TextBlock x:Name="SuggestionText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
-                       Foreground="{DynamicResource TextPrimary}" TextTrimming="CharacterEllipsis"/>
-            <Button x:Name="GoButton" Grid.Column="2" Style="{StaticResource SettingsButton}" Height="26"
-                    MinWidth="0" Padding="12,0" FontSize="12"
+            <Border Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center"
+                    Background="{DynamicResource SidebarSelected}" CornerRadius="{DynamicResource CornerRadiusControl}">
+                <TextBlock Text="&#xE8B7;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="16"
+                           Foreground="{DynamicResource AccentBlue}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Text, ElementName=FolderPath}">
+                <TextBlock x:Name="FolderName" FontSize="14" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimary}" TextTrimming="CharacterEllipsis"/>
+                <TextBlock x:Name="FolderPath" FontSize="12" Margin="0,2,0,0"
+                           Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+            <Button x:Name="GoButton" Grid.Column="2" Style="{StaticResource PrimarySettingsButton}" Margin="10,0,0,0" Height="32"
+                    MinWidth="0" Padding="12,0" FontSize="13" VerticalAlignment="Center"
                     Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[QuickSwitch_BarGo]}"
                     Click="Go_Click"/>
         </Grid>

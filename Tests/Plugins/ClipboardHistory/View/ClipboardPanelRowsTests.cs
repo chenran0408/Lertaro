@@ -10,7 +10,7 @@ public sealed class ClipboardPanelRowsTests
             CreatedAtMs: 1_700_000_000_000, LastSeenAtMs: 1_700_000_000_000, Kind: kind);
 
     private static readonly Func<string, string, bool> Contains =
-        (text, query) => text.Contains(query, StringComparison.OrdinalIgnoreCase);
+        (query, text) => text.Contains(query, StringComparison.OrdinalIgnoreCase);
 
     private static List<ClipboardPanelItem> Build(IReadOnlyList<ClipboardEntry> entries,
         ClipboardPanelTab tab = ClipboardPanelTab.All, string query = "",

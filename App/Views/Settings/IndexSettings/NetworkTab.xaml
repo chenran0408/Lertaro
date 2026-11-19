@@ -14,54 +14,27 @@
     </UserControl.Resources>
 
     <StackPanel>
-        <TextBlock Style="{StaticResource SettingsHintText}" Margin="0,0,0,12"
-                   Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_Hint]}"/>
-
         <Border x:Name="RowNetworkRebuild" Style="{StaticResource SettingsCard}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel>
+            <StackPanel>
                     <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_IndexStatus]}"
                                FontWeight="SemiBold" FontSize="14" />
                     <TextBlock Text="{Binding NetworkDrive.NetworkIndexSummary}"
-                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,5,0,0"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Style="{StaticResource PrimarySettingsButton}"
+                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                <WrapPanel Margin="0,10,0,0">
+                    <Button Style="{StaticResource SettingsButton}" Margin="0,0,8,4"
                             Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_RebuildBtn]}"
                             Command="{Binding NetworkDrive.RebuildDrivesCommand}"
                             IsEnabled="{Binding NetworkDrive.CanRebuildDrives}"/>
-                </StackPanel>
-            </Grid>
+                </WrapPanel>
+            </StackPanel>
         </Border>
 
         <Border Style="{StaticResource SettingsCard}">
             <StackPanel>
-                <Grid Margin="0,0,0,6">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="40"/>
-                        <ColumnDefinition Width="2*"/>
-                        <ColumnDefinition Width="1.2*"/>
-                        <ColumnDefinition Width="1.1*"/>
-                        <ColumnDefinition Width="1.4*" MinWidth="126"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_HeaderDrive]}"
-                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
-                    <TextBlock Grid.Column="2"
-                               Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_HeaderStatus]}"
-                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
-                    <TextBlock Grid.Column="3"
-                               Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_HeaderItems]}"
-                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
-                    <TextBlock Grid.Column="4"
-                               Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_HeaderMode]}"
-                               Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
-                </Grid>
+                <TextBlock Style="{StaticResource SettingsGroupTitle}" Margin="0,0,0,4"
+                           Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_NetworkDrive]}"/>
+                <TextBlock Style="{StaticResource SettingsHintText}" Margin="0,0,0,6" TextWrapping="Wrap"
+                           Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Network_Hint]}"/>
                 <Border Background="{DynamicResource ControlBackground}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="6"
                         Padding="24,32" Margin="0,8,0,0"
                         Visibility="{Binding NetworkDrive.IsNetworkDrivesEmpty, Converter={StaticResource BoolToVis}}">
@@ -69,7 +42,7 @@
                         <TextBlock Text="&#xE968;" FontFamily="{DynamicResource AppIconFontFamily}" FontSize="36"
                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
                         <TextBlock Text="{Binding NetworkDrive.DrivesPlaceholderText}" FontSize="14"
-                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" HorizontalAlignment="Center"/>
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
                     </StackPanel>
                 </Border>
 

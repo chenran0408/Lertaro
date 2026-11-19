@@ -25,7 +25,7 @@ internal static class SearchResultsReconciler
             return;
 
         AppSearchResult? firstSelectable = null;
-        foreach (var result in list)
+        foreach (var result in results)
         {
             if (!result.IsEmptyResult && !result.IsSearchSectionHeader)
             {
@@ -76,6 +76,11 @@ internal static class SearchResultsReconciler
             // SearchQuery notifies (it is bound), so a no-op assignment is already filtered out by its
             // own setter. The execution payloads are plain fields, but they must follow the fresh row:
             // instant providers can derive them from the query even when the row identity stays equal.
+            if (live[i].IsApplication && live[i].ParentDir != target[i].ParentDir)
+            {
+                live[i].ParentDir = target[i].ParentDir;
+                live[i].RefreshScale();
+            }
             live[i].SearchQuery = target[i].SearchQuery;
             live[i].Index = target[i].Index;
             live[i].PluginActionId = target[i].PluginActionId;

@@ -51,7 +51,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- Title Bar -->
-                <Border Grid.Row="0" Background="Transparent" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,0,0,1"
+                <Border Grid.Row="0" Background="{DynamicResource HeaderBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1"
                         MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <Grid>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
@@ -86,12 +86,12 @@
 
                      Escape closes the prompt without setting the saved marker, so it has the same
                      cancel semantics as the title-bar close button. -->
-                <Border Grid.Row="2" Background="Transparent" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="0,1,0,0">
+                <Border Grid.Row="2" Background="{DynamicResource StatusBarBg}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,1,0,0">
                     <Grid Margin="12,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                             <Button Style="{StaticResource PrimarySettingsButton}"
                                     Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_OK]}"
-                                    Width="80" Height="28" Click="BtnOK_Click" IsDefault="True"/>
+                                    Click="BtnOK_Click" IsDefault="True"/>
                         </StackPanel>
                     </Grid>
                 </Border>

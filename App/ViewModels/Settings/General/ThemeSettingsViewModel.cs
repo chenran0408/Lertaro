@@ -1,9 +1,7 @@
-using System.Windows.Input;
-using Lertaro.App.Helpers;
 using Lertaro.App.Services;
+using Lertaro.App.Services.Theme;
 using Lertaro.Core;
 
-using Lertaro.App.Services.Theme;
 namespace Lertaro.App.ViewModels.Settings.General;
 
 /// <summary>Theme selection, including the optional "follow system light/dark" mode. Split out of
@@ -22,7 +20,7 @@ public class ThemeSettingsViewModel : ViewModelBase
     private IReadOnlyList<ThemeOption>? _lightThemeOptions;
     private IReadOnlyList<ThemeOption>? _darkThemeOptions;
     private IReadOnlyList<ThemeCardOption>? _themeCards;
-    private ICommand? _selectThemeModeCommand;
+    private string _selectedSection = "Theme";
 
     public ThemeSettingsViewModel(UserSettings userSettings)
     {
@@ -92,22 +90,28 @@ public class ThemeSettingsViewModel : ViewModelBase
     private bool IsSelectedThemeDark => _selectedTheme != null && DarkThemeOptions.Contains(_selectedTheme);
 
     // What the single manual-mode grid shows: whichever flavor the currently active theme is, so
-    // picking "Light"/"Dark" mode (see SelectThemeModeCommand) narrows the grid instead of mixing
+    // picking "Light"/"Dark" mode (see SelectThemeMode) narrows the grid instead of mixing
     // both flavors into one long scroll like the very first version of this page did.
     public IReadOnlyList<ThemeCardOption> ManualThemeCards => IsSelectedThemeDark ? DarkThemeCards : LightThemeCards;
 
     public string PreferredTheme => _userSettings.Theme;
 
-    // Drives which of the three Theme Mode cards (Light / Dark / Follow System) shows as selected.
-    public string ThemeModeTag => FollowSystem ? "FollowSystem" : IsSelectedThemeDark ? "Dark" : "Light";
+    public string SelectedSection
+    {
+        get => _selectedSection;
+        set => SetProperty(ref _selectedSection, value);
+    }
 
-    // Backs the three Theme Mode cards. "Light"/"Dark" turn Follow System off and jump the active
-    // theme to whichever light/dark theme was last picked -- SelectedLightTheme/SelectedDarkTheme are
-    // kept in sync with every SelectedTheme change (see that setter), so this always reflects the most
-    // recent pick for that flavor, whether it came from the manual grid, this command, or the Follow
-    // System light/dark grids, and falls back to LightThemeOptions/DarkThemeOptions' own
-    // FirstOrDefault() when nothing was ever picked (see the constructor).
-    public ICommand SelectThemeModeCommand => _selectThemeModeCommand ??= new RelayCommand<string>(mode =>
+    public string ThemeModeTag
+    {
+        get => FollowSystem ? "FollowSystem" : IsSelectedThemeDark ? "Dark" : "Light";
+        set
+        {
+            if (value != null && value != ThemeModeTag) SelectThemeMode(value);
+        }
+    }
+
+    private void SelectThemeMode(string mode)
     {
         switch (mode)
         {
@@ -137,7 +141,7 @@ public class ThemeSettingsViewModel : ViewModelBase
             OnPropertyChanged(nameof(SelectedLightThemeId));
             OnPropertyChanged(nameof(SelectedDarkThemeId));
         }), System.Windows.Threading.DispatcherPriority.Loaded);
-    });
+    }
 
     // String-keyed mirrors of SelectedTheme/SelectedLightTheme/SelectedDarkTheme so the card grid's
     // ListBox can two-way bind via SelectedValue/SelectedValuePath (ThemeOption is an immutable record

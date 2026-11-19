@@ -38,6 +38,8 @@
   "Calendar_Unpin": "Unpin",
   "Calendar_Add": "Add",
   "Calendar_Delete": "Delete",
+  "Calendar_Hour": "Hour",
+  "Calendar_Minute": "Minute",
   "Calendar_TimeHint": "Time HH:MM",
   "Calendar_TextHint": "Reminder text",
   "Calendar_TextAdvice": "Up to 5 is recommended",

@@ -9,6 +9,35 @@ namespace Lertaro.App.Tests.Views.Controls;
 public sealed class HotkeyRecorderControlTests
 {
     [STATestMethod]
+    public void RecorderAcceptsTheClipboardDefaultAndRejectsWindowsClipboardShortcut()
+    {
+        var recorder = new HotkeyRecorderControl { Value = Lertaro.Core.HotkeyPageSettings.DefaultClipboardPanelHotkey };
+        Assert.AreEqual("Alt+V", recorder.Value);
+        recorder.Value = "Win+V";
+        Assert.AreEqual(string.Empty, recorder.Value);
+    }
+
+    [STATestMethod]
+    public void EscapeCancelsPendingCaptureWithoutErasingExistingBinding()
+    {
+        using var source = new HwndSource(new HwndSourceParameters("HotkeyRecorderCancelTest"));
+        var recorder = new HotkeyRecorderControl { Value = "Ctrl+G" };
+        var down = typeof(HotkeyRecorderControl).GetMethod("HotkeyBox_PreviewKeyDown",
+            BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var commit = typeof(HotkeyRecorderControl).GetMethod("CommitPendingSingleKey",
+            BindingFlags.Instance | BindingFlags.NonPublic)!;
+        KeyEventArgs Press(Key key) => new(Keyboard.PrimaryDevice, source, Environment.TickCount, key)
+        {
+            RoutedEvent = Keyboard.PreviewKeyDownEvent
+        };
+        down.Invoke(recorder, [null, Press(Key.F8)]);
+        down.Invoke(recorder, [null, Press(Key.Escape)]);
+        commit.Invoke(recorder, []);
+
+        Assert.AreEqual("Ctrl+G", recorder.Value);
+    }
+
+    [STATestMethod]
     public void TwoBareKeyPressesAreRecordedAsExplicitDoubleTap()
     {
         using var source = new HwndSource(new HwndSourceParameters("HotkeyRecorderDoubleTapTest"));

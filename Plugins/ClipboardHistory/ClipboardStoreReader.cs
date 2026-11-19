@@ -7,13 +7,13 @@ namespace Lertaro.Plugins.ClipboardHistory;
 /// </summary>
 internal static class ClipboardStoreReader
 {
-    public static List<ClipboardEntry> GetEntries(ClipboardDatabase database, CancellationToken cancellationToken)
+    public static List<ClipboardEntry> GetEntries(ClipboardDatabase database, CancellationToken cancellationToken, bool includeHtml = true)
     {
         var entries = new List<ClipboardEntry>();
         using var connection = database.OpenConnection();
         using var command = connection.CreateCommand();
-        command.CommandText =
-            $"SELECT {ClipboardEntryColumns.EntryColumns} FROM clipboard_history ORDER BY pinned DESC, last_seen_at_ms DESC, id DESC";
+        var columns = includeHtml ? ClipboardEntryColumns.EntryColumns : ClipboardEntryColumns.SnapshotColumns;
+        command.CommandText = $"SELECT {columns} FROM clipboard_history ORDER BY pinned DESC, last_seen_at_ms DESC, id DESC";
         using var reader = command.ExecuteReader();
         while (reader.Read())
         {
@@ -22,6 +22,17 @@ internal static class ClipboardStoreReader
         }
         cancellationToken.ThrowIfCancellationRequested();
         return entries;
+    }
+
+    public static string GetHtml(ClipboardDatabase database, ClipboardEntry entry)
+    {
+        using var connection = database.OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT html FROM clipboard_history WHERE id = @id AND last_seen_at_ms = @stamp AND content = @content";
+        command.Parameters.AddWithValue("@id", entry.Id);
+        command.Parameters.AddWithValue("@stamp", entry.LastSeenAtMs);
+        command.Parameters.AddWithValue("@content", entry.Content);
+        return command.ExecuteScalar() as string ?? string.Empty;
     }
 
     public static List<ClipboardEntry> Search(ClipboardDatabase database, string query, CancellationToken cancellationToken)

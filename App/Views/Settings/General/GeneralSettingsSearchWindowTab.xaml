@@ -206,8 +206,6 @@
                           Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_SearchWindowSingleInstance]}"
                           IsChecked="{Binding General.MainWindow.SingleInstance, Mode=TwoWay}"
                           Margin="0,16,0,0"/>
-                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_SearchWindowSingleInstanceHint]}"
-                           Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,4,0,0"/>
 
                 <CheckBox x:Name="RowSearchWindowCloseOnRepeatHotkey"
                           Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_SearchWindowCloseOnRepeatHotkey]}"
@@ -222,8 +220,6 @@
             <StackPanel>
                 <TextBlock x:Name="RowColumnOrderList" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ColumnOrderTitle]}"
                            FontWeight="SemiBold" FontSize="14" Margin="0,0,0,4"/>
-                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ColumnOrderHint]}"
-                           Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
                 <ItemsControl ItemsSource="{Binding General.ColumnOrder.Items}" ItemTemplate="{StaticResource ColumnOrderItemTemplate}" helpers:DragReorder.IsEnabled="True">
                     <ItemsControl.ItemsPanel>
@@ -239,8 +235,6 @@
             <StackPanel>
                 <TextBlock x:Name="RowSidebarGroupOrderList" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_SidebarGroupOrderTitle]}"
                            FontWeight="SemiBold" FontSize="14" Margin="0,0,0,4"/>
-                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_SidebarGroupOrderHint]}"
-                           Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
                 <ItemsControl ItemsSource="{Binding General.SidebarGroupOrder.Items}" ItemTemplate="{StaticResource SidebarGroupOrderItemTemplate}" helpers:DragReorder.IsEnabled="True">
                     <ItemsControl.ItemsPanel>
@@ -256,8 +250,6 @@
             <StackPanel>
                 <TextBlock x:Name="RowActionMenuGroupOrderList" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ActionMenuGroupOrderTitle]}"
                            FontWeight="SemiBold" FontSize="14" Margin="0,0,0,4"/>
-                <TextBlock Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_ActionMenuGroupOrderHint]}"
-                           Style="{StaticResource SettingsHintText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
                 <ItemsControl ItemsSource="{Binding General.ActionMenuGroupOrder.Items}" ItemTemplate="{StaticResource ActionMenuGroupOrderItemTemplate}" helpers:DragReorder.IsEnabled="True">
                     <ItemsControl.ItemsPanel>

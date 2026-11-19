@@ -172,14 +172,19 @@ public class SearchViewModel : ViewModelBase, IDisposable
     public ObservableRangeCollection<AppSearchResult> FilteredResults { get; }
     public ObservableCollection<DynamicSidebarGroupViewModel> DynamicSidebarGroups { get; } = new();
 
-    public bool HasActiveFilters => DynamicSidebarGroups.Any(group => group.HasSelection);
+    public bool HasActiveFilters => _activeChip.Length > 0 || DynamicSidebarGroups.Any(group => group.HasSelection);
 
     private ICommand? _clearAllFiltersCommand;
     public ICommand ClearAllFiltersCommand => _clearAllFiltersCommand ??= new RelayCommand(ClearAllFilters);
 
     public void ClearAllFilters()
     {
-        var anyChanged = false;
+        var anyChanged = _activeChip.Length > 0;
+        if (anyChanged)
+        {
+            _activeChip = string.Empty;
+            OnPropertyChanged(nameof(ActiveChip));
+        }
         foreach (var group in DynamicSidebarGroups)
             anyChanged |= group.ClearSelectionSilently();
 

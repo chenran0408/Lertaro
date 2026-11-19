@@ -89,17 +89,19 @@ public class UserSettings
     public BackgroundSettings Background { get; set; } = new();
     public bool ThemeFollowSystem { get; set; } = false;
     // Listary-style first-run tour: shown once after install, replayable from the tray menu.
-    // Version guards future redesigns: raising CurrentOnboardingVersion re-arms the tour for
-    // everyone who last saw an older one.
+    // A new version may re-offer a completed tour. An explicit skip disables automatic tours.
     public bool OnboardingCompleted { get; set; } = false;
     public int OnboardingVersion { get; set; }
-    // 1-based step the user abandoned the tour on; 0 = not skipped. Local analytics only.
+    // 1-based step the user skipped on. A positive value also opts out of automatic tours.
     public int OnboardingSkipStep { get; set; }
     /// <summary>D1 point-of-use tips: shown-once ids, independent of the tour's own flag.</summary>
     public List<string> SeenTips { get; set; } = new();
     // Bump ONLY when the tour's steps or copy change enough to warrant showing it again. Never
     // bump on releases alone: the version compare is the re-arm, not the release number.
     public static int CurrentOnboardingVersion => 2;
+
+    public bool ShouldShowOnboarding() =>
+        OnboardingSkipStep <= 0 && (!OnboardingCompleted || OnboardingVersion < CurrentOnboardingVersion);
     // Empty means "unset". The selected palette is now limited to the built-in Light/Dark modes;
     // retired custom preset IDs are migrated during ThemeManager initialization.
     public string LightThemeId { get; set; } = string.Empty;

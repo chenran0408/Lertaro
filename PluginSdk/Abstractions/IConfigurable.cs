@@ -34,6 +34,10 @@ public class PluginConfigField
     /// <summary>Opt in to single-entry JSON import/export for host-managed Array fields with flat
     /// Boolean/Text/Hotkey/FilePath/FolderPath children, including Icon Path Data. Attachments are not bundled.</summary>
     public bool AllowEntryTransfer { get; set; }
+    /// <summary>For object arrays, offer default entries individually, matching an existing row by this field.</summary>
+    public string? PresetIdentityKey { get; set; }
+    /// <summary>Show this array entry field in the expandable advanced section.</summary>
+    public bool IsAdvanced { get; set; }
     /// <summary>For Hotkey fields: when true, single keys without modifier keys (Ctrl/Alt/Shift/Win) are rejected.</summary>
     public bool RequireModifier { get; set; }
     /// <summary>When true, saving this field with an empty/whitespace value falls back to <see cref="DefaultValue"/>

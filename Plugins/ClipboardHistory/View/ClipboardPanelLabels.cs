@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Automation;
 using Lertaro.PluginSdk.Services;
 
 namespace Lertaro.Plugins.ClipboardHistory.View;
@@ -49,6 +50,8 @@ internal static class ClipboardPanelLabels
     public static string PreviewHidden() => TranslationService.Get("ClipboardHistory_PanelPreviewHidden");
 
     public static string PreviewChip() => TranslationService.Get("ClipboardHistory_PanelPreviewChip");
+
+    public static string BackToHistory() => TranslationService.Get("ClipboardHistory_PanelBackToHistory");
 
     public static string NoteLabel() => TranslationService.Get("ClipboardHistory_PanelNote");
 
@@ -101,19 +104,46 @@ internal static class ClipboardPanelLabels
     public static void ApplyTo(ClipboardPanelView view)
     {
         view.SearchWatermark.Text = SearchWatermark();
+        AutomationProperties.SetName(view.SearchBox, view.SearchWatermark.Text);
+        view.ClearSearchButton.ToolTip = TranslationService.Get("ClipboardHistory_PanelClearSearch");
+        AutomationProperties.SetName(view.ClearSearchButton, (string)view.ClearSearchButton.ToolTip);
+        view.HistoryMenuButton.Content = TranslationService.Get("ClipboardHistory_PanelManage");
+        view.PasteButton.Content = TranslationService.Get("ClipboardHistory_Paste");
+        view.CopyButton.Content = TranslationService.Get("ClipboardHistory_Copy");
         view.HintBar.Text = HintBar();
+        SetSort(view);
         view.TabAll.Content = TabLabel(ClipboardPanelTab.All);
         view.TabText.Content = TabLabel(ClipboardPanelTab.Text);
         view.TabImage.Content = TabLabel(ClipboardPanelTab.Image);
         view.TabFiles.Content = TabLabel(ClipboardPanelTab.Files);
         view.TabFavorites.Content = TabLabel(ClipboardPanelTab.Favorites);
-        view.PreviewToggle.Content = PreviewChip();
-        view.PreviewToggle.ToolTip = TranslationService.Get("ClipboardHistory_PanelTogglePreview");
+        SetPreview(view);
     }
 
-    public static void SetEmpty(ClipboardPanelView view, bool visible)
+    public static void SetPreview(ClipboardPanelView view)
     {
-        view.EmptyText.Text = visible ? $"{Empty()}\n\n{EmptyHints()}" : string.Empty;
+        var label = view.IsCompactPreviewOpen
+            ? BackToHistory()
+            : PreviewChip();
+        view.PreviewToggle.Content = label;
+        view.PreviewToggle.ToolTip = view.IsCompactLayout
+            ? label
+            : TranslationService.Get("ClipboardHistory_PanelTogglePreview");
+    }
+
+    public static void SetSort(ClipboardPanelView view)
+    {
+        view.SortToggle.Content = view.SortToggle.IsChecked == true
+            ? TranslationService.Get("ClipboardHistory_PanelSortFrequent")
+            : TranslationService.Get("ClipboardHistory_PanelSortNewest");
+    }
+
+    public static void SetEmpty(ClipboardPanelView view, bool visible, bool hasQuery)
+    {
+        view.EmptyText.Text = !visible ? string.Empty
+            : hasQuery ? TranslationService.Get("ClipboardHistory_PanelNoMatches")
+            : view.TabFavorites.IsChecked == true ? TranslationService.Get("ClipboardHistory_PanelNoFavorites")
+            : Empty();
         view.EmptyText.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
     }
 }

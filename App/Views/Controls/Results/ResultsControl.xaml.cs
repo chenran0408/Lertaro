@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Collections;
 using Lertaro.App.Services;
+using Binding = System.Windows.Data.Binding;
 
 namespace Lertaro.App.Views.Controls.Results;
 
@@ -147,7 +148,7 @@ public partial class ResultsControl : System.Windows.Controls.UserControl
     // no persistence: they are a momentary view over the results already on screen.
     public static readonly DependencyProperty ChipFilterProperty = DependencyProperty.Register(
         nameof(ChipFilter), typeof(string), typeof(ResultsControl),
-        new FrameworkPropertyMetadata(string.Empty));
+        new FrameworkPropertyMetadata(string.Empty, OnChipFilterChanged));
 
     public string ChipFilter
     {
@@ -168,12 +169,22 @@ public partial class ResultsControl : System.Windows.Controls.UserControl
 
     private void EnsureChips()
     {
-        if (_chipsBuilt) return;
+        if (_chipsBuilt || ViewMode != ResultsViewMode.Grid) return;
         _chipsBuilt = true;
         ChipBar.Children.Add(MakeChip("", "Chips_All"));
         foreach (var (kind, labelKey) in Chips)
             ChipBar.Children.Add(MakeChip(kind, labelKey));
-        TranslationManager.Instance.PropertyChanged += OnLanguageChangedForChips;
+        ChipBar.Visibility = Visibility.Visible;
+        UpdateChipStyles();
+    }
+
+    private static void OnChipFilterChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        ((ResultsControl)d).UpdateChipStyles();
+
+    private void UpdateChipStyles()
+    {
+        foreach (var button in ChipBar.Children.OfType<System.Windows.Controls.Button>())
+            button.SetResourceReference(StyleProperty, Equals(button.Tag, ChipFilter) ? "PrimarySettingsButton" : "SettingsButton");
     }
 
     private System.Windows.Controls.Button MakeChip(string kind, string labelKey)
@@ -181,23 +192,17 @@ public partial class ResultsControl : System.Windows.Controls.UserControl
         var button = new System.Windows.Controls.Button
         {
             Tag = kind,
-            Content = TranslationManager.Instance[labelKey],
-            Margin = new Thickness(0, 0, 6, 0),
-            Padding = new Thickness(10, 2, 10, 2),
+            Margin = new Thickness(0, 0, 6, 4),
+            Padding = new Thickness(12, 0, 12, 0),
+            MinWidth = 0,
+            Height = 28,
+            FontSize = 12,
             Cursor = System.Windows.Input.Cursors.Hand,
-            Focusable = false,
         };
-        button.SetResourceReference(StyleProperty, "SettingsButton");
-        button.Click += (_, _) => ChipFilter = ChipFilter == kind ? string.Empty : kind;
+        button.SetBinding(ContentProperty,
+            new Binding($"[{labelKey}]") { Source = TranslationManager.Instance });
+        button.Click += (_, _) => SetCurrentValue(ChipFilterProperty, ChipFilter == kind ? string.Empty : kind);
         return button;
-    }
-
-    private void OnLanguageChangedForChips(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName != nameof(TranslationManager.CurrentCulture)) return;
-        foreach (var child in ChipBar.Children.OfType<System.Windows.Controls.Button>())
-            if (child.Tag is string kind)
-                child.Content = TranslationManager.Instance[Chips.First(c => c.Kind == kind).LabelKey];
     }
 
     // ViewMode DependencyProperty

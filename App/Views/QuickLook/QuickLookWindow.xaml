@@ -20,7 +20,7 @@
         <surface:BackgroundSurface UseTransparentBase="True" />
 
     
-    <Grid Margin="16">
+    <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
@@ -31,7 +31,9 @@
                  QuickLookWindow.xaml.cs). Background is set explicitly because an unpainted Panel is
                  only hit-testable over its children, so the empty space beside a short filename would
                  otherwise not start a drag. -->
-            <Grid x:Name="HeaderDragHandle" Grid.Row="0" Margin="0,0,0,12" Background="Transparent" Cursor="Hand">
+            <Border Grid.Row="0" Padding="12,10" Background="{DynamicResource HeaderBg}"
+                    BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1">
+            <Grid x:Name="HeaderDragHandle" Background="Transparent" Cursor="Hand">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -39,32 +41,35 @@
                 </Grid.ColumnDefinitions>
                 <Image x:Name="ImgFileIcon" Grid.Column="0" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center"/>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock x:Name="TxtFileName" FontSize="14" FontWeight="Bold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" TextTrimming="CharacterEllipsis"/>
-                    <TextBlock x:Name="TxtFilePath" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                    <TextBlock x:Name="TxtFileName" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontSize="14" FontWeight="Bold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="TxtFilePath" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
                 </StackPanel>
                 <!-- Affordance only; the drag target is the whole row above, not just these bars. -->
                 <TextBlock x:Name="TxtDragGrip" Grid.Column="2" Text="&#xE76F;" FontFamily="{DynamicResource AppIconFontFamily}"
                            FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" Opacity="0.5"
                            VerticalAlignment="Center" Margin="8,0,0,0" IsHitTestVisible="False"/>
             </Grid>
+            </Border>
 
-            <!-- Separator -->
-            <Border Grid.Row="0" VerticalAlignment="Bottom" Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,0,0,0"/>
-
-            <Grid Grid.Row="1" Margin="0,12,0,12" Background="Transparent">
+            <Grid Grid.Row="1" Margin="10" Background="Transparent">
                 <ContentControl x:Name="ContentArea" Focusable="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
             </Grid>
 
             <!-- Footer: Size and Dates -->
-            <Grid x:Name="FooterGrid" Grid.Row="2" Margin="0,8,0,0" Background="Transparent" Cursor="SizeAll">
+            <Border Grid.Row="2" Background="{DynamicResource StatusBarBg}" BorderBrush="{DynamicResource BorderColor}"
+                    BorderThickness="0,1,0,0" Padding="12,8">
+            <Grid x:Name="FooterGrid" Background="Transparent" Cursor="SizeAll">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Border Grid.ColumnSpan="2" Height="1" VerticalAlignment="Top" Background="{DynamicResource ControlBorderBrush}" Margin="0,-8,0,8"/>
-                <TextBlock x:Name="TxtFooterSize" Grid.Column="0" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}"/>
-                <TextBlock x:Name="TxtFooterDate" Grid.Column="1" FontSize="12" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" HorizontalAlignment="Right"/>
+                <TextBlock x:Name="TxtFooterSize" Grid.Column="0" FontSize="12" TextTrimming="CharacterEllipsis"
+                           MaxWidth="128" Margin="0,0,12,0" Foreground="{DynamicResource TextSecondary}"/>
+                <TextBlock x:Name="TxtFooterDate" Grid.Column="1" FontSize="12" TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"
+                           TextAlignment="Right" Foreground="{DynamicResource TextSecondary}"/>
             </Grid>
+            </Border>
     </Grid>
     </Grid>
 </appWindow:AppWindow>

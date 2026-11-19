@@ -208,6 +208,7 @@ public class ServiceMonitorViewModel : ViewModelBase, IDisposable
             resetAutoInstallFlag: _connectionHandler.ResetAutoInstallFlag,
             onReadyStatus: status =>
             {
+                IsServiceConnected = true;
                 IsIndexReady = true;
                 ApplyReadyStatus(status);
                 LoadingPanelVisibility = Visibility.Collapsed;

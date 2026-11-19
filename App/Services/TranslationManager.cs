@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Lertaro.Core;
+using Lertaro.PluginSdk.Abstractions.Plugins;
 
 using Lertaro.App.Services.Plugin;
 namespace Lertaro.App.Services;
@@ -163,18 +164,17 @@ public class TranslationManager : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Gets all unique culture codes supported by all loaded translation providers.
+    /// Gets the host's built-in languages and any languages added by loaded plugins.
     /// </summary>
-    public IEnumerable<string> GetAvailableCultures()
+    public IEnumerable<string> GetAvailableCultures() => GetAvailableCultures(PluginManager.Instance.TranslationProviders);
+
+    internal static IEnumerable<string> GetAvailableCultures(IEnumerable<ITranslationProvider> providers)
     {
-        var cultures = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var provider in PluginManager.Instance.TranslationProviders)
-        {
-            foreach (var culture in provider.SupportedCultures)
-            {
-                cultures.Add(culture);
-            }
-        }
+        var cultures = new HashSet<string>(
+            PluginSdk.Services.TranslationService.GetSupportedCultures(typeof(TranslationManager).Assembly),
+            StringComparer.OrdinalIgnoreCase);
+        foreach (var provider in providers)
+            cultures.UnionWith(provider.SupportedCultures);
         return cultures;
     }
 

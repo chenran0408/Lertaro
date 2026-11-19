@@ -73,8 +73,10 @@
     </UserControl.Resources>
 
     <StackPanel>
-        <TextBlock Style="{StaticResource SettingsHintText}" Margin="0,0,0,12"
-                    Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_QuickNavHint]}"/>
+        <Expander Style="{DynamicResource SettingsDetailsExpander}">
+            <TextBlock Style="{DynamicResource SettingsHintText}" Margin="0,6,0,0"
+                       Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[General_QuickNavHint]}"/>
+        </Expander>
 
         <Border Style="{StaticResource SettingsCard}">
             <StackPanel>

@@ -23,17 +23,6 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <!-- The label column is Star, not Auto, because it holds wrapping text: an Auto
-                         column measures its content against infinite width, so a wrapping label or
-                         description placed there never sees a width to wrap at and just runs out
-                         sideways. Star gives it whatever the row has left over, which is a real
-                         width, so both texts wrap to the pane and follow it as it resizes.
-
-                         That moves the job of lining every row's editor up at the same X onto the
-                         editor column itself: shared-sizing it to the widest editor on screen (see
-                         the page-level IsSharedSizeScope="True" this relies on) leaves the label
-                         column the same width in every row, which is what the old shared-sized
-                         label column achieved from the other side. -->
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="FieldEditor"/>
                 </Grid.ColumnDefinitions>
@@ -41,8 +30,7 @@
                 <!-- Label & Description for simple inputs -->
                 <StackPanel Grid.Column="0" Grid.Row="0" VerticalAlignment="Center" Margin="0,0,12,0"
                             Visibility="{Binding IsSimpleField, Converter={StaticResource BoolToVis}}">
-                    <TextBlock Text="{Binding Label}" FontSize="14" FontWeight="SemiBold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="{Binding Label, Converter={StaticResource StringToVis}}"/>
-                    <TextBlock Text="{Binding Description}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,2,0,0" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+                    <ContentControl Content="{Binding}" Focusable="False" ContentTemplate="{StaticResource PluginFieldHeading}"/>
                     <!-- Two features answering to one trigger word: both answer to it and the file search
                          strips the word once, so nothing here is silently wrong, it is just ambiguous. Named
                          at the field where the collision is being created, and never enforced. -->
@@ -56,16 +44,29 @@
                                 Visibility="{Binding IsCustomControl, Converter={StaticResource BoolToVis}}"/>
 
                 <!-- Field Controls for simple inputs -->
-                <ContentControl Content="{Binding}" Grid.Column="1" Grid.Row="0" VerticalAlignment="Center" Focusable="False"
-                                Style="{StaticResource FieldValueEditorStyle}"/>
+                <ContentControl Content="{Binding}" VerticalAlignment="Center" Focusable="False">
+                    <ContentControl.Style>
+                        <Style TargetType="ContentControl" BasedOn="{StaticResource FieldValueEditorStyle}">
+                            <Setter Property="Grid.Column" Value="1"/>
+                            <Setter Property="Grid.Row" Value="0"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding UsesWideEditor}" Value="True">
+                                    <Setter Property="Grid.Column" Value="0"/>
+                                    <Setter Property="Grid.ColumnSpan" Value="2"/>
+                                    <Setter Property="Grid.Row" Value="1"/>
+                                    <Setter Property="Margin" Value="0,6,0,0"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ContentControl.Style>
+                </ContentControl>
 
                 <!-- Object layout -->
                 <StackPanel Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Margin="4,4,4,4"
                             Visibility="{Binding IsObject, Converter={StaticResource BoolToVis}}">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                        <TextBlock Text="{Binding Label}" FontSize="14" FontWeight="Bold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}"/>
-                    </StackPanel>
-                    <TextBlock Text="{Binding Description}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+                    <ContentControl Content="{Binding}" Focusable="False" Margin="0,0,0,6"
+                                    ContentTemplate="{StaticResource PluginFieldHeading}"/>
 
                     <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0">
                         <!-- Collapsed layouts still create children. Only the matching layout may
@@ -87,10 +88,8 @@
                 <!-- Group layout -->
                 <StackPanel Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Margin="4,4,4,4"
                             Visibility="{Binding IsGroup, Converter={StaticResource BoolToVis}}">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                        <TextBlock Text="{Binding Label}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource AccentBlue}"/>
-                    </StackPanel>
-                    <TextBlock Text="{Binding Description}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+                    <ContentControl Content="{Binding}" Focusable="False" Margin="0,0,0,6"
+                                    ContentTemplate="{StaticResource PluginFieldHeading}"/>
 
                     <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0">
                         <ItemsControl>
@@ -111,54 +110,27 @@
                      scalar-array list below it. -->
                 <StackPanel Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Margin="4,4,4,4"
                             Visibility="{Binding IsArray, Converter={StaticResource BoolToVis}}">
-                    <TextBlock Text="{Binding Label}" FontSize="14" FontWeight="Bold" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" Margin="0,0,0,6"/>
-                    <TextBlock Text="{Binding Description}" FontSize="14" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=SecondaryForegroundBrush}" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+                    <ContentControl Content="{Binding}" Focusable="False" ContentTemplate="{StaticResource PluginFieldHeading}"/>
 
-                    <!-- Object-array master/detail: a compact selectable list on the left,
-                         the selected item's full editable fields on the right.
-
-                         This one table can be wider than the pane (its columns come to 496 before
-                         anything inside them is measured), so it gets a scroller of its own. Only
-                         it: a scroller around the whole field list hands every row an unbounded
-                         width, and a row's wrapping description measures itself against exactly
-                         that, so the descriptions would stop wrapping again.
-
-                         The same reason is why the Grid's width is pinned to the viewport rather
-                         than left to the content. Inside a horizontally scrolling viewer the Grid
-                         would otherwise be measured against infinity too, and the detail panel's
-                         Star column would resolve to whatever its widest line of text wants,
-                         re-inflating the nested descriptions this whole change was about. MinWidth
-                         is what keeps it scrollable rather than squeezed once the pane drops below
-                         the column total. -->
-                    <ScrollViewer Margin="8,0,0,0"
-                                  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
-                                  PreviewMouseWheel="ArrayScroll_PreviewMouseWheel"
-                                  Visibility="{Binding IsObjectArray, Converter={StaticResource BoolToVis}}">
-                    <Grid MinWidth="496" Width="{Binding ViewportWidth, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
-                        <!-- Both sides are proportional so extra pane width is shared rather than
-                             landing entirely on the detail panel, which is what a fixed master
-                             column did. The detail side still grows faster: it holds labelled
-                             fields whose descriptions wrap, where the master list is a compact
-                             title, badge and row buttons that gains little past a point. MinWidth
-                             on each is the pair the table's own MinWidth of 496 is built from, so
-                             they degrade to the old fixed sizes before the scroller takes over. -->
+                    <Grid Margin="0,6,0,0" SizeChanged="ArrayLayout_SizeChanged"
+                          Visibility="{Binding IsObjectArray, Converter={StaticResource BoolToVis}}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" MinWidth="220"/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition Width="1.5*" MinWidth="260"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="0"/>
                         </Grid.ColumnDefinitions>
-
-                        <!-- Master list: height locked to the detail panel's natural height (kept
-                             in sync from code-behind, see ArrayDetailPanel_Loaded) so only the
-                             ListBox itself scrolls. Add sits on the list's header, where it stays put
-                             as the list grows, rather than under a list whose bottom edge moves. -->
-                        <Grid Grid.Column="0">
+                        <Grid VerticalAlignment="Top">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,4">
-                                <Button Style="{StaticResource ArrayHeaderAddButton}"
+                            <WrapPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,4">
+                                <Button Click="ChoosePreset_Click" Style="{StaticResource SettingsButton}" Height="30" MinWidth="0"
+                                        Margin="0,0,6,0" AutomationProperties.AutomationId="ChoosePreset"
+                                        Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_EntryPresets]}"
+                                        Visibility="{Binding HasEntryPresets, Converter={StaticResource BoolToVis}}"/>
+                                <Button Style="{StaticResource SettingsButton}" Command="{Binding AddCommand}" Margin="0,0,4,0" MinWidth="48" Height="32"
+                                        Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Add]}"
                                         ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Add]}"/>
                                 <Button Style="{StaticResource ArrayHeaderDuplicateButton}"
                                         ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Duplicate]}"/>
@@ -171,14 +143,8 @@
                                         IsEnabled="{Binding CanExportEntry}"
                                         ToolTip="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_EntryExport]}"
                                         AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_EntryExport]}"/>
-                            </StackPanel>
-                            <!-- No horizontal scrolling of its own. Left at the default it hands each
-                                 row an unbounded width, the row's Star column resolves to however
-                                 long the title happens to be, and the list grows a second horizontal
-                                 bar inside the table's own. Bounding it to the list width is also
-                                 what lets the title's TextTrimming ellipsize, which is the behaviour
-                                 the item template was written for. -->
-                            <ListBox Grid.Row="1" ItemsSource="{Binding ArrayItems}" SelectedItem="{Binding SelectedArrayItem, Mode=TwoWay}"
+                            </WrapPanel>
+                            <ListBox Grid.Row="1" MaxHeight="220" AutomationProperties.Name="{Binding Label}" ItemsSource="{Binding ArrayItems}" SelectedItem="{Binding SelectedArrayItem, Mode=TwoWay}"
                                      BorderThickness="0" Background="Transparent"
                                      ScrollViewer.CanContentScroll="False"
                                      ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -245,21 +211,19 @@
                             </ListBox>
                         </Grid>
 
-                        <!-- Detail panel for the selected item. VerticalAlignment="Top" keeps its
-                             ActualHeight equal to its own natural content size regardless of the
-                             row's resolved height, which ArrayDetailPanel_Loaded (code-behind)
-                             then mirrors onto ArrayMasterListGrid: a pure Grid-Auto-row approach
-                             here creates a feedback loop where a tall item list on the left drags
-                             this panel's height up with it instead of staying at its own size. -->
-                        <Border Grid.Column="2" VerticalAlignment="Top" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1,0,0,0" Padding="12,0,0,0"
-                                Visibility="{Binding SelectedArrayItem, Converter={StaticResource NullToVis}}"
+                        <Border Grid.Row="1" Margin="0,10,0,0" Padding="0,10,0,0" BorderThickness="0,1,0,0"
+                                BorderBrush="{DynamicResource ControlBorderBrush}" Visibility="{Binding SelectedArrayItem, Converter={StaticResource NullToVis}}"
                                 Loaded="ArrayDetailPanel_Loaded" SizeChanged="ArrayDetailPanel_SizeChanged">
                             <StackPanel DataContext="{Binding SelectedArrayItem}">
-                                <ItemsControl ItemsSource="{Binding Children}" ItemTemplate="{StaticResource ArrayDetailFieldTemplate}"/>
+                                <ItemsControl ItemsSource="{Binding BasicFields}" ItemTemplate="{StaticResource ArrayDetailFieldTemplate}"/>
+                                <Expander AutomationProperties.AutomationId="AdvancedEntryFields"
+                                          Visibility="{Binding HasAdvancedFields, Converter={StaticResource BoolToVis}}"
+                                          Header="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Plugins_EntryAdvanced]}">
+                                    <ItemsControl ItemsSource="{Binding AdvancedFields}" ItemTemplate="{StaticResource ArrayDetailFieldTemplate}"/>
+                                </Expander>
                             </StackPanel>
                         </Border>
                     </Grid>
-                    </ScrollViewer>
 
                     <!-- Scalar-array list: a single value column, no header needed -->
                     <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1,0,0,0" Margin="8,0,0,0" Padding="12,0,0,0"
@@ -280,7 +244,7 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <Button Command="{Binding AddCommand}" Style="{StaticResource PrimarySettingsButton}" Height="24" MinWidth="80" Padding="8,0" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Add]}" FontSize="14" Cursor="Hand" HorizontalAlignment="Left" Margin="0,8,0,0"/>
+                            <Button Command="{Binding AddCommand}" Style="{StaticResource PrimarySettingsButton}" MinHeight="32" MinWidth="80" Padding="8,0" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Add]}" FontSize="14" Cursor="Hand" HorizontalAlignment="Left" Margin="0,8,0,0"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>

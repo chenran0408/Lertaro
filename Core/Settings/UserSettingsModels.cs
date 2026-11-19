@@ -145,7 +145,8 @@ public class HotkeyPageSettings
     // so it has to be reachable while that window has focus, which means the hook service detects it.
     public string QuickPanelHotkey { get; set; } = "Ctrl+F2";
     public string QuickPanelAlternateHotkey { get; set; } = string.Empty;
-    public string ClipboardPanelHotkey { get; set; } = "Win+V";
+    public const string DefaultClipboardPanelHotkey = "Alt+V";
+    public string ClipboardPanelHotkey { get; set; } = DefaultClipboardPanelHotkey;
     // Ditto-style global quick paste: Ctrl+Win+1..9 pastes that history slot straight into the
     // active window, no panel. The combo is fixed (digits are not a recorder field); this only
     // turns the family on or off.
@@ -215,11 +216,14 @@ public class SearchWindowSettings
     // QuickSearchWindowShowSupport.ShowWindow), so typing still replaces it rather than appending to it.
     // Off by default: the window is meant to start clean for the usual "summon and type" gesture.
     public bool KeepSearchText { get; set; } = false;
-    // Where the quick window appears on summon. True (default) places it centred on the cursor a
-    // step below it -- the eyes are already at the cursor when the hotkey goes down. False falls
-    // back to the dragged-and-remembered relative spot. The remembered spot is kept either way
-    // (RelativeLeft/Top above), so toggling back restores it untouched.
-    public bool FollowCursorOnSummon { get; set; } = true;
+    private bool? _followCursorOnSummon;
+
+    // Older settings stored the position without a summon mode. Preserve that position on upgrade.
+    public bool FollowCursorOnSummon
+    {
+        get => _followCursorOnSummon ?? (RelativeLeft is null || RelativeTop is null);
+        set => _followCursorOnSummon = value;
+    }
 }
 
 public class PreviewWindowSettings
