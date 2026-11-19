@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 3a4890cac893bf0c5e354ec4d84cb40834232dd8
+          ref: 906051e91e7c4ba46dafc94493b348067dd3a7e1
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
