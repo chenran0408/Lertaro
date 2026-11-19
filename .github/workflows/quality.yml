@@ -8,15 +8,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 592b170ed99009161d1bd7855359ced2ebbdbafc
+          ref: 3a4890cac893bf0c5e354ec4d84cb40834232dd8
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      - name: Reproduce the two failing plugin suites
+      - name: Run affected plugin suites
         shell: pwsh
         run: |
           $failed = @()
-          foreach ($name in 'BrowserData','FlowLauncherBridge') {
+          foreach ($name in 'BrowserData','ContentSearch','FlowLauncherBridge') {
             dotnet test "Tests/Plugins/$name/$name.csproj" -c Release -r win-arm64 -p:RustIndexStoreTarget=aarch64-pc-windows-msvc --logger 'console;verbosity=normal' --logger "trx;LogFileName=$name.trx" --results-directory results -v quiet
             if ($LASTEXITCODE) { $failed += $name }
           }
