@@ -111,7 +111,7 @@ public sealed class ContentIndexRunReporterTests
     public void Observe_ExistingIndexFromBeforeCompletionTracking_DoesNotNotifyAgain()
     {
         _database.InsertOrUpdateFile("existing.txt", DateTime.UtcNow, 10, "indexed text");
-        using (var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={_dbPath}"))
+        using (var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={_dbPath};Pooling=False"))
         {
             connection.Open();
             using var command = connection.CreateCommand();

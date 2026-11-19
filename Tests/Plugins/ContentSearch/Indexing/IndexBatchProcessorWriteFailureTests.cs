@@ -103,7 +103,7 @@ public sealed class IndexBatchProcessorWriteFailureTests
     /// </summary>
     private void RefuseTheRowOf(string path)
     {
-        using var conn = new SqliteConnection($"Data Source={_tempDbPath}");
+        using var conn = new SqliteConnection($"Data Source={_tempDbPath};Pooling=False");
         conn.Open();
         using var cmd = conn.CreateCommand();
         var quotedPath = path.Replace("'", "''", StringComparison.Ordinal);

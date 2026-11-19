@@ -227,7 +227,7 @@ public sealed class DatabaseSearchHelperFtsTests
     {
         // Without this index the duplicate half of the expansion is a scan of `files` per hit -- the
         // difference between a settled search and one that holds the UI thread for minutes.
-        using var conn = new SqliteConnection($"Data Source={_tempDbPath}");
+        using var conn = new SqliteConnection($"Data Source={_tempDbPath};Pooling=False");
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT name FROM pragma_index_list('files');";
