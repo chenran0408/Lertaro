@@ -14,6 +14,7 @@ public class FlowInstantResultProvider : IInstantResultProvider
 {
     private readonly FlowQueryDispatcher _dispatcher;
     private readonly FlowPluginHost _host;
+    private readonly Action<Func<string, bool>> _refreshMatching;
 
     public FlowInstantResultProvider() : this(FlowLauncherBridgePlugin.Dispatcher, FlowLauncherBridgePlugin.Host)
     {
@@ -24,7 +25,13 @@ public class FlowInstantResultProvider : IInstantResultProvider
     }
 
     public FlowInstantResultProvider(FlowQueryDispatcher dispatcher, FlowPluginHost host)
+        : this(dispatcher, host, SearchRefreshService.RefreshIfMatches)
     {
+    }
+
+    internal FlowInstantResultProvider(FlowQueryDispatcher dispatcher, FlowPluginHost host, Action<Func<string, bool>> refreshMatching)
+    {
+        _refreshMatching = refreshMatching;
         _dispatcher = dispatcher;
         _host = host;
     }
@@ -284,7 +291,7 @@ public class FlowInstantResultProvider : IInstantResultProvider
                         // never resolve.
                         if (completed.IsCompletedSuccessfully)
                         {
-                            SearchRefreshService.RefreshIfMatches(current =>
+                            _refreshMatching(current =>
                                 string.Equals(current?.Trim(), q.Trim(), StringComparison.OrdinalIgnoreCase));
                         }
                     }

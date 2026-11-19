@@ -18,15 +18,6 @@ public sealed class FlowInstantResultProviderTests
             });
     }
 
-    // SearchRefreshService is process-wide static state, so it is only ever touched by the tests below
-    // and reset around each of them (a leftover stub delegate from one test would otherwise be invoked by
-    // another test's dispatch and change its outcome).
-    [TestInitialize]
-    public void ResetRefreshSeam() => PluginSdk.Services.SearchRefreshService.RefreshMatchingFunc = null;
-
-    [TestCleanup]
-    public void ClearRefreshSeam() => PluginSdk.Services.SearchRefreshService.RefreshMatchingFunc = null;
-
     [TestMethod]
     public void GetInstantResults_WhenDispatchAnswersWithinTimeout_DoesNotRequestARefresh()
     {
@@ -42,10 +33,10 @@ public sealed class FlowInstantResultProviderTests
         });
 
         var refreshCalls = 0;
-        PluginSdk.Services.SearchRefreshService.RefreshMatchingFunc = _ => Interlocked.Increment(ref refreshCalls);
+        Action<Func<string, bool>> refreshMatching = _ => Interlocked.Increment(ref refreshCalls);
 
         var dispatcher = new FlowQueryDispatcher(host);
-        var provider = new FlowInstantResultProvider(dispatcher);
+        var provider = new FlowInstantResultProvider(dispatcher, host, refreshMatching);
 
         var results = provider.GetInstantResults("dev").ToList();
 
@@ -73,7 +64,7 @@ public sealed class FlowInstantResultProviderTests
         var refreshCalls = 0;
         var matchedQuery = string.Empty;
         var refreshed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        PluginSdk.Services.SearchRefreshService.RefreshMatchingFunc = predicate =>
+        Action<Func<string, bool>> refreshMatching = predicate =>
         {
             if (predicate("dev"))
             {
@@ -84,7 +75,7 @@ public sealed class FlowInstantResultProviderTests
         };
 
         var dispatcher = new FlowQueryDispatcher(host);
-        var provider = new FlowInstantResultProvider(dispatcher);
+        var provider = new FlowInstantResultProvider(dispatcher, host, refreshMatching);
 
         var results = provider.GetInstantResults("dev").ToList();
 
@@ -112,14 +103,14 @@ public sealed class FlowInstantResultProviderTests
 
         var refreshCalls = 0;
         var refreshed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        PluginSdk.Services.SearchRefreshService.RefreshMatchingFunc = _ =>
+        Action<Func<string, bool>> refreshMatching = _ =>
         {
             Interlocked.Increment(ref refreshCalls);
             refreshed.TrySetResult();
         };
 
         var dispatcher = new FlowQueryDispatcher(host);
-        var provider = new FlowInstantResultProvider(dispatcher);
+        var provider = new FlowInstantResultProvider(dispatcher, host, refreshMatching);
         var callers = Enumerable.Range(0, 2)
             .Select(_ => Task.Run(() => provider.GetInstantResults("same").ToList()))
             .ToArray();

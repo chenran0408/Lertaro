@@ -146,7 +146,7 @@ public sealed class ContentSearchDatabase : IDisposable
                 using var cmd = conn.CreateCommand();
                 cmd.CommandText = "INSERT INTO files_fts(files_fts) VALUES('optimize'); PRAGMA wal_checkpoint(TRUNCATE); PRAGMA shrink_memory;";
                 cmd.ExecuteNonQuery();
-                SqliteConnection.ClearAllPools();
+                SqliteConnection.ClearPool(conn);
             }
             catch { }
         }
@@ -363,7 +363,7 @@ public sealed class ContentSearchDatabase : IDisposable
             {
                 try
                 {
-                    SqliteConnection.ClearAllPools();
+                    ClearIndexPool();
                     TryDeleteFile(_dbPath);
                     TryDeleteFile(_dbPath + "-wal");
                     TryDeleteFile(_dbPath + "-shm");
@@ -382,5 +382,11 @@ public sealed class ContentSearchDatabase : IDisposable
         }
     }
 
-    public void Dispose() => SqliteConnection.ClearAllPools();
+    private void ClearIndexPool()
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        SqliteConnection.ClearPool(connection);
+    }
+
+    public void Dispose() => ClearIndexPool();
 }

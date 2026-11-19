@@ -6,6 +6,32 @@ namespace Lertaro.Plugins.ContentSearch.Tests.Storage;
 public sealed class ContentSearchDatabaseTests
 {
     [TestMethod]
+    public void DisposingAnIndexKeepsOtherDatabaseConnectionsPooled()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"pool_{Guid.NewGuid():N}.db");
+        using var other = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={path};Pooling=True");
+        try
+        {
+            other.Open();
+            using var command = other.CreateCommand();
+            command.CommandText = "CREATE TEMP TABLE marker(value INTEGER); INSERT INTO marker VALUES (42);";
+            command.ExecuteNonQuery();
+            other.Close();
+
+            using (var index = new ContentSearchDatabase(path + ".index")) { }
+            other.Open();
+            command.CommandText = "SELECT value FROM marker";
+            Assert.AreEqual(42L, command.ExecuteScalar());
+        }
+        finally
+        {
+            other.Close();
+            Microsoft.Data.Sqlite.SqliteConnection.ClearPool(other);
+            File.Delete(path);
+        }
+    }
+
+    [TestMethod]
     public void Database_InsertAndSearch_ReturnsMatchingHit()
     {
         var tempDb = Path.Combine(Path.GetTempPath(), $"test_db_{Guid.NewGuid():N}.db");
