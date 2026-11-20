@@ -23,6 +23,7 @@ public sealed class QuickSearchWindowFocusHelperTests
             {
                 window.Hide();
                 helper.CancelPendingFocus();
+                FocusManager.SetFocusedElement(window, null);
                 textBox.Text = "new query";
             });
             After(window.Dispatcher, 100, () =>
@@ -34,7 +35,10 @@ public sealed class QuickSearchWindowFocusHelperTests
             PumpFor(window.Dispatcher, 350);
 
             Assert.IsTrue(window.IsVisible);
-            Assert.AreSame(textBox, Keyboard.FocusedElement);
+            // Hide can transfer the Windows foreground to another application. In that case
+            // only logical focus belongs to this window until the user activates it again.
+            Assert.AreSame(textBox, FocusManager.GetFocusedElement(window));
+            if (window.IsActive) Assert.AreSame(textBox, Keyboard.FocusedElement);
             Assert.AreEqual(textBox.Text.Length, textBox.CaretIndex);
             Assert.AreEqual(0, textBox.SelectionLength);
         }

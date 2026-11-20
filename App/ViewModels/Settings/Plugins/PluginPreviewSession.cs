@@ -15,7 +15,7 @@ internal sealed class PluginPreviewSession(PluginInfoViewModel plugin)
         var revision = _revision;
         try
         {
-            await plugin.OnPreviewAsync(plugin.ConfigFields.ToDictionary(f => f.SchemaField.Key, f => f.Value));
+            await plugin.OnPreviewAsync(plugin.ConfigFields.ToDictionary(f => f.SchemaField.Key, f => f.IsArray ? f.ArrayItems.Select(item => item.GetValue()).ToList() : f.LocalValueStore));
             if (IsClosed || revision != _revision) plugin.OnRollback?.Invoke();
             else IsActive = true;
         }

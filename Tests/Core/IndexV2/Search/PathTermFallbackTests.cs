@@ -1,4 +1,5 @@
 using Lertaro.Core.IndexV2.Search;
+using Lertaro.Core.SearchIndex.Fzf;
 
 namespace Lertaro.Core.Tests.IndexV2.Search;
 
@@ -32,6 +33,65 @@ public sealed class PathTermFallbackTests
         new FileRecord(2, 1, "summary", FileRecordFlags.Directory),
         new FileRecord(3, 2, "2024.txt", FileRecordFlags.None),
     });
+
+    [TestMethod]
+    public void BoundedAncestorMatchesAgreeWithTheExhaustivePrefixIncludingTies()
+    {
+        var records = new List<FileRecord> { LiveIndexFixture.Root(), new(2, 1, "orchid", FileRecordFlags.Directory) };
+        for (var i = 0; i < 1300; i++)
+            records.Add(new FileRecord((ulong)(i + 3), 2, $"report-{i:D4}.txt", FileRecordFlags.None));
+        using var fixture = LiveIndexFixture.Build("T", records);
+        var all = Search(fixture, "orchid report", int.MaxValue);
+        Assert.HasCount(1300, all);
+        CollectionAssert.AreEqual(all.Take(12).Select(row => row.Path).ToArray(),
+            Search(fixture, "orchid report", 12).Select(row => row.Path).ToArray());
+        Assert.IsEmpty(Search(fixture, "unrelated report", 12));
+    }
+
+    [TestMethod]
+    public void CachedTermDoesNotCrossAliasSettingsOrSnapshots()
+    {
+        using var first = BuildSeriesDrive();
+        using var second = BuildSeriesDrive();
+        var pattern = FzfPattern.Parse("rose");
+        var original = SearchContext.DisabledAliasIds;
+        try
+        {
+            SearchContext.DisabledAliasIds = null;
+            first.Index.Read((snapshot, overlay) =>
+            {
+                Assert.IsFalse(PathTermMatchCache.TryGet(snapshot, pattern, out var hits, out var save));
+                var matches = new List<UniqueMatch>();
+                SearchMatcher.MatchUniques(snapshot, pattern, matches);
+                save!(matches);
+                Assert.IsTrue(PathTermMatchCache.TryGet(snapshot, pattern, out hits, out _));
+                Assert.AreEqual(matches.Count, hits.Length);
+                SearchContext.DisabledAliasIds = [12];
+                Assert.IsFalse(PathTermMatchCache.TryGet(snapshot, pattern, out hits, out _));
+                return true;
+            });
+            SearchContext.DisabledAliasIds = null;
+            Assert.IsFalse(second.Index.Read((snapshot, overlay) =>
+                PathTermMatchCache.TryGet(snapshot, pattern, out _, out _)));
+        }
+        finally
+        {
+            SearchContext.DisabledAliasIds = original;
+        }
+    }
+
+    [TestMethod]
+    public void RefiningTheFolderTermKeepsOnlyTheMatchingPath()
+    {
+        using var fixture = BuildSeriesDrive();
+        var first = Search(fixture, "episode01 rose");
+        var refined = Search(fixture, "episode01 tulip");
+        var restored = Search(fixture, "episode01 rose");
+
+        CollectionAssert.AreEqual(new[] { @"T:\library\drama\Rose Season\Episode01.mp4" }, first.Select(row => row.Path).ToArray());
+        CollectionAssert.AreEqual(new[] { @"T:\library\drama\Tulip Season\Episode01.mp4" }, refined.Select(row => row.Path).ToArray());
+        CollectionAssert.AreEqual(first.Select(row => row.Path).ToArray(), restored.Select(row => row.Path).ToArray());
+    }
 
     [TestMethod]
     public void SearchStreaming_AndFirstBranchStillUsesAncestorFallback()

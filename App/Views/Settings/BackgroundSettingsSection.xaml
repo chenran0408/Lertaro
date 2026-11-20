@@ -31,7 +31,7 @@
                         <TextBlock DockPanel.Dock="Right" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" Text="{Binding Opacity, StringFormat={}{0:0}%}"/>
                         <TextBlock Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Opacity]}"/>
                     </DockPanel>
-                    <Slider x:Name="RowBackgroundOpacity" Margin="0,6" Minimum="0" Maximum="100" Value="{Binding Opacity}"
+                    <Slider x:Name="RowBackgroundOpacity" AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Opacity]}" Margin="0,6" Minimum="0" Maximum="100" Value="{Binding Opacity}"
                             SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True" AutoToolTipPlacement="TopLeft"
                             ToolTip="{Binding Opacity, StringFormat={}{0:0}%}"/>
                     <TextBlock Style="{DynamicResource SettingsHintText}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_OpacityHint]}"/>

@@ -66,13 +66,19 @@ public class FavoriteItemViewModel : ViewModelBase
         set => SetProperty(ref _editName, value);
     }
 
+    private bool _hasPathError;
+    public bool HasPathError { get => _hasPathError; internal set => SetProperty(ref _hasPathError, value); }
+
     public string EditPath
     {
         get => _editPath;
         set
         {
             if (SetProperty(ref _editPath, value))
+            {
+                HasPathError = false;
                 CommandManager.InvalidateRequerySuggested();
+            }
         }
     }
 

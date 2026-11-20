@@ -157,7 +157,7 @@ internal sealed class SearchDispatchController
         FileFilterScopeDirective? scopeDirective,
         string? instantQuery,
         bool emitInstantResults,
-        Action? beforeSearch,
+        Action<CancellationToken>? beforeSearch,
         Func<string?, List<AppSearchResult>>? collectInstantResults,
         Task? additionalResultsReady);
 
@@ -218,9 +218,8 @@ internal sealed class SearchDispatchController
             // gate, and it has to stay late because "is the list still empty?" is only answerable once the
             // rows land.
             true,
-            // Nothing to start alongside a quick-window search: the rows this window can show all come from
-            // the one search already, and its instant providers are folded into the mapper above.
-            null,
+            // Start the application's catalog scan with the index request, once per accepted query.
+            deferInstantPass ? token => instantPass.StartCatalogSearch(searchQuery, providerQuery, token) : null,
             contextDir => SearchResultMapper.CollectInstantPass(instantPass, providerQuery, searchQuery, _getIsInlineSearchContext(), contextDir),
             deferInstantPass ? instantPass.Completion : null
         );

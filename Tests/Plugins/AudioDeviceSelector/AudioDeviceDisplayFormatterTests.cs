@@ -6,6 +6,25 @@ namespace Lertaro.Plugins.AudioDeviceSelector.Tests;
 public sealed class AudioDeviceDisplayFormatterTests
 {
     [TestMethod]
+    [DataRow("Speakers (Realtek(R) Audio)", "Speakers", "Realtek(R) Audio")]
+    [DataRow("麦克风（USB (Pro)）", "麦克风", "USB (Pro)")]
+    [DataRow("Output (2) (USB)", "Output (2)", "USB")]
+    public void DescriptionModeKeepsTheEntireAdapterName(string friendly, string name, string adapter)
+    {
+        var display = AudioDeviceDisplayFormatter.Format(friendly, AudioDeviceDisplayMode.DeviceDescription);
+        Assert.AreEqual(adapter, display.Title);
+        Assert.AreEqual(name, display.Description);
+    }
+
+    [TestMethod]
+    public void DescriptionModeWithoutAnAdapterKeepsAUsableTitle()
+    {
+        var display = AudioDeviceDisplayFormatter.Format("Studio Display", AudioDeviceDisplayMode.DeviceDescription);
+        Assert.AreEqual("Studio Display", display.Title);
+        Assert.AreEqual(string.Empty, display.Description);
+    }
+
+    [TestMethod]
     public void SplitFriendlyName_WithParenthesizedDescription_ReturnsBothParts()
     {
         var result = AudioDeviceDisplayFormatter.SplitFriendlyName("Speakers (USB Audio)");

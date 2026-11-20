@@ -75,6 +75,11 @@ public sealed class LocalSendSendViewModel : ViewModelBase, IDisposable
     }
     public bool IsFilesMode => _selectedMode == 0;
     public bool IsTextMode => _selectedMode == 1;
+    private readonly List<LocalSendSendDeviceItem> _failedDevices = new();
+    public bool CanRetryFailed => !IsSending && _failedDevices.Count > 0;
+
+    public int TargetDeviceCount { get; private set; }
+    public int SentDeviceCount { get; private set; }
     public LocalSendSendResult LastSendResult { get; internal set; } = LocalSendSendResult.Success;
     public int CurrentStep { get => _currentStep; set => SetProperty(ref _currentStep, value); }
     public bool IsFromAction => _isFromAction;
@@ -106,6 +111,8 @@ public sealed class LocalSendSendViewModel : ViewModelBase, IDisposable
     }
     public void SetMode(LocalSendSendMode mode, string? text = null, bool proceed = false)
     {
+        _failedDevices.Clear();
+        OnPropertyChanged(nameof(CanRetryFailed));
         SelectedMode = mode == LocalSendSendMode.Text ? 1 : 0;
         if (mode == LocalSendSendMode.Text) TextToSend = text ?? string.Empty;
         _isFromAction = proceed;
@@ -119,10 +126,11 @@ public sealed class LocalSendSendViewModel : ViewModelBase, IDisposable
     }
     public void ProceedToStep1()
     {
+        _failedDevices.Clear();
+        OnPropertyChanged(nameof(CanRetryFailed));
         TargetFiles.Clear();
         if (IsFilesMode)
         {
-            _textToSend = string.Empty;
             foreach (var item in CollectedItems)
             {
                 TargetFiles.Add(item.Path);
@@ -136,27 +144,47 @@ public sealed class LocalSendSendViewModel : ViewModelBase, IDisposable
     public LocalSendTransferStage TransferStage { get => _transferStage; private set => SetProperty(ref _transferStage, value); }
     private string _speedText = string.Empty;
     public string SpeedText { get => _speedText; private set => SetProperty(ref _speedText, value); }
-    public async Task StartSendBatchAsync(List<LocalSendSendDeviceItem> selectedDevices)
+    public Task StartSendBatchAsync(List<LocalSendSendDeviceItem> selectedDevices)
     {
-        if (selectedDevices == null || selectedDevices.Count == 0) return;
+        if (IsSending || selectedDevices == null || selectedDevices.Count == 0) return Task.CompletedTask;
+        TargetDeviceCount = selectedDevices.Count;
+        SentDeviceCount = 0;
+        return SendBatchAsync(selectedDevices);
+    }
+
+    public Task RetryFailedAsync() =>
+        CanRetryFailed ? SendBatchAsync(_failedDevices.ToList()) : Task.CompletedTask;
+
+    private async Task SendBatchAsync(List<LocalSendSendDeviceItem> selectedDevices)
+    {
+        _failedDevices.Clear();
         IsSending = true;
+        OnPropertyChanged(nameof(CanRetryFailed));
         TransferStage = LocalSendTransferStage.Transferring;
         // The window stays open after a transfer, so without this every batch in the session leaked its
         // source (and the kernel event it allocates lazily) until the view-model was disposed.
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
-        var allSuccess = true;
+        var batchResult = LocalSendSendResult.Success;
         for (var dIdx = 0; dIdx < selectedDevices.Count; dIdx++)
         {
             if (_cts.IsCancellationRequested) break;
             var deviceItem = selectedDevices[dIdx];
             var devHeader = selectedDevices.Count > 1 ? $"[{dIdx + 1}/{selectedDevices.Count}] {deviceItem.Alias}: " : string.Empty;
             var res = await SendToSingleDeviceAsync(deviceItem, devHeader);
-            if (res != LocalSendSendResult.Success) allSuccess = false;
+            if (res == LocalSendSendResult.Success) SentDeviceCount++;
+            else
+            {
+                batchResult = res;
+                if (!_cts.IsCancellationRequested) _failedDevices.Add(deviceItem);
+            }
         }
+        LastSendResult = _cts.IsCancellationRequested ? LocalSendSendResult.Canceled : batchResult;
+        if (_cts.IsCancellationRequested) _failedDevices.Clear();
         IsSending = false;
+        OnPropertyChanged(nameof(CanRetryFailed));
         SpeedText = string.Empty;
-        if (allSuccess && !_cts.IsCancellationRequested)
+        if (LastSendResult == LocalSendSendResult.Success)
         {
             SendSuccessCompleted?.Invoke(this, EventArgs.Empty);
         }
@@ -170,8 +198,7 @@ public sealed class LocalSendSendViewModel : ViewModelBase, IDisposable
         {
             LocalSendSendResult result;
             string? errDetails;
-            var isSendingText = IsTextMode || (TargetFiles.Count == 0 && !string.IsNullOrWhiteSpace(TextToSend));
-            if (isSendingText)
+            if (IsTextMode)
             {
                 var textName = TranslationManager.Instance["Settings_LocalSend_Text"];
                 _progressTracker.PrepareText(TextToSend, textName);
@@ -180,7 +207,6 @@ public sealed class LocalSendSendViewModel : ViewModelBase, IDisposable
                     item.Device, TextToSend, item.Pin, _cts?.Token ?? CancellationToken.None);
                 if (result == LocalSendSendResult.Success)
                 {
-                    LastSendResult = LocalSendSendResult.Success;
                     _progressTracker.MarkConfirmed(new LocalSendFileConfirmationArgs("text", textName, 1, 1), TranslationManager.Instance["Settings_LocalSend_Completed"]);
                     NotifyTransferListChanged();
                 }
@@ -277,7 +303,6 @@ public sealed class LocalSendSendViewModel : ViewModelBase, IDisposable
     }
     private void HandleResult(LocalSendSendResult result, string? errDetails)
     {
-        LastSendResult = result;
         if (result != LocalSendSendResult.Success)
         {
             _progressTracker.MarkPending(LocalSendSendPresentation.GetStatus(result, errDetails, string.Empty));

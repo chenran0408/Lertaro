@@ -20,6 +20,8 @@ public static class AliasProviderRegistry
     // silently attribute one's aliases to the other's rules. See Register.
     private static readonly object RegistrationGate = new();
     private static byte _nextId;
+    private static int _registrationVersion;
+    internal static int RegistrationVersion => Volatile.Read(ref _registrationVersion);
 
     // Provider id -> the syllable separator that provider declares (see IAliasProvider.SyllableSeparator).
     // Baked aliases are stored as bare bytes with only their provider id, so the alignment rule has no
@@ -46,6 +48,7 @@ public static class AliasProviderRegistry
             IdByInstance[provider] = id;
             SeparatorById[id] = provider.SyllableSeparator;
             Providers.Add(provider);
+            Interlocked.Increment(ref _registrationVersion);
         }
 
         Logger.Log($"[AliasProviderRegistry] Registered alias provider: {provider.Name} with ID: {id} ({componentId})");

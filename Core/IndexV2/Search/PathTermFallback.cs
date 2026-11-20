@@ -28,7 +28,7 @@ internal static class PathTermFallback
 {
     /// <summary>What one unique name contributed: which terms its own name satisfied, and the best
     /// match among them for a matching row to rank by.</summary>
-    private struct NameHit
+    internal struct NameHit
     {
         public int Mask;
         public int Score;
@@ -40,11 +40,13 @@ internal static class PathTermFallback
     // pass allocated; rented and cleared, the buckets survive and only the first search of a size pays
     // for them. Pooled the way SearchMatcher pools its workers and hit lists, because searches on
     // different drives run at the same time and a single shared instance would be a race.
-    private sealed class Scratch
+    private sealed class Scratch : IDisposable
     {
         public readonly Dictionary<int, NameHit> NameHits = new();
         public readonly Dictionary<int, int> AncestorMemo = new();
         public readonly List<int> AncestorChain = new(64);
+
+        public void Dispose() => ScratchPool.Add(this);
 
         public void Reset()
         {
@@ -89,6 +91,17 @@ internal static class PathTermFallback
         if (directoryContext.Excluded)
             return;
 
+        foreach (var rank in CollectPathRanks(snapshot, delta, pattern, directoryContext, limit, token))
+        {
+            token.ThrowIfCancellationRequested();
+            onResult(ResultBuilder.ToResult(snapshot, delta, rank));
+        }
+    }
+
+    private static List<FzfRank> CollectPathRanks(Snapshot snapshot, DeltaOverlay delta, FzfPattern pattern,
+        NameSearch.DirectoryContext directoryContext, int limit, CancellationToken token)
+    {
+        var termCount = pattern.TermSets.Length;
         var termPatterns = new FzfPattern[termCount];
         var termBytePatterns = new FzfBytePattern[termCount];
         for (var i = 0; i < termCount; i++)
@@ -104,34 +117,35 @@ internal static class PathTermFallback
         // the same way and written in the same breath, so every hit paid four hash lookups where it
         // needs one, and the row walk below then looked the rank up a second time. A broad term set can
         // reach tens of thousands of uniques per query.
-        var scratch = RentScratch();
+        using var scratch = RentScratch();
         var nameHits = scratch.NameHits;
         var fullMask = (1 << termCount) - 1;
         for (var i = 0; i < termCount; i++)
         {
             token.ThrowIfCancellationRequested();
-            var hits = SearchMatcher.RentHitList();
-            SearchMatcher.MatchUniques(snapshot, termPatterns[i], hits, token);
             var bit = 1 << i;
-            foreach (var m in hits)
+            if (PathTermMatchCache.TryGet(snapshot, termPatterns[i], out var saved, out var remember))
             {
-                ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(nameHits, m.Uid, out var existed);
-                entry.Mask |= bit;
-                // Keep the strongest term hit as the row's ranking basis.
-                if (!existed || m.Match.Score > entry.Score)
-                {
-                    entry.Score = m.Match.Score;
-                    entry.SortKey = m.SortKey;
-                }
+                foreach (var hit in saved)
+                    AddNameHit(nameHits, hit.Uid, hit.Score, hit.SortKey, bit);
+                continue;
             }
-            SearchMatcher.ReturnHitList(hits);
+
+            var hits = SearchMatcher.RentHitList();
+            try
+            {
+                SearchMatcher.MatchUniques(snapshot, termPatterns[i], hits, token);
+                foreach (var hit in hits)
+                    AddNameHit(nameHits, hit.Uid, hit.Match.Score, hit.SortKey, bit);
+                remember?.Invoke(hits);
+            }
+            finally
+            {
+                SearchMatcher.ReturnHitList(hits);
+            }
         }
 
-        if (nameHits.Count == 0)
-        {
-            ScratchPool.Add(scratch);
-            return;
-        }
+        if (nameHits.Count == 0) return [];
 
         // The source root's segments are the same for every row in the query, but the ancestor walk
         // below consulted them on each of its (many) memo misses -- re-splitting the root string and
@@ -147,7 +161,11 @@ internal static class PathTermFallback
         // Bounded by the index rather than by the caller's limit, which is no longer capped: the
         // multiply overflows int for a large enough limit, and FzfTopN reserves twice its capacity.
         var keep = (int)Math.Min((long)Math.Max(limit, 8) * 8, snapshot.Count + delta.Added.Count);
-        var topN = new FzfTopN(keep);
+        // Every occurrence of a unique name has the same upper bound on its rank. Once a small
+        // page is full, skip inferior names before materialising their rows or walking their parents.
+        var bounded = limit < nameHits.Count / 4;
+        var topN = bounded ? null : new FzfTopN(keep);
+        var page = bounded ? new PriorityQueue<FzfRank, FzfRank>(WorstRankFirst) : null;
         try
         {
             foreach (var (uid, hit) in nameHits)
@@ -157,6 +175,8 @@ internal static class PathTermFallback
                 // it has already been reported (or was cut by its limit, which this pass must not
                 // undo by re-reporting it further down). Skipping is what keeps the two passes from
                 // double-reporting now that this one runs alongside a non-empty result set.
+                if (page != null && page.Count == limit && hit.SortKey > page.Peek().SortKey)
+                    continue;
                 var nameMask = hit.Mask;
                 if (nameMask == fullMask)
                     continue;
@@ -174,34 +194,46 @@ internal static class PathTermFallback
                     if (membership != null && !NameSearch.RowMatchesFilter(snapshot, delta, row, directoryContext, membership))
                         continue;
 
+                    var rank = new FzfRank(row, hit.Score, hit.SortKey);
+                    if (page != null && page.Count == limit && FzfResultRank.Compare(rank, page.Peek()) >= 0)
+                        continue;
                     var parent = snapshot.ParentIndexes[row];
                     if (parent == row || parent < 0)
                         continue;
-                    if ((nameMask | PathTermFallbackAncestorHelper.AncestorMask(snapshot, delta, parent, termPatterns, termBytePatterns, worker, ancestorMemo, fullMask, rootMask, ancestorChain)) != fullMask)
+                    if ((nameMask | PathTermFallbackAncestorHelper.AncestorMask(snapshot, delta, parent, termPatterns, termBytePatterns, worker, ancestorMemo, fullMask, rootMask, ancestorChain, nameHits)) != fullMask)
                         continue;
 
-                    topN.Add(new FzfRank(row, hit.Score, hit.SortKey));
+                    if (page == null)
+                        topN!.Add(rank);
+                    else if (page.Count < limit)
+                        page.Enqueue(rank, rank);
+                    else
+                        page.DequeueEnqueue(rank, rank);
                 }
             }
         }
         finally
         {
             SearchMatcher.ReturnWorker(worker);
-            // Returned before the results are emitted: nothing below reads it, and a caller that stops
-            // consuming partway through must not strand it.
-            ScratchPool.Add(scratch);
         }
 
-        var emitted = 0;
-        var seen = new HashSet<int>();
-        foreach (var rank in topN.Finish(keep))
+        if (page == null) return topN!.Finish(limit);
+        var ranks = page.UnorderedItems.Select(pair => pair.Element).ToList();
+        FzfRankRadixSorter.Sort(ranks);
+        return ranks;
+    }
+
+    private static readonly IComparer<FzfRank> WorstRankFirst =
+        Comparer<FzfRank>.Create((left, right) => FzfResultRank.Compare(right, left));
+
+    private static void AddNameHit(Dictionary<int, NameHit> hits, int uid, int score, ulong sortKey, int bit)
+    {
+        ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(hits, uid, out var existed);
+        entry.Mask |= bit;
+        if (!existed || score > entry.Score)
         {
-            token.ThrowIfCancellationRequested();
-            if (!seen.Add(rank.EntryIndex))
-                continue;
-            onResult(ResultBuilder.ToResult(snapshot, delta, rank));
-            if (++emitted >= limit)
-                break;
+            entry.Score = score;
+            entry.SortKey = sortKey;
         }
     }
 

@@ -23,7 +23,7 @@ public sealed class TaskbarAppearancePlugin : IPlugin, IConfigurable, ITranslati
 
     public async Task PrepareForSettingsTransferAsync()
     {
-        RestorePreview();
+        await RestorePreviewAsync();
         await TaskbarEngine.SuspendAsync();
     }
     private const string PluginId = "Lertaro.Plugins.TaskbarAppearance";
@@ -57,7 +57,7 @@ public sealed class TaskbarAppearancePlugin : IPlugin, IConfigurable, ITranslati
         ],
         OnSaveAsync = SaveAsync,
         OnPreviewAsync = PreviewAsync,
-        OnRollback = RestorePreview
+        OnRollback = () => _ = RestorePreviewAsync()
     };
 
     private async Task SaveAsync()
@@ -80,11 +80,11 @@ public sealed class TaskbarAppearancePlugin : IPlugin, IConfigurable, ITranslati
         _hasPreview = true;
     }
 
-    private void RestorePreview()
+    private async Task RestorePreviewAsync()
     {
         if (!_hasPreview) return;
         _hasPreview = false;
-        try { TaskbarEngine.RestorePreview(ReadOptions()); }
+        try { await TaskbarEngine.RestorePreviewAsync(ReadOptions()); }
         catch (Exception ex) { PluginSdk.Logger.Log($"[TaskbarAppearance] Restore preview: {ex.Message}", PluginSdk.LogLevel.Error); }
     }
 

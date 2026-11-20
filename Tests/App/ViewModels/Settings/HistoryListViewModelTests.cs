@@ -19,6 +19,21 @@ public sealed class HistoryListViewModelTests
     }
 
     [TestMethod]
+    public void BothCleanupActionsKeepHiddenHistory()
+    {
+        foreach (var lowUsageOnly in new[] { true, false })
+        {
+            var vm = new HistoryListViewModel<string>(() => ["invoice", "weekend", "recipes"],
+                value => new() { Primary = value, RawValue = value }, () => true, _ => { });
+            vm.SearchText = "invoice";
+            (lowUsageOnly ? vm.ClearBelowCommand : vm.ClearAllCommand).Execute(null);
+            CollectionAssert.AreEqual(new[] { "weekend", "recipes" }, vm.GetEntriesToSave().ToArray());
+            Assert.IsFalse(vm.ClearAllCommand.CanExecute(null));
+            Assert.IsFalse(vm.ClearBelowCommand.CanExecute(null));
+        }
+    }
+
+    [TestMethod]
     public void Constructor_MapsLoadedEntriesIntoFilteredItems()
     {
         var vm = MakeVm(new List<string> { "a.txt", "b.txt" });

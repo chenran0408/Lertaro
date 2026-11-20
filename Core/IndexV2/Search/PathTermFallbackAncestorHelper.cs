@@ -12,7 +12,8 @@ internal static class PathTermFallbackAncestorHelper
 {
     internal static int AncestorMask(Snapshot snapshot, DeltaOverlay delta, int parentRow,
         FzfPattern[] termPatterns, FzfBytePattern[] termBytePatterns, SearchMatcher.Worker worker,
-        Dictionary<int, int> memo, int fullMask, int rootMask, List<int> chain)
+        Dictionary<int, int> memo, int fullMask, int rootMask, List<int> chain,
+        Dictionary<int, PathTermFallback.NameHit> nameHits)
     {
         if (memo.TryGetValue(parentRow, out var cached))
             return cached;
@@ -55,9 +56,18 @@ internal static class PathTermFallbackAncestorHelper
             if (mask != fullMask)
             {
                 var uid = (int)snapshot.NameIds[node];
-                var nameUtf8 = snapshot.UniqueNameUtf8(uid);
-                if (nameUtf8.Length > 0)
-                    mask |= MaskForSegment(snapshot, uid, nameUtf8, termPatterns, termBytePatterns, worker, mask, fullMask);
+                // Without aliases, phase A already computed exactly this segment's literal term
+                // mask. Aliased folders keep the ancestor-specific (more permissive) matching rules.
+                if (!snapshot.HasAliases(uid))
+                {
+                    if (nameHits.TryGetValue(uid, out var hit)) mask |= hit.Mask;
+                }
+                else
+                {
+                    var nameUtf8 = snapshot.UniqueNameUtf8(uid);
+                    if (!nameUtf8.IsEmpty)
+                        mask |= MaskForSegment(snapshot, uid, nameUtf8, termPatterns, termBytePatterns, worker, mask, fullMask);
+                }
             }
 
             if (composable)

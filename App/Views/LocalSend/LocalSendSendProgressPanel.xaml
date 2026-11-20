@@ -1,6 +1,7 @@
 <UserControl x:Class="Lertaro.App.Views.LocalSend.LocalSendSendProgressPanel"
               xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:services="clr-namespace:Lertaro.App.Services"
               xmlns:local="clr-namespace:Lertaro.App.Views.LocalSend"
               xmlns:converters="clr-namespace:Lertaro.App.Converters">
     <UserControl.Resources>
@@ -35,8 +36,23 @@
             </Border>
         </Grid>
         <Border Grid.Row="1" Style="{StaticResource LocalSendActionBar}">
-            <Button Content="{Binding ActionText, RelativeSource={RelativeSource AncestorType={x:Type local:LocalSendSendProgressPanel}}}"
-                    Click="Action_Click" Style="{StaticResource SettingsButton}" HorizontalAlignment="Right"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="RetryFailedButton" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[LocalSend_RetryFailed]}"
+                        Click="Retry_Click" Margin="0,0,8,0">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource PrimarySettingsButton}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CanRetryFailed}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="{Binding ActionText, RelativeSource={RelativeSource AncestorType={x:Type local:LocalSendSendProgressPanel}}}"
+                    Click="Action_Click" Style="{StaticResource SettingsButton}"/>
+            </StackPanel>
         </Border>
     </Grid>
 </UserControl>

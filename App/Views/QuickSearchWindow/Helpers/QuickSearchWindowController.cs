@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Interop;
-using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Lertaro.App.Services;
 using Lertaro.App.Services.ShellIcons;
@@ -24,21 +23,9 @@ public class QuickSearchWindowController
     internal QuickSearchWindowForegroundWatcher ForegroundWatcher => _foregroundWatcher;
     internal IntPtr LastActiveHwnd { get => _lastActiveHwnd; set => _lastActiveHwnd = value; }
     internal int VisibilityOperationToken { get => _visibilityOpToken; set => _visibilityOpToken = value; }
-    // Bumped by every ShowWindow()/HideWindow() call. HideWindow()'s actual Hide() is deferred behind
-    // a fade-out (see its own comment), so a rapid Show() right after a Hide() needs a way to tell that
-    // deferred continuation "a newer call already superseded you" -- otherwise the pending continuation
-    // would still fire and hide the window moments after the user just re-summoned it.
+    // Superseded show callbacks must not reopen a window the user just dismissed.
     private int _visibilityOpToken;
-    // Set by a caller that's about to intentionally move focus to an external window itself as part of
-    // executing a result (e.g. WindowSwitcher's "activatewindow:" action -- see PluginActionExecutor).
-    // HideWindow's actual restore-focus step can be reached from THREE independent triggers -- this
-    // class's own HideWindow call, QuickSearchWindow.Window_Deactivated's safety net, and
-    // QuickSearchWindowForegroundWatcher's global foreground hook -- and whichever one happens to win
-    // the FinishHide race would otherwise restore focus to _lastActiveHwnd (whatever was foreground
-    // before this window was ever shown), undoing the freshly-activated target a beat later. Guarding
-    // FinishHide's own restore step once, here, covers all three without needing each caller to agree
-    // on which of them will actually fire first. Consumed (and cleared) the next time FinishHide runs,
-    // regardless of which trigger got there.
+    // An action that activates a different application owns the foreground handoff.
     private bool _suppressNextRestore;
     public void SuppressNextRestore() => _suppressNextRestore = true;
     // useAltTapBypass is used by callers backed by recent input on the Hook thread.
@@ -188,7 +175,7 @@ public class QuickSearchWindowController
 
     public void HideWindow(bool restoreFocus = true)
     {
-        var opToken = ++_visibilityOpToken;
+        ++_visibilityOpToken;
         _focusHelper.CancelPendingFocus();
 
         _foregroundWatcher.Stop();
@@ -207,93 +194,57 @@ public class QuickSearchWindowController
 
         _window.KeywordHistoryController.Reset();
 
-        // Everything below this point (the SearchQuery reset onward) reads as the window's "closed"
-        // state, so it's deferred behind a fade-out of whatever is CURRENTLY on screen -- fading out
-        // first, then resetting the content, means the window dismisses showing what the user was just
-        // looking at instead of jump-cutting to the empty/startup-panel state a beat before it vanishes.
-        void FinishHide()
+        // Give the target application its keyboard back immediately. Reset the search behind
+        // the hidden window so an empty launch panel never flashes on the way out.
+        _window.Hide();
+        // SearchQuery's own setter already runs PerformSearch("") when this actually changes the query
+        // (clearing/replacing results the normal way). Explicitly wiping Search.Results here on top of
+        // that used to erase the startup panel's own still-valid results/tabs the moment the box was
+        // already empty (nothing "changes" so the setter is a no-op) -- meaning next time the window
+        // showed, there was nothing left to display while the panel's async refetch ran, which is what
+        // produced the empty/loading flash ShowWindow's RefreshEmptyState() was supposed to avoid.
+        // Dies with the summon it belonged to, so the next one starts with the normal behaviour.
+        if (_stayOpen)
         {
-            // A newer ShowWindow()/HideWindow() call already superseded this one (e.g. the user
-            // re-summoned the window mid fade-out) -- don't hide out from under them.
-            if (opToken != _visibilityOpToken) return;
-
-            // SearchQuery's own setter already runs PerformSearch("") when this actually changes the query
-            // (clearing/replacing results the normal way). Explicitly wiping Search.Results here on top of
-            // that used to erase the startup panel's own still-valid results/tabs the moment the box was
-            // already empty (nothing "changes" so the setter is a no-op) -- meaning next time the window
-            // showed, there was nothing left to display while the panel's async refetch ran, which is what
-            // produced the empty/loading flash ShowWindow's RefreshEmptyState() was supposed to avoid.
-            // Dies with the summon it belonged to, so the next one starts with the normal behaviour.
-            if (_stayOpen)
-            {
-                _stayOpen = false;
-                StayOpenChanged?.Invoke(false);
-            }
-
-            // KeepSearchText: leave the query (and its results) alone so the next summon resumes where the
-            // user left off. ShowSupport re-selects that text when the window comes back, so typing still
-            // replaces it instead of appending to it.
-            if (!UserSettings.Load().SearchWindow.KeepSearchText) _window.ViewModel.SearchQuery = string.Empty;
-
-            _window.UpdateLayout();
-            _window.Hide();
-            // Hiding really does take the window off screen (WS_VISIBLE is cleared, and hit-testing can no
-            // longer reach it), but Win32 still answers GetWindowRect with the rectangle it last occupied --
-            // which is a live-looking, on-screen, captioned window to any enumerator that leaves out the
-            // IsWindowVisible check. PixPin's element picker is one of them: it drew its selection box
-            // exactly where the previous summon had been. -32000 is where Windows itself parks windows it
-            // has disabled, and the value such enumerators recognise as "not a candidate". ShowWindow runs
-            // PositionWindow twice around the Show, so nothing has to undo this.
-            _window.Left = ParkedOffScreen;
-            _window.Top = ParkedOffScreen;
-            PowerThrottlingHelper.WindowHidden("quick");
-
-            InlineSearchManager.Instance.KeyboardHook.IsQuickSearchWindowVisible = false;
-            InlineSearchManager.Instance.KeyboardHook.Start();
-
-            if (restoreFocus && !_suppressNextRestore && _lastActiveHwnd != IntPtr.Zero) QuickSearchWindowNative.SetForegroundWindow(_lastActiveHwnd);
-            _suppressNextRestore = false;
-            _lastActiveHwnd = IntPtr.Zero;
-
-            Task.Run(async () =>
-            {
-                await Task.Delay(100);
-                // These two genuinely free memory, so they still run on every hide.
-                try { ShellIconHelper.ClearCache(); } catch { }
-                try { PathCacheMaintenance.ClearAllPathCaches(); } catch { }
-            });
-
-            // Trimming the working set frees nothing -- it only evicts pages the next summon has to
-            // fault straight back in, which measured at ~17MB and 70% of a summon's time every single
-            // time, and at 4.7 seconds once when the machine was under an index rebuild's memory and
-            // disk pressure. Deferred until the window has been left alone; see IdleWorkingSetTrimGate.
-            IdleWorkingSetTrimmer.WindowHidden();
+            _stayOpen = false;
+            StayOpenChanged?.Invoke(false);
         }
 
-        if (_window.Content is UIElement fadeContent)
-        {
-            var fadeOutDuration = (Duration)System.Windows.Application.Current.FindResource("DurationFast");
-            var fadeOut = new DoubleAnimation(0.0, fadeOutDuration)
-            {
-                EasingFunction = System.Windows.Application.Current.TryFindResource("EaseOutCubic") as IEasingFunction
-            };
-            fadeContent.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+        // KeepSearchText: leave the query (and its results) alone so the next summon resumes where the
+        // user left off. ShowSupport re-selects that text when the window comes back, so typing still
+        // replaces it instead of appending to it.
+        if (!UserSettings.Load().SearchWindow.KeepSearchText) _window.ViewModel.SearchQuery = string.Empty;
 
-            // A one-shot dispatcher timer, not a pool thread sleeping to a blocking Invoke: the thread was
-            // occupied purely to wait out an animation, supersession is already handled by the search
-            // version guard inside FinishHide, and if the app began shutting down just after a hide the
-            // Invoke threw inside a fire-and-forget task -- an unobserved exception with no context.
-            var fadeTimer = new DispatcherTimer { Interval = fadeOutDuration.TimeSpan };
-            fadeTimer.Tick += (_, _) =>
-            {
-                fadeTimer.Stop();
-                FinishHide();
-            };
-            fadeTimer.Start();
-        }
-        else
+        // Hiding really does take the window off screen (WS_VISIBLE is cleared, and hit-testing can no
+        // longer reach it), but Win32 still answers GetWindowRect with the rectangle it last occupied --
+        // which is a live-looking, on-screen, captioned window to any enumerator that leaves out the
+        // IsWindowVisible check. PixPin's element picker is one of them: it drew its selection box
+        // exactly where the previous summon had been. -32000 is where Windows itself parks windows it
+        // has disabled, and the value such enumerators recognise as "not a candidate". ShowWindow runs
+        // PositionWindow twice around the Show, so nothing has to undo this.
+        _window.Left = ParkedOffScreen;
+        _window.Top = ParkedOffScreen;
+        PowerThrottlingHelper.WindowHidden("quick");
+
+        InlineSearchManager.Instance.KeyboardHook.IsQuickSearchWindowVisible = false;
+        InlineSearchManager.Instance.KeyboardHook.Start();
+
+        if (restoreFocus && !_suppressNextRestore && _lastActiveHwnd != IntPtr.Zero) QuickSearchWindowNative.SetForegroundWindow(_lastActiveHwnd);
+        _suppressNextRestore = false;
+        _lastActiveHwnd = IntPtr.Zero;
+
+        Task.Run(async () =>
         {
-            FinishHide();
-        }
+            await Task.Delay(100);
+            // These two genuinely free memory, so they still run on every hide.
+            try { ShellIconHelper.ClearCache(); } catch { }
+            try { PathCacheMaintenance.ClearAllPathCaches(); } catch { }
+        });
+
+        // Trimming the working set frees nothing -- it only evicts pages the next summon has to
+        // fault straight back in, which measured at ~17MB and 70% of a summon's time every single
+        // time, and at 4.7 seconds once when the machine was under an index rebuild's memory and
+        // disk pressure. Deferred until the window has been left alone; see IdleWorkingSetTrimGate.
+        IdleWorkingSetTrimmer.WindowHidden();
     }
 }

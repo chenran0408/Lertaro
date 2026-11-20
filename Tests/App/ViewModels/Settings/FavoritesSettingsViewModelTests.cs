@@ -9,6 +9,55 @@ namespace Lertaro.App.Tests.ViewModels.Settings;
 public sealed class FavoritesSettingsViewModelTests
 {
     [TestMethod]
+    public void ApplyAndSwitchCommitDraftsAndFilteredClearKeepsHiddenRows()
+    {
+        var settings = new UserSettings();
+        settings.Favorites.Clear();
+        var vm = new FavoritesSettingsViewModel(settings);
+        foreach (var name in new[] { "first", "second", "third" })
+        {
+            vm.NewPath = "https://example.invalid/" + name;
+            vm.NewName = name;
+            vm.AddCommand.Execute(null);
+        }
+
+        var first = vm.Items[0];
+        var second = vm.Items[1];
+        vm.EditCommand.Execute(first);
+        first.EditName = "renamed";
+        vm.EditCommand.Execute(second);
+        Assert.AreEqual("renamed", first.Name);
+        second.EditName = "updated";
+        vm.Save();
+        Assert.AreEqual("updated", settings.Favorites[1].Name);
+
+        vm.EditCommand.Execute(first);
+        first.EditPath = second.Path;
+        vm.EditCommand.Execute(second);
+        Assert.IsTrue(first.IsEditing);
+        Assert.IsTrue(first.HasPathError);
+        Assert.IsFalse(second.IsEditing);
+        vm.FilterText = "second";
+        vm.ClearCommand.Execute(null);
+        CollectionAssert.AreEqual(new[] { "renamed", "third" }, vm.Items.Select(row => row.Name).ToArray());
+        Assert.IsFalse(vm.ClearCommand.CanExecute(null));
+    }
+
+    [TestMethod]
+    public void SuggestedNamesFollowTypingUntilTheUserChoosesAName()
+    {
+        var vm = new FavoritesSettingsViewModel(new UserSettings());
+        vm.NewPath = @"D:\sample\a";
+        vm.NewPath += "bc.exe";
+        Assert.AreEqual("abc.exe", vm.NewName);
+        vm.NewPath = "https://example.invalid/";
+        Assert.AreEqual(string.Empty, vm.NewName);
+        vm.NewName = "chosen";
+        vm.NewPath = @"D:\sample\different.exe";
+        Assert.AreEqual("chosen", vm.NewName);
+    }
+
+    [TestMethod]
     public void Constructor_LoadsExistingFavorites()
     {
         var settings = new UserSettings { Favorites = new List<FavoriteItemSetting> { new() { Name = "Docs", Path = @"C:\Docs" } } };
@@ -107,14 +156,17 @@ public sealed class FavoritesSettingsViewModelTests
     }
 
     [TestMethod]
-    public void AddPathPresetCommand_Execute_SetsVirtualPathAndClearsName()
+    public void AddPathPresetCommand_SuggestsFolderNameAndPreservesCustomName()
     {
-        var vm = new FavoritesSettingsViewModel(new UserSettings()) { NewName = "Old", NewPath = @"C:\Old" };
+        var vm = new FavoritesSettingsViewModel(new UserSettings()) { NewPath = @"C:\Old" };
 
         vm.AddPathPresetCommand.Execute("shell:Downloads");
 
         Assert.AreEqual("shell:Downloads", vm.NewPath);
         Assert.AreEqual(PluginSdk.Helpers.ShellPathHelper.GetVirtualFolderDisplayName("shell:Downloads", ""), vm.NewName);
+        vm.NewName = "My documents";
+        vm.AddPathPresetCommand.Execute("shell:Personal");
+        Assert.AreEqual("My documents", vm.NewName);
     }
 
     [TestMethod]

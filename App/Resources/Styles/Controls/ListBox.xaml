@@ -21,13 +21,6 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
                     <Grid>
-                        <!-- SelectionOverlay carries the hover/selected background as its own Opacity
-                             fade rather than swapping ItemBorder's Background between Transparent and
-                             {DynamicResource HoverBackground}: a Storyboard can't animate a shared
-                             DynamicResource brush's Color without mutating that same brush everywhere
-                             else it's used, so the fade lives on a dedicated layer instead. Same for
-                             AccentBar: its Fill stays permanently AccentBarColor and only its own
-                             Opacity toggles. -->
                         <Border x:Name="SelectionOverlay" CornerRadius="{StaticResource CornerRadiusControl}"
                                 Background="{DynamicResource ItemSelected}" Margin="6,2,6,2" Opacity="0"/>
                         <Rectangle x:Name="AccentBar" Width="3" HorizontalAlignment="Left"
@@ -48,33 +41,9 @@
                              always covers the hover case too: a standalone hover trigger would be
                              dead weight that never fires differently from selection. -->
                         <Trigger Property="IsSelected" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="SelectionOverlay" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="{StaticResource DurationHover}" EasingFunction="{StaticResource EaseOutCubic}"/>
-                                        <DoubleAnimation Storyboard.TargetName="AccentBar" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="{StaticResource DurationHover}" EasingFunction="{StaticResource EaseOutCubic}"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="SelectionOverlay" Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="{StaticResource DurationHover}" EasingFunction="{StaticResource EaseOutCubic}"/>
-                                        <DoubleAnimation Storyboard.TargetName="AccentBar" Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="{StaticResource DurationHover}" EasingFunction="{StaticResource EaseOutCubic}"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
+                            <Setter TargetName="SelectionOverlay" Property="Opacity" Value="1"/>
+                            <Setter TargetName="AccentBar" Property="Opacity" Value="1"/>
                         </Trigger>
-                        <!-- Visibility=Collapsed, not just Opacity=0: a running "selected" animation's
-                             held value outranks a plain Setter on the SAME property (Opacity) regardless
-                             of trigger order or which condition changed last, so an Opacity Setter here
-                             can lose that fight. Visibility is a different property the animation never
-                             touches, so Collapsed hides the bar/overlay unconditionally no matter what
-                             the animation is doing underneath. -->
                         <DataTrigger Binding="{Binding IsEmptyResult}" Value="True">
                             <Setter TargetName="ItemBorder" Property="Background" Value="Transparent"/>
                             <Setter TargetName="AccentBar" Property="Visibility" Value="Collapsed"/>

@@ -1,88 +1,71 @@
 using System.Windows;
+using Lertaro.PluginSdk.Abstractions;
 using Lertaro.Core;
-
 using Lertaro.App.Services.Plugin;
 using Lertaro.App.Helpers.Visuals;
+
 namespace Lertaro.App.Services.Theme;
 
 public class ThemeManager
 {
     private static readonly Lazy<ThemeManager> _instance = new(() => new ThemeManager());
-    private static readonly PluginSdk.Abstractions.ITheme[] BuiltInThemes =
+    private static readonly ITheme[] BuiltInThemes =
     [
         new BuiltInTheme("Light", false),
         new BuiltInTheme("Dark", true)
     ];
     public static ThemeManager Instance => _instance.Value;
 
+    private ThemeSelection? _preview;
     private ResourceDictionary? _activeThemeDictionary;
     private string _currentThemeId = "Light";
-    private PluginSdk.Abstractions.ITheme? _activeTheme;
+    private ITheme? _activeTheme;
 
     public string CurrentThemeId => _currentThemeId;
     public ResourceDictionary? ActiveThemeDictionary => _activeThemeDictionary;
-    public PluginSdk.Abstractions.ITheme? ActiveTheme => _activeTheme;
+    public ITheme? ActiveTheme => _activeTheme;
 
     public event Action? ThemeChanged;
 
     private ThemeManager() => PluginSdk.Services.ThemeService.IsDarkThemeFunc = () => _activeTheme?.IsDark ?? false;
 
-    public IEnumerable<PluginSdk.Abstractions.ITheme> GetAvailableThemes() => PluginManager.Instance.ThemeProviders
-            .SelectMany(p => PluginPerformanceMonitor.Measure(p, () => p.GetThemes()?.ToList() ?? new List<PluginSdk.Abstractions.ITheme>()))
+    public IEnumerable<ITheme> GetAvailableThemes() => PluginManager.Instance.ThemeProviders
+            .SelectMany(p => PluginPerformanceMonitor.Measure(p, () => p.GetThemes()?.ToList() ?? new List<ITheme>()))
             .Concat(BuiltInThemes)
             .GroupBy(t => t.Id)
             .Select(g => g.First());
 
-    public void Initialize(string preferredThemeId)
+    public void Initialize(UserSettings settings)
     {
-        var settings = UserSettings.Load();
-        var themeIds = new[] { preferredThemeId, settings.Theme, settings.LightThemeId, settings.DarkThemeId };
-        var legacyThemes = themeIds.Any(NeedsLegacyThemeLookup)
-            ? GetLegacyThemes().ToList() : [];
-        var activeMode = ResolveThemeMode(preferredThemeId, SystemThemeWatcher.IsSystemLight ? "Light" : "Dark", legacyThemes);
-        var storedMode = ResolveThemeMode(settings.Theme, "Light", legacyThemes);
-        var lightMode = ResolveThemeMode(settings.LightThemeId, "Light", legacyThemes);
-        var darkMode = ResolveThemeMode(settings.DarkThemeId, "Dark", legacyThemes);
-
-        // The per-system slots are semantic slots: a legacy dark preset cannot remain assigned to
-        // the light slot (or vice versa) after its colors are removed.
-        if (lightMode != "Light") lightMode = "Light";
-        if (darkMode != "Dark") darkMode = "Dark";
-
-        if (settings.Theme != storedMode || settings.LightThemeId != lightMode || settings.DarkThemeId != darkMode)
+        var themes = GetAvailableThemes().ToArray();
+        var saved = ThemeSelection.Read(settings);
+        var resolved = saved.Resolve(themes);
+        if (resolved != saved)
         {
-            settings.Theme = storedMode;
-            settings.LightThemeId = lightMode;
-            settings.DarkThemeId = darkMode;
+            resolved.Store(settings);
             settings.Save();
         }
-
-        ApplyTheme(activeMode, saveSettings: false);
+        ApplyTheme(resolved.ActiveId(SystemThemeWatcher.IsSystemLight), false, themes);
     }
 
-    private static IEnumerable<PluginSdk.Abstractions.ITheme> GetLegacyThemes() => PluginManager.Instance.ThemeProviders
-        .SelectMany(provider => PluginPerformanceMonitor.Measure(provider,
-            () => provider.GetThemes()?.ToList() ?? new List<PluginSdk.Abstractions.ITheme>()));
-
-    private static bool NeedsLegacyThemeLookup(string? themeId) =>
-        !string.Equals(themeId, "Light", StringComparison.OrdinalIgnoreCase)
-        && !string.Equals(themeId, "Dark", StringComparison.OrdinalIgnoreCase)
-        && themeId?.EndsWith("Light", StringComparison.OrdinalIgnoreCase) != true
-        && themeId?.EndsWith("Dark", StringComparison.OrdinalIgnoreCase) != true;
-
-    internal static string ResolveThemeMode(string? themeId, string fallback,
-        IEnumerable<PluginSdk.Abstractions.ITheme> legacyThemes)
+    internal void Preview(ThemeSelection selection, IReadOnlyList<ITheme> themes)
     {
-        if (string.Equals(themeId, "Light", StringComparison.OrdinalIgnoreCase)) return "Light";
-        if (string.Equals(themeId, "Dark", StringComparison.OrdinalIgnoreCase)) return "Dark";
+        _preview = selection;
+        ApplySelection(selection, themes);
+    }
 
-        var legacy = legacyThemes.FirstOrDefault(theme =>
-            string.Equals(theme.Id, themeId, StringComparison.OrdinalIgnoreCase));
-        if (legacy != null) return legacy.IsDark ? "Dark" : "Light";
+    internal void EndPreview(UserSettings settings, IReadOnlyList<ITheme> themes)
+    {
+        if (_preview == null) return;
+        _preview = null;
+        ApplySelection(ThemeSelection.Read(settings), themes);
+    }
 
-        if (themeId?.EndsWith("Dark", StringComparison.OrdinalIgnoreCase) == true) return "Dark";
-        if (themeId?.EndsWith("Light", StringComparison.OrdinalIgnoreCase) == true) return "Light";
-        return string.Equals(fallback, "Dark", StringComparison.OrdinalIgnoreCase) ? "Dark" : "Light";
+    private void ApplySelection(ThemeSelection selection, IReadOnlyList<ITheme>? themes = null)
+    {
+        var themeId = selection.ActiveId(SystemThemeWatcher.IsSystemLight);
+        if (!string.Equals(CurrentThemeId, themeId, StringComparison.OrdinalIgnoreCase))
+            ApplyTheme(themeId, false, themes ?? GetAvailableThemes().ToArray());
     }
 
     /// <summary>Starts watching the OS light/dark setting and re-applies the user's configured
@@ -101,31 +84,17 @@ public class ThemeManager
                 return;
             dispatcher.BeginInvoke(new Action(() =>
             {
-                var settings = UserSettings.Load();
-                if (!settings.ThemeFollowSystem) return;
-                ApplyTheme(ResolveLightDarkThemeId(SystemThemeWatcher.IsSystemLight, settings), saveSettings: false);
+                var selection = _preview ?? ThemeSelection.Read(UserSettings.Load());
+                if (selection.FollowSystem) ApplySelection(selection);
             }));
         };
     }
 
-    /// <summary>Resolves the "follow system" light/dark theme pair's configured Id to one that
-    /// actually exists among the the shell glass palette modes. Retired preset IDs, missing IDs, or IDs
-    /// with the wrong light/dark flavor resolve to the matching the shell glass mode.</summary>
-    public string ResolveLightDarkThemeId(bool wantLight, UserSettings? settings = null)
-    {
-        settings ??= UserSettings.Load();
-        var configured = wantLight ? settings.LightThemeId : settings.DarkThemeId;
-        var themes = GetAvailableThemes().Where(t => t.IsDark != wantLight).ToList();
-        if (!string.IsNullOrEmpty(configured) && themes.Any(t => string.Equals(t.Id, configured, StringComparison.OrdinalIgnoreCase)))
-        {
-            return configured;
-        }
-        return themes.FirstOrDefault()?.Id ?? "Light";
-    }
+    public bool ApplyTheme(string themeId, bool saveSettings = true) =>
+        ApplyTheme(themeId, saveSettings, GetAvailableThemes().ToArray());
 
-    public bool ApplyTheme(string themeId, bool saveSettings = true)
+    private bool ApplyTheme(string themeId, bool saveSettings, IReadOnlyList<ITheme> themes)
     {
-        var themes = GetAvailableThemes().ToList();
         // Fallback to Light if not found
         var theme = themes.FirstOrDefault(t => string.Equals(t.Id, themeId, StringComparison.OrdinalIgnoreCase)) ?? themes.FirstOrDefault(t => string.Equals(t.Id, "Light", StringComparison.OrdinalIgnoreCase));
         if (theme == null)

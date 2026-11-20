@@ -8,20 +8,17 @@ internal static class TaskbarEngine
     private static readonly SemaphoreSlim Gate = new(1);
     private static bool _resumeAllowed = true;
 
-    internal static void RestorePreview(TaskbarOptions saved)
+    internal static async Task RestorePreviewAsync(TaskbarOptions saved)
     {
-        if (!string.IsNullOrWhiteSpace(saved.ExecutablePath))
+        if (string.IsNullOrWhiteSpace(saved.ExecutablePath))
         {
-            // A bundled preview never edits an external engine. Restore its prior absence without launching it.
-            BundledTaskbarEngine.Stop();
+            await ApplyAsync(saved);
             return;
         }
-        if (!saved.Enabled) BundledTaskbarEngine.Stop();
-        else if (BundledTaskbarEngine.IsRunning)
-        {
-            saved.IsBundled = true;
-            TaskbarConfigStore.Apply(Path.Combine(BundledTaskbarEngine.RuntimeDirectory, "settings.json"), saved);
-        }
+        // A bundled preview never changes the external engine. Stop only our own host.
+        await Gate.WaitAsync();
+        try { await BundledTaskbarEngine.StopAsync(); }
+        finally { Gate.Release(); }
     }
 
     internal static async Task SuspendAsync()

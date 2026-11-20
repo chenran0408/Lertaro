@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Shell;
 using Lertaro.App.Helpers.Visuals;
 using MediaBrush = System.Windows.Media.Brush;
 using MediaBrushes = System.Windows.Media.Brushes;
@@ -76,9 +77,24 @@ public class AppWindow : Window
         SetResourceReference(SecondaryForegroundBrushProperty, "TextSecondary");
         SetResourceReference(PanelBorderBrushProperty, "WindowBorderBrush");
         SetResourceReference(AccentBrushProperty, "AccentBlue");
-        // Fluent corners come from the window manager: the shape (and its ClearType text) stays
-        // real instead of a painted Border trick. Windows 11 rounds; older systems fail the call
-        // harmlessly and keep square corners. This path existed but was never wired up.
-        SourceInitialized += (_, _) => DwmWindowCorners.ApplyRound(this);
+    }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        if (WindowStyle == WindowStyle.None && !AllowsTransparency &&
+            ResizeMode is ResizeMode.CanResize or ResizeMode.CanResizeWithGrip &&
+            WindowChrome.GetWindowChrome(this) == null)
+        {
+            // Extend the client area across the native resize frame while retaining edge hit testing.
+            WindowChrome.SetWindowChrome(this, new WindowChrome
+            {
+                CaptionHeight = 0,
+                GlassFrameThickness = new Thickness(0),
+                UseAeroCaptionButtons = false
+            });
+        }
+
+        base.OnSourceInitialized(e);
+        DwmWindowCorners.ApplyRound(this);
     }
 }

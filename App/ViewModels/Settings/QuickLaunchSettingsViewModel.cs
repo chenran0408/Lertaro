@@ -11,6 +11,8 @@ namespace Lertaro.App.ViewModels.Settings;
 public sealed class QuickLaunchSettingsViewModel : ViewModelBase
 {
     private readonly UserSettings _userSettings;
+    public event Action<object>? InvalidEdit;
+    private bool _hasCustomName;
     private string _newName = string.Empty;
     private string _newPath = string.Empty;
     private bool _isEnabled;
@@ -29,6 +31,7 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
             OnPropertyChanged(nameof(HasItems));
             CommandManager.InvalidateRequerySuggested();
         };
+        VisibleItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ClearLabel));
         _isAddFormOpen = Items.Count == 0;
 
         var disabledIds = userSettings.QuickLaunch.DisabledSourceIds;
@@ -48,7 +51,8 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
         }
 
         AddCommand = new RelayCommand(Add, CanAdd);
-        ClearCommand = new RelayCommand(Clear);
+        ShowAllCommand = new RelayCommand(() => FilterText = string.Empty);
+        ClearCommand = new RelayCommand(Clear, () => CanReorder ? HasItems : MatchingItems().Any());
         RemoveCommand = new RelayCommand<QuickLaunchItemViewModel>(item => Items.Remove(item));
         EditCommand = new RelayCommand<QuickLaunchItemViewModel>(Edit);
         SaveEditCommand = new RelayCommand<QuickLaunchItemViewModel>(SaveEdit, CanSaveEdit);
@@ -70,6 +74,7 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
     public ObservableCollection<QuickLaunchSourceOptionViewModel> Sources { get; } = new();
     public ICommand SelectSectionCommand { get; }
     public ICommand AddCommand { get; }
+    public ICommand ShowAllCommand { get; }
     public ICommand ClearCommand { get; }
     public ICommand RemoveCommand { get; }
     public ICommand EditCommand { get; }
@@ -84,6 +89,7 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
     public ICommand BrowseEditFolderCommand { get; }
     public ICommand BrowseEditFileCommand { get; }
 
+    internal string? CustomName => _hasCustomName ? NewName.Trim() : null;
     public bool HasItems => Items.Count > 0;
     private bool _isAddFormOpen;
     public bool IsAddFormOpen { get => _isAddFormOpen; set => SetProperty(ref _isAddFormOpen, value); }
@@ -98,10 +104,9 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
             if (!SetProperty(ref _filterText, value)) return;
             var query = value.Trim();
             CollectionViewSource.GetDefaultView(Items).Filter = query.Length == 0 ? null :
-                row => row is QuickLaunchItemViewModel item && (item.IsEditing
-                    || item.DisplayName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
-                    || item.Path.Contains(query, StringComparison.OrdinalIgnoreCase));
+                row => row is QuickLaunchItemViewModel item && (item.IsEditing || MatchesFilter(item, query));
             OnPropertyChanged(nameof(CanReorder));
+            OnPropertyChanged(nameof(ClearLabel));
             CommandManager.InvalidateRequerySuggested();
         }
     }
@@ -128,7 +133,11 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
     public string NewName
     {
         get => _newName;
-        set => SetProperty(ref _newName, value);
+        set
+        {
+            _hasCustomName = !string.IsNullOrWhiteSpace(value);
+            SetProperty(ref _newName, value);
+        }
     }
 
     public string NewPath
@@ -137,14 +146,20 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
         set
         {
             if (!SetProperty(ref _newPath, value)) return;
+            if (!_hasCustomName)
+            {
+                var name = string.IsNullOrWhiteSpace(value) || FavoriteUrlHelper.IsWebUrl(value)
+                    ? string.Empty
+                    : LaunchItemNameHelper.GetAutomaticName(NormalizePath(value));
+                SetProperty(ref _newName, name, nameof(NewName));
+            }
             CommandManager.InvalidateRequerySuggested();
-            if (string.IsNullOrWhiteSpace(NewName) && !FavoriteUrlHelper.IsWebUrl(value))
-                NewName = LaunchItemNameHelper.GetAutomaticName(value);
         }
     }
 
     public void NotifyLanguageChanged()
     {
+        OnPropertyChanged(nameof(ClearLabel));
         foreach (var source in Sources)
         {
             if (QuickLaunchSourceCatalog.Find(source.Id) is { } provider)
@@ -154,6 +169,7 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
 
     public void Save()
     {
+        if (!TryFinishEdit()) return;
         var settings = _userSettings.QuickLaunch;
         settings.Enabled = IsEnabled;
         settings.ShowShortcutBadges = ShowShortcutBadges;
@@ -179,7 +195,26 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
             normalized, StringComparison.OrdinalIgnoreCase));
     }
 
-    private void Clear() => Items.Clear();
+    private System.ComponentModel.ICollectionView VisibleItems => CollectionViewSource.GetDefaultView(Items);
+    private static bool MatchesFilter(QuickLaunchItemViewModel item, string query) =>
+        item.DisplayName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+        || item.Path.Contains(query, StringComparison.OrdinalIgnoreCase);
+
+    private IEnumerable<QuickLaunchItemViewModel> MatchingItems()
+    {
+        var query = FilterText.Trim();
+        return query.Length == 0 ? Items : Items.Where(item => MatchesFilter(item, query));
+    }
+
+    private int VisibleCount => CanReorder ? Items.Count : MatchingItems().Count();
+    public string ClearLabel => string.Format(Services.TranslationManager.Instance[
+        CanReorder ? "List_ClearAllCount" : "List_ClearMatchesCount"], VisibleCount);
+
+    private void Clear()
+    {
+        foreach (var row in MatchingItems().ToArray())
+            Items.Remove(row);
+    }
 
     private void Add()
     {
@@ -191,12 +226,30 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
 
     private void Edit(QuickLaunchItemViewModel? item)
     {
-        if (item == null) return;
-        foreach (var other in Items.Where(other => other != item))
-            other.IsEditing = false;
+        if (item == null || item.IsEditing || !TryFinishEdit()) return;
+        item.HasPathError = false;
         item.EditName = item.Name;
         item.EditPath = item.Path;
         item.IsEditing = true;
+    }
+
+    internal bool TryFinishEdit()
+    {
+        var row = Items.FirstOrDefault(item => item.IsEditing);
+        if (row == null) return true;
+        if (row.EditName == row.Name && row.EditPath == row.Path)
+        {
+            CancelEdit(row);
+            return true;
+        }
+        if (CanSaveEdit(row))
+        {
+            SaveEdit(row);
+            return true;
+        }
+        row.HasPathError = true;
+        InvalidEdit?.Invoke(row);
+        return false;
     }
 
     private bool CanSaveEdit(QuickLaunchItemViewModel? item)
@@ -298,7 +351,9 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
             .Select(item => FavoritePathResolver.NormalizeForComparison(item.Path))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var rawPath in paths)
+        var selected = paths.ToArray();
+        var customName = selected.Length == 1 ? CustomName : null;
+        foreach (var rawPath in selected)
         {
             var path = rawPath.Trim().Trim('"');
             if (string.IsNullOrWhiteSpace(path) || !FavoritePathResolver.IsPathAvailable(path))
@@ -308,7 +363,7 @@ public sealed class QuickLaunchSettingsViewModel : ViewModelBase
 
             Items.Add(new QuickLaunchItemViewModel
             {
-                Name = LaunchItemNameHelper.GetAutomaticName(path),
+                Name = customName ?? LaunchItemNameHelper.GetAutomaticName(path),
                 Path = path
             });
         }
@@ -344,13 +399,19 @@ public sealed class QuickLaunchItemViewModel : ViewModelBase
         }
     }
     public string EditName { get => _editName; set => SetProperty(ref _editName, value); }
+    private bool _hasPathError;
+    public bool HasPathError { get => _hasPathError; internal set => SetProperty(ref _hasPathError, value); }
+
     public string EditPath
     {
         get => _editPath;
         set
         {
             if (SetProperty(ref _editPath, value))
+            {
+                HasPathError = false;
                 CommandManager.InvalidateRequerySuggested();
+            }
         }
     }
     public bool IsEditing { get => _isEditing; set => SetProperty(ref _isEditing, value); }

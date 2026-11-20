@@ -10,6 +10,8 @@ namespace Lertaro.App.ViewModels.Settings;
 public class FavoritesSettingsViewModel : ViewModelBase
 {
     private readonly UserSettings _userSettings;
+    public event Action<object>? InvalidEdit;
+    private bool _hasCustomName;
     private string _newName = string.Empty;
     private string _newPath = string.Empty;
 
@@ -32,10 +34,12 @@ public class FavoritesSettingsViewModel : ViewModelBase
             CommandManager.InvalidateRequerySuggested();
         };
         FavoriteHotkeySettingsSupport.RefreshHints(this);
+        VisibleItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ClearLabel));
         _isAddFormOpen = Items.Count == 0;
 
         AddCommand = new RelayCommand(Add, CanAdd);
-        ClearCommand = new RelayCommand(Clear);
+        ShowAllCommand = new RelayCommand(() => FilterText = string.Empty);
+        ClearCommand = new RelayCommand(Clear, () => CanReorder ? HasItems : MatchingItems().Any());
         RemoveCommand = new RelayCommand<FavoriteItemViewModel>(Remove);
         EditCommand = new RelayCommand<FavoriteItemViewModel>(Edit);
         SaveEditCommand = new RelayCommand<FavoriteItemViewModel>(SaveEdit, CanSaveEdit);
@@ -59,6 +63,7 @@ public class FavoritesSettingsViewModel : ViewModelBase
     public UserSettings Settings => _userSettings;
 
     public ICommand AddCommand { get; }
+    public ICommand ShowAllCommand { get; }
     public ICommand ClearCommand { get; }
     public ICommand RemoveCommand { get; }
     public ICommand EditCommand { get; }
@@ -72,6 +77,9 @@ public class FavoritesSettingsViewModel : ViewModelBase
     public ICommand MoveDownCommand { get; }
     public ICommand AddPathPresetCommand { get; }
 
+    public void NotifyLanguageChanged() => OnPropertyChanged(nameof(ClearLabel));
+
+    internal string? CustomName => _hasCustomName ? NewName.Trim() : null;
     public bool HasItems => Items.Count > 0;
     private bool _isAddFormOpen;
     public bool IsAddFormOpen { get => _isAddFormOpen; set => SetProperty(ref _isAddFormOpen, value); }
@@ -86,10 +94,9 @@ public class FavoritesSettingsViewModel : ViewModelBase
             if (!SetProperty(ref _filterText, value)) return;
             var query = value.Trim();
             CollectionViewSource.GetDefaultView(Items).Filter = query.Length == 0 ? null :
-                row => row is FavoriteItemViewModel item && (item.IsEditing
-                    || item.DisplayName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
-                    || item.Path.Contains(query, StringComparison.OrdinalIgnoreCase));
+                row => row is FavoriteItemViewModel item && (item.IsEditing || MatchesFilter(item, query));
             OnPropertyChanged(nameof(CanReorder));
+            OnPropertyChanged(nameof(ClearLabel));
             CommandManager.InvalidateRequerySuggested();
         }
     }
@@ -105,8 +112,8 @@ public class FavoritesSettingsViewModel : ViewModelBase
         get => _newName;
         set
         {
-            if (SetProperty(ref _newName, value))
-                CommandManager.InvalidateRequerySuggested();
+            _hasCustomName = !string.IsNullOrWhiteSpace(value);
+            SetProperty(ref _newName, value);
         }
     }
 
@@ -115,33 +122,15 @@ public class FavoritesSettingsViewModel : ViewModelBase
         get => _newPath;
         set
         {
-            if (SetProperty(ref _newPath, value))
+            if (!SetProperty(ref _newPath, value)) return;
+            if (!_hasCustomName)
             {
-                CommandManager.InvalidateRequerySuggested();
-                // A URL leaves the name blank so the full URL shows; a real file path auto-fills
-                // from its file name, and a shell virtual path auto-fills from the shell display name.
-                if (string.IsNullOrWhiteSpace(NewName) && !string.IsNullOrWhiteSpace(value)
-                    && !FavoriteUrlHelper.IsWebUrl(value))
-                {
-                    try
-                    {
-                        var expanded = FavoritePathResolver.Expand(value);
-                        if (FavoritePathResolver.IsVirtualPath(expanded))
-                        {
-                            var virtualName = PluginSdk.Helpers.ShellPathHelper.GetVirtualFolderDisplayName(expanded, string.Empty);
-                            if (!string.IsNullOrEmpty(virtualName))
-                                NewName = virtualName;
-                        }
-                        else
-                        {
-                            var name = System.IO.Path.GetFileName(expanded.TrimEnd('\\', '/'));
-                            if (!string.IsNullOrEmpty(name))
-                                NewName = name;
-                        }
-                    }
-                    catch { }
-                }
+                var name = string.IsNullOrWhiteSpace(value) || FavoriteUrlHelper.IsWebUrl(value)
+                    ? string.Empty
+                    : FavoritePathResolver.GetDisplayName(NormalizePath(value));
+                SetProperty(ref _newName, name, nameof(NewName));
             }
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 
@@ -154,10 +143,25 @@ public class FavoritesSettingsViewModel : ViewModelBase
             normalized, StringComparison.OrdinalIgnoreCase));
     }
 
+    private System.ComponentModel.ICollectionView VisibleItems => CollectionViewSource.GetDefaultView(Items);
+    private static bool MatchesFilter(FavoriteItemViewModel item, string query) =>
+        item.DisplayName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+        || item.Path.Contains(query, StringComparison.OrdinalIgnoreCase);
+
+    private IEnumerable<FavoriteItemViewModel> MatchingItems()
+    {
+        var query = FilterText.Trim();
+        return query.Length == 0 ? Items : Items.Where(item => MatchesFilter(item, query));
+    }
+
+    private int VisibleCount => CanReorder ? Items.Count : MatchingItems().Count();
+    public string ClearLabel => string.Format(Services.TranslationManager.Instance[
+        CanReorder ? "List_ClearAllCount" : "List_ClearMatchesCount"], VisibleCount);
+
     private void Clear()
     {
-        foreach (var item in Items) item.PropertyChanged -= OnItemPropertyChanged;
-        Items.Clear();
+        foreach (var row in MatchingItems().ToArray())
+            Items.Remove(row);
     }
 
     private void Add()
@@ -176,7 +180,6 @@ public class FavoritesSettingsViewModel : ViewModelBase
     public void AddPathPreset(string? path)
     {
         if (string.IsNullOrWhiteSpace(path)) return;
-        NewName = string.Empty;
         NewPath = path;
         IsAddFormOpen = true;
     }
@@ -191,12 +194,30 @@ public class FavoritesSettingsViewModel : ViewModelBase
 
     private void Edit(FavoriteItemViewModel item)
     {
-        if (item == null) return;
-        foreach (var other in Items.Where(other => other != item))
-            other.IsEditing = false;
+        if (item == null || item.IsEditing || !TryFinishEdit()) return;
+        item.HasPathError = false;
         item.EditName = item.Name;
         item.EditPath = item.Path;
         item.IsEditing = true;
+    }
+
+    internal bool TryFinishEdit()
+    {
+        var row = Items.FirstOrDefault(item => item.IsEditing);
+        if (row == null) return true;
+        if (row.EditName == row.Name && row.EditPath == row.Path)
+        {
+            CancelEdit(row);
+            return true;
+        }
+        if (CanSaveEdit(row))
+        {
+            SaveEdit(row);
+            return true;
+        }
+        row.HasPathError = true;
+        InvalidEdit?.Invoke(row);
+        return false;
     }
 
     private bool CanSaveEdit(FavoriteItemViewModel? item)
@@ -288,7 +309,11 @@ public class FavoritesSettingsViewModel : ViewModelBase
         return index >= 0 && index < Items.Count - 1;
     }
 
-    public void Save() => _userSettings.Favorites = Items.Select(x => new FavoriteItemSetting { Name = x.Name, Path = x.Path, Hotkey = x.Hotkey }).ToList();
+    public void Save()
+    {
+        if (!TryFinishEdit()) return;
+        _userSettings.Favorites = Items.Select(x => new FavoriteItemSetting { Name = x.Name, Path = x.Path, Hotkey = x.Hotkey }).ToList();
+    }
 
     /// <summary>
     /// Re-applies the global-hotkey registrations after the favorites above were written to settings, and

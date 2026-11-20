@@ -16,7 +16,7 @@ public sealed class ThemeManagerModeTests
     }
 
     [STATestMethod]
-    public void AvailableThemesAreOnlyBuiltInLightAndDarkModes()
+    public void BuiltInLightAndDarkAreAvailableWithoutPlugins()
     {
         var themes = ThemeManager.Instance.GetAvailableThemes().ToArray();
 
@@ -25,22 +25,24 @@ public sealed class ThemeManagerModeTests
         Assert.IsTrue(themes[1].IsDark);
     }
 
-    [STATestMethod]
-    public void LegacyThemeModeUsesKnownThemeMetadataBeforeItsIdSuffix()
+    [TestMethod]
+    public void InstalledPluginChoicesSurviveRestartIncludingBothSystemSlots()
     {
-        var legacy = new[] { new FakeTheme("old-preset", isDark: true) };
-
-        Assert.AreEqual("Dark", ThemeManager.ResolveThemeMode("old-preset", "Light", legacy));
-        Assert.AreEqual("Light", ThemeManager.ResolveThemeMode("old-preset", "Dark",
-            new[] { new FakeTheme("old-preset", isDark: false) }));
+        var themes = new[] { new FakeTheme("AmberLight", false), new FakeTheme("OceanDark", true) };
+        var saved = new ThemeSelection("amberlight", "AmberLight", "OceanDark", true);
+        var selection = saved.Resolve(themes);
+        Assert.AreEqual("AmberLight", selection.ManualId);
+        Assert.AreEqual("AmberLight", selection.ActiveId(true));
+        Assert.AreEqual("OceanDark", selection.ActiveId(false));
+        Assert.AreEqual("AmberLight", (selection with { FollowSystem = false }).ActiveId(false));
     }
 
-    [STATestMethod]
-    public void LegacyThemeModeFallsBackToRecognizedSuffixThenRequestedMode()
+    [TestMethod]
+    public void MissingThemesAndSlotsWithWrongBrightnessFallBackToBuiltIns()
     {
-        Assert.AreEqual("Dark", ThemeManager.ResolveThemeMode("RetiredPresetDark", "Light", []));
-        Assert.AreEqual("Light", ThemeManager.ResolveThemeMode("RetiredPresetLight", "Dark", []));
-        Assert.AreEqual("Dark", ThemeManager.ResolveThemeMode("UnknownPreset", "Dark", []));
-        Assert.AreEqual("Light", ThemeManager.ResolveThemeMode("UnknownPreset", "other", []));
+        var themes = new[] { new FakeTheme("AmberLight", false), new FakeTheme("OceanDark", true) };
+        var removed = new ThemeSelection("RetiredDark", "OceanDark", "AmberLight", false);
+        Assert.AreEqual(new ThemeSelection("Dark", "Light", "Dark", false), removed.Resolve(themes));
+        Assert.AreEqual("Light", (removed with { ManualId = "Missing" }).Resolve(themes).ManualId);
     }
 }

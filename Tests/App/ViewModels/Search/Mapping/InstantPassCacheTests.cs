@@ -14,6 +14,17 @@ namespace Lertaro.App.Tests.ViewModels.Search.Mapping;
 public sealed class InstantPassCacheTests
 {
     [TestMethod]
+    public async Task SupersededCatalogSearchHonorsCancellation()
+    {
+        var pass = new SearchResultMapper.InstantPassCache();
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        pass.StartCatalogSearch("settings", "settings", cancellation.Token);
+        Assert.IsNotNull(pass.Catalog);
+        await Assert.ThrowsExactlyAsync<TaskCanceledException>(() => pass.Catalog);
+    }
+
+    [TestMethod]
     public async Task EarlyEmissionAndFilePaint_ShareOneProviderCall()
     {
         var provider = new CountingProvider();

@@ -67,7 +67,7 @@ internal sealed class QuickSearchWindowShowSupport
 
         var fadeContent = window.Content as UIElement;
         fadeContent?.BeginAnimation(UIElement.OpacityProperty, null);
-        fadeContent?.Opacity = 0;
+        fadeContent?.Opacity = 1;
         await WindowPresentationHelper.ShowAsync(window, () =>
         {
             // Keep the inline hook live until the prepared window is ready to receive focus. During
@@ -78,10 +78,11 @@ internal sealed class QuickSearchWindowShowSupport
             window.WindowState = WindowState.Normal;
             _controller.PositionWindow();
 
-            if (fadeContent != null)
+            if (fadeContent != null && SystemParameters.ClientAreaAnimation && System.Windows.Media.RenderCapability.Tier > 0)
             {
-                var fadeIn = new DoubleAnimation(1.0, (Duration)System.Windows.Application.Current.FindResource("DurationWindowFadeIn"))
+                var fadeIn = new DoubleAnimation(0.85, 1.0, TimeSpan.FromMilliseconds(90))
                 {
+                    FillBehavior = FillBehavior.Stop,
                     EasingFunction = System.Windows.Application.Current.TryFindResource("EaseOutCubic") as IEasingFunction
                 };
                 fadeContent.BeginAnimation(UIElement.OpacityProperty, fadeIn);

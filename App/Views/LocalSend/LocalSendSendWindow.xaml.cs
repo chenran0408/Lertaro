@@ -12,7 +12,6 @@ namespace Lertaro.App.Views.LocalSend;
 public partial class LocalSendSendWindow : Controls.AppWindow
 {
     private readonly LocalSendSendViewModel _vm;
-    private CancelSource _cancelSource;
 
     public LocalSendSendWindow(
         IEnumerable<string>? initialFiles = null,
@@ -26,6 +25,7 @@ public partial class LocalSendSendWindow : Controls.AppWindow
         _vm = new LocalSendSendViewModel(initialFiles, initialText, initialMode);
         DataContext = _vm;
         _vm.PropertyChanged += Vm_PropertyChanged;
+        _vm.SendingStarted += (_, _) => Dispatcher.BeginInvoke(UpdateStep2UiState);
         StateChanged += (_, _) => { if (WindowState == WindowState.Maximized) WindowState = WindowState.Normal; };
         TranslationManager.Instance.PropertyChanged += OnLanguageChanged;
         Closed += (_, _) =>
@@ -102,12 +102,9 @@ public partial class LocalSendSendWindow : Controls.AppWindow
             return;
         }
 
-        TxtWindowTitle.Text = _cancelSource switch
-        {
-            CancelSource.Self => TranslationManager.Instance["Settings_LocalSend_Canceled"],
-            CancelSource.Receiver => TranslationManager.Instance["Settings_LocalSend_ReceiverCanceled"],
-            _ => LocalSendSendPresentation.GetStatus(_vm.LastSendResult, null, string.Empty)
-        };
+        TxtWindowTitle.Text = _vm.SentDeviceCount > 0 && _vm.SentDeviceCount < _vm.TargetDeviceCount
+            ? string.Format(TranslationManager.Instance["Settings_LocalSend_BatchPartial"], _vm.SentDeviceCount, _vm.TargetDeviceCount)
+            : LocalSendSendPresentation.GetStatus(_vm.LastSendResult, null, string.Empty);
     }
 
     private void Panel_CloseRequested(object? sender, EventArgs e)
@@ -128,16 +125,7 @@ public partial class LocalSendSendWindow : Controls.AppWindow
         _vm.CurrentStep = 2;
         TxtWindowTitle.Text = TranslationManager.Instance["Settings_LocalSend_Waiting"];
 
-        EventHandler sendingStarted = (_, _) => Dispatcher.BeginInvoke(UpdateStep2UiState);
-        _vm.SendingStarted += sendingStarted;
-        try
-        {
-            await _vm.StartSendBatchAsync(e.Devices.ToList());
-        }
-        finally
-        {
-            _vm.SendingStarted -= sendingStarted;
-        }
+        await _vm.StartSendBatchAsync(e.Devices.ToList());
         UpdateStep2UiState();
     }
 
@@ -145,7 +133,6 @@ public partial class LocalSendSendWindow : Controls.AppWindow
     {
         if (_vm.IsSending)
         {
-            _cancelSource = CancelSource.Self;
             TxtWindowTitle.Text = TranslationManager.Instance["Settings_LocalSend_Canceled"];
             _vm.CancelCommand.Execute(null);
             return;
@@ -153,13 +140,6 @@ public partial class LocalSendSendWindow : Controls.AppWindow
 
         Close();
     }
-
-    public void HandleSessionCanceled(string sessionId) => Dispatcher.BeginInvoke(new Action(() =>
-    {
-        _cancelSource = CancelSource.Receiver;
-        TxtWindowTitle.Text = TranslationManager.Instance["Settings_LocalSend_ReceiverCanceled"];
-        _vm.CancelCommand.Execute(null);
-    }));
 
     protected override void OnPreviewKeyDown(WpfKeyEventArgs e)
     {
@@ -175,6 +155,5 @@ public partial class LocalSendSendWindow : Controls.AppWindow
         base.OnClosing(e);
     }
 
-    private enum CancelSource { None, Self, Receiver }
 }
 

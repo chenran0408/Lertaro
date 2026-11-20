@@ -28,7 +28,7 @@
                         <Button Click="UndoPreview" Style="{StaticResource SettingsButton}" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Background_Undo]}"/>
                     </WrapPanel>
                     <TextBlock Margin="0,8,0,0" Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=ForegroundBrush}" Text="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_TaskbarOpacity]}"/>
-                    <Slider x:Name="OpacitySlider" Minimum="0" Maximum="100" IsSnapToTickEnabled="True" TickFrequency="1" AutoToolTipPlacement="TopLeft"/>
+                    <Slider x:Name="OpacitySlider" AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Appearance_TaskbarOpacity]}" Minimum="0" Maximum="100" IsSnapToTickEnabled="True" TickFrequency="1" AutoToolTipPlacement="TopLeft"/>
                     <TextBlock x:Name="PreviewStatus" Style="{DynamicResource SettingsHintText}" TextWrapping="Wrap"/>
                 </StackPanel>
                 <plugins:PluginConfigSection x:Name="Fields" Visibility="Collapsed"/>

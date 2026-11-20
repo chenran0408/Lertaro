@@ -104,7 +104,7 @@ public class RippleAdorner : Adorner
 
     private static void Element_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (sender is UIElement clickedElement)
+        if (SystemParameters.ClientAreaAnimation && RenderCapability.Tier > 0 && sender is UIElement clickedElement)
         {
             var layer = AdornerLayer.GetAdornerLayer(clickedElement);
             if (layer != null)

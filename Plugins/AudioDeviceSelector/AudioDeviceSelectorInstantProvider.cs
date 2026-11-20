@@ -53,15 +53,16 @@ public sealed class AudioDeviceSelectorInstantProvider : IInstantResultProvider
         foreach (var device in devices)
         {
             var display = AudioDeviceDisplayFormatter.Format(device.FriendlyName, displayMode);
+            var description = FormatDescription(display.Description, device.Direction, device.IsDefault);
             if (!string.IsNullOrEmpty(searchTerm) &&
                 !FuzzyMatchService.IsMatch(searchTerm, display.Title) &&
-                !FuzzyMatchService.IsMatch(searchTerm, display.Description))
+                !FuzzyMatchService.IsMatch(searchTerm, description))
                 continue;
 
             results.Add(new InstantResultItem
             {
                 Title = display.Title,
-                Description = FormatDescription(display.Description, device.Direction),
+                Description = description,
                 IconData = GetIconData(device.Direction, device.IsDefault),
                 IconColor = GetIconColor(device.IsDefault),
                 ActionType = "None",
@@ -91,11 +92,12 @@ public sealed class AudioDeviceSelectorInstantProvider : IInstantResultProvider
         ? DefaultDeviceIcon
         : direction == AudioDeviceDirection.Input ? MicrophoneIcon : SpeakerIcon;
 
-    internal static string FormatDescription(string description, AudioDeviceDirection direction)
+    internal static string FormatDescription(string description, AudioDeviceDirection direction, bool isDefault)
     {
         var type = TranslationService.Get(direction == AudioDeviceDirection.Input
             ? "AudioDeviceSelector_InputDevice"
             : "AudioDeviceSelector_OutputDevice");
+        if (isDefault) type = $"{type} · {TranslationService.Get("AudioDeviceSelector_DefaultDevice")}";
         return string.IsNullOrEmpty(description) ? type : $"{type} · {description}";
     }
 

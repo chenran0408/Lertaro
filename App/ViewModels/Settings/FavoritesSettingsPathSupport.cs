@@ -12,7 +12,9 @@ internal static class FavoritesSettingsPathSupport
             .Select(item => FavoritePathResolver.NormalizeForComparison(item.Path))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var rawPath in paths)
+        var selected = paths.ToArray();
+        var customName = selected.Length == 1 ? owner.CustomName : null;
+        foreach (var rawPath in selected)
         {
             var path = rawPath.Trim().Trim('"');
             if (string.IsNullOrWhiteSpace(path) || !FavoritePathResolver.IsPathAvailable(path))
@@ -22,7 +24,7 @@ internal static class FavoritesSettingsPathSupport
 
             owner.Items.Add(new FavoriteItemViewModel
             {
-                Name = FavoritePathResolver.GetDisplayName(path),
+                Name = customName ?? FavoritePathResolver.GetDisplayName(path),
                 Path = path
             });
         }

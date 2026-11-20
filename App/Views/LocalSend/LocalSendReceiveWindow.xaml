@@ -72,12 +72,18 @@
                          ScrollViewer.CanContentScroll="True" converters:ScrollViewerHelper.AlwaysShowScrollBarWhenNeeded="True"/>
             </Border>
 
-            <Border x:Name="TextMessageBorder" Grid.Row="2" Margin="16,0,16,12" Visibility="Collapsed">
+            <Grid x:Name="TextMessageBorder" Grid.Row="2" Margin="16,0,16,12" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <TextBox x:Name="TxtTextMessage" Style="{StaticResource MultiLineTextBoxStyle}" Padding="12,8"
                          AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_Text]}"
                          IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"/>
-            </Border>
+                <TextBlock x:Name="TextActionError" Grid.Row="1" Visibility="Collapsed" Margin="0,6,0,0"
+                           Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+            </Grid>
 
             <ProgressBar x:Name="PbTransfer" Grid.Row="3" Height="6" Margin="16,0,16,12"
                          Minimum="0" Maximum="100" Visibility="Collapsed"
@@ -118,7 +124,12 @@
                         <Button x:Name="BtnCloseText" Style="{StaticResource SettingsButton}"
                                 Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Common_Close]}"
                                 Click="BtnCloseProgress_Click"/>
-                        <Button x:Name="BtnCopyText" Style="{StaticResource PrimarySettingsButton}" Click="BtnCopyText_Click"/>
+                        <Button x:Name="BtnOpenTextUrl" Visibility="Collapsed" Style="{StaticResource SettingsButton}"
+                                Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_OpenInBrowser]}"
+                                Click="BtnOpenTextUrl_Click"/>
+                        <Button x:Name="BtnCopyText" Style="{StaticResource PrimarySettingsButton}"
+                                Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[Settings_LocalSend_Copy]}"
+                                Click="BtnCopyText_Click"/>
                     </WrapPanel>
                 </Grid>
             </Border>

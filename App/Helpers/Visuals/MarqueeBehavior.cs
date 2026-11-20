@@ -185,7 +185,7 @@ public static class MarqueeBehavior
         if (availableWidth <= 0 || elementWidth <= 0) return;
 
         var overflow = elementWidth - availableWidth;
-        var shouldAnimate = overflow > 0 && isActive();
+        var shouldAnimate = overflow > 0 && SystemParameters.ClientAreaAnimation && isActive();
 
         if (shouldAnimate)
         {

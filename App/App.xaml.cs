@@ -299,12 +299,9 @@ public partial class App : Application
 
             // Searchable items load on the first query, off the UI thread; ProviderLoaded refreshes it once ready.
 
-            var startupThemeId = settings.ThemeFollowSystem
-                ? ThemeManager.Instance.ResolveLightDarkThemeId(SystemThemeWatcher.IsSystemLight, settings)
-                : settings.Theme;
-            ThemeManager.Instance.Initialize(startupThemeId);
+            ThemeManager.Instance.Initialize(settings);
             ThemeManager.Instance.InitializeSystemFollow();
-            Logger.Log($"[App] Theme initialized with theme: {startupThemeId}");
+            Logger.Log($"[App] Theme initialized with theme: {ThemeManager.Instance.CurrentThemeId}");
         }
         catch (Exception ex)
         {

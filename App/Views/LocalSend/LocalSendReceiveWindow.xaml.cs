@@ -16,18 +16,16 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
     private readonly Stopwatch _stopwatch = new();
     private long _lastBytes;
     private bool _isCompleted;
-    private string? _currentSessionId;
+    private bool _isCanceled;
     private string? _lastSavedPath;
     private string? _lastRootSavedPath;
     private LocalSendTransferStage _transferStage = LocalSendTransferStage.Transferring;
     private List<LocalSendReceiveFileItem> _fileItems = new();
     private bool _isTextMessage;
-    private bool _isTextUrl;
     public LocalSendReceiveWindow(LocalSendUploadRequestArgs requestArgs)
     {
         InitializeComponent();
         _requestArgs = requestArgs;
-        _currentSessionId = requestArgs.SessionId;
         SystemMenuBlocker.Attach(this);
         ThemedWindowIconHelper.Apply(this);
         ThemedWindowIconHelper.Apply(TitleBarLogo, this);
@@ -41,7 +39,6 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
         if (_isTextMessage)
         {
             TxtWindowTitle.Text = TranslationManager.Instance["Settings_LocalSend_TextReceivedTitle"];
-            BtnCopyText.Content = TranslationManager.Instance[_isTextUrl ? "Settings_LocalSend_OpenInBrowser" : "Settings_LocalSend_Copy"];
             return;
         }
         if (GridStep1Footer.Visibility == Visibility.Visible)
@@ -51,7 +48,7 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
         else
         {
             BtnCloseProgress.Content = TranslationManager.Instance[_isCompleted ? "Common_Close" : "Common_Cancel"];
-            var titleKey = _fileItems.Any(i => i.IsFailed) ? "Local_StateFailed" : _isCompleted
+            var titleKey = _isCanceled ? "Settings_LocalSend_Canceled" : _fileItems.Any(i => i.IsFailed) ? "Local_StateFailed" : _isCompleted
                 ? "Settings_LocalSend_Completed" : _transferStage == LocalSendTransferStage.VerifyingChecksum
                     ? "Settings_LocalSend_VerifyingChecksum" : "Settings_LocalSend_Receiving";
             TxtWindowTitle.Text = TranslationManager.Instance[titleKey];
@@ -65,10 +62,9 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
         if (LocalSendTextMessageHelper.TryGetMessage(dto, out var textMessage))
         {
             _isTextMessage = true;
-            _isTextUrl = LocalSendTextMessageHelper.TryGetHttpUrl(textMessage, out _);
+            BtnOpenTextUrl.Visibility = LocalSendTextMessageHelper.TryGetHttpUrl(textMessage, out _) ? Visibility.Visible : Visibility.Collapsed;
             TxtWindowTitle.Text = TranslationManager.Instance["Settings_LocalSend_TextReceivedTitle"];
             TxtTextMessage.Text = textMessage;
-            BtnCopyText.Content = TranslationManager.Instance[_isTextUrl ? "Settings_LocalSend_OpenInBrowser" : "Settings_LocalSend_Copy"];
             FileListBorder.Visibility = Visibility.Collapsed;
             TextMessageBorder.Visibility = Visibility.Visible;
             GridStep1Footer.Visibility = Visibility.Collapsed;
@@ -115,6 +111,7 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
         if (e.Key == Key.Escape || e.SystemKey == Key.Escape)
         {
             e.Handled = true;
+            if (_isCompleted || GridStep1Footer.Visibility == Visibility.Visible) Close();
         }
     }
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
@@ -128,15 +125,15 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
         // SslStream and both cancellation registrations -- permanently, and leaves the sender waiting
         // for a response that can no longer come. Respond is a TrySetResult, so declining on a window
         // that already answered is a no-op.
-        if (!_isCompleted && !string.IsNullOrEmpty(_currentSessionId)) _requestArgs.Respond(false);
-        if (!string.IsNullOrEmpty(_currentSessionId)) LocalSendServiceManager.Instance.UnregisterSession(_currentSessionId);
+        if (!_isCompleted && !string.IsNullOrEmpty(_requestArgs.SessionId)) _requestArgs.Respond(false);
+        if (!string.IsNullOrEmpty(_requestArgs.SessionId)) LocalSendServiceManager.Instance.UnregisterSession(_requestArgs.SessionId);
     }
     private void BtnDecline_Click(object sender, RoutedEventArgs e) { _requestArgs.Respond(false); Close(); }
     private bool ApplySelectedFiles()
     { var selected = LstFiles.SelectedItems.OfType<LocalSendReceiveFileItem>().Select(i => i.FileId).ToHashSet(); if (selected.Count == 0) { BtnDecline_Click(this, new RoutedEventArgs()); return false; } _requestArgs.SelectedFileIds = selected; return true; }
     private void BtnAcceptDefault_Click(object sender, RoutedEventArgs e)
     {
-        if (_isCompleted || LocalSendServiceManager.Instance.IsSessionCanceled(_currentSessionId ?? string.Empty))
+        if (_isCompleted || LocalSendServiceManager.Instance.IsSessionCanceled(_requestArgs.SessionId))
         {
             ShowSenderCanceledInStep1();
             return;
@@ -151,7 +148,7 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
         var dialog = new OpenFolderDialog { Title = title };
         if (dialog.ShowDialog(this) == true && !string.IsNullOrWhiteSpace(dialog.FolderName))
         {
-            if (_isCompleted || LocalSendServiceManager.Instance.IsSessionCanceled(_currentSessionId ?? string.Empty))
+            if (_isCompleted || LocalSendServiceManager.Instance.IsSessionCanceled(_requestArgs.SessionId))
             {
                 ShowSenderCanceledInStep1();
                 return;
@@ -164,7 +161,7 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
     }
     private void ShowSenderCanceledInStep1()
     {
-        _isCompleted = true; _requestArgs.Respond(false); LstFiles.UnselectAll();
+        _isCanceled = _isCompleted = true; _requestArgs.Respond(false); LstFiles.UnselectAll();
         BtnToggleSelectAll.Visibility = Visibility.Collapsed; GridStep1Footer.Visibility = Visibility.Collapsed; PanelStep2Footer.Visibility = Visibility.Visible;
         TxtSummary.Text = TranslationManager.Instance["Settings_LocalSend_SenderCanceled"]; BtnCloseProgress.Content = TranslationManager.Instance["Common_Close"];
     }
@@ -207,7 +204,7 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
         {
             timer.Stop();
             if (_isCompleted) return;
-            var sessionId = _currentSessionId ?? string.Empty;
+            var sessionId = _requestArgs.SessionId;
             // Cancel the session for real, exactly as BtnCloseProgress_Click does: HandleSessionCanceled
             // only repaints, so a stalled transfer used to show "Canceled" while the server kept writing
             // the file and then silently flipped the window to "Completed".
@@ -217,11 +214,10 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
         return timer;
     }
     private int _maxCompletedCount;
-    public void HandleProgressChanged(LocalSendProgressArgs args) => Dispatcher.BeginInvoke(new Action(() =>
+    public void HandleProgressChanged(LocalSendProgressArgs args)
     {
-        if (_isCompleted && !args.IsAllDone) return;
+        if (_isCompleted || args.SessionId != _requestArgs.SessionId) return;
         ResetInactivityTimer();
-        _currentSessionId = args.SessionId;
         _transferStage = args.Stage;
         var isAllDone = args.IsAllDone;
         if (isAllDone) { _isCompleted = true; _inactivityTimer?.Stop(); }
@@ -262,21 +258,23 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
                 _autoCloseTimer.Start();
             }
         }
-    }));
+    }
     private void AutoCloseTimer_Tick(object? sender, EventArgs e)
     {
         _autoCloseTimer?.Stop();
         Close();
     }
     private void UpdateFileItemsProgress(LocalSendProgressArgs args) => PbTransfer.Value = LocalSendReceiveWindowHelper.UpdateItemProgress(LstFiles.Items, args);
-    public void HandleSessionCanceled(string sessionId) => Dispatcher.BeginInvoke(new Action(() =>
+    public void HandleSessionCanceled(string sessionId)
     {
-        _isCompleted = true; _inactivityTimer?.Stop();
+        if (_isCompleted || (sessionId.Length != 0 && sessionId != _requestArgs.SessionId)) return;
+        _isCanceled = _isCompleted = true;
+        _inactivityTimer?.Stop();
         TxtWindowTitle.Text = TranslationManager.Instance["Settings_LocalSend_Canceled"];
         LocalSendReceiveWindowHelper.MarkCanceledItems(_fileItems, TranslationManager.Instance["Settings_LocalSend_Canceled"]);
         if (GridStep1Footer.Visibility == Visibility.Visible) ShowSenderCanceledInStep1();
         else { TxtSpeed.Text = TranslationManager.Instance["Settings_LocalSend_SenderCanceled"]; BtnCloseProgress.Content = TranslationManager.Instance["Common_Close"]; }
-    }));
+    }
     private void BtnOpenFolder_Click(object sender, RoutedEventArgs e)
     {
         var target = LocalSendReceiveWindowHelper.ResolveFolderTarget(_lastRootSavedPath, _lastSavedPath);
@@ -287,14 +285,13 @@ public partial class LocalSendReceiveWindow : Controls.AppWindow
     }
     private void BtnCloseProgress_Click(object sender, RoutedEventArgs e)
     {
-        if (!_isCompleted && !string.IsNullOrEmpty(_currentSessionId))
+        if (!_isCompleted && !string.IsNullOrEmpty(_requestArgs.SessionId))
         {
-            _isCompleted = true; TxtWindowTitle.Text = TxtSpeed.Text = TranslationManager.Instance["Settings_LocalSend_Canceled"];
-            BtnCloseProgress.Content = TranslationManager.Instance["Common_Close"]; LocalSendServiceManager.Instance.CancelSession(_currentSessionId, notifySender: true); return;
+            HandleSessionCanceled(_requestArgs.SessionId);
+            TxtSpeed.Text = string.Empty;
+            LocalSendServiceManager.Instance.CancelSession(_requestArgs.SessionId, notifySender: true);
+            return;
         }
         Close();
     }
-    private void BtnCopyText_Click(object sender, RoutedEventArgs e)
-    { if (_isTextUrl) { try { Process.Start(new ProcessStartInfo(TxtTextMessage.Text.Trim()) { UseShellExecute = true }); } catch { } } else System.Windows.Clipboard.SetText(TxtTextMessage.Text); Close(); }
 }
-

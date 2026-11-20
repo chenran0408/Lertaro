@@ -8,6 +8,55 @@ namespace Lertaro.App.Tests.ViewModels.Settings;
 public sealed class QuickLaunchSettingsViewModelTests
 {
     [TestMethod]
+    public void ApplyAndSwitchCommitDraftsAndFilteredClearKeepsHiddenRows()
+    {
+        var settings = new UserSettings();
+        settings.QuickLaunch.Items.Clear();
+        var vm = new QuickLaunchSettingsViewModel(settings);
+        foreach (var name in new[] { "first", "second", "third" })
+        {
+            vm.NewPath = "https://example.invalid/" + name;
+            vm.NewName = name;
+            vm.AddCommand.Execute(null);
+        }
+
+        var first = vm.Items[0];
+        var second = vm.Items[1];
+        vm.EditCommand.Execute(first);
+        first.EditName = "renamed";
+        vm.EditCommand.Execute(second);
+        Assert.AreEqual("renamed", first.Name);
+        second.EditName = "updated";
+        vm.Save();
+        Assert.AreEqual("updated", settings.QuickLaunch.Items[1].Name);
+
+        vm.EditCommand.Execute(first);
+        first.EditPath = second.Path;
+        vm.EditCommand.Execute(second);
+        Assert.IsTrue(first.IsEditing);
+        Assert.IsTrue(first.HasPathError);
+        Assert.IsFalse(second.IsEditing);
+        vm.FilterText = "second";
+        vm.ClearCommand.Execute(null);
+        CollectionAssert.AreEqual(new[] { "renamed", "third" }, vm.Items.Select(row => row.Name).ToArray());
+        Assert.IsFalse(vm.ClearCommand.CanExecute(null));
+    }
+
+    [TestMethod]
+    public void SuggestedNamesFollowTypingUntilTheUserChoosesAName()
+    {
+        var vm = new QuickLaunchSettingsViewModel(new UserSettings());
+        vm.NewPath = @"D:\sample\a";
+        vm.NewPath += "bc.exe";
+        Assert.AreEqual("abc", vm.NewName);
+        vm.NewPath = "https://example.invalid/";
+        Assert.AreEqual(string.Empty, vm.NewName);
+        vm.NewName = "chosen";
+        vm.NewPath = @"D:\sample\different.exe";
+        Assert.AreEqual("chosen", vm.NewName);
+    }
+
+    [TestMethod]
     public void ShortcutBadges_DefaultToEnabledAndSaveChanges()
     {
         var settings = new UserSettings();

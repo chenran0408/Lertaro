@@ -11,5 +11,10 @@ public partial class LocalSendSendProgressPanel : WpfUserControl
 
     public LocalSendSendProgressPanel() => InitializeComponent();
     public string ActionText { get => (string)GetValue(ActionTextProperty); set => SetValue(ActionTextProperty, value); }
+    private async void Retry_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ViewModels.LocalSend.LocalSendSendViewModel vm) await vm.RetryFailedAsync();
+    }
+
     private void Action_Click(object sender, RoutedEventArgs e) => ActionRequested?.Invoke(this, EventArgs.Empty);
 }

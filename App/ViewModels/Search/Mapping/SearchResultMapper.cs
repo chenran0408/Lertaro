@@ -35,6 +35,11 @@ public static class SearchResultMapper
         public bool HasPluginSearchActions;
 
         public Task Completion => _completed.Task;
+        public Task<List<(AppSearchResult Result, MatchRank Match, bool IsExactAlias)>>? Catalog { get; private set; }
+
+        public void StartCatalogSearch(string query, string rawQuery, CancellationToken token)
+            => Catalog = Task.Run(() => SearchableItemMapper.CollectSearchableItemResults(query, false,
+                ResolveTypeTrigger(rawQuery, false), token), token);
 
         public bool TryGetRows(out IReadOnlyList<AppSearchResult> rows)
         {
@@ -53,6 +58,13 @@ public static class SearchResultMapper
             Collected = true;
             _completed.TrySetResult();
         }
+    }
+
+    private static string? ResolveTypeTrigger(string probe, bool isInlineWindow)
+    {
+        if (isInlineWindow || probe.Length == 0) return null;
+        var type = SearchResultTypePriority.ResolveTrigger(probe[0], UserSettings.Load().ResultTypeTriggers);
+        return type != null && PluginTriggerQuery.ClaimsLeadingWord(probe, SearchWindowType.Main) ? null : type;
     }
 
     internal static List<AppSearchResult> CollectInstantPass(InstantPassCache pass, string rawQuery, string query, bool isInlineWindow, string? contextDirectory,
@@ -146,22 +158,7 @@ public static class SearchResultMapper
         // (SearchDispatchController.StripResultTypeTrigger removes it before the file-index engine ever
         // sees it), so it's used as-is below for matching/highlighting -- the trigger character never
         // shows up highlighted and never pollutes the fuzzy match, with no second stripping needed here.
-        string? triggeredTypeId = null;
-        if (!isInlineWindow)
-        {
-            var probe = rawQuery ?? query;
-            if (probe.Length > 0)
-            {
-                triggeredTypeId = SearchResultTypePriority.ResolveTrigger(probe[0], UserSettings.Load().ResultTypeTriggers);
-                // The same precedence SearchDispatchController applies before it cuts the character off the
-                // searched text: a word some plugin owns outranks the character that merely starts it, or
-                // the exclusive filter below would compete a "set 路径" search on the leftover "et ". Read
-                // from the raw probe, since `query` has already had that word stripped out of it here. This
-                // is the quick/inline mapper, so the word inventory is the quick window's (Main).
-                if (triggeredTypeId != null && PluginTriggerQuery.ClaimsLeadingWord(probe, SearchWindowType.Main))
-                    triggeredTypeId = null;
-            }
-        }
+        var triggeredTypeId = ResolveTypeTrigger(rawQuery ?? query, isInlineWindow);
 
         // Collect every candidate before choosing the context's ordering ladder. Usage is an auxiliary
         // signal for global launch searches, while inline/scoped searches keep their existing policy.
@@ -222,7 +219,9 @@ public static class SearchResultMapper
         // routing hid these too (its "Case B").
         if (fileFilterScope == null)
         {
-            foreach (var (result, match, exactAlias) in SearchableItemMapper.CollectSearchableItemResults(query, isInlineWindow, triggeredTypeId))
+            var catalog = instantPass.Catalog?.GetAwaiter().GetResult()
+                ?? SearchableItemMapper.CollectSearchableItemResults(query, isInlineWindow, triggeredTypeId);
+            foreach (var (result, match, exactAlias) in catalog)
             {
                 var typeId = result.SourceProvider is ISearchableItemProvider provider
                     ? SearchResultTypePriority.GetProviderTypeId(provider)

@@ -18,7 +18,6 @@ public static class LocalSendAppEventHandler
     private static LocalSendReceiveWindow? _activeReceiveWindow;
     private static LocalSendSendWindow? _activeSendWindow;
     private static LocalSendProgressArgs? _pendingProgressArgs;
-    private static bool _isProgressDispatchPending;
     private static volatile bool _isReceiveWindowOpen;
     private static volatile bool _isSendWindowOpen;
     // A multicast response has the same announcement flags as a shutdown packet, so only an active request can verify availability.
@@ -40,30 +39,25 @@ public static class LocalSendAppEventHandler
 
     private static void OnProgressChanged(object? sender, LocalSendProgressArgs e)
     {
-        _pendingProgressArgs = e;
-
-        if (e.IsAllDone || e.IsFinished || e.IsFailed || !_isProgressDispatchPending)
+        var dispatcher = Application.Current.Dispatcher;
+        if (e.IsAllDone || e.IsFinished || e.IsFailed)
         {
-            _isProgressDispatchPending = true;
-            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
-            {
-                _isProgressDispatchPending = false;
-                var argsToUpdate = _pendingProgressArgs;
-                if (argsToUpdate == null) return;
-
-                if (_activeReceiveWindow != null && _activeReceiveWindow.IsLoaded)
-                {
-                    _activeReceiveWindow.HandleProgressChanged(argsToUpdate);
-                }
-            }));
+            dispatcher.BeginInvoke(DispatcherPriority.Background, () => DeliverProgress(e));
+        }
+        else if (Interlocked.Exchange(ref _pendingProgressArgs, e) == null)
+        {
+            dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
+                DeliverProgress(Interlocked.Exchange(ref _pendingProgressArgs, null)!));
         }
     }
 
-    private static void OnSessionCanceled(object? sender, string sessionId) => Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+    private static void DeliverProgress(LocalSendProgressArgs args)
     {
-        _activeReceiveWindow?.HandleSessionCanceled(sessionId);
-        _activeSendWindow?.HandleSessionCanceled(sessionId);
-    }));
+        if (_activeReceiveWindow is { IsLoaded: true } window) window.HandleProgressChanged(args);
+    }
+
+    private static void OnSessionCanceled(object? sender, string sessionId) => Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+        _activeReceiveWindow?.HandleSessionCanceled(sessionId)));
 
     private static void OnSendRequested(object? sender, (IReadOnlyList<string>? Files, string? Text) e) => OpenSendWindow(e.Files, e.Text);
 
@@ -130,7 +124,10 @@ public static class LocalSendAppEventHandler
         // another would overwrite _activeReceiveWindow and corrupt the close-handler state. Drop the
         // duplicate request; the first window remains the single owner of receive state.
         if (_isReceiveWindowOpen)
+        {
+            e.Respond(false);
             return;
+        }
 
         _activeReceiveWindow = new LocalSendReceiveWindow(e);
         _isReceiveWindowOpen = true;

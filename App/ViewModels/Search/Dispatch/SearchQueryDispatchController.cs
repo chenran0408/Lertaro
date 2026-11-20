@@ -291,7 +291,7 @@ internal sealed class SearchQueryDispatchController
                 if (_queryTokens.Count == 0)
                     _setReceivedCount(count);
             },
-            beforeSearch: StartContentRowAppend
+            beforeSearch: _ => StartContentRowAppend()
         );
     }
 

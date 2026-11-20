@@ -88,6 +88,12 @@ public partial class SettingsWindow : Views.Controls.AppWindow
         ThemedWindowIconHelper.Apply(TitleBarLogo, this);
         var vm = new SettingsViewModel();
         DataContext = vm;
+        vm.Favorites.InvalidEdit += row => FocusPathEditor("Favorites", row);
+        vm.QuickLaunch.InvalidEdit += row =>
+        {
+            vm.QuickLaunch.SelectedSection = "Items";
+            FocusPathEditor("QuickLaunch", row);
+        };
         _pagePrewarmer = new SettingsPagePrewarmer(this);
         Loaded += (_, _) =>
         {
@@ -159,6 +165,21 @@ public partial class SettingsWindow : Views.Controls.AppWindow
         {
             vm.CanApply = _validationErrorCount == 0;
         }
+    }
+
+    private void FocusPathEditor(string section, object row)
+    {
+        SelectSection(section);
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+        {
+            var list = section == "Favorites" ? PageFavorites.PathItemsList : PageQuickLaunch.PathItemsList;
+            if (list.ItemContainerGenerator.ContainerFromItem(row) is ContentPresenter presenter &&
+                list.ItemTemplate.FindName("EditingPath", presenter) is PathEntryEditor editor)
+            {
+                editor.TargetBox.BringIntoView();
+                editor.TargetBox.Focus();
+            }
+        });
     }
 
     // Case-insensitive: callers may provide a section name from the host UI, SDK, or external URI

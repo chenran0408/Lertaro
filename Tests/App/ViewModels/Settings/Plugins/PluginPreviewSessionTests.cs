@@ -18,6 +18,29 @@ public sealed class PluginPreviewSessionTests
     }
 
     [TestMethod]
+    public async Task PreviewPassesEditedRuleDataWithoutCommittingIt()
+    {
+        var settings = new UserSettings();
+        var rules = new PluginConfigFieldViewModel("preview", new PluginConfigField
+        {
+            Key = "Rules", FieldType = ConfigFieldType.Array, DefaultValue = new List<object>(),
+            SubFields = [new PluginConfigField { Key = "Opacity", FieldType = ConfigFieldType.Integer, DefaultValue = 0 }]
+        }, settings);
+        var plugin = new PluginInfoViewModel("Preview", "1", "Preview.dll", "1", [], [rules],
+            onPreviewAsync: values =>
+            {
+                var json = System.Text.Json.JsonSerializer.SerializeToElement(values);
+                Assert.AreEqual(65, json.GetProperty("Rules")[0].GetProperty("Opacity").GetInt32());
+                return Task.CompletedTask;
+            });
+        plugin.IsConfigTab = true;
+        rules.AddCommand.Execute(null);
+        rules.ArrayItems[0].Children[0].Value = 65;
+        await new PluginPreviewSession(plugin).PreviewAsync();
+        Assert.IsTrue(rules.IsDirty);
+    }
+
+    [TestMethod]
     public async Task PreviewUsesDraftWithoutCommittingIt()
     {
         object? received = null;

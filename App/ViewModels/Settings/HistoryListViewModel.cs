@@ -42,8 +42,8 @@ public class HistoryListViewModel<T> : ViewModelBase
 
         FilteredItems = new ObservableCollection<HistoryEntryViewModel<T>>(_allItems);
         RemoveItemCommand = new RelayCommand<HistoryEntryViewModel<T>>(RemoveItem);
-        ClearAllCommand = new RelayCommand(ClearAll, () => _allItems.Count > 0);
-        ClearBelowCommand = new RelayCommand(ClearBelow, () => _allItems.Any(item => item.UsageCount <= UsageThreshold));
+        ClearAllCommand = new RelayCommand(ClearAll, () => FilteredItems.Count > 0);
+        ClearBelowCommand = new RelayCommand(ClearBelow, () => FilteredItems.Any(item => item.UsageCount <= UsageThreshold));
     }
 
     public bool IsHistoryEnabled
@@ -83,8 +83,11 @@ public class HistoryListViewModel<T> : ViewModelBase
     }
 
     public string ClearBelowButtonLabel => string.Format(
-        TranslationManager.Instance["Settings_History_Clear_Below"],
-        UsageThreshold);
+        TranslationManager.Instance["History_ClearBelowCount"],
+        UsageThreshold, FilteredItems.Count(row => row.UsageCount <= UsageThreshold));
+
+    public string ClearLabel => string.Format(TranslationManager.Instance[
+        string.IsNullOrWhiteSpace(SearchText) ? "List_ClearAllCount" : "List_ClearMatchesCount"], FilteredItems.Count);
 
     public string ResultSummary => string.Format(TranslationManager.Instance["History_ResultSummary"], FilteredItems.Count, _allItems.Count);
     public bool HasPendingRemovals => _pendingRemovals.Count > 0;
@@ -93,6 +96,7 @@ public class HistoryListViewModel<T> : ViewModelBase
     public void NotifyLanguageChanged()
     {
         OnPropertyChanged(nameof(ClearBelowButtonLabel));
+        OnPropertyChanged(nameof(ClearLabel));
         OnPropertyChanged(nameof(ResultSummary));
         OnPropertyChanged(nameof(PendingSummary));
     }
@@ -115,9 +119,9 @@ public class HistoryListViewModel<T> : ViewModelBase
         UpdateSummary();
     }
 
-    private void ClearAll() => StageRemovals(_allItems);
+    private void ClearAll() => StageRemovals(FilteredItems);
 
-    private void ClearBelow() => StageRemovals(_allItems.Where(item => item.UsageCount <= UsageThreshold));
+    private void ClearBelow() => StageRemovals(FilteredItems.Where(item => item.UsageCount <= UsageThreshold));
 
     private void StageRemovals(IEnumerable<HistoryEntryViewModel<T>> entries)
     {
@@ -160,6 +164,8 @@ public class HistoryListViewModel<T> : ViewModelBase
 
     private void UpdateSummary()
     {
+        OnPropertyChanged(nameof(ClearBelowButtonLabel));
+        OnPropertyChanged(nameof(ClearLabel));
         OnPropertyChanged(nameof(ResultSummary));
         OnPropertyChanged(nameof(PendingSummary));
         OnPropertyChanged(nameof(HasPendingRemovals));

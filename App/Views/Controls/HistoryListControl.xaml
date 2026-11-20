@@ -222,7 +222,7 @@
                           AutomationProperties.Name="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[History_UsageThreshold]}"/>
                 <Button Content="{Binding ClearBelowButtonLabel}" Style="{StaticResource SettingsButton}"
                         Command="{Binding ClearBelowCommand}" Height="30" Margin="0,0,8,4"/>
-                <Button x:Name="BtnClearAll" Content="{Binding Source={x:Static services:TranslationManager.Instance}, Path=[History_ClearTab]}"
+                <Button x:Name="BtnClearAll" Content="{Binding ClearLabel}"
                         Style="{StaticResource SettingsButton}" Height="30" Margin="0,0,0,4" Command="{Binding ClearAllCommand}"/>
             </WrapPanel>
         </StackPanel>

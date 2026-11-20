@@ -51,7 +51,7 @@ public static class SearchableItemMapper
     // the caller (SearchResultMapper.BuildQuickResults) merges these into one globally sorted list
     // alongside favorites/history-matched files/file-search results, rather than always showing every
     // searchable item ahead of every file result regardless of which actually matched better.
-    public static List<(AppSearchResult Result, MatchRank Match, bool IsExactAlias)> CollectSearchableItemResults(string query, bool isInlineWindow, string? triggeredTypeId = null)
+    public static List<(AppSearchResult Result, MatchRank Match, bool IsExactAlias)> CollectSearchableItemResults(string query, bool isInlineWindow, string? triggeredTypeId = null, CancellationToken token = default)
     {
         var candidates = new List<(AppSearchResult Result, MatchRank Match, bool IsExactAlias)>();
         if (isInlineWindow) return candidates;
@@ -84,6 +84,7 @@ public static class SearchableItemMapper
 
             foreach (var entry in entries)
             {
+                token.ThrowIfCancellationRequested();
                 // The standard match contract (FuzzyMatcher.ComputeBestMatch): title first,
                 // then each curated alias, via the same FzfPattern Parse Core's real file search uses
                 // -- a multi-word query like "gsh ypfq" correctly requires BOTH words to match

@@ -65,6 +65,7 @@ public class SettingsViewModel : ViewModelBase
         ApplyUiState();
         QuickPanel.NotifyLanguageChanged();
         QuickLaunch.NotifyLanguageChanged();
+        Favorites.NotifyLanguageChanged();
         _deferred.ExistingHistory?.NotifyLanguageChanged();
     }
 
@@ -171,7 +172,7 @@ public class SettingsViewModel : ViewModelBase
 
     private async Task<bool> ApplyCoreAsync(bool personalOnly)
     {
-        if (!CanApply)
+        if (!CanApply || !Favorites.TryFinishEdit() || !QuickLaunch.TryFinishEdit())
             return false;
         _isApplying = true;
         OnPropertyChanged(nameof(CanApply));
@@ -234,13 +235,13 @@ public class SettingsViewModel : ViewModelBase
             QuickLaunch.Save();
             QuickPanel.Save();
             LocalSend.Apply();
-            _deferred.ExistingAppearance?.StageBackground();
+            _deferred.ExistingAppearance?.Stage();
             if (!_userSettings.Save())
             {
-                _deferred.ExistingAppearance?.RejectBackgroundSave();
+                _deferred.ExistingAppearance?.RejectSave();
                 throw new IOException($"Could not save settings to {UserSettings.SettingsPath}.");
             }
-            _deferred.ExistingAppearance?.AcceptBackground();
+            _deferred.ExistingAppearance?.Accept();
             _deferred.ExistingHistory?.SaveRemovals();
             _isSaved = true;
             Hotkeys.QuickPanelWake.MarkSaved();

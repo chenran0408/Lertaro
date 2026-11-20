@@ -55,7 +55,7 @@ internal sealed class SearchExecutionEngine : IDisposable
         // Invoked on the UI thread at the moment the search itself is issued -- so after the debounce,
         // once per settled query rather than once per keystroke. For work that must overlap the search
         // but must not be repeated for characters the user typed and then replaced.
-        Action? beforeSearch = null,
+        Action<CancellationToken>? beforeSearch = null,
         Func<string?, List<AppSearchResult>>? collectInstantResults = null,
         Task? additionalResultsReady = null)
     {
@@ -126,7 +126,7 @@ internal sealed class SearchExecutionEngine : IDisposable
         // whether it was issued directly or waited out QueueSearch's keystroke debounce, so a caller with
         // work that should overlap the search -- and must not be repeated for every character typed --
         // hangs it here rather than reimplementing the delay.
-        Action? beforeSearch = null,
+        Action<CancellationToken>? beforeSearch = null,
         Func<string?, List<AppSearchResult>>? collectInstantResults = null,
         Task? additionalResultsReady = null)
     {
@@ -139,7 +139,6 @@ internal sealed class SearchExecutionEngine : IDisposable
             return;
         }
 
-        beforeSearch?.Invoke();
         onSearchStateChanged(true);
         var cts = new CancellationTokenSource();
         var searchVersion = Interlocked.Increment(ref _searchVersion);
@@ -149,6 +148,7 @@ internal sealed class SearchExecutionEngine : IDisposable
         }
 
         var token = cts.Token;
+        beforeSearch?.Invoke(token);
         var sourceTracker = InlineSearchManager.Instance.ExplorerTracker;
         var commandDirectory = isInlineSearchContext
             ? (!string.IsNullOrWhiteSpace(searchScope) ? searchScope : sourceTracker.ActivePath ?? sourceTracker.LastActiveExplorerPath)

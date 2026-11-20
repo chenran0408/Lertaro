@@ -26,6 +26,8 @@
                 <!-- Not Focusable="False": ListBoxItem's own click-to-select handling ties into focus
                      acquisition, so disabling it silently breaks mouse selection. Suppressing just the
                      focus visual (the dotted rectangle) is enough to get the "no chrome" look. -->
+                <Setter Property="AutomationProperties.Name" Value="{Binding DisplayName}"/>
+                <Setter Property="AutomationProperties.AutomationId" Value="{Binding Id}"/>
                 <Setter Property="FocusVisualStyle" Value="{DynamicResource FluentFocusRing}"/>
                 <!-- Selecting a ListBoxItem (by click, or programmatically when a mode card switches
                      SelectedThemeId) raises RequestBringIntoView. This ListBox has no ScrollViewer of
