@@ -150,7 +150,9 @@ for %%p in (Service\Service.csproj Cli\Cli.csproj TaskbarHost\TaskbarHost.csproj
 )
 
 :: Publish the GUI last so the shared Core and SDK assemblies keep their ReadyToRun code.
-dotnet publish "%ROOT%App\App.csproj" -c Release -o "%OUT%" %RIDARGS% -p:RuntimeIdentifier=win-%ARCH% --self-contained false -p:PublishReadyToRun=true -p:ErrorOnDuplicatePublishOutputFiles=false -v quiet
+set "APP_RIDARGS=%RIDARGS%"
+if "%ARCH%"=="x64" set "APP_RIDARGS=%RIDARGS% -r win-x64 --self-contained false"
+dotnet publish "%ROOT%App\App.csproj" -c Release -o "%OUT%" %APP_RIDARGS% -p:PublishReadyToRun=true -p:ErrorOnDuplicatePublishOutputFiles=false -v quiet
 if errorlevel 1 exit /b 1
 
 echo.
