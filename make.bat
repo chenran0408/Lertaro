@@ -83,10 +83,7 @@ for /f "usebackq tokens=*" %%v in (`%BUILD_POWERSHELL% -NoProfile -Command "$num
 echo App Version: %APP_VER% (PE Version: %APP_VER_4%)
 
 
-:: Two architectures, same steps. x64 publishes with no RID exactly as it always has, so its output is
-:: unchanged; arm64 is a cross-publish from whatever machine is building. They are separate artifacts
-:: rather than one combined installer because the BrowserData plugin carries a native library and only
-:: one architecture's copy can sit in its (flat, deps.json-less) load directory -- see that project.
+:: Separate installers keep architecture-specific application code and native plugin dependencies together.
 echo.
 echo === Building x64 ===
 set "ARCH=x64"
@@ -147,10 +144,14 @@ mkdir "%OUT%"
 :: Publish each project separately to keep shared output deterministic and avoid NETSDK1194.
 echo.
 echo [1/4] Publishing App/Service/Cli in Release mode...
-for %%p in (App\App.csproj Service\Service.csproj Cli\Cli.csproj TaskbarHost\TaskbarHost.csproj) do (
+for %%p in (Service\Service.csproj Cli\Cli.csproj TaskbarHost\TaskbarHost.csproj) do (
     dotnet publish "%ROOT%%%p" -c Release -o "%OUT%" %RIDARGS% -p:ErrorOnDuplicatePublishOutputFiles=false -v quiet
     if errorlevel 1 exit /b 1
 )
+
+:: Publish the GUI last so the shared Core and SDK assemblies keep their ReadyToRun code.
+dotnet publish "%ROOT%App\App.csproj" -c Release -o "%OUT%" %RIDARGS% -p:RuntimeIdentifier=win-%ARCH% --self-contained false -p:PublishReadyToRun=true -p:ErrorOnDuplicatePublishOutputFiles=false -v quiet
+if errorlevel 1 exit /b 1
 
 echo.
 echo [2/4] Publishing Plugins in Release mode...

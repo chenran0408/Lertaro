@@ -111,7 +111,7 @@ public class TranslationManager : INotifyPropertyChanged
     {
         _translations.Clear();
 
-        foreach (var culture in new[] { "en-US", _currentCulture })
+        foreach (var culture in GetTranslationCultures(null, _currentCulture))
             foreach (var pair in PluginSdk.Services.TranslationService.LoadEmbeddedTranslations(typeof(TranslationManager).Assembly, culture, "App"))
                 _translations[pair.Key] = pair.Value;
 
@@ -120,47 +120,30 @@ public class TranslationManager : INotifyPropertyChanged
         {
             try
             {
-                // 1. Get first supported language translations (lowest priority fallback)
-                IReadOnlyDictionary<string, string>? fallbackDict = null;
-                if (provider.SupportedCultures != null && provider.SupportedCultures.Count > 0)
-                {
-                    fallbackDict = PluginPerformanceMonitor.Measure(provider, () => provider.GetTranslations(provider.SupportedCultures[0]));
-                }
-
-                // 2. Get English translations (middle priority fallback)
-                var engDict = PluginPerformanceMonitor.Measure(provider, () => provider.GetTranslations("en-US"));
-
-                // 3. Get target translations (highest priority)
-                var targetDict = PluginPerformanceMonitor.Measure(provider, () => provider.GetTranslations(_currentCulture));
-
-                // Merge them in order of increasing priority so higher priorities overwrite lower ones
-                if (fallbackDict != null)
-                {
-                    foreach (var kvp in fallbackDict)
-                    {
-                        _translations[kvp.Key] = kvp.Value;
-                    }
-                }
-                if (engDict != null)
-                {
-                    foreach (var kvp in engDict)
-                    {
-                        _translations[kvp.Key] = kvp.Value;
-                    }
-                }
-                if (targetDict != null)
-                {
-                    foreach (var kvp in targetDict)
-                    {
-                        _translations[kvp.Key] = kvp.Value;
-                    }
-                }
+                // Read the full chain before merging, so a failing provider cannot leave partial overrides.
+                var dictionaries = GetTranslationCultures(provider.SupportedCultures?.FirstOrDefault(), _currentCulture)
+                    .Select(culture => PluginPerformanceMonitor.Measure(provider, () => provider.GetTranslations(culture)))
+                    .ToArray();
+                foreach (var dictionary in dictionaries)
+                    if (dictionary != null)
+                        foreach (var pair in dictionary)
+                            _translations[pair.Key] = pair.Value;
             }
             catch (Exception ex)
             {
                 Logger.Log($"[TranslationManager] Failed to get translations from provider '{provider.Name}': {ex.Message}", LogLevel.Error);
             }
         }
+    }
+
+    internal static IEnumerable<string> GetTranslationCultures(string? fallback, string active)
+    {
+        // Keep the highest-priority occurrence: the active language always wins over English.
+        if (fallback != null && fallback != "en-US" && fallback != active)
+            yield return fallback;
+        if (active != "en-US")
+            yield return "en-US";
+        yield return active;
     }
 
     /// <summary>
