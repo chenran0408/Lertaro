@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Input;
 using Lertaro.App.Helpers.Visuals;
 using Lertaro.App.Services.AppWindow;
@@ -21,7 +22,17 @@ public partial class QuickSearchLaunchPanel : WpfUserControl
     public QuickSearchLaunchPanel()
     {
         InitializeComponent();
+        IsVisibleChanged += (_, _) => UIElementAutomationPeer.FromElement(this)?.InvalidatePeer();
         _shortcutSupport = new Helpers.QuickSearchLaunchShortcutSupport(LaunchItemsListView, () => (DataContext as QuickSearchViewModel)?.LaunchPanelItems, () => (DataContext as QuickSearchViewModel)?.LaunchPanelColumns ?? 1, () => (DataContext as QuickSearchViewModel)?.LaunchPanelItemScale ?? 1);
+    }
+
+    protected override AutomationPeer OnCreateAutomationPeer() => new LaunchPanelAutomationPeer(this);
+
+    // The launch grid and search results share one slot. Enumerating an off-screen source
+    // walks every launch item before a screen reader can reach the visible results.
+    private sealed class LaunchPanelAutomationPeer(QuickSearchLaunchPanel panel) : UserControlAutomationPeer(panel)
+    {
+        protected override List<AutomationPeer>? GetChildrenCore() => panel.IsVisible ? base.GetChildrenCore() : null;
     }
 
     internal void ScrollSelectedItemIntoView(AppSearchResult? item)
