@@ -1,3 +1,4 @@
+using Lertaro.PluginSdk.Helpers;
 using Lertaro.Core.SearchIndex.Query;
 namespace Lertaro.Core.Indexer.NetworkDrive;
 
@@ -11,7 +12,7 @@ public static class NetworkIndexerSearchExtensions
         Action<SearchResult> onResult,
         CancellationToken token = default,
         string? directoryFilter = null,
-        string? fileNameFilter = null)
+        string? fileNameFilter = null, SearchCategoryFilter category = SearchCategoryFilter.All)
     {
         indexer.EnsureConfigured();
         if (limit <= 0 || string.IsNullOrWhiteSpace(query))
@@ -21,10 +22,16 @@ public static class NetworkIndexerSearchExtensions
         lock (indexer.Gate)
             snapshots = indexer._indexes.Values.ToArray();
 
-        if (snapshots.Length == 0)
-            return;
-
         var parsed = SearchQueryParser.Parse(query);
+        SearchSnapshots(snapshots, parsed, query, directoryFilter, limit, onResult, token, fileNameFilter, category);
+    }
+
+    internal static void SearchSnapshots(NetworkIndex[] snapshots, ParsedSearchQuery parsed, string query, string? directoryFilter,
+        int limit, Action<SearchResult> onResult, CancellationToken token, string? fileNameFilter = null,
+        SearchCategoryFilter category = SearchCategoryFilter.All)
+    {
+        if (snapshots.Length == 0 || limit <= 0) return;
+
         var directoryFilterLower = IndexerHelper.NormalizeFilter(directoryFilter);
         var callbackLock = new object();
         var emitted = 0;
@@ -63,7 +70,7 @@ public static class NetworkIndexerSearchExtensions
                         emitted++;
                         onResult(result);
                     }
-                }, token, fileNameFilter);
+                }, token, fileNameFilter, category);
             });
     }
 

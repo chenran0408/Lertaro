@@ -1,3 +1,4 @@
+using Lertaro.PluginSdk.Helpers;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
@@ -105,7 +106,7 @@ public class SearchViewModel : ViewModelBase, IDisposable
             updateSidebarCounts: (batch, final) => _sidebarCountHelper?.Update(batch, final),
             replaceSidebarCounts: results => _sidebarCountHelper?.Replace(results),
             applyFiltersAndRender: ApplyFiltersAndRender,
-            isTypeFilterSelected: () => IsTypeFilterSelected);
+            getIndexCategory: () => _indexCategory);
 
         // Initialize dynamic plugin sidebar groups -- PluginManager.SidebarFilterProviders already
         // applies the user's saved order (falling back to each provider's own SortOrder).
@@ -192,6 +193,12 @@ public class SearchViewModel : ViewModelBase, IDisposable
             return;
 
         OnPropertyChanged(nameof(HasActiveFilters));
+        var category = SelectedIndexCategory();
+        if (category != _indexCategory)
+        {
+            _indexCategory = category;
+            if (!string.IsNullOrWhiteSpace(AdvancedQuery)) _dispatcher.OnAdvancedQueryChanged(AdvancedQuery);
+        }
         _sidebarCountHelper?.Recalculate();
         ApplyFiltersAndRender(extendsContent: false, unchangedPrefix: 0);
     }
@@ -284,9 +291,24 @@ public class SearchViewModel : ViewModelBase, IDisposable
         ApplyFiltersAndRender(extendsContent: false, unchangedPrefix: 0);
     }
 
+    private SearchCategoryFilter _indexCategory;
+
+    private SearchCategoryFilter SelectedIndexCategory()
+    {
+        var selected = DynamicSidebarGroups.Where(group => group.Id == "Type")
+            .SelectMany(group => group.Items).Where(item => item.IsSelected).ToList();
+        return selected.Count == 1 ? selected[0].Category : SearchCategoryFilter.All;
+    }
+
     public void OnDynamicFilterChanged()
     {
         OnPropertyChanged(nameof(HasActiveFilters));
+        var category = SelectedIndexCategory();
+        if (category != _indexCategory)
+        {
+            _indexCategory = category;
+            if (!string.IsNullOrWhiteSpace(AdvancedQuery)) _dispatcher.OnAdvancedQueryChanged(AdvancedQuery);
+        }
         _sidebarCountHelper?.Recalculate();
         ApplyFiltersAndRender(extendsContent: false, unchangedPrefix: 0);
     }
@@ -416,11 +438,8 @@ public class SearchViewModel : ViewModelBase, IDisposable
 
         TranslationManager.Instance.PropertyChanged -= OnTranslationsChanged;
 
-        // Reuse the dispatcher's clear path before dropping the view's lists. It invalidates queued
-        // content-provider appends and token snapshots, detaches the query accumulator, and cancels the
-        // active stream. The window closes on the UI thread, so already-queued render callbacks cannot
-        // interleave with this clear; later callbacks see their cancelled token or stale generation.
-        _dispatcher.OnAdvancedQueryChanged(string.Empty);
+        // Invalidate pending content and token work before cancelling the active search.
+        _dispatcher.Dispose();
         _searchEngine.Dispose();
         _serviceStatus.Dispose();
         _searchService.Dispose();

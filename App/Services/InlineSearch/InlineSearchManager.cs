@@ -312,6 +312,7 @@ public class InlineSearchManager : IDisposable
         var host = _currentHostHwnd;
         var foreground = ExplorerNativeHooks.GetForegroundWindow();
         ExplorerNativeHooks.GetWindowThreadProcessId(host, out var hostPid);
+        var cardWasForeground = foreground == new System.Windows.Interop.WindowInteropHelper(win).Handle;
         var restoreOwnPicker = host != 0 && hostPid == (uint)Environment.ProcessId
             && _explorerTracker.IsActiveWindowDialog && _explorerTracker.ActiveHwnd == host
             && (foreground == host || foreground == new System.Windows.Interop.WindowInteropHelper(win).Handle);
@@ -323,7 +324,7 @@ public class InlineSearchManager : IDisposable
         win.Close();
         // WPF can reactivate a different managed window when a helper inside our own modal picker
         // closes. Return focus after teardown so the picker's delayed confirmation still reaches it.
-        if (restoreOwnPicker && ExplorerNativeHooks.IsWindow(host))
+        if ((restoreOwnPicker || (cardWasForeground && host != 0)) && ExplorerNativeHooks.IsWindow(host))
             ExplorerNativeHooks.SetForegroundWindow(host);
         PowerThrottlingHelper.WindowHidden("inline");
 

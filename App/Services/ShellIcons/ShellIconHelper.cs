@@ -187,6 +187,9 @@ public static class ShellIconHelper
         var isVirtualItem = UserPathResolver.IsVirtualPath(checkPath);
         var isDummyPath = checkPath.StartsWith("dummy", StringComparison.OrdinalIgnoreCase);
         var isUnreachableNetwork = checkPath.StartsWith(@"\\", StringComparison.OrdinalIgnoreCase) && !ViewModels.Search.SearchReachabilityGate.IsPathReachable(checkPath);
+        if (!isVirtualItem && !isDummyPath && !isUnreachableNetwork && ShellPathHelper.IsCloudOnly(checkPath))
+            return GetIconForPath(isDir ? "dummy_folder" : "dummy" + Path.GetExtension(checkPath), isDir);
+
         var isPhysicalPath = !isVirtualItem && !isDummyPath && !isUnreachableNetwork && (isDir ? Directory.Exists(checkPath) : File.Exists(checkPath));
         // One probe, used for both the cache-key decision and the thumbnail below. This asked twice --
         // an .Any here and a .FirstOrDefault after the cache check -- which ran every registered

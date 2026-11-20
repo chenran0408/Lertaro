@@ -1,3 +1,4 @@
+using Lertaro.PluginSdk.Helpers;
 using Lertaro.App.ViewModels.Search.Dispatch;
 using Lertaro.Core;
 using Lertaro.Core.Services.Search;
@@ -17,7 +18,7 @@ internal static class ScopedSearchRunner
         Action<SearchResult> onResult,
         Action onLocalSearchFailed,
         bool bypassExclusions,
-        CancellationToken token)
+        CancellationToken token, SearchCategoryFilter category = SearchCategoryFilter.All)
     {
         var failureReported = 0;
         void ReportLocalSearchFailedOnce()
@@ -28,7 +29,7 @@ internal static class ScopedSearchRunner
 
         var tasks = directive.Folders.Select(folder => RunFolderAsync(
             searchService, folder, query, fileLimit, appLimit, onResult,
-            ReportLocalSearchFailedOnce, bypassExclusions, directive.FilterPattern, token)).ToArray();
+            ReportLocalSearchFailedOnce, bypassExclusions, directive.FilterPattern, token, category)).ToArray();
 
         try
         {
@@ -50,13 +51,13 @@ internal static class ScopedSearchRunner
         Action onLocalSearchFailed,
         bool bypassExclusions,
         string fileNameFilter,
-        CancellationToken token)
+        CancellationToken token, SearchCategoryFilter category = SearchCategoryFilter.All)
     {
         try
         {
             await searchService.SearchStreamingAsync(
                 query, fileLimit, appLimit, folder, onResult, token,
-                onLocalSearchFailed, bypassExclusions, fileNameFilter: fileNameFilter).ConfigureAwait(false);
+                onLocalSearchFailed, bypassExclusions, fileNameFilter: fileNameFilter, category: category).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {

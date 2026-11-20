@@ -19,6 +19,8 @@
   <Project Path="Plugins/WindowSwitcher/WindowSwitcher.csproj" />
   <Project Path="Plugins/ClipboardHistory/ClipboardHistory.csproj" />
   <Project Path="Plugins/DirectoryOpus/DirectoryOpus.csproj" />
+  <Project Path="Plugins/Tessoa/Tessoa.csproj" />
+  <Project Path="Plugins/Xplorer2/Xplorer2.csproj" />
   <Project Path="Plugins/TotalCommander/TotalCommander.csproj" />
   <Project Path="Plugins/QuickLookBridge/QuickLookBridge.csproj" />
   <Project Path="Plugins/WinRAR/WinRAR.csproj" />

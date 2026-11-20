@@ -27,7 +27,7 @@ public class ResultTypeOrderViewModel : ViewModelBase
     {
         _userSettings = userSettings;
 
-        var order = userSettings.ResultTypeOrder;
+        var order = SearchResultTypePriority.WithFolders(userSettings.ResultTypeOrder);
         var triggers = userSettings.ResultTypeTriggers;
         var candidates = new List<ResultTypeOrderItem>
         {
@@ -35,7 +35,14 @@ public class ResultTypeOrderViewModel : ViewModelBase
                 SearchResultTypePriority.FilesTypeId,
                 () => TranslationManager.Instance["General_ResultTypeFiles"],
                 triggers.GetValueOrDefault(SearchResultTypePriority.FilesTypeId, string.Empty),
-                _ => RefreshTriggerWarnings())
+                _ => RefreshTriggerWarnings()),
+            // Placed by the same read-time rule as the ranking (SearchResultTypePriority.WithFolders), so an
+            // order saved before Folders existed shows it right after Files -- where it already ranks.
+            new(
+                SearchResultTypePriority.FoldersTypeId,
+                () => TranslationManager.Instance["General_ResultTypeFolders"],
+                triggers.GetValueOrDefault(SearchResultTypePriority.FoldersTypeId, string.Empty),
+                _ => RefreshTriggerWarnings()),
         };
 
         foreach (var provider in PluginManager.Instance.SearchableItemProviders)

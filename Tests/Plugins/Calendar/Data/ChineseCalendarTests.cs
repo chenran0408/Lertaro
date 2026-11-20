@@ -184,9 +184,8 @@ public sealed class ChineseCalendarTests
     [TestMethod]
     public void YearHasDutyData_KnowsThatANotYetAnnouncedYearIsEmpty()
     {
-        // The State Council notice for 2027 does not exist yet, so the grid has to be able to say so
-        // rather than render every day as an ordinary workday.
         Assert.IsTrue(ChineseCalendar.YearHasDutyData(2026));
-        Assert.IsFalse(ChineseCalendar.YearHasDutyData(2027));
+        Assert.IsTrue(ChineseCalendar.YearHasDutyData(2027));
+        Assert.IsFalse(ChineseCalendar.YearHasDutyData(2099));
     }
 }

@@ -16,6 +16,13 @@ public class ShellMenuActionProvider : IDynamicActionProvider
 
     private ShellMenuSession? _session;
     private string? _lastPath;
+    private readonly object _sessionGate = new();
+    private readonly Func<string, ShellMenuSession?> _createSession;
+    private int _generation;
+    private static readonly IntPtr NativeMenuRoot = new(-550);
+
+    public ShellMenuActionProvider() : this(ShellMenuSession.Create) { }
+    internal ShellMenuActionProvider(Func<string, ShellMenuSession?> createSession) => _createSession = createSession;
 
     // Build only when a supported file menu is requested. Warming a folder menu for an application
     // click loads unrelated third-party handlers into the process before CanProvide can reject it.
@@ -37,23 +44,45 @@ public class ShellMenuActionProvider : IDynamicActionProvider
 
     public IEnumerable<DynamicMenuItem> GetMenuItems(IReadOnlyList<ISearchResult> results, IntPtr hMenu)
     {
+        if (results.Count != 1) return [];
         var result = results[0];
-        // If root menu, create a new session
         if (hMenu == IntPtr.Zero)
         {
-            _session?.Dispose();
-            _session = ShellMenuSession.Create(result.FullPath);
-            _lastPath = result.FullPath;
+            ClearSession();
+            lock (_sessionGate) _lastPath = result.FullPath;
+            return [new DynamicMenuItem { Text = GroupName, HasSubMenu = true,
+                SubMenuHandle = NativeMenuRoot, IsActionable = false }];
         }
 
-        if (_session == null)
+        if (hMenu == NativeMenuRoot)
         {
-            return Array.Empty<DynamicMenuItem>();
+            int generation;
+            lock (_sessionGate)
+            {
+                if (_lastPath != result.FullPath) return [];
+                generation = _generation;
+            }
+            var created = _createSession(result.FullPath);
+            lock (_sessionGate)
+            {
+                if (generation != _generation)
+                {
+                    created?.Dispose();
+                    return [];
+                }
+                _session?.Dispose();
+                _session = created;
+            }
+            hMenu = IntPtr.Zero;
         }
+
+        ShellMenuSession? session;
+        lock (_sessionGate) session = _session;
+        if (session == null) return [];
 
         try
         {
-            var items = _session.EnumerateItems(hMenu);
+            var items = session.EnumerateItems(hMenu);
             var menuItems = new List<DynamicMenuItem>();
             foreach (var item in items)
             {
@@ -78,8 +107,13 @@ public class ShellMenuActionProvider : IDynamicActionProvider
 
     public void ExecuteCommand(IReadOnlyList<ISearchResult> results, uint commandId, IntPtr ownerHwnd)
     {
-        var sessionToExecute = _session;
-        _session = null; // Detach to allow parallel executions/cleanup
+        ShellMenuSession? sessionToExecute;
+        lock (_sessionGate)
+        {
+            sessionToExecute = _session;
+            _session = null;
+            _generation++;
+        }
 
         if (sessionToExecute != null)
         {
@@ -99,8 +133,14 @@ public class ShellMenuActionProvider : IDynamicActionProvider
 
     public void ClearSession()
     {
-        _session?.Dispose();
-        _session = null;
-        _lastPath = null;
+        ShellMenuSession? session;
+        lock (_sessionGate)
+        {
+            session = _session;
+            _session = null;
+            _lastPath = null;
+            _generation++;
+        }
+        session?.Dispose();
     }
 }

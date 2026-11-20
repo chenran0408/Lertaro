@@ -1,3 +1,4 @@
+using Lertaro.PluginSdk.Helpers;
 using Lertaro.App.ViewModels.Search;
 using Lertaro.Core;
 using Lertaro.PluginSdk.Abstractions;
@@ -8,6 +9,18 @@ namespace Lertaro.App.Tests.ViewModels.Search;
 [TestClass]
 public sealed class QueryFilterSupportTests
 {
+    [TestMethod]
+    [DataRow("file: report", SearchCategoryFilter.File)]
+    [DataRow("folder: report", SearchCategoryFilter.Folder)]
+    [DataRow("report ext:pdf", SearchCategoryFilter.File)]
+    [DataRow("report", SearchCategoryFilter.All)]
+    public void ParsedTypeNarrowsTheIndexBeforeResultsAreCapped(string query, SearchCategoryFilter expected)
+    {
+        QueryFilterSupport.Extract(query, out var filters);
+        Assert.AreEqual(expected, QueryFilterSupport.IndexCategory(filters, SearchCategoryFilter.All));
+        Assert.AreEqual(SearchCategoryFilter.Image, QueryFilterSupport.IndexCategory(filters, SearchCategoryFilter.Image));
+    }
+
     [TestMethod]
     [DataRow("; tr en 早上好", true)]
     [DataRow("tr en 早上好", true)]

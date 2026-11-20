@@ -1,6 +1,7 @@
 using Lertaro.Core;
 
 using Lertaro.Core.Wire;
+using Lertaro.App.Services.AppWindow;
 namespace Lertaro.App.Services.Plugin;
 
 public static class PluginActionExecutor
@@ -23,7 +24,7 @@ public static class PluginActionExecutor
                     if (shouldHide && view is not Views.QuickPanel.QuickPanelWindow { IsStayOpen: true })
                     {
                         (view as QuickSearchWindow)?.SuppressNextForegroundRestore();
-                        view?.HideWindow();
+                        view?.HideWindowAfterExecution();
                     }
                     return true;
                 }
@@ -34,7 +35,7 @@ public static class PluginActionExecutor
                 // Suppress restoring focus to the prior background window so any popup window or launched
                 // app opened by InstantResultOnExecute/Execute doesn't immediately get deactivated and closed.
                 (view as QuickSearchWindow)?.SuppressNextForegroundRestore();
-                view?.HideWindow();
+                view?.HideWindowAfterExecution();
 
                 if (result.InstantResultOnExecute != null)
                 {
@@ -165,7 +166,7 @@ public static class PluginActionExecutor
         // and an empty one is a legitimate no-op inside those actions, so it is worth knowing which it was.
         Logger.Log($"[PluginActionExecutor] Running shortcut command '{registration.Action.GetType().Name}' keyword='{registration.Action.Keywords.FirstOrDefault()}' argument='{result.PluginActionArgumentText}' context='{result.ContextDirectory}'", LogLevel.Info);
 
-        view.HideWindow();
+        view.HideWindowAfterExecution();
 
         // Guarded: these actions are third-party-plugin-authored, and an exception escaping here travels up
         // through the WPF input handler as an unhandled dispatcher exception -- a crash dialog, rather than

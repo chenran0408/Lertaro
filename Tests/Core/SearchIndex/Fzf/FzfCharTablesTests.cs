@@ -66,11 +66,11 @@ public sealed class FzfCharTablesTests
     }
 
     [TestMethod]
-    public void CharsEqual_CaseInsensitive_LowersOnlyTheTextSide()
+    public void CharsEqual_CaseInsensitive_AcceptsEitherPatternCasing()
     {
-        // Only `text` gets lowered before comparing -- callers must pass an already-lowercased pattern.
         Assert.IsTrue(FzfCharTables.CharsEqual('A', 'a', caseSensitive: false));
-        Assert.IsFalse(FzfCharTables.CharsEqual('a', 'A', caseSensitive: false));
+        Assert.IsTrue(FzfCharTables.CharsEqual('a', 'A', caseSensitive: false));
+        Assert.IsFalse(FzfCharTables.CharsEqual('a', 'A', caseSensitive: true));
     }
 
     [TestMethod]

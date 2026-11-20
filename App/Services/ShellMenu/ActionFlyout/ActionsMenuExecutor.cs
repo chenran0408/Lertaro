@@ -40,7 +40,7 @@ internal sealed class ActionsMenuExecutor
         if (item.OnExecute != null)
         {
             RecordQuickSearchKeyword();
-            _view.HideWindow();
+            _view.HideWindowAfterExecution();
             item.OnExecute();
             return;
         }
@@ -64,7 +64,7 @@ internal sealed class ActionsMenuExecutor
                 {
                     if (!_view.GetType().Name.Equals("SearchWindow", StringComparison.Ordinal))
                     {
-                        _view.HideWindow();
+                        _view.HideWindowAfterExecution();
                     }
                 }
             }
@@ -92,7 +92,7 @@ internal sealed class ActionsMenuExecutor
                 PluginPerformanceMonitor.Measure(provider, () => provider.ExecuteCommand(activeResults, item.CommandId, hwnd));
                 if (!_view.GetType().Name.Equals("SearchWindow", StringComparison.Ordinal))
                 {
-                    _view.HideWindow();
+                    _view.HideWindowAfterExecution();
                 }
             }
 

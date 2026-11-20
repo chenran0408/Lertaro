@@ -1,3 +1,4 @@
+using Lertaro.PluginSdk.Helpers;
 using System.IO;
 using Lertaro.Plugins.CoreExtensions.Models;
 using Lertaro.Plugins.CoreExtensions.Providers.QueryTokens;
@@ -43,6 +44,7 @@ public class TypeFilterProvider : ISidebarFilterProvider
         group.Items.Add(new SidebarFilterItem
         {
             Id = "Type_Folder",
+            Category = SearchCategoryFilter.Folder,
             DisplayName = TranslationService.Get("Filter_TypeFolder"),
             IconData = "M2,4 A1,1 0 0,1 3,3 H7 L9,5 H18 A1,1 0 0,1 19,6 V16 A1,1 0 0,1 18,17 H3 A1,1 0 0,1 2,16 Z",
             MatchPredicate = res => !res.IsApplication && res.IsDir
@@ -52,6 +54,7 @@ public class TypeFilterProvider : ISidebarFilterProvider
         {
             Id = "Type_File",
             DisplayName = TranslationService.Get("Filter_TypeFile"),
+            Category = SearchCategoryFilter.File,
             IconData = "M6 2c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z",
             MatchPredicate = res => !res.IsApplication && !res.IsDir
         });

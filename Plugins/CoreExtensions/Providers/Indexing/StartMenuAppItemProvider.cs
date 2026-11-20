@@ -97,6 +97,7 @@ public class StartMenuAppItemProvider : ISearchableItemProvider, IDisposable
         foreach (var entry in deduped)
         {
             var capturedPath = entry.Path;
+            if (ShellPathHelper.IsCloudOnly(capturedPath)) continue;
             var targetPath = StartMenuShortcutResolver.ResolveShortcutTarget(capturedPath) ?? capturedPath;
             var parentDir = Path.GetDirectoryName(targetPath);
             var desc = string.IsNullOrWhiteSpace(parentDir)

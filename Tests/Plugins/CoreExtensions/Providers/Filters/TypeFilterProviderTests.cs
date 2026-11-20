@@ -1,3 +1,4 @@
+using Lertaro.PluginSdk.Helpers;
 using Lertaro.PluginSdk.Abstractions;
 using Lertaro.PluginSdk.Services;
 using Lertaro.Plugins.CoreExtensions.Models;
@@ -38,6 +39,21 @@ public sealed class TypeFilterProviderTests
 
     [TestMethod]
     public void TypeFile_RegularFile_IsIncluded() => Assert.IsTrue(GetPredicate("Type_File")(new FakeResult { IsDir = false }));
+
+    [TestMethod]
+    public void TypeFile_NarrowsTheCandidateBudgetBeforeTakingThePage()
+    {
+        var item = new TypeFilterProvider().GetFilterGroups().Single().Items.Single(row => row.Id == "Type_File");
+        var candidates = Enumerable.Range(0, 204)
+            .Select(i => new FakeResult { FullPath = $@"D:\report{i}", IsDir = true })
+            .Append(new FakeResult { FullPath = @"D:\report.txt" });
+
+        var page = candidates.Where(row => SearchCategoryClassifier.Matches(
+            item.Category ?? SearchCategoryFilter.All, row.FullPath, row.IsDir)).Take(204);
+        var files = page.Where(item.MatchPredicate).ToList();
+
+        Assert.AreEqual(@"D:\report.txt", Assert.ContainsSingle(files).FullPath);
+    }
 
     [TestMethod]
     public void TypeDoc_TxtExtension_IsIncluded() => Assert.IsTrue(GetPredicate("Type_Doc")(new FakeResult { FullPath = @"C:\a.txt" }));

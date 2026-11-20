@@ -38,13 +38,14 @@ public sealed class ActionsMenuExecutorTests
         var executor = new ActionsMenuExecutor(
             view,
             new Dictionary<uint, IDynamicActionProvider>(),
-            new ActionsMenuNavigator(view, _ => { }, () => { }),
+            new ActionsMenuNavigator(view, _ => Task.CompletedTask, () => { }),
             () => { });
         var result = new AppSearchResult { Name = "result", FullPath = "result" };
 
         executor.Execute(result, [result]);
 
         CollectionAssert.AreEqual(new[] { "execute", "hide" }, calls);
+        Assert.IsTrue(view.ExecutionReported, "the hide did not report that an action was executed");
     }
 
     [StaTestMethod]
@@ -65,7 +66,7 @@ public sealed class ActionsMenuExecutorTests
         var executor = new ActionsMenuExecutor(
             view,
             new Dictionary<uint, IDynamicActionProvider>(),
-            new ActionsMenuNavigator(view, _ => { }, () => { }),
+            new ActionsMenuNavigator(view, _ => Task.CompletedTask, () => { }),
             () => { });
         var result = new AppSearchResult { Name = "result", FullPath = "result" };
 
@@ -113,10 +114,20 @@ public sealed class ActionsMenuExecutorTests
         public void LocateInExplorerExternal(string path) { }
         public void OpenFileOrFolderExternal(string path) { }
         public void OpenFileOrFolderAsAdminExternal(string path) { }
+        // HideWindowAfterExecution is the one an executing surface must reach: the inline card reports it to
+        // the hook as "a result was executed" instead of "the session was cancelled".
+        public bool ExecutionReported { get; private set; }
+
         public void HideWindow()
         {
             HideWindowCalled = true;
             calls.Add("hide");
+        }
+
+        public void HideWindowAfterExecution()
+        {
+            ExecutionReported = true;
+            HideWindow();
         }
 
         public void ShowWindow() { }

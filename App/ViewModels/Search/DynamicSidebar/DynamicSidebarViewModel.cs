@@ -122,6 +122,7 @@ public class DynamicSidebarItemViewModel : ViewModelBase
     }
 
     public string Id => _item.Id;
+    internal PluginSdk.Helpers.SearchCategoryFilter Category => _item.Category.GetValueOrDefault();
 
     private string _displayName;
     public string DisplayName

@@ -1,5 +1,6 @@
 using Lertaro.Core.IndexV2.Space;
 using Lertaro.Core.Wire;
+using Lertaro.PluginSdk.Helpers;
 
 namespace Lertaro.Core.Tests.Wire;
 
@@ -12,6 +13,24 @@ public sealed class SearchRequestBinarySerializerTests
         await SearchRequestBinarySerializer.WriteSearchRequestAsync(stream, message);
         stream.Position = 0;
         return await SearchRequestBinarySerializer.ReadSearchRequestAsync(stream);
+    }
+
+    [TestMethod]
+    [DataRow(SearchRequestId.Search)]
+    [DataRow(SearchRequestId.SearchDir)]
+    public async Task SearchCategory_RoundTripsAndDefaultsToAllForPreviousClient(SearchRequestId id)
+    {
+        var request = new SearchRequestMessage { Id = id, Query = "report", Category = SearchCategoryFilter.File };
+        Assert.AreEqual(SearchCategoryFilter.File, (await RoundTripAsync(request)).Category);
+
+        using var encoded = new MemoryStream();
+        await SearchRequestBinarySerializer.WriteSearchRequestAsync(encoded, request);
+        var bytes = encoded.ToArray();
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(bytes.AsSpan(8), bytes.Length - 13);
+        using var previous = new MemoryStream(bytes, 0, bytes.Length - 1);
+        var decoded = await SearchRequestBinarySerializer.ReadSearchRequestAsync(previous);
+        Assert.AreEqual(SearchCategoryFilter.All, decoded.Category);
+        Assert.AreEqual(request.Query, decoded.Query);
     }
 
     [TestMethod]

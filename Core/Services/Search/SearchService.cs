@@ -1,3 +1,4 @@
+using Lertaro.PluginSdk.Helpers;
 using Lertaro.Core.Indexer.Usn;
 
 using Lertaro.Core.Services.Network;
@@ -43,7 +44,7 @@ public class SearchService : IDisposable
     // matched/highlighted verbatim, so a caller must never pass the marker through as part of it. A path
     // query does not bypass exclusions by itself. An explicit bypass only affects results returned by the
     // search sources; CheckNeedsLiveSearch decides when the live-scan fallback can provide missing data.
-    public async Task<bool> SearchStreamingAsync(string query, int maxResults, int maxAppResults, string? directoryFilter, Action<SearchResult> onResult, CancellationToken token = default, Action? onLocalSearchFailed = null, bool bypassExclusions = false, string? fileNameFilter = null)
+    public async Task<bool> SearchStreamingAsync(string query, int maxResults, int maxAppResults, string? directoryFilter, Action<SearchResult> onResult, CancellationToken token = default, Action? onLocalSearchFailed = null, bool bypassExclusions = false, string? fileNameFilter = null, SearchCategoryFilter category = SearchCategoryFilter.All)
     {
         var settings = UserSettings.Load();
         var exclusionRules = ExclusionRuleSet.From(settings);
@@ -66,7 +67,8 @@ public class SearchService : IDisposable
                 .Where(c => c.Contains("::AliasProvider::", StringComparison.OrdinalIgnoreCase))
                 .Concat(settings.DisabledPluginAssemblies.Select(dll => dll + "::AliasProvider::*"))
                 .ToList(),
-            FileNameFilter = fileNameFilter
+            FileNameFilter = fileNameFilter,
+            Category = category,
         };
 
         var disabledIds = AliasProviderRegistry.ResolveDisabledProviders(msg.DisabledAliasComponents);
@@ -125,7 +127,7 @@ public class SearchService : IDisposable
         {
             try
             {
-                return SearchServiceHelper.SearchNetworkDrives(query, fileCandidateLimit, directoryFilter, exclusionRules, effectiveBypassExclusions, uniqueOnResult, token, fileNameFilter);
+                return SearchServiceHelper.SearchNetworkDrives(query, fileCandidateLimit, directoryFilter, exclusionRules, effectiveBypassExclusions, uniqueOnResult, token, fileNameFilter, category);
             }
             catch (OperationCanceledException)
             {

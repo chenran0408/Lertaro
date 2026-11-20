@@ -1,3 +1,4 @@
+using Lertaro.Core.SearchIndex.Query;
 using Lertaro.Core.Indexer.NetworkDrive;
 
 namespace Lertaro.Core.Tests.Indexer.NetworkDrive;
@@ -8,6 +9,21 @@ namespace Lertaro.Core.Tests.Indexer.NetworkDrive;
 [TestClass]
 public sealed class NetworkIndexerTests
 {
+    [TestMethod]
+    [DataRow(1)]
+    [DataRow(2)]
+    [DataRow(int.MaxValue)]
+    public void SearchSnapshots_CategoryReachesEachShareBeforeItsLimit(int limit)
+    {
+        using var first = NetworkIndex.FromStore(BuildShareStore("Y", "report.exe", "report-a.png"));
+        using var second = NetworkIndex.FromStore(BuildShareStore("Z", "report.exe", "report-b.png"));
+        var rows = new List<SearchResult>();
+        NetworkIndexerSearchExtensions.SearchSnapshots([first, second], SearchQueryParser.Parse("report"), "report", null,
+            limit, rows.Add, CancellationToken.None, category: PluginSdk.Helpers.SearchCategoryFilter.Image);
+        Assert.HasCount(Math.Min(2, limit), rows);
+        Assert.IsTrue(rows.All(r => r.Name.EndsWith(".png", StringComparison.OrdinalIgnoreCase)));
+    }
+
     // Regression coverage: "complete" on its own must not count as cached when the pass finished with
     // directories it never captured. Gating on IsComplete alone is what left those directories missing
     // forever under the default Manual refresh mode, because nothing ever ran a second pass.
@@ -18,5 +34,19 @@ public sealed class NetworkIndexerTests
         Assert.IsFalse(NetworkIndexer.IsFullyCached(isComplete: true, hasUncapturedDirectories: true));
         Assert.IsFalse(NetworkIndexer.IsFullyCached(isComplete: false, hasUncapturedDirectories: false));
         Assert.IsFalse(NetworkIndexer.IsFullyCached(isComplete: false, hasUncapturedDirectories: true));
+    }
+    private static FileRecordStore BuildShareStore(string drive, params string[] names)
+    {
+        var store = new FileRecordStore
+        {
+            SourceKey = drive,
+            SourceKind = FileRecordSourceKind.NetworkMappedDrive,
+            IdKind = FileRecordIdKind.SourceLocalId64,
+            RootId = 1,
+        };
+        store.Records.Add(new FileRecord(1, 1, string.Empty, FileRecordFlags.Directory | FileRecordFlags.SourceRoot));
+        for (var i = 0; i < names.Length; i++)
+            store.Records.Add(new FileRecord((ulong)(i + 2), 1, names[i], FileRecordFlags.None));
+        return store;
     }
 }

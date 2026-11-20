@@ -1,3 +1,4 @@
+using Lertaro.PluginSdk.Helpers;
 using System.Runtime.InteropServices;
 using System.Text;
 using Lertaro.Core.SearchIndex.Fzf;
@@ -73,11 +74,11 @@ internal static class PathTermFallback
     private const int MaxTerms = 16;
 
     public static void SearchStreaming(Snapshot snapshot, DeltaOverlay delta, FzfPattern pattern, int limit,
-        Action<SearchResult> onResult, CancellationToken token, string? directoryFilterLower)
+        Action<SearchResult> onResult, CancellationToken token, string? directoryFilterLower, SearchCategoryFilter category = SearchCategoryFilter.All)
     {
         if (pattern.OrGroups != null)
         {
-            SearchAndFirstBranches(snapshot, delta, pattern, limit, onResult, token, directoryFilterLower);
+            SearchAndFirstBranches(snapshot, delta, pattern, limit, onResult, token, directoryFilterLower, category);
             return;
         }
 
@@ -91,7 +92,7 @@ internal static class PathTermFallback
         if (directoryContext.Excluded)
             return;
 
-        foreach (var rank in CollectPathRanks(snapshot, delta, pattern, directoryContext, limit, token))
+        foreach (var rank in CollectPathRanks(snapshot, delta, pattern, directoryContext, limit, token, category))
         {
             token.ThrowIfCancellationRequested();
             onResult(ResultBuilder.ToResult(snapshot, delta, rank));
@@ -99,7 +100,7 @@ internal static class PathTermFallback
     }
 
     private static List<FzfRank> CollectPathRanks(Snapshot snapshot, DeltaOverlay delta, FzfPattern pattern,
-        NameSearch.DirectoryContext directoryContext, int limit, CancellationToken token)
+        NameSearch.DirectoryContext directoryContext, int limit, CancellationToken token, SearchCategoryFilter category = SearchCategoryFilter.All)
     {
         var termCount = pattern.TermSets.Length;
         var termPatterns = new FzfPattern[termCount];
@@ -189,7 +190,7 @@ internal static class PathTermFallback
 
                 foreach (var row in snapshot.RowsForUid(uid))
                 {
-                    if (snapshot.IsDeleted(row) || delta.IsSuperseded(row))
+                    if (snapshot.IsDeleted(row) || delta.IsSuperseded(row) || !NameSearch.CategoryAdmits(category, snapshot, delta, row))
                         continue;
                     if (membership != null && !NameSearch.RowMatchesFilter(snapshot, delta, row, directoryContext, membership))
                         continue;
@@ -238,7 +239,7 @@ internal static class PathTermFallback
     }
 
     private static void SearchAndFirstBranches(Snapshot snapshot, DeltaOverlay delta, FzfPattern pattern, int limit,
-        Action<SearchResult> onResult, CancellationToken token, string? directoryFilterLower)
+        Action<SearchResult> onResult, CancellationToken token, string? directoryFilterLower, SearchCategoryFilter category)
     {
         var emitted = 0;
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -257,7 +258,7 @@ internal static class PathTermFallback
                     return;
                 emitted++;
                 onResult(result);
-            }, token, directoryFilterLower);
+            }, token, directoryFilterLower, category);
         }
     }
 

@@ -146,7 +146,7 @@ public static class SearchResultMapper
 
         // Keep explicit result-type preferences. Ordinary global queries additionally protect exact
         // names and use launch-entry preferences; inline/scoped queries retain their existing order.
-        var typeOrder = isInlineWindow ? new List<string>() : UserSettings.Load().ResultTypeOrder;
+        var typeOrder = isInlineWindow ? new List<string>() : SearchResultTypePriority.WithFolders(UserSettings.Load().ResultTypeOrder);
 
         // Quick-window-only exclusive filter: if the first character the user actually typed matches a
         // configured per-type trigger (UserSettings.ResultTypeTriggers), only that type's candidates
@@ -248,11 +248,12 @@ public static class SearchResultMapper
         // was already fetched from the backend using the trigger-stripped query (SearchDispatchController
         // strips it before ever dispatching the search), so this gets the same clean-text recall any
         // other type gets, not just whatever a trigger-polluted query happened to match.
-        if (fileResults != null && (triggeredTypeId == null || triggeredTypeId == SearchResultTypePriority.FilesTypeId))
+        if (fileResults != null && (triggeredTypeId == null || triggeredTypeId is SearchResultTypePriority.FilesTypeId or SearchResultTypePriority.FoldersTypeId))
         {
             var nowUtc = DateTime.UtcNow;
             foreach (var result in fileResults)
             {
+                if (!InTriggeredFileBucket(result.IsDir, triggeredTypeId)) continue;
                 var lookupPath = result.Path.Length > 3 && result.Path[^1] == '\\' ? result.Path.TrimEnd('\\') : result.Path;
                 var hasHistory = historySnapshot.TryGetValue(lookupPath, out var priority);
                 var (band, depth) = RankedCandidateOrdering.SignalsOf(result.Metadata, result.Path, nowUtc);
@@ -260,7 +261,7 @@ public static class SearchResultMapper
                     SearchResultHelper.CreateUiResult(result, query, 0, isApplication: false, scope),
                     IsCurated: hasHistory,
                     hasHistory ? priority : int.MaxValue,
-                    SearchResultTypePriority.Rank(SearchResultTypePriority.FilesTypeId, typeOrder),
+                    SearchResultTypePriority.Rank(result.IsDir ? SearchResultTypePriority.FoldersTypeId : SearchResultTypePriority.FilesTypeId, typeOrder),
                     fuzzy.Rank(result.Name),
                     SearchResultHelper.NormalizePath(result.Path),
                     RecencyBand: band,
@@ -271,8 +272,10 @@ public static class SearchResultMapper
         // The history and favorite rows merged above never pass through the engine's own folder filter, so the
         // scope has to be re-applied to them here. Before ranking and before the display cap, so a dropped
         // file cannot take a row the folders would have used.
-        if (folderScope)
+        if (folderScope || triggeredTypeId == SearchResultTypePriority.FoldersTypeId)
             candidates.RemoveAll(c => !c.Result.IsDir);
+        else if (triggeredTypeId == SearchResultTypePriority.FilesTypeId)
+            candidates.RemoveAll(c => c.Result.IsDir);
         if (QueryFilterSupport.ActiveFilters is { } activeFilters)
             candidates.RemoveAll(c => !activeFilters.Matches(c.Result));
 
@@ -382,4 +385,7 @@ public static class SearchResultMapper
 
     internal static bool IsQueriedDirectory(string path, string? normalizedQueriedDirectory) =>
         SearchResultDirectoryHelper.IsQueriedDirectory(path, normalizedQueriedDirectory);
+    internal static bool InTriggeredFileBucket(bool isDirectory, string? typeId) =>
+        typeId == null || typeId == (isDirectory ? SearchResultTypePriority.FoldersTypeId : SearchResultTypePriority.FilesTypeId);
+
 }

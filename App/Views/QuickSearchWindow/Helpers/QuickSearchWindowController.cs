@@ -175,7 +175,7 @@ public class QuickSearchWindowController
 
     public void HideWindow(bool restoreFocus = true)
     {
-        ++_visibilityOpToken;
+        var opToken = ++_visibilityOpToken;
         _focusHelper.CancelPendingFocus();
 
         _foregroundWatcher.Stop();
@@ -233,13 +233,16 @@ public class QuickSearchWindowController
         _suppressNextRestore = false;
         _lastActiveHwnd = IntPtr.Zero;
 
-        Task.Run(async () =>
+        _ = ClearCachesAfterHideAsync();
+
+        async Task ClearCachesAfterHideAsync()
         {
             await Task.Delay(100);
-            // These two genuinely free memory, so they still run on every hide.
+            // Showing the window again invalidates cleanup from its previous dismissal.
+            if (opToken != _visibilityOpToken || _window.IsVisible) return;
             try { ShellIconHelper.ClearCache(); } catch { }
             try { PathCacheMaintenance.ClearAllPathCaches(); } catch { }
-        });
+        }
 
         // Trimming the working set frees nothing -- it only evicts pages the next summon has to
         // fault straight back in, which measured at ~17MB and 70% of a summon's time every single

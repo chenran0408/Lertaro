@@ -15,6 +15,7 @@ public sealed class LiveIndex : IDisposable
     private Snapshot? _snapshot;
     private DeltaOverlay? _delta;
     private string? _retainedBackupPath;
+    internal Search.QueryPageCache SearchPages { get; } = new();
     private long _revision;
 
     public LiveIndex(Snapshot snapshot)
@@ -203,6 +204,7 @@ public sealed class LiveIndex : IDisposable
             _lock.EnterWriteLock();
             try
             {
+                SearchPages.Clear();
                 _snapshot?.Dispose();
                 _snapshot = null;
                 _delta = null;

@@ -28,7 +28,23 @@ public static class AliasProviderRegistry
     // provider instance to ask at match time and needs this lookup instead.
     private static readonly ConcurrentDictionary<byte, char> SeparatorById = new();
 
-    public static Func<IAliasProvider, bool> FilterFunc { get; set; } = _ => true;
+    static AliasProviderRegistry() => PluginSdk.Services.PluginSettingsService.SettingChangedWithValue +=
+        (_, _, _) => InvalidateQueryPlans();
+
+    private static Func<IAliasProvider, bool> _filterFunc = _ => true;
+    private static long _queryRevision;
+    internal static long QueryRevision => Interlocked.Read(ref _queryRevision);
+    internal static void InvalidateQueryPlans() => Interlocked.Increment(ref _queryRevision);
+
+    public static Func<IAliasProvider, bool> FilterFunc
+    {
+        get => _filterFunc;
+        set
+        {
+            _filterFunc = value;
+            InvalidateQueryPlans();
+        }
+    }
 
     public static void Register(IAliasProvider provider)
     {
@@ -49,6 +65,7 @@ public static class AliasProviderRegistry
             SeparatorById[id] = provider.SyllableSeparator;
             Providers.Add(provider);
             Interlocked.Increment(ref _registrationVersion);
+            InvalidateQueryPlans();
         }
 
         Logger.Log($"[AliasProviderRegistry] Registered alias provider: {provider.Name} with ID: {id} ({componentId})");

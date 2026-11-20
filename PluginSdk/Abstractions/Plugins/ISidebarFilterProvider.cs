@@ -43,6 +43,7 @@ public class SidebarFilterGroup
 /// </summary>
 public class SidebarFilterItem
 {
+    public Helpers.SearchCategoryFilter? Category { get; set; }
     public string Id { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
 

@@ -21,7 +21,7 @@ public static class InlineSearchNavigator
         if (ExplorerShellWindowsHelper.IsExplorerWindow(tracker.ActiveHwnd))
         {
             var targetHwnd = tracker.ActiveHwnd;
-            window.HideWindow();
+            window.HideWindowAfterExecution();
             FileExecutor.LocateInExistingExplorer(path, targetHwnd, () => FileExecutor.LocateInExplorer(path));
             return;
         }
@@ -46,8 +46,7 @@ public static class InlineSearchNavigator
         var hookClient = App.HookClient;
         if (hookClient is not { IsConnected: true }) return false;
 
-        window.Manager.IsExecuting = true;
-        window.HideWindow();
+        window.HideWindowAfterExecution();
 
         if (InlineAdapterIpcCoordinator.LocateItem(targetHwnd, path, isDir, hookClient.SendMessage, out var lateResult))
         {
@@ -141,8 +140,7 @@ public static class InlineSearchNavigator
             // slow enough that this made the window visibly linger after the user already committed to the
             // click). Closing the window is a UI-only concern -- whether the navigate call itself
             // eventually succeeds or falls back below doesn't need it to still be open to decide.
-            window.Manager.IsExecuting = true;
-            window.HideWindow();
+            window.HideWindowAfterExecution();
 
             if (InlineAdapterIpcCoordinator.ExecuteItem(targetHwnd, path, isDir.Value, window.SearchText, App.HookClient.SendMessage, out var lateResult))
             {
@@ -217,7 +215,7 @@ public static class InlineSearchNavigator
                 });
 
                 window.UpdateSearchDisplay(string.Empty);
-                window.HideWindow();
+                window.HideWindowAfterExecution();
                 return;
             }
         }
@@ -232,7 +230,7 @@ public static class InlineSearchNavigator
         {
             var targetHwnd = tracker.ActiveHwnd;
             var fallbackSearchText = window.SearchText;
-            window.HideWindow();
+            window.HideWindowAfterExecution();
             FileExecutor.LocateInExistingExplorer(path, targetHwnd, () =>
             {
                 if (asAdmin) FileExecutor.OpenFileOrFolderAsAdmin(path, fallbackSearchText);
@@ -244,7 +242,7 @@ public static class InlineSearchNavigator
         var searchText = window.SearchText;
         if (path != "__SHOW_MORE__")
         {
-            window.HideWindow();
+            window.HideWindowAfterExecution();
             if (asAdmin)
                 FileExecutor.OpenFileOrFolderAsAdmin(path, searchText);
             else
@@ -252,7 +250,7 @@ public static class InlineSearchNavigator
             return;
         }
 
-        FileExecutor.OpenFileOrFolder(path, searchText, () => window.HideWindow());
+        FileExecutor.OpenFileOrFolder(path, searchText, () => window.HideWindowAfterExecution());
     }
 
     public static void ResetInlineSearchAndFocusDialog(this Lertaro.App.InlineSearchWindow window)

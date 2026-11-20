@@ -10,10 +10,8 @@ public class PinyinAliasProvider : IAliasProvider, ITranslationProvider, IConfig
 
     public string Description => TranslationService.Get("Plugin_Comp_Desc_PinyinAliasProvider");
 
-    // 4: the alias set gained the Simplified spelling of a Traditional name. The setting bit makes
-    // the provider fingerprint follow the output-affecting conversion option too, so compaction can
-    // safely reuse aliases only while this option has the same value as the base snapshot.
-    public int Version => 4 + (ConvertEnabled ? 1 : 0);
+    // 6/7 rebuild older snapshots with bounded pinyin aliases for long names.
+    public int Version => 6 + (ConvertEnabled ? 1 : 0);
 
     public IReadOnlyList<string> SupportedCultures => TranslationService.GetSupportedCultures(System.Reflection.Assembly.GetExecutingAssembly());
 

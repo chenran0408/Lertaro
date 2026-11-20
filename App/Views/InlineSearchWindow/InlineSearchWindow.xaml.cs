@@ -243,6 +243,12 @@ public partial class InlineSearchWindow : Views.Controls.AppWindow, ISearchWindo
 
     public void HideWindow() => _manager.CloseInlineSearch();
 
+    public void HideWindowAfterExecution()
+    {
+        _manager.IsExecuting = true;
+        HideWindow();
+    }
+
     internal void ExpandDialogResults()
     {
         if (!_manager.ExplorerTracker.IsActiveWindowDialog || _dialogResultsExpanded) return;

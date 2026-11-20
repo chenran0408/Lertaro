@@ -1,3 +1,4 @@
+using Lertaro.PluginSdk.Helpers;
 using Lertaro.Core.IndexV2;
 
 using Lertaro.Core.IndexV2.Search;
@@ -19,7 +20,8 @@ internal static class SearchCoordinator
         Action<SearchResult> onResult,
         CancellationToken token,
         string? directoryFilter,
-        string? fileNameFilter = null)
+        string? fileNameFilter = null,
+        SearchCategoryFilter category = SearchCategoryFilter.All)
     {
         KeyValuePair<string, LiveIndex>[] drives;
         lock (lockObj)
@@ -32,7 +34,7 @@ internal static class SearchCoordinator
 
         if (drives.Length == 1)
         {
-            IndexV2Searcher.SearchStreaming(drives[0].Value, query, limit, onResult, token, directoryFilter, fileNameFilter);
+            IndexV2Searcher.SearchStreaming(drives[0].Value, query, limit, onResult, token, directoryFilter, fileNameFilter, category);
             return;
         }
 
@@ -58,7 +60,7 @@ internal static class SearchCoordinator
                 var rows = buffered[i] = new List<SearchResult>();
                 try
                 {
-                    IndexV2Searcher.SearchStreaming(drives[i].Value, query, limit, rows.Add, token, directoryFilter, fileNameFilter);
+                    IndexV2Searcher.SearchStreaming(drives[i].Value, query, limit, rows.Add, token, directoryFilter, fileNameFilter, category);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -80,7 +82,7 @@ internal static class SearchCoordinator
             // consumer task writing the response -- but the callback is reachable concurrently, which is
             // why SearchStreamPump.CreateResultChannel sets SingleWriter = false. Cross-drive arrival order
             // is not meaningful: consumers merge by the shared RankSortKey.
-            IndexV2Searcher.SearchStreaming(drives[i].Value, query, limit, onResult, token, directoryFilter, fileNameFilter));
+            IndexV2Searcher.SearchStreaming(drives[i].Value, query, limit, onResult, token, directoryFilter, fileNameFilter, category));
     }
 
     private static ParallelOptions ParallelOptionsFor(int driveCount, CancellationToken token) => new()

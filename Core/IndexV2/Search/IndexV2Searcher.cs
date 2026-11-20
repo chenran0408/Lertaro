@@ -1,3 +1,4 @@
+using Lertaro.PluginSdk.Helpers;
 using Lertaro.Core.SearchIndex.Fzf;
 
 using Lertaro.Core.IndexV2.Search.PathMode;
@@ -11,12 +12,28 @@ namespace Lertaro.Core.IndexV2.Search;
 // the whole search sees one consistent (Snapshot, DeltaOverlay) pair.
 public static class IndexV2Searcher
 {
-    public static void SearchStreaming(LiveIndex index, string query, int limit, Action<SearchResult> onResult, CancellationToken token, string? directoryFilter = null, string? fileNameFilter = null)
+    public static void SearchStreaming(LiveIndex index, string query, int limit, Action<SearchResult> onResult, CancellationToken token, string? directoryFilter = null, string? fileNameFilter = null, SearchCategoryFilter category = SearchCategoryFilter.All)
     {
         if (limit <= 0 || string.IsNullOrWhiteSpace(query))
             return;
 
         var parsed = SearchQueryParser.Parse(query);
+        var cacheKey = parsed.IsPathMode
+            ? null
+            : QueryPageCache.KeyFor(query, directoryFilter, fileNameFilter, category);
+        if (cacheKey != null && index.SearchPages.TryReplay(cacheKey, limit, onResult, token, index.Revision))
+            return;
+
+        var captured = cacheKey == null ? null : new List<SearchResult>(Math.Min(limit, QueryPageCache.MaxRows));
+        var emitted = 0;
+        void Capture(SearchResult row)
+        {
+            emitted++;
+            if (captured != null && captured.Count < QueryPageCache.MaxRows)
+                captured.Add(QueryPageCache.Clone(row));
+            onResult(row);
+        }
+
         // ponytail: the whole search, every onResult callback included, runs inside this read lock. The
         // production callback is a blocking write to SearchStreamPump's bounded channel, so one slow pipe
         // client parks the search thread holding the lock -- and ReaderWriterLockSlim blocks new readers
@@ -26,23 +43,28 @@ public static class IndexV2Searcher
         // ExitReadLock removes progressive streaming for large result sets -- rows arrive all at once --
         // and needs a memory bound the full window cannot state while its limit is int.MaxValue. The
         // inline window already searches against a bounded limit. Reopen on an observed stall.
+        long searchRevision = 0;
         index.Read<object?>((snapshot, delta) =>
         {
+            searchRevision = index.Revision;
             var directoryFilterLower = DirectoryFilterResolver.NormalizeFilter(directoryFilter);
             if (directoryFilterLower != null && directoryFilterLower.Equals(snapshot.SourceRoot.ToLowerInvariant(), StringComparison.Ordinal))
                 directoryFilterLower = null;
 
             if (parsed.IsPathMode)
             {
-                PathSearch.SearchStreaming(snapshot, delta, parsed, limit, onResult, token, directoryFilterLower);
+                PathSearch.SearchStreaming(snapshot, delta, parsed, limit, onResult, token, directoryFilterLower,
+                    FilterPatternHelper.SplitOrNullIfMatchAll(fileNameFilter), category);
                 return null;
             }
 
             var pattern = FzfPattern.Parse(query);
-            NameSearch.SearchStreaming(snapshot, delta, pattern, limit, onResult, token, directoryFilterLower,
-                FilterPatternHelper.SplitOrNullIfMatchAll(fileNameFilter));
+            NameSearch.SearchStreaming(snapshot, delta, pattern, limit, cacheKey == null ? onResult : Capture, token, directoryFilterLower,
+                FilterPatternHelper.SplitOrNullIfMatchAll(fileNameFilter), category);
             return null;
         });
+        if (cacheKey != null && !token.IsCancellationRequested)
+            index.SearchPages.Store(cacheKey, captured!, limit, searchRevision, emitted, clone: false);
     }
 
     // Directory listing rather than search (see DirectoryEnumerator): no query, no ranking, walks the

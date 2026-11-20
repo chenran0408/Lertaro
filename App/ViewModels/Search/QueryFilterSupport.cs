@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Lertaro.PluginSdk.Helpers;
 using Lertaro.PluginSdk.Search;
 
 namespace Lertaro.App.ViewModels.Search;
@@ -21,6 +22,14 @@ public static class QueryFilterSupport
 
     /// <summary>The filters for the search currently being dispatched. Null = unfiltered.</summary>
     public static ResultFilters? ActiveFilters => ActiveLocal.Value;
+
+    internal static SearchCategoryFilter IndexCategory(ResultFilters? filters, SearchCategoryFilter category)
+    {
+        if (category != SearchCategoryFilter.All) return category;
+        if (filters?.FoldersOnly == true) return SearchCategoryFilter.Folder;
+        if (filters?.FilesOnly == true || filters?.Extensions is { Count: > 0 }) return SearchCategoryFilter.File;
+        return category;
+    }
 
     public static bool IsStealthQuery(string query) => query.StartsWith(';');
 

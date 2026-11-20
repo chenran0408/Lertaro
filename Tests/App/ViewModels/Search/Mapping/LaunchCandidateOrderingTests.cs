@@ -11,6 +11,24 @@ public sealed class LaunchCandidateOrderingTests
             new AppSearchResult { Name = name, FullPath = path, IsDir = directory, ResultKind = application ? "Application" : "File" },
             history, history ? 0 : int.MaxValue, int.MaxValue, new MatchRank(0, 0, weight), path);
 
+    // Replay the same corpus for each typed query and pin both launch identity and extension intent.
+    [TestMethod]
+    [DataRow("CopperFinch", "星槐画板 CopperFinch", 1)]
+    [DataRow("CopperFinch.exe", "CopperFinch.exe", 1)]
+    [DataRow("星槐画板", "星槐画板 CopperFinch", 3)]
+    public void ReplayLaunchRanking(string query, string target, int maximumRank)
+    {
+        var names = new[] { "CopperFinch", "CopperFinch.exe", "星槐画板 CopperFinch", "CopperFinch 说明.txt" };
+        var paths = new[] { @"C:\Docs\CopperFinch", @"C:\Apps\CopperFinch.exe", @"C:\Programs\星槐画板.lnk", @"C:\Docs\CopperFinch 说明.txt" };
+        var fuzzy = FuzzyQuery.Parse(query);
+        var candidates = names.Select((name, i) => Candidate(name, paths[i], application: i == 2, directory: i == 0)
+            with { Match = fuzzy.Rank(name) }).ToList();
+        var results = LaunchCandidateOrdering.Order(candidates, query,
+            path => path.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) ? new(paths[1], "", "") : null);
+        var position = results.ToList().FindIndex(row => row.Result.Name == target);
+        Assert.IsTrue(position >= 0 && position < maximumRank, $"{query}: {string.Join(", ", results.Select(row => row.Result.Name))}");
+    }
+
     [TestMethod]
     public void ExactSteamLaunchBeatsSameNamedFoldersWithTheDefaultFilesFirstOrder()
     {

@@ -1,3 +1,4 @@
+using Lertaro.PluginSdk.Helpers;
 using System.Windows;
 using Lertaro.Core;
 using Lertaro.App.Services;
@@ -115,7 +116,7 @@ internal sealed class SearchDispatchController
             return;
         }
         var providerQuery = queryFilters.IsEmpty ? value : QueryFilterSupport.Extract(value, out _);
-        RunEngineSearch(engineCall, originalValue, providerQuery, searchQuery, scopeDirective);
+        RunEngineSearch(engineCall, originalValue, providerQuery, searchQuery, scopeDirective, triggeredTypeId);
     }
     // An operator typed with no keyword after it yet -- a token-only query (e.g. "::foo" with no
     // keyword before it), or a bare "*" (bypass exclusion rules) -- strips down to an empty clean
@@ -159,14 +160,14 @@ internal sealed class SearchDispatchController
         bool emitInstantResults,
         Action<CancellationToken>? beforeSearch,
         Func<string?, List<AppSearchResult>>? collectInstantResults,
-        Task? additionalResultsReady);
+        Task? additionalResultsReady, SearchCategoryFilter category);
 
     private void RunEngineSearch(
         EngineSearchCall engineCall,
         string originalValue,
         string providerQuery,
         string searchQuery,
-        FileFilterScopeDirective? scopeDirective)
+        FileFilterScopeDirective? scopeDirective, string? triggeredTypeId)
     {
         // A query token (e.g. "::bzsc") filters/reorders whatever candidate set it's handed in
         // ComposeAndApplyAsync, AFTER this search already ran -- the usual 51/51 quick-window budget
@@ -221,7 +222,9 @@ internal sealed class SearchDispatchController
             // Start the application's catalog scan with the index request, once per accepted query.
             deferInstantPass ? token => instantPass.StartCatalogSearch(searchQuery, providerQuery, token) : null,
             contextDir => SearchResultMapper.CollectInstantPass(instantPass, providerQuery, searchQuery, _getIsInlineSearchContext(), contextDir),
-            deferInstantPass ? instantPass.Completion : null
+            deferInstantPass ? instantPass.Completion : null,
+            QueryFilterSupport.IndexCategory(QueryFilterSupport.ActiveFilters,
+                folderScope ? SearchCategoryFilter.Folder : SearchResultTypePriority.IndexCategoryFor(triggeredTypeId))
         );
     }
     /// <summary>B1 suggest rows replace the list while web mode is active (suggest is opt-in).</summary>

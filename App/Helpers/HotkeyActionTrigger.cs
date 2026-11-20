@@ -67,7 +67,7 @@ public static class HotkeyActionTrigger
                     && PluginPerformanceMonitor.Measure(action, () => action.CanExecute(selection)))
                 {
                     beforeExecute?.Invoke();
-                    if (hideOnRun) view.HideWindow();
+                    if (hideOnRun) view.HideWindowAfterExecution();
                     PluginPerformanceMonitor.Measure(action, () => action.Execute(selection, view));
                     return true;
                 }
@@ -83,7 +83,7 @@ public static class HotkeyActionTrigger
                 if (WpfUiHelper.MatchesHotkey(hotkey, e))
                 {
                     beforeExecute?.Invoke();
-                    if (hideOnRun) view.HideWindow();
+                    if (hideOnRun) view.HideWindowAfterExecution();
                     execute();
                     return true;
                 }

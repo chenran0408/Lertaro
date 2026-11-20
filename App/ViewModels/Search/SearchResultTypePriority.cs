@@ -4,6 +4,7 @@ using Lertaro.App.Services.PluginManagerCore;
 using Lertaro.App.ViewModels.Settings.Plugins;
 using Lertaro.Core;
 using Lertaro.PluginSdk.Abstractions.Plugins;
+using Lertaro.PluginSdk.Helpers;
 
 using Lertaro.App.Services.Plugin;
 namespace Lertaro.App.ViewModels.Search;
@@ -19,6 +20,8 @@ public static class SearchResultTypePriority
     // for its own non-plugin entries.
     public const string FilesTypeId = "__builtin::Files";
 
+    public const string FoldersTypeId = "__builtin::Folders";
+
     public static string GetProviderTypeId(ISearchableItemProvider provider) =>
         PluginLoaderHelper.MakeId(ComponentFilter.GetDllName(provider), PluginComponentType.SearchableItemProvider, provider.GetType().Name);
 
@@ -32,10 +35,26 @@ public static class SearchResultTypePriority
         return idx >= 0 ? idx : int.MaxValue;
     }
 
-    // The reverse lookup for UserSettings.ResultTypeTriggers -- a handful of entries at most, so a
-    // linear scan beats maintaining a second reversed dictionary in sync. Compared case-insensitively,
-    // like every other keyword comparison in the search box: a configured "A" has to fire for a typed "a",
-    // or a trigger character would be the one rule silently depending on the Shift key.
+    // Preserve a saved order from before folders had their own position.
+    public static List<string> WithFolders(List<string> order)
+    {
+        if (order.Contains(FoldersTypeId))
+            return order;
+        var files = order.IndexOf(FilesTypeId);
+        if (files < 0)
+            return order;
+        var withFolders = new List<string>(order);
+        withFolders.Insert(files + 1, FoldersTypeId);
+        return withFolders;
+    }
+
+    public static SearchCategoryFilter IndexCategoryFor(string? id) => id switch
+    {
+        FilesTypeId => SearchCategoryFilter.File,
+        FoldersTypeId => SearchCategoryFilter.Folder,
+        _ => SearchCategoryFilter.All
+    };
+
     public static string? ResolveTrigger(char firstChar, IReadOnlyDictionary<string, string> triggers)
     {
         foreach (var (typeId, trigger) in triggers)
@@ -53,6 +72,8 @@ public static class SearchResultTypePriority
     {
         if (typeId == FilesTypeId)
             return TranslationManager.Instance["General_ResultTypeFiles"];
+        if (typeId == FoldersTypeId)
+            return TranslationManager.Instance["General_ResultTypeFolders"];
 
         foreach (var provider in PluginManager.Instance.SearchableItemProviders)
         {

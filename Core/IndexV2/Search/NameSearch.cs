@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using Lertaro.PluginSdk.Helpers;
+using System.Runtime.InteropServices;
 using Lertaro.Core.SearchIndex;
 using Lertaro.Core.SearchIndex.Fzf;
 using Lertaro.Core.IndexV2.Delta;
@@ -22,7 +23,8 @@ internal static class NameSearch
     private const int RefinementHeadroomFactor = 5;
 
     public static void SearchStreaming(Snapshot snapshot, DeltaOverlay delta, FzfPattern pattern, int limit,
-        Action<SearchResult> onResult, CancellationToken token, string? directoryFilterLower, string[]? fileNamePatterns = null)
+        Action<SearchResult> onResult, CancellationToken token, string? directoryFilterLower, string[]? fileNamePatterns = null,
+        SearchCategoryFilter category = SearchCategoryFilter.All)
     {
         if (!DriveAdmits(snapshot, pattern, out var matchAll))
             return;
@@ -45,7 +47,7 @@ internal static class NameSearch
             ? keep
             : (int)Math.Min((long)keep * RefinementHeadroomFactor, everything);
         var topN = new FzfTopN(Math.Max(scanKeep, 1));
-        CollectRanks(snapshot, delta, pattern, matchAll, directoryContext, topN, token, fileNamePatterns);
+        CollectRanks(snapshot, delta, pattern, matchAll, directoryContext, topN, token, fileNamePatterns, category);
 
         var ranks = topN.Finish(scanKeep);
         if (!matchAll && !pattern.IsEmpty)
@@ -87,7 +89,7 @@ internal static class NameSearch
             {
                 SearchResultRelevance.Apply(result, pattern);
                 onResult(result);
-            }, token, directoryFilterLower);
+            }, token, directoryFilterLower, category);
     }
 
     [ThreadStatic]
@@ -239,7 +241,7 @@ internal static class NameSearch
         return delta.GetFullPath(row).StartsWith(ctx.FilterLower, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void CollectRanks(Snapshot snapshot, DeltaOverlay delta, FzfPattern pattern, bool matchAll, DirectoryContext ctx, FzfTopN topN, CancellationToken token, string[]? fileNamePatterns)
+    private static void CollectRanks(Snapshot snapshot, DeltaOverlay delta, FzfPattern pattern, bool matchAll, DirectoryContext ctx, FzfTopN topN, CancellationToken token, string[]? fileNamePatterns, SearchCategoryFilter category)
     {
         var membership = ctx.FilterLower != null ? new Dictionary<int, bool>() : null;
 
@@ -276,6 +278,8 @@ internal static class NameSearch
                         continue;
                     if (!MatchesFileScope(snapshot, delta, row, fileNamePatterns))
                         continue;
+                    if (!CategoryAdmits(category, snapshot, delta, row))
+                        continue;
                     topN.Add(new FzfRank(row, 0, sortKey));
                 }
             }
@@ -296,6 +300,8 @@ internal static class NameSearch
                             continue;
                         if (!MatchesFileScope(snapshot, delta, row, fileNamePatterns))
                             continue;
+                    if (!CategoryAdmits(category, snapshot, delta, row))
+                        continue;
                         // The per-unique sort key applies verbatim to every row of that unique --
                         // EntryIndex isn't packed into the key, so nothing is recomputed per row.
                         topN.Add(new FzfRank(row, m.Match.Score, m.SortKey));
@@ -304,11 +310,23 @@ internal static class NameSearch
             }, token, fileNamePatterns);
         }
 
-        MatchDeltaRows(snapshot, delta, pattern, matchAll, ctx, topN, fileNamePatterns);
+        MatchDeltaRows(snapshot, delta, pattern, matchAll, ctx, topN, fileNamePatterns, category);
     }
 
     private static bool MatchesFileScope(Snapshot snapshot, DeltaOverlay delta, int row, string[]? patterns)
         => patterns == null || IsDirectory(snapshot, delta, row) || FilterPatternHelper.Matches(delta.NameOf(row), patterns);
+    internal static bool CategoryAdmits(SearchCategoryFilter category, Snapshot snapshot, DeltaOverlay delta, int row)
+    {
+        if (category == SearchCategoryFilter.All) return true;
+        var directory = IsDirectory(snapshot, delta, row);
+        return category switch
+        {
+            SearchCategoryFilter.File => !directory,
+            SearchCategoryFilter.Folder => directory,
+            _ => SearchCategoryClassifier.Matches(category, snapshot.GetName(row), directory)
+        };
+    }
+
     private static bool IsDirectory(Snapshot snapshot, DeltaOverlay delta, int row)
         => delta.BaseOverrides.TryGetValue(row, out var record)
             ? (record.Flags & (ushort)FileRecordFlags.Directory) != 0
@@ -330,7 +348,7 @@ internal static class NameSearch
     // Delta churn is always small (live USN/watcher batches, not bulk scans), so both loops just check
     // the row's own full path against the filter prefix -- correct for renamed/moved/added rows alike,
     // unlike the row-index ancestor cache above (a snapshot-only optimization for the hot base-row path).
-    private static void MatchDeltaRows(Snapshot snapshot, DeltaOverlay delta, FzfPattern pattern, bool matchAll, DirectoryContext ctx, FzfTopN topN, string[]? fileNamePatterns)
+    private static void MatchDeltaRows(Snapshot snapshot, DeltaOverlay delta, FzfPattern pattern, bool matchAll, DirectoryContext ctx, FzfTopN topN, string[]? fileNamePatterns, SearchCategoryFilter category)
     {
         var slab = new FzfSlab();
         var queryLen = pattern.GetTotalTermLength();
@@ -339,7 +357,8 @@ internal static class NameSearch
         {
             if (record.Name.Length == 0)
                 continue;
-            if (!MatchesFileScope(record.Name, record.Flags, fileNamePatterns))
+            if (!MatchesFileScope(record.Name, record.Flags, fileNamePatterns)
+                || !SearchCategoryClassifier.Matches(category, record.Name, (record.Flags & (ushort)FileRecordFlags.Directory) != 0))
                 continue;
             var match = EmptyPatternMatch;
             if (!matchAll && !SearchMatcherRow.TryMatchNameOrAliases(pattern, record.Name, record.Aliases, record.ProviderIds, queryLen, slab, out match))
@@ -353,7 +372,8 @@ internal static class NameSearch
             var record = delta.Added[i];
             if (record.Removed || record.Name.Length == 0)
                 continue;
-            if (!MatchesFileScope(record.Name, record.Flags, fileNamePatterns))
+            if (!MatchesFileScope(record.Name, record.Flags, fileNamePatterns)
+                || !SearchCategoryClassifier.Matches(category, record.Name, (record.Flags & (ushort)FileRecordFlags.Directory) != 0))
                 continue;
             var match = EmptyPatternMatch;
             if (!matchAll && !SearchMatcherRow.TryMatchNameOrAliases(pattern, record.Name, record.Aliases, record.ProviderIds, queryLen, slab, out match))
