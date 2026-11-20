@@ -102,6 +102,24 @@ public sealed class HotkeySettingsViewModelTests
     }
 
     [TestMethod]
+    public void DoubleCtrlToggle_OnlyWarnsWhenAnotherActionUsesDoubleCtrl()
+    {
+        var vm = CreateViewModel((_, _) => false);
+        vm.ToggleHotkeyValue = "Ctrl";
+        vm.SelectJumpModifier = "Ctrl";
+        vm.QuickSwitchComboHotkey = "Ctrl+G";
+        Assert.AreEqual(string.Empty, vm.ToggleHotkeyValueConflictWarning);
+
+        vm.QuickSwitchComboHotkey = "Ctrl";
+        Assert.IsFalse(string.IsNullOrWhiteSpace(vm.ToggleHotkeyValueConflictWarning));
+        Assert.IsFalse(string.IsNullOrWhiteSpace(vm.QuickSwitchComboHotkeyConflictWarning));
+
+        vm.QuickSwitchComboHotkey = "Alt";
+        Assert.AreEqual(string.Empty, vm.ToggleHotkeyValueConflictWarning);
+        vm.Cleanup();
+    }
+
+    [TestMethod]
     public void SameBareKeySingleAndDoubleTapHotkeys_ShowConflictOnBothRows()
     {
         var vm = CreateViewModel((_, _) => false);

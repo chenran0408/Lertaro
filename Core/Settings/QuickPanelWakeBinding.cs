@@ -79,18 +79,24 @@ public static class QuickPanelWakeBindings
         {
             var tapKey = firstDoubleTap ? firstTapKey : secondTapKey;
             var other = firstDoubleTap ? second : first;
-            var tapVirtualKey = Hook.InlineSearch.KeyboardUtils.GetKeyVirtualCode(tapKey);
             if (firstDoubleTap && secondDoubleTap)
-                return tapVirtualKey == Hook.InlineSearch.KeyboardUtils.GetKeyVirtualCode(secondTapKey);
+                return SameMainKey(firstTapKey, secondTapKey);
 
             HotkeyStringFormat.ParseCombo(other.Replace(" ", ""), out var otherModifiers, out var otherKey);
             return string.IsNullOrWhiteSpace(otherModifiers)
-                && tapVirtualKey == Hook.InlineSearch.KeyboardUtils.GetKeyVirtualCode(otherKey);
+                && SameMainKey(tapKey, otherKey);
         }
         HotkeyStringFormat.ParseCombo(first.Replace(" ", ""), out var firstModifiers, out var firstKey);
         HotkeyStringFormat.ParseCombo(second.Replace(" ", ""), out var secondModifiers, out var secondKey);
-        return Hook.InlineSearch.KeyboardUtils.GetKeyVirtualCode(firstKey) == Hook.InlineSearch.KeyboardUtils.GetKeyVirtualCode(secondKey)
+        return SameMainKey(firstKey, secondKey)
             && NormalizeModifiers(firstModifiers).SetEquals(NormalizeModifiers(secondModifiers));
+    }
+
+    private static bool SameMainKey(string first, string second)
+    {
+        if (string.Equals(first, second, StringComparison.OrdinalIgnoreCase)) return true;
+        var key = Hook.InlineSearch.KeyboardUtils.GetKeyVirtualCode(first);
+        return key != 0 && key == Hook.InlineSearch.KeyboardUtils.GetKeyVirtualCode(second);
     }
 
     private static HashSet<string> NormalizeModifiers(string modifiers) => modifiers.Split('+', StringSplitOptions.RemoveEmptyEntries)

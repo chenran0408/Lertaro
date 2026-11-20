@@ -75,6 +75,11 @@ internal static class KeyboardUtils
         if (key.Length == 1 && key[0] >= '0' && key[0] <= '9')
             return key[0];
 
+        if (key.Length == 2 && key[0] == 'D' && char.IsAsciiDigit(key[1]))
+            return key[1];
+        if (key.Length == 7 && key.StartsWith("NUMPAD", StringComparison.Ordinal) && char.IsAsciiDigit(key[6]))
+            return 0x60 + (key[6] - '0');
+
         if (key.StartsWith("F") && key.Length > 1 && int.TryParse(key.Substring(1), out var fNum) && fNum >= 1 && fNum <= 12)
         {
             return 0x6F + fNum; // F1 is 0x70, F12 is 0x7B

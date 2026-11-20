@@ -39,6 +39,21 @@ public sealed class QuickPanelWakeBindingTests
         detector.OnKeyUp(0x71); detector.OnKeyDown(0x71); Assert.IsFalse(detector.QuickPanelKeyRepeated);
     }
     [TestMethod]
+    [DataRow("Ctrl", "Ctrl+D1", false)]
+    [DataRow("Ctrl", "Ctrl+NumPad9", false)]
+    [DataRow("Ctrl+D1", "Ctrl+1", true)]
+    [DataRow("Ctrl+D0", "Ctrl+D1", false)]
+    [DataRow("Ctrl+D1", "Ctrl+NumPad1", false)]
+    [DataRow("Ctrl+F13", "Ctrl+F14", false)]
+    [DataRow("DoubleTap:F13", "DoubleTap:F14", false)]
+    [DataRow("DoubleTap:F13", "F13", true)]
+    public void ConflictComparisonDistinguishesPhysicalKeys(string first, string second, bool expected)
+    {
+        Assert.AreEqual(expected, QuickPanelWakeBindings.SameKey(first, second));
+        Assert.AreEqual(expected, QuickPanelWakeBindings.SameKey(second, first));
+    }
+
+    [TestMethod]
     public void ConflictsCoverHoldVersusClickAndOppositeCircleDirectionsCanCoexist()
     {
         Assert.IsTrue(QuickPanelWakeBindings.SameKey("Alt+Ctrl+Return", "ctrl+alt+Enter"));
